@@ -3,4 +3,6 @@ project(CC)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(CC main.cpp)
+add_executable(CC main.cpp
+                  Program.cpp
+                  Program.h)
