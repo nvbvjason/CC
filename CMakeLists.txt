@@ -14,4 +14,6 @@ add_executable(CC
         Lexing/Token.h
 
         Lexing/Lexer.cpp
-        Lexing/Lexer.h)
+        Lexing/Lexer.h
+        test/ManuelTesting.cpp
+        test/ManuelTesting.h)
