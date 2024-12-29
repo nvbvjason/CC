@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef PROGRAM_H
-#define PROGRAM_H
+#ifndef CC_PROGRAM_H
+#define CC_PROGRAM_H
 
 #include <string>
 #include <vector>
@@ -16,21 +16,7 @@ public:
     [[nodiscard]] int run() const;
 };
 
+static bool fileExists(const std::string &name);
+static bool isCommandLineArgumentValid(const std::string &argument);
 
-static  bool fileExists(const std::string &name)
-{
-    std::ifstream f(name.c_str());
-    return f.good();
-}
-
-static bool isCommandLineArgumentValid(const std::string &argument)
-{
-    const std::vector<std::string> validArguements = {"--help", "-h", "--version", "--lex", "--parse", "--codegen"};
-    for (const std::string &validArguement : validArguements)
-        if (argument == validArguement)
-            return true;
-    return false;
-}
-
-
-#endif //PROGRAM_H
+#endif // CC_PROGRAM_H
