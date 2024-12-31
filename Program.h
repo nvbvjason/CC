@@ -4,6 +4,7 @@
 #define CC_PROGRAM_H
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <fstream>
 
@@ -12,7 +13,8 @@ class Program {
 public:
     Program() = delete;
     Program(const Program& other) = delete;
-    Program(int argc, char* argv[]);
+    explicit Program(std::vector<std::string> args)
+        : args(std::move(args)) {}
     [[nodiscard]] int run() const;
 };
 

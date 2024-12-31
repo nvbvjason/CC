@@ -4,11 +4,6 @@
 #include <iostream>
 #include <fstream>
 
-Program::Program(const int argc, char *argv[])
-{
-    args = std::vector<std::string>(argv, argv + argc);
-}
-
 int Program::run() const
 {
     if (args.size() < 2 || 3 < args.size()) {
@@ -31,8 +26,8 @@ int Program::run() const
             std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
             Lexing::Lexer lexer(source);
             std::vector<Lexing::Token> tokens = lexer.tokenize();
-            for (const auto& token : tokens)
-                std::cout << token << '\n';
+            // for (const auto& token : tokens)
+            //     std::cout << token << '\n';
             for (const auto& token : tokens)
                 if (token.type == Lexing::TokenType::INVALID)
                     return 4;
