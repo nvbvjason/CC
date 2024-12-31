@@ -1,5 +1,5 @@
 #include "Program.h"
-#include "Lexing/Lexer.h"
+#include "Lexing/Lexer.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -26,8 +26,8 @@ int Program::run() const
             std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
             Lexing::Lexer lexer(source);
             std::vector<Lexing::Token> tokens = lexer.tokenize();
-            // for (const auto& token : tokens)
-            //     std::cout << token << '\n';
+            for (const auto& token : tokens)
+                std::cout << token << '\n';
             for (const auto& token : tokens)
                 if (token.type == Lexing::TokenType::INVALID)
                     return 4;
@@ -44,9 +44,8 @@ static bool fileExists(const std::string &name)
 
 static bool isCommandLineArgumentValid(const std::string &argument)
 {
-    const std::vector<std::string> validArguements = {"--help", "-h", "--version", "--lex", "--parse", "--codegen"};
-    for (const std::string &validArguement : validArguements)
-        if (argument == validArguement)
-            return true;
-    return false;
+    const std::vector<std::string> validArguments = {"--help", "-h", "--version", "--lex", "--parse", "--codegen"};
+    return std::any_of(validArguments.begin(), validArguments.end(), [&](const std::string &arg) {
+        return arg == argument;
+    });
 }

@@ -1,9 +1,9 @@
-#include "Token.h"
+#include "Token.hpp"
 
 namespace Lexing {
 
 Token::Token(const i32 line, const u16 column, TokenType type, const std::string& lexeme, const i32 value)
-: m_line(line), m_column(column), type(type), lexeme(lexeme)
+    : m_line(line), m_column(column), type(type), lexeme(lexeme)
 {
     data.int32 = value;
 }

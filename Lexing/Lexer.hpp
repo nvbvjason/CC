@@ -3,7 +3,7 @@
 #ifndef CC_LEXING_LEXER_H
 #define CC_LEXING_LEXER_H
 
-#include "Token.h"
+#include "Token.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -25,7 +25,7 @@ class Lexer {
     i32 m_current = 0;
     i32 m_start = 0;
     i32 m_line = 1;
-    u16 m_column = 0;
+    u16 m_column = 1;
     std::vector<Token> m_tokens;
 public:
     explicit Lexer(const std::string& input)

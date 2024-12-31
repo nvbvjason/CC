@@ -1,4 +1,4 @@
-#include "Lexer.h"
+#include "Lexer.hpp"
 
 namespace Lexing {
 
@@ -15,10 +15,10 @@ void Lexer::scanToken()
 {
     switch (const char ch = advance()) {
         case '(':
-            addToken(TokenType::OPEN_BRACE);
+            addToken(TokenType::OPEN_PAREN);
             break;
         case ')':
-            addToken(TokenType::CLOSE_BRACE);
+            addToken(TokenType::CLOSE_PAREN);
             break;
         case '{':
             addToken(TokenType::OPEN_BRACE);
@@ -48,7 +48,7 @@ void Lexer::scanToken()
             ++m_column;
             break;
         case '\n':
-            m_column = 0;
+            m_column = 1;
             ++m_line;
             break;
         default:
@@ -95,7 +95,8 @@ void Lexer::integer()
 {
     while (isdigit(peek()))
         advance();
-    addToken(TokenType::INTEGER);
+    i32 value = std::stoi(c_source.substr(m_start, m_current - m_start));
+    addToken(TokenType::INTEGER, value);
 }
 
 void Lexer::identifier()

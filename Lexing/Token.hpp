@@ -38,9 +38,9 @@ class Token {
     u16 m_column;
 public:
     TokenType type;
-    std::string_view lexeme;
+    std::string lexeme;
     Data data;
-    Token(const i32 line, const u16 column, std::string  lexeme)
+    Token(const i32 line, const u16 column, std::string lexeme)
         : m_line(line), m_column(column), lexeme(std::move(lexeme)) {}
     Token(const i32 line, const u16 column, TokenType type, std::string lexeme)
         : m_line(line), m_column(column), type(type), lexeme(std::move(lexeme)) {}

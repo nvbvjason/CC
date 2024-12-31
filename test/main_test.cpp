@@ -6,7 +6,7 @@
 
 TEST(Chpater1, lexingValid)
 {
-    std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
+    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--lex"};
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         args[1] = path.path();
@@ -17,7 +17,7 @@ TEST(Chpater1, lexingValid)
 
 TEST(Chpater1, lexingInvalid)
 {
-    std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/invalid_lex";
+    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/invalid_lex";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--lex"};
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         args[1] = path.path();

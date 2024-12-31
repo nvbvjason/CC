@@ -7,12 +7,29 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(GTest REQUIRED)
 
+
 set(LEXING_FILES
         Lexing/Token.cpp
-        Lexing/Token.h
+        Lexing/Token.hpp
 
         Lexing/Lexer.cpp
-        Lexing/Lexer.h)
+        Lexing/Lexer.hpp)
+
+set(PARSING_FILES
+        Parser/Program.cpp
+        Parser/Program.hpp
+
+        Parser/FunctionDefinition.cpp
+        Parser/FunctionDefinition.hpp
+
+        Parser/Statement.cpp
+        Parser/Statement.hpp
+
+        Parser/Expression.cpp
+        Parser/Expression.hpp
+
+        Parser/Parser.cpp
+        Parser/Parser.hpp)
 
 add_executable(CC_run
         main.cpp
@@ -20,7 +37,8 @@ add_executable(CC_run
         Program.cpp
         Program.h
 
-        ${LEXING_FILES})
+        ${LEXING_FILES}
+        ${PARSING_FILES})
 
 set(TEST_SOURCES
         test/main_test.cpp
@@ -28,7 +46,8 @@ set(TEST_SOURCES
         Program.cpp
         Program.h
 
-        ${LEXING_FILES})
+        ${LEXING_FILES}
+        ${PARSING_FILES})
 
 add_executable(CC_test ${LEXING_FILES} ${TEST_SOURCES})
 
