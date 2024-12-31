@@ -62,6 +62,26 @@ TEST(Lexing, whiteSpace)
     ASSERT_EQ(tokens.size(), 0);
 }
 
+TEST(Lexing, invalid)
+{
+    const std::string testProgram =
+    "\\";
+    Lexing::Lexer lexer(testProgram);
+    std::vector<Lexing::Token> tokens = lexer.tokenize();
+    ASSERT_EQ(tokens.size(), 1);
+    Lexing::Token invalidToken(1, 1, Lexing::TokenType::INVALID, "\\");
+    ASSERT_EQ(tokens[0], invalidToken);
+}
+
+TEST(Lexing, invalidMultiline)
+{
+    const std::string testProgram =
+    "/*  ";
+    Lexing::Lexer lexer(testProgram);
+    std::vector<Lexing::Token> tokens = lexer.tokenize();
+    ASSERT_EQ(tokens.size(), 0);
+}
+
 }
 
 #endif //LEXER_HPP
