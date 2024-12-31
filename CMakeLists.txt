@@ -47,7 +47,9 @@ set(TEST_SOURCES
         Program.h
 
         ${LEXING_FILES}
-        ${PARSING_FILES})
+        ${PARSING_FILES}
+        test/Lexer.cpp
+        test/Lexer.hpp)
 
 add_executable(CC_test ${LEXING_FILES} ${TEST_SOURCES})
 

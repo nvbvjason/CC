@@ -27,8 +27,6 @@ int Program::run() const
             Lexing::Lexer lexer(source);
             std::vector<Lexing::Token> tokens = lexer.tokenize();
             for (const auto& token : tokens)
-                std::cout << token << '\n';
-            for (const auto& token : tokens)
                 if (token.type == Lexing::TokenType::INVALID)
                     return 4;
         }

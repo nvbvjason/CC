@@ -44,7 +44,7 @@ public:
         : m_line(line), m_column(column), lexeme(std::move(lexeme)) {}
     Token(const i32 line, const u16 column, TokenType type, std::string lexeme)
         : m_line(line), m_column(column), type(type), lexeme(std::move(lexeme)) {}
-    Token (i32 line, u16 column, TokenType type, const std::string& lexeme, i32 value);
+    Token (i32 line, u16 column, TokenType type, std::string lexeme, i32 value);
     Token() = delete;
 
     [[nodiscard]] i32 line() const { return m_line; }
@@ -54,6 +54,7 @@ public:
 
 [[nodiscard]] static std::string getTypeName(TokenType type);
 std::ostream& operator<<(std::ostream& os, const Token& token);
+bool operator==(const Token& lhs, const Token& rhs);
 
 }
 

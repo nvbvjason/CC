@@ -1,9 +1,11 @@
 #include "Token.hpp"
 
+#include <utility>
+
 namespace Lexing {
 
-Token::Token(const i32 line, const u16 column, TokenType type, const std::string& lexeme, const i32 value)
-    : m_line(line), m_column(column), type(type), lexeme(lexeme)
+Token::Token(const i32 line, const u16 column, TokenType type, std::string lexeme, const i32 value)
+    : m_line(line), m_column(column), type(type), lexeme(std::move(lexeme))
 {
     data.int32 = value;
 }
@@ -45,5 +47,18 @@ std::ostream& operator<<(std::ostream& os, const Token& token)
 {
     os << "line: " << token.line() << " column: " << token.column() << " type: " << getTypeName(token.type) << " lexeme: " << token.lexeme;
     return os;
+}
+
+bool operator==(const Token &lhs, const Token &rhs)
+{
+    return lhs.line() == rhs.line()
+        && lhs.column() == rhs.column()
+        && lhs.type == rhs.type
+        && lhs.lexeme == rhs.lexeme;
+}
+
+bool operator!=(const Token &lhs, const Token &rhs)
+{
+    return !(lhs == rhs);
 }
 }

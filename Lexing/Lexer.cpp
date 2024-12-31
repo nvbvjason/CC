@@ -34,10 +34,12 @@ void Lexer::scanToken()
                 while (peek() != '\n' && !isAtEnd())
                     advance();
             else if (match('*')) {
-                while (peek() != '*' && peekNext() != '/' && !isAtEnd()) {
+                while (c_source.substr(m_current, 2) != "*/") {
                     if (peek() == '\n')
                         ++m_line;
                     advance();
+                    if (isAtEnd())
+                        break;
                 }
                 advance();
             }
