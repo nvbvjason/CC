@@ -5,10 +5,10 @@
 
 #include <vector>
 
-#include "Program.hpp"
-#include "FunctionDefinition.hpp"
-#include "Statement.hpp"
-#include "Expression.hpp"
+#include "ProgramNode.hpp"
+#include "FunctionNode.hpp"
+#include "StatementNode.hpp"
+#include "ExpressionNode.hpp"
 #include "../Lexing/Token.hpp"
 
 namespace Parsing {
@@ -24,11 +24,11 @@ public:
     explicit Parser(std::vector<Lexing::Token> tokens)
         : c_tokens(std::move(tokens)) {}
 
-    FunctionDefinition parseProgram();
+    ProgramNode parseProgram();
 private:
-    FunctionDefinition parseFunction();
-    Statement parseStatement();
-    Expression parseExpression();
+    FunctionNode parseFunction();
+    StatementNode parseStatement();
+    ExpressionNode parseExpression();
 
     void expect(Lexing::TokenType expected);
     void advance();

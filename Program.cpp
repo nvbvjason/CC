@@ -33,9 +33,9 @@ int Program::run() const
                     return 4;
             return 0;
         }
+        Parsing::Parser parser(tokens);
+        Parsing::ProgramNode program;
         if (argument == "--parse") {
-            Parsing::Parser parser(tokens);
-            Parsing::FunctionDefinition program;
             try {
                 program = parser.parseProgram();
             }
@@ -43,6 +43,9 @@ int Program::run() const
                 return 5;
             }
             return 0;
+        }
+        if (argument == "--codegen") {
+
         }
     }
     return 0;
@@ -62,13 +65,13 @@ static bool isCommandLineArgumentValid(const std::string &argument)
     });
 }
 
-static void astPrinter(const Parsing::FunctionDefinition& function)
+static void astPrinter(const Parsing::ProgramNode& program)
 {
     std::cout << "Program(\n";
     std::cout << "\tFunction(\n";
-    std::cout << "\t\tname=" << function.name << ",\n";
-    std::cout << "\t\tbody=Return" << function.name << "(\n";
-    std::cout << "\t\t\tConstant(" << function.body.expression.constant << ")\n";
+    std::cout << "\t\tname=" << program.function.name << ",\n";
+    std::cout << "\t\tbody=Return" << program.function.name << "(\n";
+    std::cout << "\t\t\tConstant(" << program.function.body.expression.constant << ")\n";
     std::cout << "\t\t)\n";
     std::cout << "\t)\n";
     std::cout << ")\n";

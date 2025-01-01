@@ -6,18 +6,20 @@ namespace Parsing {
 
 using Lexing::TokenType;
 
-FunctionDefinition Parser::parseProgram()
+ProgramNode Parser::parseProgram()
 {
-    FunctionDefinition function = parseFunction();
+    ProgramNode program;
+    FunctionNode function = parseFunction();
     if (m_current < c_tokens.size())
         throw std::runtime_error("too many tokens");
-    return function;
+    program.function = function;
+    return program;
 }
 
-FunctionDefinition Parser::parseFunction()
+FunctionNode Parser::parseFunction()
 {
     expect(TokenType::INT_KEYWORD);
-    FunctionDefinition function;
+    FunctionNode function;
     function.name = peek().lexeme;
     expect(TokenType::IDENTIFIER);
     expect(TokenType::OPEN_PAREN);
@@ -29,18 +31,18 @@ FunctionDefinition Parser::parseFunction()
     return function;
 }
 
-Statement Parser::parseStatement()
+StatementNode Parser::parseStatement()
 {
     expect(TokenType::RETURN);
-    Statement statement;
+    StatementNode statement;
     statement.expression = parseExpression();
     expect(TokenType::SEMICOLON);
     return statement;
 }
 
-Expression Parser::parseExpression()
+ExpressionNode Parser::parseExpression()
 {
-    Expression expression;
+    ExpressionNode expression;
     expression.constant = std::stoi(peek().lexeme);
     expect(TokenType::INTEGER);
     return expression;

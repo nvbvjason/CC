@@ -9,7 +9,7 @@ using i32 = int32_t;
 
 namespace Parsing {
 
-struct Expression {
+struct ExpressionNode {
     i32 constant;
 };
 

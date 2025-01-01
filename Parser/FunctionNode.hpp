@@ -3,15 +3,15 @@
 #ifndef FUNCTION_DEFINITION_HPP
 #define FUNCTION_DEFINITION_HPP
 
-#include "Statement.hpp"
+#include "StatementNode.hpp"
 
 #include <string>
 
 namespace Parsing {
 
-struct FunctionDefinition {
+struct FunctionNode {
     std::string name;
-    Statement body;
+    StatementNode body;
 };
 
 }

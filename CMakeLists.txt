@@ -16,20 +16,24 @@ set(LEXING_FILES
         Lexing/Lexer.hpp)
 
 set(PARSING_FILES
-        Parser/Program.cpp
-        Parser/Program.hpp
+        Parser/ProgramNode.cpp
+        Parser/ProgramNode.hpp
 
-        Parser/FunctionDefinition.cpp
-        Parser/FunctionDefinition.hpp
+        Parser/FunctionNode.cpp
+        Parser/FunctionNode.hpp
 
-        Parser/Statement.cpp
-        Parser/Statement.hpp
+        Parser/StatementNode.cpp
+        Parser/StatementNode.hpp
 
-        Parser/Expression.cpp
-        Parser/Expression.hpp
+        Parser/ExpressionNode.cpp
+        Parser/ExpressionNode.hpp
 
         Parser/Parser.cpp
         Parser/Parser.hpp)
+
+set(CODEGEN_FILES
+        Codegen/AstToAssembly.cpp
+        Codegen/AstToAssembly.hpp)
 
 add_executable(CC_run
         main.cpp
@@ -38,20 +42,20 @@ add_executable(CC_run
         Program.hpp
 
         ${LEXING_FILES}
-        ${PARSING_FILES})
+        ${PARSING_FILES}
+        ${CODEGEN_FILES})
 
-set(TEST_SOURCES
-        test/main_test.cpp
+add_executable(CC_test
+        ${LEXING_FILES}
+        ${PARSING_FILES}
+        ${CODEGEN_FILES}
 
         Program.cpp
         Program.hpp
 
-        ${LEXING_FILES}
-        ${PARSING_FILES}
+        test/main_test.cpp
         test/Lexer.cpp
         test/Lexer.hpp)
-
-add_executable(CC_test ${LEXING_FILES} ${TEST_SOURCES})
 
 target_link_libraries(CC_test GTest::gtest GTest::gtest_main)
 

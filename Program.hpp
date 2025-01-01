@@ -3,7 +3,7 @@
 #ifndef CC_PROGRAM_H
 #define CC_PROGRAM_H
 
-#include "Parser/FunctionDefinition.hpp"
+#include "Parser/FunctionNode.hpp"
 
 #include <string>
 #include <utility>
@@ -21,6 +21,6 @@ public:
 
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
-static void astPrinter(const Parsing::FunctionDefinition &program);
+static void astPrinter(const Parsing::FunctionNode &program);
 
 #endif // CC_PROGRAM_H

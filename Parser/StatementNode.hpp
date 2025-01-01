@@ -3,12 +3,12 @@
 #ifndef STATEMENT_HPP
 #define STATEMENT_HPP
 
-#include "Expression.hpp"
+#include "ExpressionNode.hpp"
 
 namespace Parsing {
 
-struct Statement {
-    Expression expression;
+struct StatementNode {
+    ExpressionNode expression;
 };
 
 }
