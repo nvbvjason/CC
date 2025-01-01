@@ -5,12 +5,12 @@
 
 #include "Statement.hpp"
 
-#include <string_view>
+#include <string>
 
 namespace Parsing {
 
 struct FunctionDefinition {
-    std::string_view name;
+    std::string name;
     Statement body;
 };
 

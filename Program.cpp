@@ -61,3 +61,15 @@ static bool isCommandLineArgumentValid(const std::string &argument)
         return arg == argument;
     });
 }
+
+static void astPrinter(const Parsing::FunctionDefinition& function)
+{
+    std::cout << "Program(\n";
+    std::cout << "\tFunction(\n";
+    std::cout << "\t\tname=" << function.name << ",\n";
+    std::cout << "\t\tbody=Return" << function.name << "(\n";
+    std::cout << "\t\t\tConstant(" << function.body.expression.constant << ")\n";
+    std::cout << "\t\t)\n";
+    std::cout << "\t)\n";
+    std::cout << ")\n";
+}
