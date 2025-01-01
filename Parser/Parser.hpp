@@ -5,13 +5,29 @@
 
 #include <vector>
 
-#include "ProgramNode.hpp"
-#include "FunctionNode.hpp"
-#include "StatementNode.hpp"
-#include "ExpressionNode.hpp"
 #include "../Lexing/Token.hpp"
 
 namespace Parsing {
+
+using i32 = int32_t;
+
+struct ExpressionNode {
+    i32 constant;
+};
+
+struct StatementNode {
+    ExpressionNode expression;
+};
+
+struct FunctionNode {
+    std::string name;
+    StatementNode body;
+};
+
+struct ProgramNode {
+    FunctionNode function;
+};
+
 
 class Parser {
     std::vector<Lexing::Token> c_tokens;

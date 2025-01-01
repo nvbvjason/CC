@@ -3,7 +3,7 @@
 #ifndef CC_PROGRAM_H
 #define CC_PROGRAM_H
 
-#include "Parser/FunctionNode.hpp"
+#include "Parser/Parser.hpp"
 
 #include <string>
 #include <utility>

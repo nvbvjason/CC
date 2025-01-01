@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 
+#include "Codegen/AstToAssembly.hpp"
 #include "Parser/Parser.hpp"
 
 int Program::run() const
@@ -35,17 +36,17 @@ int Program::run() const
         }
         Parsing::Parser parser(tokens);
         Parsing::ProgramNode program;
-        if (argument == "--parse") {
-            try {
-                program = parser.parseProgram();
-            }
-            catch (const std::exception& e) {
-                return 5;
-            }
-            return 0;
+        try {
+            program = parser.parseProgram();
         }
+        catch (const std::exception&) {
+            return 5;
+        }
+        if (argument == "--parse")
+            return 0;
         if (argument == "--codegen") {
-
+            // Codegen::AstToAssembly astToAssembly(program);
+            // astToAssembly.writeToFile(argument);
         }
     }
     return 0;
@@ -68,11 +69,11 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 static void astPrinter(const Parsing::ProgramNode& program)
 {
     std::cout << "Program(\n";
-    std::cout << "\tFunction(\n";
-    std::cout << "\t\tname=" << program.function.name << ",\n";
-    std::cout << "\t\tbody=Return" << program.function.name << "(\n";
-    std::cout << "\t\t\tConstant(" << program.function.body.expression.constant << ")\n";
-    std::cout << "\t\t)\n";
-    std::cout << "\t)\n";
+    std::cout << "\t" << "Function(\n";
+    std::cout << "\t\t" << "name=" << program.function.name << ",\n";
+    std::cout << "\t\t" << "body=Return" << program.function.name << "(\n";
+    std::cout << "\t\t\t" << "Constant(" << program.function.body.expression.constant << ")\n";
+    std::cout << "\t\t" << ")\n";
+    std::cout << "\t" << ")\n";
     std::cout << ")\n";
 }

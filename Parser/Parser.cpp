@@ -8,11 +8,9 @@ using Lexing::TokenType;
 
 ProgramNode Parser::parseProgram()
 {
-    ProgramNode program;
-    FunctionNode function = parseFunction();
+    ProgramNode program{.function = parseFunction()};
     if (m_current < c_tokens.size())
         throw std::runtime_error("too many tokens");
-    program.function = function;
     return program;
 }
 
@@ -34,16 +32,14 @@ FunctionNode Parser::parseFunction()
 StatementNode Parser::parseStatement()
 {
     expect(TokenType::RETURN);
-    StatementNode statement;
-    statement.expression = parseExpression();
+    const StatementNode statement{.expression = parseExpression()};
     expect(TokenType::SEMICOLON);
     return statement;
 }
 
 ExpressionNode Parser::parseExpression()
 {
-    ExpressionNode expression;
-    expression.constant = std::stoi(peek().lexeme);
+    const ExpressionNode expression{.constant = std::stoi(peek().lexeme)};
     expect(TokenType::INTEGER);
     return expression;
 }

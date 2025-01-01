@@ -16,17 +16,6 @@ set(LEXING_FILES
         Lexing/Lexer.hpp)
 
 set(PARSING_FILES
-        Parser/ProgramNode.cpp
-        Parser/ProgramNode.hpp
-
-        Parser/FunctionNode.cpp
-        Parser/FunctionNode.hpp
-
-        Parser/StatementNode.cpp
-        Parser/StatementNode.hpp
-
-        Parser/ExpressionNode.cpp
-        Parser/ExpressionNode.hpp
 
         Parser/Parser.cpp
         Parser/Parser.hpp)
