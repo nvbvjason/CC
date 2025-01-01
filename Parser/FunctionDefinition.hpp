@@ -7,10 +7,14 @@
 
 #include <string_view>
 
+namespace Parsing {
+
 struct FunctionDefinition {
     std::string_view name;
     Statement body;
 };
+
+}
 
 
 

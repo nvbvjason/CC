@@ -5,8 +5,12 @@
 
 #include "Expression.hpp"
 
-class Statement {
+namespace Parsing {
+
+struct Statement {
     Expression expression;
 };
+
+}
 
 #endif //STATEMENT_HPP

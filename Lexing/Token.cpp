@@ -27,8 +27,6 @@ std::string getTypeName(const TokenType type)
             return "Return";
         case TokenType::VOID:
             return "Void";
-        case TokenType::MAIN:
-            return "Main";
         case TokenType::INT_KEYWORD:
             return "Int Keyword";
         case TokenType::INTEGER:
@@ -37,6 +35,8 @@ std::string getTypeName(const TokenType type)
             return "End of File";
         case TokenType::INVALID:
             return "Invalid Token";
+        case TokenType::IDENTIFIER:
+            return "Identifier";
         default:
             return "Unknown Token";
     }

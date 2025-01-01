@@ -35,7 +35,7 @@ add_executable(CC_run
         main.cpp
 
         Program.cpp
-        Program.h
+        Program.hpp
 
         ${LEXING_FILES}
         ${PARSING_FILES})
@@ -44,7 +44,7 @@ set(TEST_SOURCES
         test/main_test.cpp
 
         Program.cpp
-        Program.h
+        Program.hpp
 
         ${LEXING_FILES}
         ${PARSING_FILES}

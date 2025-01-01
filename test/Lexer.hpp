@@ -21,7 +21,7 @@ TEST(Lexing, getTokens)
     std::vector<Lexing::Token> tokens = lexer.tokenize();
     Lexing::Token intKeywordToken(1, 1, Lexing::TokenType::INT_KEYWORD, "int");
     ASSERT_EQ(tokens[0], intKeywordToken);
-    Lexing::Token mainToken(1, 5, Lexing::TokenType::MAIN, "main");
+    Lexing::Token mainToken(1, 5, Lexing::TokenType::IDENTIFIER, "main");
     ASSERT_EQ(tokens[1], mainToken);
     Lexing::Token openParenToken(1, 9, Lexing::TokenType::OPEN_PAREN, "(");
     ASSERT_EQ(tokens[2], openParenToken);

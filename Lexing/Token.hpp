@@ -19,9 +19,10 @@ enum class TokenType : u16 {
 
     SEMICOLON,
 
-    RETURN, VOID, MAIN,
+    RETURN, VOID,
 
     INT_KEYWORD,
+    IDENTIFIER,
 
     INTEGER,
 

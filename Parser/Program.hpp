@@ -5,8 +5,12 @@
 
 #include "FunctionDefinition.hpp"
 
+namespace Parsing {
+
 struct Program {
     FunctionDefinition functionDefinition;
 };
+
+}
 
 #endif //PROGRAM_HPP

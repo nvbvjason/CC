@@ -7,8 +7,12 @@
 
 using i32 = int32_t;
 
+namespace Parsing {
+
 struct Expression {
     i32 constant;
 };
+
+}
 
 #endif //EXPRESSION_HPP

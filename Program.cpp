@@ -1,8 +1,10 @@
-#include "Program.h"
+#include "Program.hpp"
 #include "Lexing/Lexer.hpp"
 
 #include <iostream>
 #include <fstream>
+
+#include "Parser/Parser.hpp"
 
 int Program::run() const
 {
@@ -21,14 +23,26 @@ int Program::run() const
             std::cerr << "Invalid argument: " << argument << '\n';
             return 3;
         }
+        std::ifstream file(inputFile);
+        std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        Lexing::Lexer lexer(source);
+        std::vector<Lexing::Token> tokens = lexer.tokenize();
         if (argument == "--lex") {
-            std::ifstream file(inputFile);
-            std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-            Lexing::Lexer lexer(source);
-            std::vector<Lexing::Token> tokens = lexer.tokenize();
             for (const auto& token : tokens)
                 if (token.type == Lexing::TokenType::INVALID)
                     return 4;
+            return 0;
+        }
+        if (argument == "--parse") {
+            Parsing::Parser parser(tokens);
+            Parsing::FunctionDefinition program;
+            try {
+                program = parser.parseProgram();
+            }
+            catch (const std::exception& e) {
+                return 5;
+            }
+            return 0;
         }
     }
     return 0;

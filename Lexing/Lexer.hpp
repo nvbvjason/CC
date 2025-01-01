@@ -15,9 +15,9 @@ namespace Lexing {
 
     static std::unordered_map<std::string, TokenType> keywords = {
         { "return", TokenType::RETURN },
-        { "main", TokenType::MAIN },
         { "int", TokenType::INT_KEYWORD },
         { "void", TokenType::VOID },
+        {"main", TokenType::IDENTIFIER}
     };
 
 class Lexer {
