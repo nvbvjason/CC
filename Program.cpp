@@ -39,7 +39,6 @@ int Program::run() const
             return err;
         if (argument == "--codegen") {
             Codegen::Assembly astToAssembly(program);
-            std::string output;
             astToAssembly.getOutput(output);
         }
     }
@@ -84,14 +83,14 @@ i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& progra
 
 i32 codegen(const Parsing::ProgramNode &programNode, std::string &output)
 {
-    Codegen::Assembly astToAssembly(programNode);
+    const Codegen::Assembly astToAssembly(programNode);
     astToAssembly.getOutput(output);
     return 0;
 }
 
 static bool fileExists(const std::string &name)
 {
-    std::ifstream f(name.c_str());
+    const std::ifstream f(name.c_str());
     return f.good();
 }
 

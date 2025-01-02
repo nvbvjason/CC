@@ -15,7 +15,9 @@ enum class TokenType : u16 {
     OPEN_PAREN, CLOSE_PAREN,
     OPEN_BRACE, CLOSE_BRACE,
 
-    SEMICOLON,
+    SEMICOLON, TILDE, MINUS,
+
+    DECREMENT,
 
     RETURN, VOID,
 

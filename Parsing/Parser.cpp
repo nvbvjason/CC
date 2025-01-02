@@ -5,7 +5,7 @@ namespace Parsing {
 
 using LexTokenType = Lexing::TokenType;
 
-i32 Parser::parseProgram(::Parsing::ProgramNode& program)
+i32 Parser::parseProgram(ProgramNode& program)
 {
     FunctionNode function;
     if(const i32 err = parseFunction(function))

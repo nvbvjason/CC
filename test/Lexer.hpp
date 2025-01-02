@@ -47,7 +47,7 @@ TEST(Lexing, multiLineComment)
     "    return 100;\n"
     "}*/";
     Lexing::Lexer lexer(testProgram);
-    std::vector<Lexing::Token> tokens = lexer.tokenize();
+    const std::vector<Lexing::Token> tokens = lexer.tokenize();
     ASSERT_EQ(tokens.size(), 0);
 }
 
@@ -56,7 +56,7 @@ TEST(Lexing, whiteSpace)
     const std::string testProgram =
     "\t\r";
     Lexing::Lexer lexer(testProgram);
-    std::vector<Lexing::Token> tokens = lexer.tokenize();
+    const std::vector<Lexing::Token> tokens = lexer.tokenize();
     ASSERT_EQ(tokens.size(), 0);
 }
 
@@ -65,7 +65,7 @@ TEST(Lexing, invalid)
     const std::string testProgram =
     "\\";
     Lexing::Lexer lexer(testProgram);
-    std::vector<Lexing::Token> tokens = lexer.tokenize();
+    const std::vector<Lexing::Token> tokens = lexer.tokenize();
     ASSERT_EQ(tokens.size(), 1);
     Lexing::Token invalidToken(1, 1, Lexing::TokenType::INVALID, "\\");
     ASSERT_EQ(tokens[0], invalidToken);
@@ -76,7 +76,7 @@ TEST(Lexing, invalidMultiline)
     const std::string testProgram =
     "/*  ";
     Lexing::Lexer lexer(testProgram);
-    std::vector<Lexing::Token> tokens = lexer.tokenize();
+    const std::vector<Lexing::Token> tokens = lexer.tokenize();
     ASSERT_EQ(tokens.size(), 0);
 }
 
@@ -103,6 +103,44 @@ TEST(Lexing, testTokenToString)
     EXPECT_EQ(tokens[8].getTypeName(), "Semicolon");
     tokens.emplace_back(4, 1, Lexing::TokenType::CLOSE_BRACE, "}");
     EXPECT_EQ(tokens[9].getTypeName(), "Close Brace");
+}
+
+TEST(Lexing, decrement)
+{
+    const std::string testProgram =
+    "--";
+    Lexing::Lexer lexer(testProgram);
+    const std::vector<Lexing::Token> tokens = lexer.tokenize();
+    Lexing::Token decrementToken(1, 1, Lexing::TokenType::DECREMENT, "--");
+    ASSERT_EQ(tokens[0], decrementToken);
+    ASSERT_EQ(tokens.size(), 1);
+}
+
+TEST(Lexing, minusMinusInBraces)
+{
+    const std::string testProgram =
+    "-(-)";
+    Lexing::Lexer lexer(testProgram);
+    const std::vector<Lexing::Token> tokens = lexer.tokenize();
+    ASSERT_EQ(tokens.size(), 4);
+    Lexing::Token firstMinus(1, 1, Lexing::TokenType::MINUS, "-");
+    ASSERT_EQ(tokens[0], firstMinus);
+    Lexing::Token openParen(1, 2, Lexing::TokenType::OPEN_PAREN, "(");
+    ASSERT_EQ(tokens[1], openParen);
+    Lexing::Token secondMinus(1, 3, Lexing::TokenType::MINUS, "-");
+    ASSERT_EQ(tokens[2], secondMinus);
+    Lexing::Token closeParen(1, 4, Lexing::TokenType::CLOSE_PAREN, ")");
+    ASSERT_EQ(tokens[3], closeParen);
+}
+
+TEST(Lexing, Tilde)
+{
+    const std::string testProgram =
+    "~";
+    Lexing::Lexer lexer(testProgram);
+    const std::vector<Lexing::Token> tokens = lexer.tokenize();
+    ASSERT_EQ(tokens.size(), 1);
+    Lexing::Token firstMinus(1, 1, Lexing::TokenType::TILDE, "~");
 }
 
 #endif //LEXER_HPP

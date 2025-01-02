@@ -29,6 +29,16 @@ void Lexer::scanToken()
         case ';':
             addToken(TokenType::SEMICOLON);
             break;
+        case '~':
+            addToken(TokenType::TILDE);
+            break;
+        case '-':
+            if (match('-')) {
+                addToken(TokenType::DECREMENT);
+                break;
+            }
+            addToken(TokenType::MINUS);
+            break;
         case '/':
             if (match('/'))
                 while (peek() != '\n' && !isAtEnd())
