@@ -32,12 +32,28 @@ enum class UnaryType {
     Complement, Negate
 };
 
-struct ConstantNode {
-    i32 constant;
+enum class ExpressionType {
+    Constant, Unary
+};
+
+struct ExpressionNode {
+    ExpressionType type;
+    union {
+        i32 constant;
+        struct UnaryNode {
+            UnaryType type;
+            ExpressionNode *left;
+        };
+    } value;
+    ExpressionNode()
+        : type(ExpressionType::Constant)
+    {
+        value.constant = 0;
+    }
 };
 
 struct StatementNode {
-    ConstantNode constant;
+    ExpressionNode constant;
 };
 
 struct FunctionNode {
@@ -64,7 +80,7 @@ public:
 private:
     i32 parseFunction(FunctionNode& function);
     i32 parseStatement(StatementNode& statement);
-    i32 parseExpression(ConstantNode& expression);
+    i32 parseExpression(ExpressionNode& expression);
 
     [[nodiscard]] i32 expect(Lexing::TokenType type);
     [[nodiscard]] bool isAtEnd() const { return m_current == c_tokens.size() - 1; }

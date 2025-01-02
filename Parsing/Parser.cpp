@@ -46,7 +46,7 @@ i32 Parser::parseStatement(StatementNode& statement)
 {
     if (const i32 err = expect(LexTokenType::Return) != 0)
         return err;
-    ConstantNode expression;
+    ExpressionNode expression;
     if (const i32 err = parseExpression(expression); err != 0)
         return err;
     statement.constant = expression;
@@ -55,11 +55,11 @@ i32 Parser::parseStatement(StatementNode& statement)
     return 0;
 }
 
-i32 Parser::parseExpression(ConstantNode& expression)
+i32 Parser::parseExpression(ExpressionNode& expression)
 {
     if (c_tokens[m_current].m_type != LexTokenType::Integer)
         return 1;
-    expression.constant = std::stoi(peek().lexeme);
+    expression.value.constant = std::stoi(peek().lexeme);
     ++m_current;
     return 0;
 }
