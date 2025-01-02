@@ -3,6 +3,8 @@
 #ifndef PARSING_PARSER_HPP
 #define PARSING_PARSER_HPP
 
+#include <memory>
+
 #include "../Lexing/Token.hpp"
 #include "../ShortTypes.hpp"
 
@@ -42,7 +44,7 @@ struct ExpressionNode {
         i32 constant;
         struct UnaryNode {
             UnaryType type;
-            ExpressionNode *left;
+            std::unique_ptr<ExpressionNode> left;
         };
     } value;
     ExpressionNode()
