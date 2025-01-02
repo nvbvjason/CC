@@ -44,7 +44,6 @@ private:
     i32 parseStatement(ReturnNode& statement);
     i32 parseExpression(ConstantNode& expression);
 
-    void advance();
     [[nodiscard]] i32 expect(Lexing::TokenType type);
     [[nodiscard]] bool isAtEnd() const { return m_current == c_tokens.size() - 1; }
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }

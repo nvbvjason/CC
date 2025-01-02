@@ -57,7 +57,7 @@ i32 Parser::parseStatement(ReturnNode& statement)
 
 i32 Parser::parseExpression(ConstantNode& expression)
 {
-    if (c_tokens[m_current].type != LexTokenType::INTEGER)
+    if (c_tokens[m_current].m_type != LexTokenType::INTEGER)
         return 1;
     expression.constant = std::stoi(peek().lexeme);
     ++m_current;
@@ -66,17 +66,9 @@ i32 Parser::parseExpression(ConstantNode& expression)
 
 i32 Parser::expect(const LexTokenType type)
 {
-    if (c_tokens[m_current].type != type)
+    if (c_tokens[m_current].m_type != type)
         return 1;
     ++m_current;
     return 0;
-}
-
-
-void Parser::advance()
-{
-    if (c_tokens.size() <= m_current)
-        return;
-    ++m_current;
 }
 }

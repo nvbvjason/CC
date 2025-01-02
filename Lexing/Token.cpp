@@ -4,9 +4,9 @@
 
 namespace Lexing {
 
-std::string getTypeName(const TokenType type)
+std::string Token::getTypeName() const
 {
-    switch (type) {
+    switch (m_type) {
         case TokenType::OPEN_PAREN:
             return "Open Paren";
         case TokenType::CLOSE_PAREN:
@@ -34,12 +34,11 @@ std::string getTypeName(const TokenType type)
         default:
             return "Unknown Token";
     }
-
 }
 
 std::ostream& operator<<(std::ostream& os, const Token& token)
 {
-    os << "line: " << token.line() << " column: " << token.column() << " type: " << getTypeName(token.type) << " lexeme: " << token.lexeme;
+    os << "line: " << token.line() << " column: " << token.column() << " type: " << token.getTypeName() << " lexeme: " << token.lexeme;
     return os;
 }
 
@@ -47,7 +46,7 @@ bool operator==(const Token &lhs, const Token &rhs)
 {
     return lhs.line() == rhs.line()
         && lhs.column() == rhs.column()
-        && lhs.type == rhs.type
+        && lhs.m_type == rhs.m_type
         && lhs.lexeme == rhs.lexeme;
 }
 

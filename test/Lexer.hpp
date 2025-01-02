@@ -80,4 +80,29 @@ TEST(Lexing, invalidMultiline)
     ASSERT_EQ(tokens.size(), 0);
 }
 
+TEST(Lexing, testTokenToString)
+{
+    std::vector<Lexing::Token> tokens;
+    tokens.emplace_back(1, 1, Lexing::TokenType::INT_KEYWORD, "int");
+    EXPECT_EQ(tokens[0].getTypeName(), "Int Keyword");
+    tokens.emplace_back(1, 5, Lexing::TokenType::IDENTIFIER, "main");
+    EXPECT_EQ(tokens[1].getTypeName(), "Identifier");
+    tokens.emplace_back(1, 9, Lexing::TokenType::OPEN_PAREN, "(");
+    EXPECT_EQ(tokens[2].getTypeName(), "Open Paren");
+    tokens.emplace_back(1, 10, Lexing::TokenType::VOID, "void");
+    EXPECT_EQ(tokens[3].getTypeName(), "Void");
+    tokens.emplace_back(1, 14, Lexing::TokenType::CLOSE_PAREN, ")");
+    EXPECT_EQ(tokens[4].getTypeName(), "Close Paren");
+    tokens.emplace_back(1, 16, Lexing::TokenType::OPEN_BRACE, "{");
+    EXPECT_EQ(tokens[5].getTypeName(), "Open Brace");
+    tokens.emplace_back(3, 5, Lexing::TokenType::RETURN, "return");
+    EXPECT_EQ(tokens[6].getTypeName(), "Return");
+    tokens.emplace_back(3, 12, Lexing::TokenType::INTEGER, "100");
+    EXPECT_EQ(tokens[7].getTypeName(), "Integer");
+    tokens.emplace_back(3, 15, Lexing::TokenType::SEMICOLON, ";");
+    EXPECT_EQ(tokens[8].getTypeName(), "Semicolon");
+    tokens.emplace_back(4, 1, Lexing::TokenType::CLOSE_BRACE, "}");
+    EXPECT_EQ(tokens[9].getTypeName(), "Close Brace");
+}
+
 #endif //LEXER_HPP

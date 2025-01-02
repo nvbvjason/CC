@@ -4,6 +4,33 @@
 #include <filesystem>
 #include <fstream>
 
+TEST(InvalidArguments, notAFile)
+{
+    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/";
+    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--codegen"};
+    args[1] = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/ch";
+    Program program(args);
+    ASSERT_NE(0, program.run());
+}
+
+TEST(InvalidArguments, noArgument)
+{
+    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/";
+    std::vector<std::string> args;
+    Program program(args);
+    ASSERT_NE(0, program.run());
+}
+
+TEST(InvalidArguments, lexing)
+{
+    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
+    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--lexing"};
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        args[1] = path.path();
+        Program program(args);
+        ASSERT_NE(0, program.run()) << path.path();
+    }
+}
 
 TEST(Chpater1, lexingValid)
 {
@@ -40,9 +67,9 @@ TEST(Chpater1, codegenValid)
 
 TEST(Chpater1, parsingInvalid)
 {
-    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/invalid_parse";
+    const std::string invalidPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/invalid_parse";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--parse"};
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
         args[1] = path.path();
         Program program(args);
         EXPECT_NE(0, program.run()) << path.path();
