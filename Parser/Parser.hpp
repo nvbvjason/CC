@@ -28,7 +28,6 @@ struct ProgramNode {
     FunctionNode function;
 };
 
-
 class Parser {
     std::vector<Lexing::Token> c_tokens;
     i32 m_current = 0;
@@ -40,17 +39,22 @@ public:
     explicit Parser(std::vector<Lexing::Token> tokens)
         : c_tokens(std::move(tokens)) {}
 
-    ProgramNode parseProgram();
+    i32 parseProgram(ProgramNode& program);
 private:
-    FunctionNode parseFunction();
-    StatementNode parseStatement();
-    ExpressionNode parseExpression();
+    i32 parseFunction(FunctionNode& function);
+    i32 parseStatement(StatementNode& statement);
+    i32 parseExpression(ExpressionNode& expression);
 
-    void expect(Lexing::TokenType expected);
     void advance();
+    [[nodiscard]] i32 expect(Lexing::TokenType type);
     [[nodiscard]] bool isAtEnd() const { return m_current == c_tokens.size() - 1; }
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
     [[nodiscard]] Lexing::Token match(Lexing::TokenType expected);
+    [[nodiscard]] static bool is_number(const std::string& s)
+    {
+        return !s.empty() && std::find_if(s.begin(),
+            s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
+    }
 };
 }
 

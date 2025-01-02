@@ -31,21 +31,17 @@ enum class TokenType : u16 {
     INVALID
 };
 
-class Token {
-    union Data {
-        i32 int32;
-    };
+struct Token {
+    std::variant<i32> m_data;
     i32 m_line;
     u16 m_column;
-public:
     TokenType type;
     std::string lexeme;
-    Data data;
-    Token(const i32 line, const u16 column, std::string lexeme)
-        : m_line(line), m_column(column), lexeme(std::move(lexeme)) {}
     Token(const i32 line, const u16 column, TokenType type, std::string lexeme)
         : m_line(line), m_column(column), type(type), lexeme(std::move(lexeme)) {}
-    Token (i32 line, u16 column, TokenType type, std::string lexeme, i32 value);
+    Token(const i32 line, const u16 column, TokenType type, std::string lexeme, const i32 value)
+        : m_data(value), m_line(line), m_column(column), type(type), lexeme(std::move(lexeme)) {}
+
     Token() = delete;
 
     [[nodiscard]] i32 line() const { return m_line; }

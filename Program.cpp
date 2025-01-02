@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "Codegen/AstToAssembly.hpp"
+#include "Codegen/Assembly.hpp"
 #include "Parser/Parser.hpp"
 
 int Program::run() const
@@ -36,17 +36,13 @@ int Program::run() const
         }
         Parsing::Parser parser(tokens);
         Parsing::ProgramNode program;
-        try {
-            program = parser.parseProgram();
-        }
-        catch (const std::exception&) {
-            return 5;
-        }
+        if (const Lexing::i32 err = parser.parseProgram(program); err != 0)
+            return err;
         if (argument == "--parse")
             return 0;
         if (argument == "--codegen") {
-            // Codegen::AstToAssembly astToAssembly(program);
-            // astToAssembly.writeToFile(argument);
+            Codegen::Assembly astToAssembly(program);
+            astToAssembly.writeToFile(argument);
         }
     }
     return 0;

@@ -16,13 +16,12 @@ set(LEXING_FILES
         Lexing/Lexer.hpp)
 
 set(PARSING_FILES
-
         Parser/Parser.cpp
         Parser/Parser.hpp)
 
 set(CODEGEN_FILES
-        Codegen/AstToAssembly.cpp
-        Codegen/AstToAssembly.hpp)
+        Codegen/Assembly.cpp
+        Codegen/Assembly.hpp)
 
 add_executable(CC_run
         main.cpp
@@ -44,7 +43,9 @@ add_executable(CC_test
 
         test/main_test.cpp
         test/Lexer.cpp
-        test/Lexer.hpp)
+        test/Lexer.hpp
+        test/Parser.cpp
+        test/Parser.hpp)
 
 target_link_libraries(CC_test GTest::gtest GTest::gtest_main)
 

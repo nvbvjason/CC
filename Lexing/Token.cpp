@@ -4,12 +4,6 @@
 
 namespace Lexing {
 
-Token::Token(const i32 line, const u16 column, TokenType type, std::string lexeme, const i32 value)
-    : m_line(line), m_column(column), type(type), lexeme(std::move(lexeme))
-{
-    data.int32 = value;
-}
-
 std::string getTypeName(const TokenType type)
 {
     switch (type) {
