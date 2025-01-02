@@ -45,7 +45,9 @@ add_executable(CC_test
 
         ${LEXING_FILES}
         ${PARSING_FILES}
-        ${CODEGEN_FILES})
+        ${CODEGEN_FILES}
+        test/Codegen.cpp
+        test/Codegen.hpp)
 
 target_link_libraries(CC_test GTest::gtest GTest::gtest_main)
 

@@ -21,7 +21,7 @@ class Assembly {
 public:
     Assembly(Parsing::ProgramNode program)
         : c_program(std::move(program)) {}
-    void writeToFile(const std::string& fileName) const;
+    void getOutput(std::string& output) const;
 
     Assembly() = delete;
     Assembly(Assembly&&) = delete;

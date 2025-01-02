@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 
+
 TEST(Chpater1, lexingValid)
 {
     const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
@@ -19,6 +20,17 @@ TEST(Chpater1, parsingValid)
 {
     const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--parse"};
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        args[1] = path.path();
+        Program program(args);
+        ASSERT_EQ(0, program.run()) << path.path();
+    }
+}
+
+TEST(Chpater1, codegenValid)
+{
+    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
+    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--codegen"};
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         args[1] = path.path();
         Program program(args);
@@ -45,6 +57,17 @@ TEST(Chpater1, lexingInvalid)
         args[1] = path.path();
         Program program(args);
         EXPECT_NE(0, program.run()) << path.path();
+    }
+}
+
+TEST(Chpater1, allvalid)
+{
+    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
+    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", ""};
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        args[1] = path.path();
+        Program program(args);
+        ASSERT_EQ(0, program.run()) << path.path();
     }
 }
 

@@ -1,7 +1,6 @@
 #include "Assembly.hpp"
 
 #include <fstream>
-#include <iostream>
 
 namespace Codegen {
 
@@ -34,13 +33,9 @@ struct Assembly::ProgramNode {
     FunctionNode function;
 };
 
-void Assembly::writeToFile(const std::string &fileName) const
+void Assembly::getOutput(std::string &output) const
 {
-    const std::string contents = getFunction(c_program.function);
-    std::ofstream file(fileName);
-    // std::cout << contents;
-    file << contents;
-    file.close();
+    output = getFunction(c_program.function);
 }
 
 std::string Assembly::getFunction(const Parsing::FunctionNode& functionNode)
@@ -54,7 +49,7 @@ std::string Assembly::getFunction(const Parsing::FunctionNode& functionNode)
 
 std::string Assembly::getInstruction(const Parsing::ReturnNode& returnNode)
 {
-    return std::format("\tmov\teax, {}\n", getOperand(returnNode.expression));
+    return std::format("\tmovl\teax, {}\n", getOperand(returnNode.expression));
 }
 
 std::string Assembly::getOperand(const Parsing::ConstantNode& constantNode)

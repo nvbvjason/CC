@@ -1,11 +1,11 @@
 #include "Program.hpp"
 #include "Lexing/Lexer.hpp"
+#include "Codegen/Assembly.hpp"
+#include "Parsing/Parser.hpp"
 
 #include <iostream>
 #include <fstream>
-
-#include "Codegen/Assembly.hpp"
-#include "Parsing/Parser.hpp"
+#include <filesystem>
 
 int Program::run() const
 {
@@ -24,27 +24,68 @@ int Program::run() const
             std::cerr << "Invalid argument: " << argument << '\n';
             return 3;
         }
-        std::ifstream file(inputFile);
-        std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        Lexing::Lexer lexer(source);
-        std::vector<Lexing::Token> tokens = lexer.tokenize();
-        if (argument == "--lex") {
-            for (const auto& token : tokens)
-                if (token.type == Lexing::TokenType::INVALID)
-                    return 4;
+        std::vector<Lexing::Token> tokens;
+        if (const i32 err = lex(tokens, inputFile) != 0)
+            return err;
+        if (argument == "--lex")
             return 0;
-        }
-        Parsing::Parser parser(tokens);
         Parsing::ProgramNode program;
-        if (const i32 err = parser.parseProgram(program); err != 0)
+        if (const i32 err = parse(tokens, program); err != 0)
             return err;
         if (argument == "--parse")
             return 0;
+        std::string output;
+        if (const i32 err = codegen(program, output); err != 0)
+            return err;
         if (argument == "--codegen") {
             Codegen::Assembly astToAssembly(program);
-            astToAssembly.writeToFile("/home/jason/src/CC/AssemblyFiles/test.asm");
+            std::string output;
+            astToAssembly.getOutput(output);
         }
     }
+    if (args.size() == 2) {
+        std::vector<Lexing::Token> tokens;
+        if (const i32 err = lex(tokens, inputFile) != 0)
+            return err;
+        Parsing::ProgramNode program;
+        if (const i32 err = parse(tokens, program); err != 0)
+            return err;
+        std::string output;
+        if (const i32 err = codegen(program, output); err != 0)
+            return err;
+        std::string stem = std::filesystem::path(inputFile).stem();
+        std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.asm", stem);
+        std::ofstream ofs(outputFileName);
+        ofs << output;
+        ofs.close();
+    }
+    return 0;
+}
+
+i32 lex(std::vector<Lexing::Token> &tokens, const std::string& inputFile)
+{
+    std::ifstream file(inputFile);
+    std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    Lexing::Lexer lexer(source);
+    tokens = lexer.tokenize();
+    for (const auto& token : tokens)
+        if (token.type == Lexing::TokenType::INVALID)
+            return 4;
+    return 0;
+}
+
+i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& programNode)
+{
+    Parsing::Parser parser(tokens);
+    if (const i32 err = parser.parseProgram(programNode); err != 0)
+        return err;
+    return 0;
+}
+
+i32 codegen(const Parsing::ProgramNode &programNode, std::string &output)
+{
+    Codegen::Assembly astToAssembly(programNode);
+    astToAssembly.getOutput(output);
     return 0;
 }
 
