@@ -40,16 +40,17 @@ void Assembly::getOutput(std::string &output) const
 
 std::string Assembly::getFunction(const Parsing::FunctionNode& functionNode)
 {
-    std::string result = functionNode.name + ":\n";
+    std::string result = "    .globl " + functionNode.name + '\n';
+    result += functionNode.name + ":\n";
     result += getInstruction(functionNode.body);
-    result += "\tret\t\n";
-    result += "\t.section .note.GNU-stack,\"\",@progbits\n";
+    result += "    ret    \n";
+    // result += "    .section .note.GNU-stack,\"\",@progbits\n";
     return result;
 }
 
 std::string Assembly::getInstruction(const Parsing::ReturnNode& returnNode)
 {
-    return std::format("\tmovl\teax, {}\n", getOperand(returnNode.expression));
+    return std::format("    mov    ${}, %eax\n", getOperand(returnNode.expression));
 }
 
 std::string Assembly::getOperand(const Parsing::ConstantNode& constantNode)

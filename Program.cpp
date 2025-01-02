@@ -53,7 +53,7 @@ int Program::run() const
         if (const i32 err = codegen(program, output); err != 0)
             return err;
         std::string stem = std::filesystem::path(inputFile).stem();
-        std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.asm", stem);
+        std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
         std::ofstream ofs(outputFileName);
         ofs << output;
         ofs.close();

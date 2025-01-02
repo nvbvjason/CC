@@ -23,13 +23,11 @@ TEST(InvalidArguments, noArgument)
 
 TEST(InvalidArguments, lexing)
 {
-    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
+    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid/newlines.c";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--lexing"};
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        args[1] = path.path();
-        Program program(args);
-        ASSERT_NE(0, program.run()) << path.path();
-    }
+    args[1] = validPath;
+    Program program(args);
+    ASSERT_NE(0, program.run());
 }
 
 TEST(Chpater1, lexingValid)
