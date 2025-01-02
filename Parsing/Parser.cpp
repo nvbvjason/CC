@@ -20,44 +20,44 @@ i32 Parser::parseProgram(ProgramNode& program)
 
 i32 Parser::parseFunction(FunctionNode& function)
 {
-    if (const i32 err = expect(Lexing::TokenType::INT_KEYWORD) != 0)
+    if (const i32 err = expect(Lexing::TokenType::IntKeyword) != 0)
         return err;
     function.name = peek().lexeme;
-    if (const i32 err = expect(LexTokenType::IDENTIFIER) != 0)
+    if (const i32 err = expect(LexTokenType::Identifier) != 0)
         return err;
-    if (const i32 err = expect(LexTokenType::OPEN_PAREN) != 0)
+    if (const i32 err = expect(LexTokenType::OpenParen) != 0)
         return err;
-    if (const i32 err = expect(LexTokenType::VOID) != 0)
+    if (const i32 err = expect(LexTokenType::Void) != 0)
         return err;
-    if (const i32 err = expect(LexTokenType::CLOSE_PAREN) != 0)
+    if (const i32 err = expect(LexTokenType::CloseParen) != 0)
         return err;
-    if (const i32 err = expect(LexTokenType::OPEN_BRACE) != 0)
+    if (const i32 err = expect(LexTokenType::OpenBrace) != 0)
         return err;
     ReturnNode statement;
     if (const i32 err = parseStatement(statement))
         return err;
     function.body = statement;
-    if (const i32 err = expect(LexTokenType::CLOSE_BRACE) != 0)
+    if (const i32 err = expect(LexTokenType::CloseBrace) != 0)
         return err;
     return 0;
 }
 
 i32 Parser::parseStatement(ReturnNode& statement)
 {
-    if (const i32 err = expect(LexTokenType::RETURN) != 0)
+    if (const i32 err = expect(LexTokenType::Return) != 0)
         return err;
     ConstantNode expression;
     if (const i32 err = parseExpression(expression); err != 0)
         return err;
     statement.expression = expression;
-    if (const i32 err = expect(LexTokenType::SEMICOLON) != 0)
+    if (const i32 err = expect(LexTokenType::Semicolon) != 0)
         return err;
     return 0;
 }
 
 i32 Parser::parseExpression(ConstantNode& expression)
 {
-    if (c_tokens[m_current].m_type != LexTokenType::INTEGER)
+    if (c_tokens[m_current].m_type != LexTokenType::Integer)
         return 1;
     expression.constant = std::stoi(peek().lexeme);
     ++m_current;

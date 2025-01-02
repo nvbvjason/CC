@@ -12,23 +12,23 @@
 namespace Lexing {
 
 enum class TokenType : u16 {
-    OPEN_PAREN, CLOSE_PAREN,
-    OPEN_BRACE, CLOSE_BRACE,
+    OpenParen, CloseParen,
+    OpenBrace, CloseBrace,
 
-    SEMICOLON, TILDE, MINUS,
+    Semicolon, Tilde, Minus,
 
-    DECREMENT,
+    Decrement,
 
-    RETURN, VOID,
+    Return, Void,
 
-    INT_KEYWORD,
-    IDENTIFIER,
+    IntKeyword,
+    Identifier,
 
-    INTEGER,
+    Integer,
 
-    END_OF_FILE,
+    EndOfFile,
 
-    INVALID
+    Invalid
 };
 
 struct Token {

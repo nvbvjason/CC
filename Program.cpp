@@ -68,7 +68,7 @@ i32 lex(std::vector<Lexing::Token> &tokens, const std::string& inputFile)
     Lexing::Lexer lexer(source);
     tokens = lexer.tokenize();
     for (const auto& token : tokens)
-        if (token.m_type == Lexing::TokenType::INVALID)
+        if (token.m_type == Lexing::TokenType::Invalid)
             return 4;
     return 0;
 }

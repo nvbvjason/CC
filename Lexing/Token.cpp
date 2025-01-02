@@ -7,29 +7,29 @@ namespace Lexing {
 std::string Token::getTypeName() const
 {
     switch (m_type) {
-        case TokenType::OPEN_PAREN:
+        case TokenType::OpenParen:
             return "Open Paren";
-        case TokenType::CLOSE_PAREN:
+        case TokenType::CloseParen:
             return "Close Paren";
-        case TokenType::OPEN_BRACE:
+        case TokenType::OpenBrace:
             return "Open Brace";
-        case TokenType::CLOSE_BRACE:
+        case TokenType::CloseBrace:
             return "Close Brace";
-        case TokenType::SEMICOLON:
+        case TokenType::Semicolon:
             return "Semicolon";
-        case TokenType::RETURN:
+        case TokenType::Return:
             return "Return";
-        case TokenType::VOID:
+        case TokenType::Void:
             return "Void";
-        case TokenType::INT_KEYWORD:
+        case TokenType::IntKeyword:
             return "Int Keyword";
-        case TokenType::INTEGER:
+        case TokenType::Integer:
             return "Integer";
-        case TokenType::END_OF_FILE:
+        case TokenType::EndOfFile:
             return "End of File";
-        case TokenType::INVALID:
+        case TokenType::Invalid:
             return "Invalid Token";
-        case TokenType::IDENTIFIER:
+        case TokenType::Identifier:
             return "Identifier";
         default:
             return "Unknown Token";

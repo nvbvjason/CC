@@ -15,29 +15,29 @@ void Lexer::scanToken()
 {
     switch (const char ch = advance()) {
         case '(':
-            addToken(TokenType::OPEN_PAREN);
+            addToken(TokenType::OpenParen);
             break;
         case ')':
-            addToken(TokenType::CLOSE_PAREN);
+            addToken(TokenType::CloseParen);
             break;
         case '{':
-            addToken(TokenType::OPEN_BRACE);
+            addToken(TokenType::OpenBrace);
             break;
         case '}':
-            addToken(TokenType::CLOSE_BRACE);
+            addToken(TokenType::CloseBrace);
             break;
         case ';':
-            addToken(TokenType::SEMICOLON);
+            addToken(TokenType::Semicolon);
             break;
         case '~':
-            addToken(TokenType::TILDE);
+            addToken(TokenType::Tilde);
             break;
         case '-':
             if (match('-')) {
-                addToken(TokenType::DECREMENT);
+                addToken(TokenType::Decrement);
                 break;
             }
-            addToken(TokenType::MINUS);
+            addToken(TokenType::Minus);
             break;
         case '/':
             if (match('/'))
@@ -67,7 +67,7 @@ void Lexer::scanToken()
             else if (isalpha(ch))
                 identifier();
             else
-                addToken(TokenType::INVALID);
+                addToken(TokenType::Invalid);
             break;
     }
 }
@@ -106,7 +106,7 @@ void Lexer::integer()
     while (isdigit(peek()))
         advance();
     i32 value = std::stoi(c_source.substr(m_start, m_current - m_start));
-    addToken(TokenType::INTEGER, value);
+    addToken(TokenType::Integer, value);
 }
 
 void Lexer::identifier()
@@ -116,7 +116,7 @@ void Lexer::identifier()
     std::string text = c_source.substr(m_start, m_current - m_start);
     const auto iden = keywords.find(text);
     if (iden == keywords.end()) {
-        addToken(TokenType::INVALID);
+        addToken(TokenType::Invalid);
         return;
     }
     addToken(iden->second);
