@@ -108,7 +108,7 @@ static void astPrinter(const Parsing::ProgramNode& program)
     std::cout << "\t" << "Function(\n";
     std::cout << "\t\t" << "name=" << program.function.name << ",\n";
     std::cout << "\t\t" << "body=Return" << program.function.name << "(\n";
-    std::cout << "\t\t\t" << "Constant(" << program.function.body.expression.constant << ")\n";
+    std::cout << "\t\t\t" << "Constant(" << program.function.body.constant.constant << ")\n";
     std::cout << "\t\t" << ")\n";
     std::cout << "\t" << ")\n";
     std::cout << ")\n";

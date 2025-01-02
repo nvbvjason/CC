@@ -48,9 +48,9 @@ std::string Assembly::getFunction(const Parsing::FunctionNode& functionNode)
     return result;
 }
 
-std::string Assembly::getInstruction(const Parsing::ReturnNode& returnNode)
+std::string Assembly::getInstruction(const Parsing::StatementNode& returnNode)
 {
-    return std::format("    mov    ${}, %eax\n", getOperand(returnNode.expression));
+    return std::format("    mov    ${}, %eax\n", getOperand(returnNode.constant));
 }
 
 std::string Assembly::getOperand(const Parsing::ConstantNode& constantNode)

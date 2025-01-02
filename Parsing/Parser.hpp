@@ -28,17 +28,21 @@
 
 namespace Parsing {
 
+enum class UnaryType {
+    Complement, Negate
+};
+
 struct ConstantNode {
     i32 constant;
 };
 
-struct ReturnNode {
-    ConstantNode expression;
+struct StatementNode {
+    ConstantNode constant;
 };
 
 struct FunctionNode {
     std::string name;
-    ReturnNode body;
+    StatementNode body;
 };
 
 struct ProgramNode {
@@ -59,13 +63,12 @@ public:
     i32 parseProgram(ProgramNode& program);
 private:
     i32 parseFunction(FunctionNode& function);
-    i32 parseStatement(ReturnNode& statement);
+    i32 parseStatement(StatementNode& statement);
     i32 parseExpression(ConstantNode& expression);
 
     [[nodiscard]] i32 expect(Lexing::TokenType type);
     [[nodiscard]] bool isAtEnd() const { return m_current == c_tokens.size() - 1; }
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
-    [[nodiscard]] Lexing::Token match(Lexing::TokenType expected);
     [[nodiscard]] static bool is_number(const std::string& s)
     {
         return !s.empty() && std::ranges::find_if(s,[](const unsigned char c) {

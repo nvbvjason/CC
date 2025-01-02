@@ -33,7 +33,7 @@ i32 Parser::parseFunction(FunctionNode& function)
         return err;
     if (const i32 err = expect(LexTokenType::OpenBrace) != 0)
         return err;
-    ReturnNode statement;
+    StatementNode statement;
     if (const i32 err = parseStatement(statement))
         return err;
     function.body = statement;
@@ -42,14 +42,14 @@ i32 Parser::parseFunction(FunctionNode& function)
     return 0;
 }
 
-i32 Parser::parseStatement(ReturnNode& statement)
+i32 Parser::parseStatement(StatementNode& statement)
 {
     if (const i32 err = expect(LexTokenType::Return) != 0)
         return err;
     ConstantNode expression;
     if (const i32 err = parseExpression(expression); err != 0)
         return err;
-    statement.expression = expression;
+    statement.constant = expression;
     if (const i32 err = expect(LexTokenType::Semicolon) != 0)
         return err;
     return 0;

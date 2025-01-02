@@ -30,7 +30,7 @@ public:
     Assembly& operator=(const Assembly&) = delete;
 private:
     [[nodiscard]] static std::string getFunction(const Parsing::FunctionNode& functionNode);
-    [[nodiscard]] static std::string getInstruction(const Parsing::ReturnNode& returnNode);
+    [[nodiscard]] static std::string getInstruction(const Parsing::StatementNode& returnNode);
     [[nodiscard]] static std::string getOperand(const Parsing::ConstantNode& constantNode);
 };
 

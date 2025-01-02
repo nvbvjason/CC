@@ -103,6 +103,10 @@ TEST(Lexing, testTokenToString)
     EXPECT_EQ(tokens[8].getTypeName(), "Semicolon");
     tokens.emplace_back(4, 1, Lexing::TokenType::CloseBrace, "}");
     EXPECT_EQ(tokens[9].getTypeName(), "Close Brace");
+    tokens.emplace_back(4, 1, Lexing::TokenType::Invalid, "}");
+    EXPECT_EQ(tokens[10].getTypeName(), "Invalid Token");
+    tokens.emplace_back(4, 1, Lexing::TokenType::EndOfFile, "}");
+    EXPECT_EQ(tokens[11].getTypeName(), "End of File");
 }
 
 TEST(Lexing, decrement)
