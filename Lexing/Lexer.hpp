@@ -10,8 +10,6 @@
 #include <vector>
 
 namespace Lexing {
-    using i32 = int32_t;
-    using u16 = uint16_t;
 
     static std::unordered_map<std::string, TokenType> keywords = {
         { "return", TokenType::RETURN },

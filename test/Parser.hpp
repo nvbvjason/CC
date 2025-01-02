@@ -5,9 +5,13 @@
 
 #include <gtest/gtest.h>
 
+#include "../Parsing/Parser.hpp"
+
 namespace GTest {
 
-
+// #include "../Lexing/Lexer.hpp"
+// #include "../Parsing/Parser.hpp"
+//
 // TEST(Lexing, invalidNameForMain)
 // {
 //     const std::string testProgram =
@@ -16,7 +20,9 @@ namespace GTest {
 //     "}";
 //     Lexing::Lexer lexer(testProgram);
 //     std::vector<Lexing::Token> tokens = lexer.tokenize();
-//     ASSERT_EQ(tokens.size(), 10);
+//     Parsing::Parser parser(tokens);
+//     Parsing::ProgramNode program;
+//     ASSERT_NE(0, parser.parse());
 // }
 }
 

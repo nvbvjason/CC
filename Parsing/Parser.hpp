@@ -1,15 +1,15 @@
 #pragma once
 
-#ifndef PARSER_HPP
-#define PARSER_HPP
+#ifndef PARSING_PARSER_HPP
+#define PARSING_PARSER_HPP
+
+#include "../Lexing/Token.hpp"
+#include "../ShortTypes.hpp"
 
 #include <vector>
 
-#include "../Lexing/Token.hpp"
-
 namespace Parsing {
 
-using i32 = int32_t;
 
 struct ExpressionNode {
     i32 constant;
@@ -52,10 +52,11 @@ private:
     [[nodiscard]] Lexing::Token match(Lexing::TokenType expected);
     [[nodiscard]] static bool is_number(const std::string& s)
     {
-        return !s.empty() && std::find_if(s.begin(),
-            s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
+        return !s.empty() && std::ranges::find_if(s,[](const unsigned char c) {
+            return !std::isdigit(c);
+        }) == s.end();
     }
 };
 }
 
-#endif //PARSER_HPP
+#endif // PARSING_PARSER_HPP

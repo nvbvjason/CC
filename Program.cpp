@@ -5,7 +5,7 @@
 #include <fstream>
 
 #include "Codegen/Assembly.hpp"
-#include "Parser/Parser.hpp"
+#include "Parsing/Parser.hpp"
 
 int Program::run() const
 {
@@ -36,13 +36,13 @@ int Program::run() const
         }
         Parsing::Parser parser(tokens);
         Parsing::ProgramNode program;
-        if (const Lexing::i32 err = parser.parseProgram(program); err != 0)
+        if (const i32 err = parser.parseProgram(program); err != 0)
             return err;
         if (argument == "--parse")
             return 0;
         if (argument == "--codegen") {
-            Codegen::Assembly astToAssembly(program);
-            astToAssembly.writeToFile(argument);
+            // Codegen::Assembly astToAssembly(program);
+            // astToAssembly.writeToFile(argument);
         }
     }
     return 0;

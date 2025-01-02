@@ -3,15 +3,13 @@
 #ifndef CC_LEXING_TOKEN_H
 #define CC_LEXING_TOKEN_H
 
-#include <cstdint>
+#include "../ShortTypes.hpp"
+
 #include <string>
 #include <utility>
 #include <ostream>
 
 namespace Lexing {
-
-using i32 = int32_t;
-using u16 = uint16_t;
 
 enum class TokenType : u16 {
     OPEN_PAREN, CLOSE_PAREN,
