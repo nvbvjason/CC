@@ -1,5 +1,8 @@
 #include "Assembly.hpp"
 
+#include <fstream>
+#include <iostream>
+
 namespace Codegen {
 
 struct Assembly::OperandNode {
@@ -33,24 +36,29 @@ struct Assembly::ProgramNode {
 
 void Assembly::writeToFile(const std::string &fileName) const
 {
-    std::string filename = fileName + ".asm";
-    std::string contents = getFunction(c_program.function);
+    const std::string contents = getFunction(c_program.function);
+    std::ofstream file(fileName);
+    // std::cout << contents;
+    file << contents;
+    file.close();
 }
 
-std::string Assembly::getFunction(const Parsing::FunctionNode& functionNode) const
+std::string Assembly::getFunction(const Parsing::FunctionNode& functionNode)
 {
-    std::string result = functionNode.name;
-    // result +=
+    std::string result = functionNode.name + ":\n";
+    result += getInstruction(functionNode.body);
+    result += "\tret\t\n";
+    result += "\t.section .note.GNU-stack,\"\",@progbits\n";
     return result;
 }
 
-std::string Assembly::getInstruction() const
+std::string Assembly::getInstruction(const Parsing::ReturnNode& returnNode)
 {
-    return "";
+    return std::format("\tmov\teax, {}\n", getOperand(returnNode.expression));
 }
 
-std::string Assembly::getOperand() const
+std::string Assembly::getOperand(const Parsing::ConstantNode& constantNode)
 {
-    return "";
+    return std::to_string(constantNode.constant);
 }
 }

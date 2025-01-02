@@ -19,7 +19,7 @@ class Assembly {
 
     Parsing::ProgramNode c_program;
 public:
-    explicit Assembly(Parsing::ProgramNode program)
+    Assembly(Parsing::ProgramNode program)
         : c_program(std::move(program)) {}
     void writeToFile(const std::string& fileName) const;
 
@@ -29,9 +29,9 @@ public:
     Assembly(const Assembly&) = delete;
     Assembly& operator=(const Assembly&) = delete;
 private:
-    [[nodiscard]] std::string getFunction(const Parsing::FunctionNode& functionNode) const;
-    [[nodiscard]] std::string getInstruction() const;
-    [[nodiscard]] std::string getOperand() const;
+    [[nodiscard]] static std::string getFunction(const Parsing::FunctionNode& functionNode);
+    [[nodiscard]] static std::string getInstruction(const Parsing::ReturnNode& returnNode);
+    [[nodiscard]] static std::string getOperand(const Parsing::ConstantNode& constantNode);
 };
 
 }

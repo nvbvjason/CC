@@ -41,8 +41,8 @@ int Program::run() const
         if (argument == "--parse")
             return 0;
         if (argument == "--codegen") {
-            // Codegen::Assembly astToAssembly(program);
-            // astToAssembly.writeToFile(argument);
+            Codegen::Assembly astToAssembly(program);
+            astToAssembly.writeToFile("/home/jason/src/CC/AssemblyFiles/test.asm");
         }
     }
     return 0;

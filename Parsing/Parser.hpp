@@ -10,17 +10,17 @@
 
 namespace Parsing {
 
-struct ExpressionNode {
+struct ConstantNode {
     i32 constant;
 };
 
-struct StatementNode {
-    ExpressionNode expression;
+struct ReturnNode {
+    ConstantNode expression;
 };
 
 struct FunctionNode {
     std::string name;
-    StatementNode body;
+    ReturnNode body;
 };
 
 struct ProgramNode {
@@ -41,8 +41,8 @@ public:
     i32 parseProgram(ProgramNode& program);
 private:
     i32 parseFunction(FunctionNode& function);
-    i32 parseStatement(StatementNode& statement);
-    i32 parseExpression(ExpressionNode& expression);
+    i32 parseStatement(ReturnNode& statement);
+    i32 parseExpression(ConstantNode& expression);
 
     void advance();
     [[nodiscard]] i32 expect(Lexing::TokenType type);
