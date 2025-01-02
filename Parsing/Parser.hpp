@@ -10,7 +10,6 @@
 
 namespace Parsing {
 
-
 struct ExpressionNode {
     i32 constant;
 };

@@ -6,24 +6,20 @@
 #include <gtest/gtest.h>
 
 #include "../Parsing/Parser.hpp"
+#include "../Lexing/Lexer.hpp"
+#include "../Lexing/Token.hpp"
 
-namespace GTest {
-
-// #include "../Lexing/Lexer.hpp"
-// #include "../Parsing/Parser.hpp"
-//
-// TEST(Lexing, invalidNameForMain)
-// {
-//     const std::string testProgram =
-//     "int master(void) {\n"
-//     "    return 0;\n"
-//     "}";
-//     Lexing::Lexer lexer(testProgram);
-//     std::vector<Lexing::Token> tokens = lexer.tokenize();
-//     Parsing::Parser parser(tokens);
-//     Parsing::ProgramNode program;
-//     ASSERT_NE(0, parser.parse());
-// }
+TEST(Lexing, invalidNameForMain)
+{
+    const std::string testProgram =
+    "int master(void) {\n"
+    "    return 0;\n"
+    "}";
+    Lexing::Lexer lexer(testProgram);
+    std::vector<Lexing::Token> tokens = lexer.tokenize();
+    Parsing::Parser parser(tokens);
+    Parsing::ProgramNode program;
+    ASSERT_NE(0, parser.parseProgram(program));
 }
 
 #endif //PARSER_HPP

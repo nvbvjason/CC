@@ -8,8 +8,6 @@
 
 #include <gtest/gtest.h>
 
-namespace GTest {
-
 TEST(Lexing, getTokens)
 {
     const std::string testProgram =
@@ -80,8 +78,6 @@ TEST(Lexing, invalidMultiline)
     Lexing::Lexer lexer(testProgram);
     std::vector<Lexing::Token> tokens = lexer.tokenize();
     ASSERT_EQ(tokens.size(), 0);
-}
-
 }
 
 #endif //LEXER_HPP
