@@ -27,7 +27,7 @@ int Program::run() const
 
 i32 Program::runTwoArgs(const std::string& inputFile)
 {
-    std::vector<Lexing::Token> tokens;
+    std::vector<Lexing::Lexeme> tokens;
     if (const i32 err = lex(tokens, inputFile) != 0)
         return err;
     Parsing::ProgramNode program;
@@ -51,7 +51,7 @@ i32 Program::runThreeArgs(const std::string& inputFile) const
         std::cerr << "Invalid argument: " << argument << '\n';
         return 3;
     }
-    std::vector<Lexing::Token> tokens;
+    std::vector<Lexing::Lexeme> tokens;
     if (const i32 err = lex(tokens, inputFile) != 0)
         return err;
     if (argument == "--lex")
@@ -71,19 +71,19 @@ i32 Program::runThreeArgs(const std::string& inputFile) const
     return 0;
 }
 
-i32 lex(std::vector<Lexing::Token> &tokens, const std::string& inputFile)
+i32 lex(std::vector<Lexing::Lexeme> &tokens, const std::string& inputFile)
 {
     std::ifstream file(inputFile);
     std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     Lexing::Lexer lexer(source);
     tokens = lexer.tokenize();
     for (const auto& token : tokens)
-        if (token.m_type == Lexing::TokenType::Invalid)
+        if (token.m_type == Lexing::LexemeType::Invalid)
             return 4;
     return 0;
 }
 
-i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& programNode)
+i32 parse(const std::vector<Lexing::Lexeme>& tokens, Parsing::ProgramNode& programNode)
 {
     Parsing::Parser parser(tokens);
     if (const i32 err = parser.parseProgram(programNode); err != 0)

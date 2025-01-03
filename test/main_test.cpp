@@ -76,9 +76,9 @@ TEST(Chpater1, parsingInvalid)
 
 TEST(Chpater1, lexingInvalid)
 {
-    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/invalid_lex";
+    const std::string invalidPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/invalid_lex";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--lex", ""};
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
         args[2] = path.path();
         Program program(args);
         EXPECT_NE(0, program.run()) << path.path();

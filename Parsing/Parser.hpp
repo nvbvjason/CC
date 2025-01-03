@@ -5,7 +5,7 @@
 
 #include <memory>
 
-#include "../Lexing/Token.hpp"
+#include "../Lexing/Lexeme.hpp"
 #include "../ShortTypes.hpp"
 
 #include <vector>
@@ -68,14 +68,14 @@ struct ProgramNode {
 };
 
 class Parser {
-    std::vector<Lexing::Token> c_tokens;
+    std::vector<Lexing::Lexeme> c_tokens;
     i32 m_current = 0;
 public:
     Parser(const Parser& other) = delete;
     Parser(Parser&& other) = delete;
     Parser& operator=(const Parser& other) = delete;
     Parser& operator=(Parser&& other) = delete;
-    explicit Parser(std::vector<Lexing::Token> tokens)
+    explicit Parser(std::vector<Lexing::Lexeme> tokens)
         : c_tokens(std::move(tokens)) {}
 
     i32 parseProgram(ProgramNode& program);
@@ -84,9 +84,9 @@ private:
     i32 parseStatement(StatementNode& statement);
     i32 parseExpression(ExpressionNode& expression);
 
-    [[nodiscard]] i32 expect(Lexing::TokenType type);
+    [[nodiscard]] i32 expect(Lexing::LexemeType type);
     [[nodiscard]] bool isAtEnd() const { return m_current == c_tokens.size() - 1; }
-    [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
+    [[nodiscard]] Lexing::Lexeme peek() const { return c_tokens[m_current]; }
     [[nodiscard]] static bool is_number(const std::string& s)
     {
         return !s.empty() && std::ranges::find_if(s,[](const unsigned char c) {

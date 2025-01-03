@@ -7,7 +7,7 @@
 
 #include "../Parsing/Parser.hpp"
 #include "../Lexing/Lexer.hpp"
-#include "../Lexing/Token.hpp"
+#include "../Lexing/Lexeme.hpp"
 
 TEST(Lexing, invalidNameForMain)
 {
@@ -16,7 +16,7 @@ TEST(Lexing, invalidNameForMain)
     "    return 0;\n"
     "}";
     Lexing::Lexer lexer(testProgram);
-    std::vector<Lexing::Token> tokens = lexer.tokenize();
+    std::vector<Lexing::Lexeme> tokens = lexer.tokenize();
     Parsing::Parser parser(tokens);
     Parsing::ProgramNode program;
     ASSERT_NE(0, parser.parseProgram(program));

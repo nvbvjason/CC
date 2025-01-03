@@ -1,8 +1,10 @@
 #include "Lexer.hpp"
 
+#include <bits/ranges_algo.h>
+
 namespace Lexing {
 
-std::vector<Token> Lexer::tokenize()
+std::vector<Lexeme> Lexer::tokenize()
 {
     while (!isAtEnd()) {
         m_start = m_current;
@@ -15,29 +17,29 @@ void Lexer::scanToken()
 {
     switch (const char ch = advance()) {
         case '(':
-            addToken(TokenType::OpenParen);
+            addToken(LexemeType::OpenParen);
             break;
         case ')':
-            addToken(TokenType::CloseParen);
+            addToken(LexemeType::CloseParen);
             break;
         case '{':
-            addToken(TokenType::OpenBrace);
+            addToken(LexemeType::OpenBrace);
             break;
         case '}':
-            addToken(TokenType::CloseBrace);
+            addToken(LexemeType::CloseBrace);
             break;
         case ';':
-            addToken(TokenType::Semicolon);
+            addToken(LexemeType::Semicolon);
             break;
         case '~':
-            addToken(TokenType::Tilde);
+            addToken(LexemeType::Tilde);
             break;
         case '-':
             if (match('-')) {
-                addToken(TokenType::Decrement);
+                addToken(LexemeType::Decrement);
                 break;
             }
-            addToken(TokenType::Minus);
+            addToken(LexemeType::Minus);
             break;
         case '/':
             if (match('/'))
@@ -67,7 +69,7 @@ void Lexer::scanToken()
             else if (isalpha(ch))
                 identifier();
             else
-                addToken(TokenType::Invalid);
+                addToken(LexemeType::Invalid);
             break;
     }
 }
@@ -103,33 +105,36 @@ char Lexer::advance()
 
 void Lexer::integer()
 {
-    while (isdigit(peek()))
+    while (isalnum(peek()))
         advance();
+    const std::string str = c_source.substr(m_start, m_current - m_start);
+    if (!std::ranges::all_of(str,::isdigit))
+        addToken(LexemeType::Invalid);
     i32 value = std::stoi(c_source.substr(m_start, m_current - m_start));
-    addToken(TokenType::Integer, value);
+    addToken(LexemeType::Integer, value);
 }
 
 void Lexer::identifier()
 {
     while (isalpha(peek()))
         advance();
-    std::string text = c_source.substr(m_start, m_current - m_start);
+    const std::string text = c_source.substr(m_start, m_current - m_start);
     const auto iden = keywords.find(text);
     if (iden == keywords.end()) {
-        addToken(TokenType::Invalid);
+        addToken(LexemeType::Identifier);
         return;
     }
     addToken(iden->second);
 }
 
-void Lexer::addToken(TokenType type, i32 value)
+void Lexer::addToken(LexemeType type, i32 value)
 {
     std::string text = c_source.substr(m_start, m_current - m_start);
     m_tokens.emplace_back(m_line, m_column, type, text, value);
     m_column += m_current - m_start;
 }
 
-void Lexer::addToken(const TokenType type)
+void Lexer::addToken(const LexemeType type)
 {
     std::string text = c_source.substr(m_start, m_current - m_start);
     m_tokens.emplace_back(m_line, m_column, type, text);

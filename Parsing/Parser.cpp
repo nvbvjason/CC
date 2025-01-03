@@ -3,7 +3,7 @@
 
 namespace Parsing {
 
-using LexTokenType = Lexing::TokenType;
+using LexTokenType = Lexing::LexemeType;
 
 i32 Parser::parseProgram(ProgramNode& program)
 {
@@ -20,7 +20,7 @@ i32 Parser::parseProgram(ProgramNode& program)
 
 i32 Parser::parseFunction(FunctionNode& function)
 {
-    if (const i32 err = expect(Lexing::TokenType::IntKeyword) != 0)
+    if (const i32 err = expect(Lexing::LexemeType::IntKeyword) != 0)
         return err;
     function.name = peek().lexeme;
     if (const i32 err = expect(LexTokenType::Identifier) != 0)
