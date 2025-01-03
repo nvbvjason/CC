@@ -13,50 +13,60 @@ int Program::run() const
         std::cerr << "Usage: <input_file> possible-argument" << '\n';
         return 1;
     }
-    if (!fileExists(args[1])) {
-        std::cerr << "File " << args[1] << " not found" << '\n';
+    const std::string inputFile = args.back();
+    if (!fileExists(inputFile)) {
+        std::cerr << "File " << inputFile << " not found" << '\n';
         return 2;
     }
-    const std::string inputFile = args[1];
-    if (args.size() == 3) {
-        std::string argument = args[2];
-        if (!isCommandLineArgumentValid(argument)) {
-            std::cerr << "Invalid argument: " << argument << '\n';
-            return 3;
-        }
-        std::vector<Lexing::Token> tokens;
-        if (const i32 err = lex(tokens, inputFile) != 0)
-            return err;
-        if (argument == "--lex")
-            return 0;
-        Parsing::ProgramNode program;
-        if (const i32 err = parse(tokens, program); err != 0)
-            return err;
-        if (argument == "--parse")
-            return 0;
-        std::string output;
-        if (const i32 err = codegen(program, output); err != 0)
-            return err;
-        if (argument == "--codegen") {
-            Codegen::Assembly astToAssembly(program);
-            astToAssembly.getOutput(output);
-        }
+    if (args.size() == 3)
+        return runThreeArgs(inputFile);
+    if (args.size() == 2)
+        return runTwoArgs(inputFile);
+    return 0;
+}
+
+i32 Program::runTwoArgs(const std::string& inputFile)
+{
+    std::vector<Lexing::Token> tokens;
+    if (const i32 err = lex(tokens, inputFile) != 0)
+        return err;
+    Parsing::ProgramNode program;
+    if (const i32 err = parse(tokens, program); err != 0)
+        return err;
+    std::string output;
+    if (const i32 err = codegen(program, output); err != 0)
+        return err;
+    std::string stem = std::filesystem::path(inputFile).stem();
+    std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
+    std::ofstream ofs(outputFileName);
+    ofs << output;
+    ofs.close();
+    return 0;
+}
+
+i32 Program::runThreeArgs(const std::string& inputFile) const
+{
+    std::string argument = args[1];
+    if (!isCommandLineArgumentValid(argument)) {
+        std::cerr << "Invalid argument: " << argument << '\n';
+        return 3;
     }
-    if (args.size() == 2) {
-        std::vector<Lexing::Token> tokens;
-        if (const i32 err = lex(tokens, inputFile) != 0)
-            return err;
-        Parsing::ProgramNode program;
-        if (const i32 err = parse(tokens, program); err != 0)
-            return err;
-        std::string output;
-        if (const i32 err = codegen(program, output); err != 0)
-            return err;
-        std::string stem = std::filesystem::path(inputFile).stem();
-        std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
-        std::ofstream ofs(outputFileName);
-        ofs << output;
-        ofs.close();
+    std::vector<Lexing::Token> tokens;
+    if (const i32 err = lex(tokens, inputFile) != 0)
+        return err;
+    if (argument == "--lex")
+        return 0;
+    Parsing::ProgramNode program;
+    if (const i32 err = parse(tokens, program); err != 0)
+        return err;
+    if (argument == "--parse")
+        return 0;
+    std::string output;
+    if (const i32 err = codegen(program, output); err != 0)
+        return err;
+    if (argument == "--codegen") {
+        Codegen::Assembly astToAssembly(program);
+        astToAssembly.getOutput(output);
     }
     return 0;
 }

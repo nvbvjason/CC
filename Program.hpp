@@ -16,7 +16,9 @@ public:
     Program(const Program& other) = delete;
     explicit Program(std::vector<std::string> args)
         : args(std::move(args)) {}
-    [[nodiscard]] int run() const;
+    [[nodiscard]] i32 run() const;
+    [[nodiscard]] static i32 runTwoArgs(const std::string& inputFile);
+    [[nodiscard]] i32 runThreeArgs(const std::string& inputFile) const;
 };
 
 static i32 lex(std::vector<Lexing::Token>& tokens, const std::string& inputFile);
