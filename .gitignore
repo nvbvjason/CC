@@ -1,3 +1,5 @@
 /cmake-build*
 /writing-a-c-compiler-tests/
 /AssemblyFiles/
+/AssemblyFiles/*
+!/AssemblyFiles/.gitkeep

@@ -44,7 +44,7 @@ std::string Assembly::getFunction(const Parsing::FunctionNode& functionNode)
     result += functionNode.name + ":\n";
     result += getInstruction(functionNode.body);
     result += "    ret    \n";
-    // result += "    .section .note.GNU-stack,\"\",@progbits\n";
+    result += "    .section .note.GNU-stack,\"\",@progbits\n";
     return result;
 }
 

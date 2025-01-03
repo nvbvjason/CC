@@ -24,8 +24,8 @@ TEST(InvalidArguments, noArgument)
 TEST(InvalidArguments, lexing)
 {
     const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid/newlines.c";
-    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--lexing"};
-    args[1] = validPath;
+    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--lexing", ""};
+    args[2] = validPath;
     CompilerDriver program(args);
     ASSERT_NE(0, program.run());
 }
@@ -104,7 +104,7 @@ TEST(Chapter1, astPrinter)
     std::string expected =
         "Program(\n"
         "\tFunction(\n"
-        "\t\tname=main,\n"
+        "\t\tname=\"main\",\n"
         "\t\tbody=Return(\n"
         "\t\t\tConstant(100)\n"
         "\t\t)\n"

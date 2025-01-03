@@ -26,6 +26,8 @@ static i32 parse(const std::vector<Lexing::Lexeme>& tokens, Parsing::ProgramNode
 static i32 codegen(const Parsing::ProgramNode& programNode, std::string& output);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
+static std::string getSourceCode(const std::string& inputFile);
+static std::string preProcess(const std::string &file);
 std::string astPrinter(const Parsing::ProgramNode &program);
 
 #endif // CC_PROGRAM_H
