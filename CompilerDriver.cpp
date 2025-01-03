@@ -1,4 +1,4 @@
-#include "Program.hpp"
+#include "CompilerDriver.hpp"
 #include "Lexing/Lexer.hpp"
 #include "Codegen/Assembly.hpp"
 #include "Parsing/Parser.hpp"
@@ -7,7 +7,7 @@
 #include <fstream>
 #include <filesystem>
 
-int Program::run() const
+int CompilerDriver::run() const
 {
     if (args.size() < 2 || 3 < args.size()) {
         std::cerr << "Usage: <input_file> possible-argument" << '\n';
@@ -25,7 +25,7 @@ int Program::run() const
     return 0;
 }
 
-i32 Program::runTwoArgs(const std::string& inputFile)
+i32 CompilerDriver::runTwoArgs(const std::string& inputFile)
 {
     std::vector<Lexing::Lexeme> tokens;
     if (const i32 err = lex(tokens, inputFile) != 0)
@@ -44,7 +44,7 @@ i32 Program::runTwoArgs(const std::string& inputFile)
     return 0;
 }
 
-i32 Program::runThreeArgs(const std::string& inputFile) const
+i32 CompilerDriver::runThreeArgs(const std::string& inputFile) const
 {
     std::string argument = args[1];
     if (!isCommandLineArgumentValid(argument)) {
@@ -112,14 +112,16 @@ static bool isCommandLineArgumentValid(const std::string &argument)
     });
 }
 
-static void astPrinter(const Parsing::ProgramNode& program)
+std::string astPrinter(const Parsing::ProgramNode& program)
 {
-    std::cout << "Program(\n";
-    std::cout << "\t" << "Function(\n";
-    std::cout << "\t\t" << "name=" << program.function.name << ",\n";
-    std::cout << "\t\t" << "body=Return" << program.function.name << "(\n";
-    std::cout << "\t\t\t" << "Constant(" << program.function.body.constant.value.constant << ")\n";
-    std::cout << "\t\t" << ")\n";
-    std::cout << "\t" << ")\n";
-    std::cout << ")\n";
+    std::string result;
+    result += std::format("Program(\n");
+    result += std::format("\tFunction(\n");
+    result += std::format("\t\tname={},\n", program.function.name);
+    result += std::format("\t\tbody=Return(\n");
+    result += std::format("\t\t\tConstant({})\n", program.function.body.constant.value.constant);
+    result += std::format("\t\t)\n");
+    result += std::format("\t)\n");
+    result += std::format(")\n");
+    return result;
 }

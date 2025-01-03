@@ -9,12 +9,12 @@
 #include <utility>
 #include <vector>
 
-class Program {
+class CompilerDriver {
     std::vector<std::string> args;
 public:
-    Program() = delete;
-    Program(const Program& other) = delete;
-    explicit Program(std::vector<std::string> args)
+    CompilerDriver() = delete;
+    CompilerDriver(const CompilerDriver& other) = delete;
+    explicit CompilerDriver(std::vector<std::string> args)
         : args(std::move(args)) {}
     [[nodiscard]] i32 run() const;
     [[nodiscard]] static i32 runTwoArgs(const std::string& inputFile);
@@ -26,6 +26,6 @@ static i32 parse(const std::vector<Lexing::Lexeme>& tokens, Parsing::ProgramNode
 static i32 codegen(const Parsing::ProgramNode& programNode, std::string& output);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
-static void astPrinter(const Parsing::FunctionNode &program);
+std::string astPrinter(const Parsing::ProgramNode &program);
 
 #endif // CC_PROGRAM_H

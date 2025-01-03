@@ -25,13 +25,13 @@ set(CODEGEN_FILES
 add_executable(CC_run
         main.cpp
 
-        Program.cpp
-        Program.hpp
+        CompilerDriver.cpp
+        CompilerDriver.hpp
 
+        ShortTypes.hpp
         ${LEXING_FILES}
         ${PARSING_FILES}
-        ${CODEGEN_FILES}
-        ShortTypes.hpp)
+        ${CODEGEN_FILES})
 
 add_executable(CC_test
         test/main_test.cpp
@@ -40,14 +40,13 @@ add_executable(CC_test
         test/Parser.cpp
         test/Parser.hpp
 
-        Program.cpp
-        Program.hpp
+        CompilerDriver.cpp
+        CompilerDriver.hpp
 
+        ShortTypes.hpp
         ${LEXING_FILES}
         ${PARSING_FILES}
-        ${CODEGEN_FILES}
-        test/Codegen.cpp
-        test/Codegen.hpp)
+        ${CODEGEN_FILES})
 
 target_link_libraries(CC_test GTest::gtest GTest::gtest_main)
 
