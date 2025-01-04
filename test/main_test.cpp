@@ -48,11 +48,14 @@ TEST(Chpater1, lexingValid)
 TEST(Chpater1, parsingValid)
 {
     const std::string validPath = testsFolderPath + "chapter_1/valid";
-    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--parse", ""};
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        args[2] = path.path();
-        CompilerDriver program(args);
-        ASSERT_EQ(0, program.run()) << path.path();
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Lexeme> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+        Parsing::Parser parser(lexemes);
+        Parsing::ProgramNode program;
+        ASSERT_EQ(0, parser.parseProgram(program)) << path.path();
     }
 }
 
@@ -70,11 +73,14 @@ TEST(Chpater1, codegenValid)
 TEST(Chpater1, parsingInvalid)
 {
     const std::string invalidPath = testsFolderPath + "chapter_1/invalid_parse";
-    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--parse", ""};
     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
-        args[2] = path.path();
-        CompilerDriver program(args);
-        EXPECT_NE(0, program.run()) << path.path();
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Lexeme> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+        Parsing::Parser parser(lexemes);
+        Parsing::ProgramNode program;
+        ASSERT_NE(0, parser.parseProgram(program)) << path.path();
     }
 }
 
@@ -115,6 +121,17 @@ TEST(Chapter1, astPrinter)
         "\t)\n"
         ")\n";
     ASSERT_EQ(expected, astPrinter(program)) << astPrinter(program);
+}
+
+TEST(Chpater2, lexingValid)
+{
+    const std::string validPath = testsFolderPath + "chapter_2/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Lexeme> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+    }
 }
 
 void cleanUp()
