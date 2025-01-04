@@ -4,13 +4,17 @@
 
 namespace Lexing {
 
-std::vector<Lexeme> Lexer::tokenize()
+i32 Lexer::getLexems(std::vector<Lexeme>& lexemes)
 {
     while (!isAtEnd()) {
         m_start = m_current;
         scanToken();
     }
-    return m_tokens;
+    lexemes = m_tokens;
+    for (const Lexeme& lexeme : lexemes)
+        if (lexeme.m_type == LexemeType::Invalid)
+            return 1;
+    return 0;
 }
 
 void Lexer::scanToken()

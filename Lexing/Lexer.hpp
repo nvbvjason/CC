@@ -27,7 +27,7 @@ class Lexer {
 public:
     explicit Lexer(const std::string& input)
         : c_source(input) {}
-    [[nodiscard]] std::vector<Lexeme> tokenize();
+    [[nodiscard]] i32 getLexems(std::vector<Lexeme>& lexemes);
 private:
     [[nodiscard]] bool isAtEnd() const { return c_source.size() <= m_current; }
     [[nodiscard]] char peek() const;

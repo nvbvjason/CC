@@ -4,46 +4,50 @@
 #include <filesystem>
 #include <fstream>
 
+#include "../Lexing/Lexer.hpp"
+
+const std::string testsFolderPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/";
+
 TEST(InvalidArguments, notAFile)
 {
     const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "", "--codegen"};
     args[1] = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/ch";
-    CompilerDriver program(args);
+    const CompilerDriver program(args);
     ASSERT_NE(0, program.run());
 }
 
 TEST(InvalidArguments, noArgument)
 {
-    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/";
-    std::vector<std::string> args;
-    CompilerDriver program(args);
+    const std::string validPath = testsFolderPath + "chapter_1/";
+    constexpr std::vector<std::string> args;
+    const CompilerDriver program(args);
     ASSERT_NE(0, program.run());
 }
 
 TEST(InvalidArguments, lexing)
 {
-    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid/newlines.c";
+    const std::string validPath = testsFolderPath + "chapter_1/valid/newlines.c";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--lexing", ""};
     args[2] = validPath;
-    CompilerDriver program(args);
+    const CompilerDriver program(args);
     ASSERT_NE(0, program.run());
 }
 
 TEST(Chpater1, lexingValid)
 {
-    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
-    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--lex", ""};
+    const std::string validPath = testsFolderPath + "chapter_1/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        args[2] = path.path();
-        CompilerDriver program(args);
-        ASSERT_EQ(0, program.run()) << path.path();
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Lexeme> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
     }
 }
 
 TEST(Chpater1, parsingValid)
 {
-    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
+    const std::string validPath = testsFolderPath + "chapter_1/valid";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--parse", ""};
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         args[2] = path.path();
@@ -54,7 +58,7 @@ TEST(Chpater1, parsingValid)
 
 TEST(Chpater1, codegenValid)
 {
-    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
+    const std::string validPath = testsFolderPath + "chapter_1/valid";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--codegen", ""};
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         args[2] = path.path();
@@ -65,7 +69,7 @@ TEST(Chpater1, codegenValid)
 
 TEST(Chpater1, parsingInvalid)
 {
-    const std::string invalidPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/invalid_parse";
+    const std::string invalidPath = testsFolderPath + "chapter_1/invalid_parse";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--parse", ""};
     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
         args[2] = path.path();
@@ -76,18 +80,18 @@ TEST(Chpater1, parsingInvalid)
 
 TEST(Chpater1, lexingInvalid)
 {
-    const std::string invalidPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/invalid_lex";
-    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", "--lex", ""};
+    const std::string invalidPath = testsFolderPath + "chapter_1/invalid_lex";
     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
-        args[2] = path.path();
-        CompilerDriver program(args);
-        EXPECT_NE(0, program.run()) << path.path();
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Lexeme> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        ASSERT_NE(0, lexer.getLexems(lexemes)) << path.path();
     }
 }
 
 TEST(Chpater1, allvalid)
 {
-    const std::string validPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/chapter_1/valid";
+    const std::string validPath = testsFolderPath + "chapter_1/valid";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", ""};
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         args[1] = path.path();
@@ -101,7 +105,7 @@ TEST(Chapter1, astPrinter)
     Parsing::ProgramNode program;
     program.function.name = "main";
     program.function.body.constant.value.constant = 100;
-    std::string expected =
+    const std::string expected =
         "Program(\n"
         "\tFunction(\n"
         "\t\tname=\"main\",\n"
@@ -113,7 +117,15 @@ TEST(Chapter1, astPrinter)
     ASSERT_EQ(expected, astPrinter(program)) << astPrinter(program);
 }
 
+void cleanUp()
+{
+    for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))
+        remove_all(entry.path());
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    const int result = RUN_ALL_TESTS();
+    cleanUp();
+    return result;
 }

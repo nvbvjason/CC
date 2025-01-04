@@ -7,7 +7,7 @@ void cleanUp();
 int main(const int argc, char *argv[])
 {
     const CompilerDriver program(std::vector<std::string>(argv, argv + argc));
-    i32 returnCode = program.run();
+    const i32 returnCode = program.run();
     cleanUp();
     return returnCode;
 }

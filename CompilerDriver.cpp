@@ -13,15 +13,15 @@ int CompilerDriver::run() const
         std::cerr << "Usage: <input_file> possible-argument" << '\n';
         return 1;
     }
-    const std::string inputFile = args.back();
-    if (!fileExists(inputFile)) {
-        std::cerr << "File " << inputFile << " not found" << '\n';
+    const std::filesystem::path m_inputFile(args.back());
+    if (!fileExists(m_inputFile)) {
+        std::cerr << "File " << m_inputFile.string() << " not found" << '\n';
         return 2;
     }
     if (args.size() == 3)
-        return runThreeArgs(inputFile);
+        return runThreeArgs(m_inputFile);
     if (args.size() == 2)
-        return runTwoArgs(inputFile);
+        return runTwoArgs(m_inputFile);
     return 0;
 }
 
@@ -71,14 +71,12 @@ i32 CompilerDriver::runThreeArgs(const std::string& inputFile) const
     return 0;
 }
 
-i32 lex(std::vector<Lexing::Lexeme> &tokens, const std::string& inputFile)
+i32 lex(std::vector<Lexing::Lexeme> &lexemes, const std::string& inputFile)
 {
     const std::string source = preProcess(inputFile);
     Lexing::Lexer lexer(source);
-    tokens = lexer.tokenize();
-    for (const auto& token : tokens)
-        if (token.m_type == Lexing::LexemeType::Invalid)
-            return 4;
+    if (const i32 err = lexer.getLexems(lexemes); err != 0)
+        return err;
     return 0;
 }
 
@@ -120,7 +118,7 @@ std::string getSourceCode(const std::string &inputFile)
 
 static std::string preProcess(const std::string &file)
 {
-    std::filesystem::path inputFile(file);
+    const std::filesystem::path inputFile(file);
     std::string command = "gcc -E -P ";
     command += inputFile.string();
     command += " -o ";
@@ -129,6 +127,16 @@ static std::string preProcess(const std::string &file)
     command += generatedFileName;
     system(command.c_str());
     return getSourceCode(generatedFileName);
+}
+
+i32 assemble(const std::string &asmFile, const std::string &inputFile)
+{
+    std::string stem = std::filesystem::path().stem();
+    std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
+    std::ofstream ofs(outputFileName);
+    ofs << asmFile;
+    ofs.close();
+    return 0;
 }
 
 std::string astPrinter(const Parsing::ProgramNode& program)
