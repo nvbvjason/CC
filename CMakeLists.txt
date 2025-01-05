@@ -16,7 +16,11 @@ set(LEXING_FILES
 
 set(PARSING_FILES
         Parsing/Parser.cpp
-        Parsing/Parser.hpp)
+        Parsing/Parser.hpp
+        Parsing/ConcreteTree.cpp
+        Parsing/ConcreteTree.hpp
+        Parsing/AbstractTree.cpp
+        Parsing/AbstractTree.hpp)
 
 set(CODEGEN_FILES
         Codegen/Assembly.cpp

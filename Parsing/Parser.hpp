@@ -3,30 +3,11 @@
 #ifndef PARSING_PARSER_HPP
 #define PARSING_PARSER_HPP
 
-#include <memory>
-
 #include "../Lexing/Lexeme.hpp"
 #include "../ShortTypes.hpp"
 
+#include <memory>
 #include <vector>
-
-/*
-    program = Program(function_definition)
-    function_definition = Function(identifier names, statement body)
-    statement = Return(exp)
-    exp = Constant(int) | Unary(unary_operator, exp)
-    unary_operator = Complement | Negate
-*/
-
-/*
-    <program> ::= <function>
-    <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
-    <statement> ::= "return" <exp> ";"
-    <exp> ::= <int> | <unop> <exp> | "(" <exp> ")"
-    <unop> = ::= "-" | "~"
-    <identifier> ::= ? An identifier token ?
-    <int> ::= ? A constant token ?
-*/
 
 namespace Parsing {
 

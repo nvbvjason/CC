@@ -23,13 +23,6 @@ public:
     [[nodiscard]] i32 runThreeArgs(const std::string& inputFile) const;
 };
 
-static i32 lex(std::vector<Lexing::Lexeme>& lexemes, const std::string& inputFile);
-static i32 parse(const std::vector<Lexing::Lexeme>& tokens, Parsing::ProgramNode& programNode);
-static i32 codegen(const Parsing::ProgramNode& programNode, std::string& output);
-static bool fileExists(const std::string &name);
-static bool isCommandLineArgumentValid(const std::string &argument);
-static std::string preProcess(const std::string &file);
-static i32 assemble(const std::string& asmFile);
 std::string getSourceCode(const std::string& inputFile);
 std::string astPrinter(const Parsing::ProgramNode &program);
 

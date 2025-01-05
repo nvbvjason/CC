@@ -33,9 +33,10 @@ struct Assembly::ProgramNode {
     FunctionNode function;
 };
 
-void Assembly::getOutput(std::string &output) const
+i32 Assembly::getOutput(std::string &output) const
 {
     output = getFunction(c_program.function);
+    return 0;
 }
 
 std::string Assembly::getFunction(const Parsing::FunctionNode& functionNode)
