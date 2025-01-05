@@ -3,7 +3,7 @@
 #ifndef CC_PROGRAM_H
 #define CC_PROGRAM_H
 
-#include "Parsing/Parser.hpp"
+#include "Parsing/ConcreteTree.hpp"
 
 #include <filesystem>
 #include <string>
@@ -19,8 +19,6 @@ public:
     explicit CompilerDriver(std::vector<std::string> args)
         : args(std::move(args)) {}
     [[nodiscard]] i32 run() const;
-    [[nodiscard]] static i32 runTwoArgs(const std::string& inputFile);
-    [[nodiscard]] i32 runThreeArgs(const std::string& inputFile) const;
 };
 
 std::string getSourceCode(const std::string& inputFile);

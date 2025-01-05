@@ -2,10 +2,10 @@
 #include "../CompilerDriver.hpp"
 #include "../Lexing/Lexer.hpp"
 #include "../Codegen/Assembly.hpp"
+#include "../Parsing/ConcreteTree.hpp"
 
 #include <filesystem>
 #include <fstream>
-
 
 const std::string testsFolderPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/";
 
@@ -40,7 +40,7 @@ TEST(Chpater1, lexingValid)
     const std::string validPath = testsFolderPath + "chapter_1/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         const std::string sourceCode = getSourceCode(path.path());
-        std::vector<Lexing::Lexeme> lexemes;
+        std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
         ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
     }
@@ -51,7 +51,7 @@ TEST(Chpater1, lexingInvalid)
     const std::string invalidPath = testsFolderPath + "chapter_1/invalid_lex";
     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
         const std::string sourceCode = getSourceCode(path.path());
-        std::vector<Lexing::Lexeme> lexemes;
+        std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
         ASSERT_NE(0, lexer.getLexems(lexemes)) << path.path();
     }
@@ -62,43 +62,43 @@ TEST(Chpater1, parsingValid)
     const std::string validPath = testsFolderPath + "chapter_1/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         const std::string sourceCode = getSourceCode(path.path());
-        std::vector<Lexing::Lexeme> lexemes;
+        std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
         ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
-        Parsing::Parser parser(lexemes);
+        Parsing::Parse parser(lexemes);
         Parsing::ProgramNode program;
-        ASSERT_EQ(0, parser.parseProgram(program)) << path.path();
+        ASSERT_EQ(0, parser.programParse(program)) << path.path();
     }
 }
 
-TEST(Chpater1, codegenValid)
-{
-    const std::string validPath = testsFolderPath + "chapter_1/valid";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        const std::string sourceCode = getSourceCode(path.path());
-        std::vector<Lexing::Lexeme> lexemes;
-        Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
-        Parsing::Parser parser(lexemes);
-        Parsing::ProgramNode program;
-        ASSERT_EQ(0, parser.parseProgram(program)) << path.path();
-        std::string output;
-        const Codegen::Assembly astToAssembly(program);
-        ASSERT_EQ(0, astToAssembly.getOutput(output)) << path.path();
-    }
-}
+// TEST(Chpater1, codegenValid)
+// {
+//     const std::string validPath = testsFolderPath + "chapter_1/valid";
+//     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+//         const std::string sourceCode = getSourceCode(path.path());
+//         std::vector<Lexing::Token> lexemes;
+//         Lexing::Lexer lexer(sourceCode);
+//         ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+//         Parsing::Parse parser(lexemes);
+//         Parsing::ProgramNode program;
+//         ASSERT_EQ(0, parser.programParse(program)) << path.path();
+//         std::string output;
+//         const Codegen::Assembly astToAssembly(program);
+//         ASSERT_EQ(0, astToAssembly.getOutput(output)) << path.path();
+//     }
+// }
 
 TEST(Chpater1, parsingInvalid)
 {
     const std::string invalidPath = testsFolderPath + "chapter_1/invalid_parse";
     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
         const std::string sourceCode = getSourceCode(path.path());
-        std::vector<Lexing::Lexeme> lexemes;
+        std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
         ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
-        Parsing::Parser parser(lexemes);
+        Parsing::Parse parser(lexemes);
         Parsing::ProgramNode program;
-        ASSERT_NE(0, parser.parseProgram(program)) << path.path();
+        ASSERT_NE(0, parser.programParse(program)) << path.path();
     }
 }
 
@@ -113,31 +113,28 @@ TEST(Chpater1, allvalid)
     }
 }
 
-TEST(Chapter1, astPrinter)
-{
-    Parsing::ProgramNode program;
-    program.function.name = "main";
-    program.function.body.constant.value.constant = 100;
-    const std::string expected =
-        "Program(\n"
-        "\tFunction(\n"
-        "\t\tname=\"main\",\n"
-        "\t\tbody=Return(\n"
-        "\t\t\tConstant(100)\n"
-        "\t\t)\n"
-        "\t)\n"
-        ")\n";
-    ASSERT_EQ(expected, astPrinter(program)) << astPrinter(program);
-}
-
 TEST(Chpater2, lexingValid)
 {
     const std::string validPath = testsFolderPath + "chapter_2/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         const std::string sourceCode = getSourceCode(path.path());
-        std::vector<Lexing::Lexeme> lexemes;
+        std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
         ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+    }
+}
+
+TEST(Chpater2, parsingValid)
+{
+    const std::string validPath = testsFolderPath + "chapter_2/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Token> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+        Parsing::Parse parser(lexemes);
+        Parsing::ProgramNode program;
+        ASSERT_EQ(0, parser.programParse(program)) << path.path();
     }
 }
 

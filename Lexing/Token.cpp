@@ -1,46 +1,46 @@
-#include "Lexeme.hpp"
+#include "Token.hpp"
 
 namespace Lexing {
 
-std::string Lexeme::getTypeName() const
+std::string Token::getTypeName() const
 {
     switch (m_type) {
-        case LexemeType::OpenParen:
+        case TokenType::OpenParen:
             return "Open Paren";
-        case LexemeType::CloseParen:
+        case TokenType::CloseParen:
             return "Close Paren";
-        case LexemeType::OpenBrace:
+        case TokenType::OpenBrace:
             return "Open Brace";
-        case LexemeType::CloseBrace:
+        case TokenType::CloseBrace:
             return "Close Brace";
-        case LexemeType::Semicolon:
+        case TokenType::Semicolon:
             return "Semicolon";
-        case LexemeType::Return:
+        case TokenType::Return:
             return "Return";
-        case LexemeType::Void:
+        case TokenType::Void:
             return "Void";
-        case LexemeType::IntKeyword:
+        case TokenType::IntKeyword:
             return "Int Keyword";
-        case LexemeType::Integer:
+        case TokenType::Integer:
             return "Integer";
-        case LexemeType::EndOfFile:
+        case TokenType::EndOfFile:
             return "End of File";
-        case LexemeType::Invalid:
+        case TokenType::Invalid:
             return "Invalid Token";
-        case LexemeType::Identifier:
+        case TokenType::Identifier:
             return "Identifier";
         default:
             return "Unknown Token";
     }
 }
 
-std::ostream& operator<<(std::ostream& os, const Lexeme& token)
+std::ostream& operator<<(std::ostream& os, const Token& token)
 {
     os << "line: " << token.line() << " column: " << token.column() << " type: " << token.getTypeName() << " lexeme: " << token.lexeme;
     return os;
 }
 
-bool operator==(const Lexeme &lhs, const Lexeme &rhs)
+bool operator==(const Token &lhs, const Token &rhs)
 {
     return lhs.line() == rhs.line()
         && lhs.column() == rhs.column()
@@ -48,7 +48,7 @@ bool operator==(const Lexeme &lhs, const Lexeme &rhs)
         && lhs.lexeme == rhs.lexeme;
 }
 
-bool operator!=(const Lexeme &lhs, const Lexeme &rhs)
+bool operator!=(const Token &lhs, const Token &rhs)
 {
     return !(lhs == rhs);
 }

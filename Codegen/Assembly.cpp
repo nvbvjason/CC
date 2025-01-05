@@ -35,27 +35,27 @@ struct Assembly::ProgramNode {
 
 i32 Assembly::getOutput(std::string &output) const
 {
-    output = getFunction(c_program.function);
+    output = getFunction(c_program->function);
     return 0;
 }
 
-std::string Assembly::getFunction(const Parsing::FunctionNode& functionNode)
+std::string Assembly::getFunction(const std::unique_ptr<Parsing::FunctionNode> &functionNode)
 {
-    std::string result = "    .globl " + functionNode.name + '\n';
-    result += functionNode.name + ":\n";
-    result += getInstruction(functionNode.body);
+    std::string result = "    .globl " + functionNode->name + '\n';
+    result += functionNode->name + ":\n";
+    result += getInstruction(functionNode->body);
     result += "    ret    \n";
     result += "    .section .note.GNU-stack,\"\",@progbits\n";
     return result;
 }
 
-std::string Assembly::getInstruction(const Parsing::StatementNode& returnNode)
+std::string Assembly::getInstruction(const std::unique_ptr<Parsing::StatementNode>& returnNode)
 {
-    return std::format("    mov    ${}, %eax\n", getOperand(returnNode.constant));
+    return std::format("    mov    ${}, %eax\n", getOperand(returnNode->expression));
 }
 
-std::string Assembly::getOperand(const Parsing::ExpressionNode& constantNode)
+std::string Assembly::getOperand(const std::unique_ptr<Parsing::ExpressionNode>& constantNode)
 {
-    return std::to_string(constantNode.value.constant);
+    return std::to_string(std::get<i32>(constantNode->value));
 }
 }

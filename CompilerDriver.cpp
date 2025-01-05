@@ -1,14 +1,14 @@
 #include "CompilerDriver.hpp"
 #include "Lexing/Lexer.hpp"
 #include "Codegen/Assembly.hpp"
-#include "Parsing/Parser.hpp"
+#include "Parsing/ConcreteTree.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 
-static i32 lex(std::vector<Lexing::Lexeme>& lexemes, const std::string& inputFile);
-static i32 parse(const std::vector<Lexing::Lexeme>& tokens, Parsing::ProgramNode& programNode);
+static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
+static i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& programNode);
 static i32 codegen(const Parsing::ProgramNode& programNode, std::string& output);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
@@ -34,7 +34,7 @@ int CompilerDriver::run() const
         return 3;
     }
     const std::string inputFile = args.back();
-    std::vector<Lexing::Lexeme> tokens;
+    std::vector<Lexing::Token> tokens;
     if (const i32 err = lex(tokens, inputFile) != 0)
         return err;
     if (argument == "--lex")
@@ -44,6 +44,10 @@ int CompilerDriver::run() const
         return err;
     if (argument == "--parse")
         return 0;
+    if (argument == "--printAst") {
+        astPrinter(program);
+        return 0;
+    }
     std::string output;
     if (const i32 err = codegen(program, output); err != 0)
         return err;
@@ -57,7 +61,7 @@ int CompilerDriver::run() const
     return 0;
 }
 
-i32 lex(std::vector<Lexing::Lexeme> &lexemes, const std::string& inputFile)
+i32 lex(std::vector<Lexing::Token> &lexemes, const std::string& inputFile)
 {
     const std::string source = preProcess(inputFile);
     Lexing::Lexer lexer(source);
@@ -66,17 +70,18 @@ i32 lex(std::vector<Lexing::Lexeme> &lexemes, const std::string& inputFile)
     return 0;
 }
 
-i32 parse(const std::vector<Lexing::Lexeme>& tokens, Parsing::ProgramNode& programNode)
+i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& programNode)
 {
-    Parsing::Parser parser(tokens);
-    if (const i32 err = parser.parseProgram(programNode); err != 0)
+    Parsing::Parse parser(tokens);
+    if (const i32 err = parser.programParse(programNode); err != 0)
         return err;
     return 0;
 }
 
-i32 codegen(const Parsing::ProgramNode &programNode, std::string &output)
+i32 codegen(const Parsing::ProgramNode& programNode, std::string &output)
 {
-    const Codegen::Assembly astToAssembly(programNode);
+    const Parsing::ProgramNode* temp = &programNode;
+    Codegen::Assembly astToAssembly(temp);
     return astToAssembly.getOutput(output);
 }
 
@@ -88,7 +93,7 @@ static bool fileExists(const std::string &name)
 
 static bool isCommandLineArgumentValid(const std::string &argument)
 {
-    const std::vector<std::string> validArguments = {"", "--help", "-h", "--version", "--lex", "--parse", "--codegen"};
+    const std::vector<std::string> validArguments = {"",  "--printAst","--help", "-h", "--version", "--lex", "--parse", "--codegen"};
     return std::any_of(validArguments.begin(), validArguments.end(), [&](const std::string &arg) {
         return arg == argument;
     });
@@ -129,9 +134,9 @@ std::string astPrinter(const Parsing::ProgramNode& program)
     std::string result;
     result += std::format("Program(\n");
     result += std::format("\tFunction(\n");
-    result += std::format("\t\tname=\"{}\",\n", program.function.name);
-    result += std::format("\t\tbody=Return(\n");
-    result += std::format("\t\t\tConstant({})\n", program.function.body.constant.value.constant);
+    // result += std::format("\t\tname=\"{}\",\n", program.function.name);
+    // result += std::format("\t\tbody=Return(\n");
+    // result += std::format("\t\t\tConstant({})\n", program.function.body.constant.value.constant);
     result += std::format("\t\t)\n");
     result += std::format("\t)\n");
     result += std::format(")\n");

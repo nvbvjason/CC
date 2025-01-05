@@ -8,15 +8,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(GTest REQUIRED)
 
 set(LEXING_FILES
-        Lexing/Lexeme.cpp
-        Lexing/Lexeme.hpp
+        Lexing/Token.cpp
+        Lexing/Token.hpp
 
         Lexing/Lexer.cpp
         Lexing/Lexer.hpp)
 
 set(PARSING_FILES
-        Parsing/Parser.cpp
-        Parsing/Parser.hpp
         Parsing/ConcreteTree.cpp
         Parsing/ConcreteTree.hpp
         Parsing/AbstractTree.cpp
