@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "../CompilerDriver.hpp"
 #include "../Lexing/Lexer.hpp"
-#include "../Codegen/Assembly.hpp"
 #include "../Parsing/ConcreteTree.hpp"
 
 #include <filesystem>
@@ -135,6 +134,21 @@ TEST(Chpater2, parsingValid)
         Parsing::Parse parser(lexemes);
         Parsing::ProgramNode program;
         ASSERT_EQ(0, parser.programParse(program)) << path.path();
+    }
+}
+
+TEST(Chpater2, parsingInvalid)
+{
+    const std::string validPath = testsFolderPath + "chapter_2/invalid_parse";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Token> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        if (lexer.getLexems(lexemes) != 0)
+            return;
+        Parsing::Parse parser(lexemes);
+        Parsing::ProgramNode program;
+        ASSERT_NE(0, parser.programParse(program)) << path.path();
     }
 }
 

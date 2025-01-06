@@ -2,6 +2,7 @@
 #include "Lexing/Lexer.hpp"
 #include "Codegen/Assembly.hpp"
 #include "Parsing/ConcreteTree.hpp"
+#include "Parsing/AstVisualizer.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -45,7 +46,7 @@ int CompilerDriver::run() const
     if (argument == "--parse")
         return 0;
     if (argument == "--printAst") {
-        astPrinter(program);
+        std::cout << astVisualizer(program) << '\n';
         return 0;
     }
     std::string output;
@@ -127,18 +128,4 @@ i32 assemble(const std::string &asmFile, const std::string &inputFile)
     ofs << asmFile;
     ofs.close();
     return 0;
-}
-
-std::string astPrinter(const Parsing::ProgramNode& program)
-{
-    std::string result;
-    result += std::format("Program(\n");
-    result += std::format("\tFunction(\n");
-    // result += std::format("\t\tname=\"{}\",\n", program.function.name);
-    // result += std::format("\t\tbody=Return(\n");
-    // result += std::format("\t\t\tConstant({})\n", program.function.body.constant.value.constant);
-    result += std::format("\t\t)\n");
-    result += std::format("\t)\n");
-    result += std::format(")\n");
-    return result;
 }

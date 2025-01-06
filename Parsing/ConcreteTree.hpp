@@ -25,7 +25,7 @@ class Parse {
     i32 m_current = 0;
 public:
     Parse() = delete;
-    Parse(std::vector<Lexing::Token> c_tokens)
+    Parse(const std::vector<Lexing::Token> &c_tokens)
         : c_tokens(c_tokens) {}
     i32 programParse(ProgramNode& program);
     i32 functionParse(FunctionNode* function);
