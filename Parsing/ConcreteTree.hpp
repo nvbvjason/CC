@@ -30,9 +30,9 @@ public:
     i32 programParse(ProgramNode& program);
     i32 functionParse(FunctionNode* function);
     i32 statementParse(StatementNode* statement);
-    i32 expressionParse(ExpressionNode* expression);
-    i32 unaryParse(UnaryNode* unary);
-    i32 unaryOperatorParse(UnaryOperator& unaryOperator);
+    std::pair<ExpressionNode*, i32> expressionParse();
+    std::pair<UnaryNode*, i32> unaryParse();
+    std::pair<UnaryOperator, i32> unaryOperatorParse();
     [[nodiscard]] Lexing::Token advance()
     {
         Lexing::Token lexeme = c_tokens[m_current];

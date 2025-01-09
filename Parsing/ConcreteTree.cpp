@@ -45,59 +45,72 @@ i32 Parse::statementParse(StatementNode* statement)
 {
     if (!expect(Lexing::TokenType::Return))
         return m_current + 1;
-    const auto expression = new ExpressionNode();
-    if (expressionParse(expression))
+    auto [expression, errExpr] = expressionParse();
+    if (errExpr != 0) {
+        delete expression;
         return m_current + 1;
+    }
     statement->expression = static_cast<std::unique_ptr<ExpressionNode>>(expression);
     if (!expect(Lexing::TokenType::Semicolon))
         return m_current + 1;
     return 0;
 }
 
-i32 Parse::expressionParse(ExpressionNode* expression)
+std::pair<ExpressionNode*, i32> Parse::expressionParse()
 {
+    ExpressionNode* expression = new ExpressionNode();
     switch (Lexing::Token lexeme = advance(); lexeme.m_type) {
         case Lexing::TokenType::Integer:
             expression->type = ExpressionNodeType::Constant;
-            expression->value = std::get<i32>(lexeme.m_data);
-            break;
+        expression->value = std::get<i32>(lexeme.m_data);
+        break;
         case Lexing::TokenType::Minus:
         case Lexing::TokenType::Tilde: {
             --m_current;
             expression->type = ExpressionNodeType::Unary;
-            const auto unaryNode = new UnaryNode();
-            if (const i32 err = unaryParse(unaryNode))
-                return err;
+            auto[unaryNode, errUnary] = unaryParse();
+            if (errUnary != 0) {
+                delete unaryNode;
+                return {expression, errUnary};
+            }
             expression->value = static_cast<std::unique_ptr<UnaryNode>>(unaryNode);
             break;
         }
-        case Lexing::TokenType::OpenParen:
-            if (const i32 err = expressionParse(expression) != 0)
-                return err;
+        case Lexing::TokenType::OpenParen: {
+            auto[innerExpression, errExpression] = expressionParse();
+            if (errExpression != 0) {
+                delete expression;
+                return {innerExpression, errExpression};
+            }
             if (!expect(Lexing::TokenType::CloseParen))
-                return m_current + 1;
+                return {expression, m_current + 1};
             break;
+        }
         default:
-            return -1;
+            return {expression, -1};
     }
-    return 0;
+    return {expression, 0};
 }
 
-i32 Parse::unaryParse(UnaryNode* unary)
+std::pair<UnaryNode*, i32> Parse::unaryParse()
+{
+    auto unaryNode = new UnaryNode();
+    auto[unaryOperator, errUnaryOperator] = unaryOperatorParse();
+    if (errUnaryOperator != 0)
+        return {unaryNode, errUnaryOperator};
+    unaryNode->unaryOperator = unaryOperator;
+    auto[expression, errExpression] = expressionParse();
+    if (errExpression != 0) {
+        delete expression;
+        return  {unaryNode, errExpression};
+    }
+    unaryNode->expression = static_cast<std::unique_ptr<ExpressionNode>>(expression);
+    return {unaryNode, 0};
+}
+
+std::pair<UnaryOperator, i32> Parse::unaryOperatorParse()
 {
     UnaryOperator unaryOperator;
-    if (const i32 err = unaryOperatorParse(unaryOperator) != 0)
-        return err;
-    unary->unaryOperator = unaryOperator;
-    const auto expression = new ExpressionNode();
-    if (const i32 err = expressionParse(expression))
-        return err;
-    unary->expression = static_cast<std::unique_ptr<ExpressionNode>>(expression);
-    return 0;
-}
-
-i32 Parse::unaryOperatorParse(UnaryOperator& unaryOperator)
-{
     switch (const auto type = advance(); type.m_type) {
         case Lexing::TokenType::Minus:
             unaryOperator = UnaryOperator::Negate;
@@ -106,9 +119,10 @@ i32 Parse::unaryOperatorParse(UnaryOperator& unaryOperator)
             unaryOperator = UnaryOperator::Complement;
             break;
         default:
-            return m_current + 1;
+
+            return {unaryOperator, m_current + 1};
     }
-    return 0;
+    return {unaryOperator, 0};
 }
 
 i32 Parse::match(const Lexing::TokenType &type)
