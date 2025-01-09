@@ -28,8 +28,8 @@ public:
     Parse(const std::vector<Lexing::Token> &c_tokens)
         : c_tokens(c_tokens) {}
     i32 programParse(ProgramNode& program);
-    i32 functionParse(FunctionNode* function);
-    i32 statementParse(StatementNode* statement);
+    std::pair<FunctionNode*, i32> functionParse();
+    std::pair<StatementNode*, i32> statementParse();
     std::pair<ExpressionNode*, i32> expressionParse();
     std::pair<UnaryNode*, i32> unaryParse();
     std::pair<UnaryOperator, i32> unaryOperatorParse();

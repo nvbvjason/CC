@@ -5,9 +5,11 @@ namespace Parsing {
 
 i32 Parse::programParse(ProgramNode& program)
 {
-    const auto functionNode = new FunctionNode();
-    if (const i32 err = functionParse(functionNode) != 0)
+    auto[functionNode, err] = functionParse();
+    if (err != 0) {
+        delete functionNode;
         return err;
+    }
     program.function = static_cast<std::unique_ptr<FunctionNode>>(functionNode);
     if (program.function->name != "main")
         return -1;
@@ -16,54 +18,58 @@ i32 Parse::programParse(ProgramNode& program)
     return 0;
 }
 
-i32 Parse::functionParse(FunctionNode* function)
+std::pair<FunctionNode*, i32> Parse::functionParse()
 {
+    const auto function = new FunctionNode();
     if (!expect(Lexing::TokenType::IntKeyword))
-        return m_current + 1;
+        return {function, m_current + 1};
     const Lexing::Token lexeme = advance();
     if (lexeme.m_type != Lexing::TokenType::Identifier)
-        return m_current + 1;
+        return {function, m_current + 1};
     function->name = lexeme.lexeme;
     if (!expect(Lexing::TokenType::OpenParen))
-        return m_current + 1;
+        return {function, m_current + 1};
     if (!expect(Lexing::TokenType::Void))
-        return m_current + 1;
+        return {function, m_current + 1};
     if (!expect(Lexing::TokenType::CloseParen))
-        return m_current + 1;
+        return {function, m_current + 1};
     if (!expect(Lexing::TokenType::OpenBrace))
-        return m_current + 1;
-    const auto statement = new StatementNode();
-    if (const i32 err = statementParse(statement) != 0)
-        return err;
+        return {function, m_current + 1};
+    auto[statement, errStatement] = statementParse();
+    if (errStatement != 0) {
+        delete statement;
+        return {function, errStatement};
+    }
     function->body = static_cast<std::unique_ptr<StatementNode>>(statement);
     if (!expect(Lexing::TokenType::CloseBrace))
-        return m_current + 1;
-    return 0;
+        return {function, m_current + 1};
+    return {function, 0};
 }
 
-i32 Parse::statementParse(StatementNode* statement)
+std::pair<StatementNode*, i32> Parse::statementParse()
 {
+    auto statement = new StatementNode();
     if (!expect(Lexing::TokenType::Return))
-        return m_current + 1;
+        return {statement, m_current + 1};
     auto [expression, errExpr] = expressionParse();
     if (errExpr != 0) {
         delete expression;
-        return m_current + 1;
+        return {statement, m_current + 1};
     }
     statement->expression = static_cast<std::unique_ptr<ExpressionNode>>(expression);
     if (!expect(Lexing::TokenType::Semicolon))
-        return m_current + 1;
-    return 0;
+        return {statement, m_current + 1};
+    return {statement, 0};
 }
 
 std::pair<ExpressionNode*, i32> Parse::expressionParse()
 {
-    ExpressionNode* expression = new ExpressionNode();
+    auto expression = new ExpressionNode();
     switch (Lexing::Token lexeme = advance(); lexeme.m_type) {
         case Lexing::TokenType::Integer:
             expression->type = ExpressionNodeType::Constant;
-        expression->value = std::get<i32>(lexeme.m_data);
-        break;
+            expression->value = std::get<i32>(lexeme.m_data);
+            break;
         case Lexing::TokenType::Minus:
         case Lexing::TokenType::Tilde: {
             --m_current;
@@ -77,8 +83,7 @@ std::pair<ExpressionNode*, i32> Parse::expressionParse()
             break;
         }
         case Lexing::TokenType::OpenParen: {
-            auto[innerExpression, errExpression] = expressionParse();
-            if (errExpression != 0) {
+            if (auto[innerExpression, errExpression] = expressionParse(); errExpression != 0) {
                 delete expression;
                 return {innerExpression, errExpression};
             }
