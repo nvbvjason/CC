@@ -22,8 +22,7 @@ int CompilerDriver::run() const
         std::cerr << "Usage: <input_file> possible-argument" << '\n';
         return 1;
     }
-    const std::filesystem::path m_inputFile(args.back());
-    if (!fileExists(m_inputFile)) {
+    if (const std::filesystem::path m_inputFile(args.back()); !fileExists(m_inputFile)) {
         std::cerr << "File " << m_inputFile.string() << " not found" << '\n';
         return 2;
     }
@@ -82,7 +81,7 @@ i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& progra
 i32 codegen(const Parsing::ProgramNode& programNode, std::string &output)
 {
     const Parsing::ProgramNode* temp = &programNode;
-    Codegen::Assembly astToAssembly(temp);
+    const Codegen::Assembly astToAssembly(temp);
     return astToAssembly.getOutput(output);
 }
 
@@ -103,7 +102,7 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 std::string getSourceCode(const std::string &inputFile)
 {
     std::ifstream file(inputFile);
-    std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    std::string source((std::istreambuf_iterator(file)), std::istreambuf_iterator<char>());
     return source;
 }
 
@@ -120,10 +119,10 @@ static std::string preProcess(const std::string &file)
     return getSourceCode(generatedFileName);
 }
 
-i32 assemble(const std::string &asmFile, const std::string &inputFile)
+i32 assemble(const std::string &asmFile)
 {
     std::string stem = std::filesystem::path().stem();
-    std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
+    const std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
     std::ofstream ofs(outputFileName);
     ofs << asmFile;
     ofs.close();

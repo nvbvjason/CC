@@ -6,11 +6,9 @@ namespace Parsing {
 i32 Parse::programParse(ProgramNode& program)
 {
     auto[functionNode, err] = functionParse();
-    if (err != 0) {
-        delete functionNode;
-        return err;
-    }
     program.function = static_cast<std::unique_ptr<FunctionNode>>(functionNode);
+    if (err != 0)
+        return err;
     if (program.function->name != "main")
         return -1;
     if (constexpr int endOfFileToken = 1; m_current < c_tokens.size() - endOfFileToken)
@@ -36,11 +34,9 @@ std::pair<FunctionNode*, i32> Parse::functionParse()
     if (!expect(Lexing::TokenType::OpenBrace))
         return {function, m_current + 1};
     auto[statement, errStatement] = statementParse();
-    if (errStatement != 0) {
-        delete statement;
-        return {function, errStatement};
-    }
     function->body = static_cast<std::unique_ptr<StatementNode>>(statement);
+    if (errStatement != 0)
+        return {function, errStatement};
     if (!expect(Lexing::TokenType::CloseBrace))
         return {function, m_current + 1};
     return {function, 0};
@@ -52,11 +48,9 @@ std::pair<StatementNode*, i32> Parse::statementParse()
     if (!expect(Lexing::TokenType::Return))
         return {statement, m_current + 1};
     auto [expression, errExpr] = expressionParse();
-    if (errExpr != 0) {
-        delete expression;
-        return {statement, m_current + 1};
-    }
     statement->expression = static_cast<std::unique_ptr<ExpressionNode>>(expression);
+    if (errExpr != 0)
+        return {statement, m_current + 1};
     if (!expect(Lexing::TokenType::Semicolon))
         return {statement, m_current + 1};
     return {statement, 0};
@@ -75,18 +69,14 @@ std::pair<ExpressionNode*, i32> Parse::expressionParse()
             --m_current;
             expression->type = ExpressionNodeType::Unary;
             auto[unaryNode, errUnary] = unaryParse();
-            if (errUnary != 0) {
-                delete unaryNode;
-                return {expression, errUnary};
-            }
             expression->value = static_cast<std::unique_ptr<UnaryNode>>(unaryNode);
+            if (errUnary != 0)
+                return {expression, errUnary};
             break;
         }
         case Lexing::TokenType::OpenParen: {
-            if (auto[innerExpression, errExpression] = expressionParse(); errExpression != 0) {
-                delete expression;
-                return {innerExpression, errExpression};
-            }
+            if (auto[expression, errExpression] = expressionParse(); errExpression != 0)
+                return {expression, errExpression};
             if (!expect(Lexing::TokenType::CloseParen))
                 return {expression, m_current + 1};
             break;
@@ -105,11 +95,9 @@ std::pair<UnaryNode*, i32> Parse::unaryParse()
         return {unaryNode, errUnaryOperator};
     unaryNode->unaryOperator = unaryOperator;
     auto[expression, errExpression] = expressionParse();
-    if (errExpression != 0) {
-        delete expression;
-        return  {unaryNode, errExpression};
-    }
     unaryNode->expression = static_cast<std::unique_ptr<ExpressionNode>>(expression);
+    if (errExpression != 0)
+        return  {unaryNode, errExpression};
     return {unaryNode, 0};
 }
 
