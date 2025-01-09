@@ -1,9 +1,9 @@
 #pragma once
 
-#ifndef ABSTRACTTREE_HPP
-#define ABSTRACTTREE_HPP
+#ifndef CC_PARSING_ABSTRACT_TREE_HPP
+#define CC_PARSING_ABSTRACT_TREE_HPP
 
-#include "../ShortTypes.hpp"
+#include "../AbbreviationsOfTypes.hpp"
 
 #include <memory>
 #include <string>
@@ -55,4 +55,4 @@ struct ExpressionNode {
 };
 } // Parsing
 
-#endif //ABSTRACTTREE_HPP
+#endif // CC_PARSING_ABSTRACT_TREE_HPP

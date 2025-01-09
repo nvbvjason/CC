@@ -22,6 +22,4 @@ TEST(Lexing, invalidNameForMain)
     ASSERT_NE(0, parser.parseProgram(program));
 }
 
-
-
 #endif //CODEGEN_HPP

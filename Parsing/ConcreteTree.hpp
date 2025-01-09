@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef CONCRETE_TREE_HPP
-#define CONCRETE_TREE_HPP
+#ifndef CC_PARSING_CONCRETE_TREE_HPP
+#define CC_PARSING_CONCRETE_TREE_HPP
 
 /*
     <program> ::= <function>
@@ -50,4 +50,4 @@ private:
 };
 } // Parsing
 
-#endif //CONCRETE_TREE_HPP
+#endif // CC_PARSING_CONCRETE_TREE_HPP

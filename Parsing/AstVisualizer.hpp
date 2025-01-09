@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef AST_VISUALIZER_HPP
-#define AST_VISUALIZER_HPP
+#ifndef CC_PARSING_AST_VISUALIZER_HPP
+#define CC_PARSING_AST_VISUALIZER_HPP
 
 #include "AbstractTree.hpp"
 
@@ -14,4 +14,4 @@ namespace Parsing {
     std::string unaryOperatorVisualizer(const UnaryOperator& unaryOperator);
 }
 
-#endif // AST_VISUALIZER_HPP
+#endif // CC_PARSING_AST_VISUALIZER_HPP

@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef AST_TO_ASSEMBLY_HPP
-#define AST_TO_ASSEMBLY_HPP
+#ifndef CC_CODEGEN_AST_TO_ASSEMBLY_HPP
+#define CC_CODEGEN_AST_TO_ASSEMBLY_HPP
 
 #include "../Parsing/ConcreteTree.hpp"
 
@@ -34,4 +34,4 @@ private:
 
 }
 
-#endif // AST_TO_ASSEMBLY_HPP
+#endif // CC_CODEGEN_AST_TO_ASSEMBLY_HPP
