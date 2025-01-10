@@ -17,7 +17,7 @@ class Assembly {
 
     const Parsing::ProgramNode* c_program;
 public:
-    Assembly(const Parsing::ProgramNode* program)
+    explicit Assembly(const Parsing::ProgramNode* program)
         : c_program(program) {}
     [[nodiscard]] i32 getOutput(std::string& output) const;
 

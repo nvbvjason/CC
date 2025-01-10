@@ -112,8 +112,8 @@ void Lexer::integer()
 {
     while (isalnum(peek()))
         advance();
-    const std::string str = c_source.substr(m_start, m_current - m_start);
-    if (!std::ranges::all_of(str,::isdigit))
+    if (const std::string str = c_source.substr(m_start, m_current - m_start);
+        !std::ranges::all_of(str,isdigit))
         addToken(TokenType::Invalid);
     const i32 value = std::stoi(c_source.substr(m_start, m_current - m_start));
     addToken(TokenType::Integer, value);

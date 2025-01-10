@@ -26,6 +26,10 @@ set(CODEGEN_FILES
         Codegen/Assembly.cpp
         Codegen/Assembly.hpp)
 
+set(TACKY_FILES
+        Tacky/AbstractTree.cpp
+        Tacky/AbstractTree.hpp)
+
 add_executable(CC_run
         main.cpp
 
@@ -35,7 +39,8 @@ add_executable(CC_run
         ShortTypes.hpp
         ${LEXING_FILES}
         ${PARSING_FILES}
-        ${CODEGEN_FILES})
+        ${CODEGEN_FILES}
+        ${TACKY_FILES})
 
 add_executable(CC_test
         test/main_test.cpp
@@ -50,7 +55,8 @@ add_executable(CC_test
         ShortTypes.hpp
         ${LEXING_FILES}
         ${PARSING_FILES}
-        ${CODEGEN_FILES})
+        ${CODEGEN_FILES}
+        ${TACKY_FILES})
 
 target_link_libraries(CC_test GTest::gtest GTest::gtest_main)
 
