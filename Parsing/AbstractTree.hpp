@@ -37,11 +37,13 @@ struct StatementNode {
 };
 
 enum class ExpressionNodeType {
-    Constant, Unary
+    Constant, Unary,
+    Invalid
 };
 
 enum class UnaryOperator {
-    Complement, Negate
+    Complement, Negate,
+    Invalid
 };
 
 struct UnaryNode {

@@ -28,7 +28,9 @@ set(CODEGEN_FILES
 
 set(TACKY_FILES
         Tacky/AbstractTree.cpp
-        Tacky/AbstractTree.hpp)
+        Tacky/AbstractTree.hpp
+        Tacky/ConcreteTree.cpp
+        Tacky/ConcreteTree.hpp)
 
 add_executable(CC_run
         main.cpp

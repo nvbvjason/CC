@@ -1,7 +1,9 @@
 #pragma once
 
-#ifndef ABSTRACTTREE_HPP
-#define ABSTRACTTREE_HPP
+#ifndef CC_TACKY_ABSTRACT_TREE_HPP
+#define CC_TACKY_ABSTRACT_TREE_HPP
+
+#include <memory>
 
 #include "../AbbreviationsOfTypes.hpp"
 
@@ -25,12 +27,12 @@ struct ValueNode;
 struct UnaryNode;
 
 struct ProgramNode {
-    FunctionNode* function;
+    std::unique_ptr<FunctionNode> function = nullptr;
 };
 
 struct FunctionNode {
     std::string identifier;
-    std::vector<ValueNode*> instructions;
+    std::vector<ValueNode> instructions;
 };
 
 enum class InstructionType {
@@ -39,8 +41,8 @@ enum class InstructionType {
 };
 
 struct InstructionNode {
-    InstructionType type;
-    std::variant<ValueNode*, UnaryNode*> value;
+    InstructionType type = InstructionType::Invalid;
+    std::variant<std::unique_ptr<ValueNode>, std::unique_ptr<UnaryNode>> value;
 };
 
 enum class UnaryOperationType {
@@ -49,30 +51,18 @@ enum class UnaryOperationType {
 };
 
 struct UnaryNode {
-    UnaryOperationType type;
-    ValueNode* source;
-    ValueNode* destination;
+    UnaryOperationType type = UnaryOperationType::Invalid;
+    std::unique_ptr<ValueNode> source = nullptr;
+    std::unique_ptr<ValueNode> destination = nullptr;
 };
 
 struct ValueNode {
     std::variant<i32, std::string> value;
+    explicit ValueNode(i32 value)
+        : value(value) {}
+    explicit ValueNode(std::string value)
+        : value(std::move(value)) {}
 };
-
-/*
-    emit_tacky(e, instructions)
-        match e with
-        | Constant(c) ->
-            return Constant(c)
-        | Unary(op, inner)
-            src =   emit_tacky(inner, instructions)
-            dst_name = make_temporary()
-            dst = Var(dst_name)
-            tacky_op = convert_unop(op)
-            instructions.append(Unary(tacky_op, src, dst))
-            return dst
-*/
-
-
 } // Tacky
 
-#endif //ABSTRACTTREE_HPP
+#endif // CC_TACKY_ABSTRACT_TREE_HPP
