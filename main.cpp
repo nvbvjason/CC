@@ -1,6 +1,9 @@
 #include "CompilerDriver.hpp"
 
 #include <filesystem>
+#include <iostream>
+
+std::filesystem::path root;
 
 void cleanUp();
 

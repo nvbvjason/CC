@@ -36,24 +36,24 @@ struct StatementNode {
     std::unique_ptr<ExpressionNode> expression = nullptr;
 };
 
-enum class ExpressionNodeType {
-    Constant, Unary,
-    Invalid
-};
-
 enum class UnaryOperator {
     Complement, Negate,
     Invalid
 };
 
 struct UnaryNode {
-    UnaryOperator unaryOperator;
+    UnaryOperator unaryOperator = UnaryOperator::Invalid;
     std::unique_ptr<ExpressionNode> expression = nullptr;
 };
 
+enum class ExpressionNodeType {
+    Constant, Unary,
+    Invalid
+};
+
 struct ExpressionNode {
-    ExpressionNodeType type;
-    std::variant<i32, std::unique_ptr<UnaryNode>> value;
+    ExpressionNodeType type = ExpressionNodeType::Invalid;
+    std::variant<i32, std::unique_ptr<ExpressionNode>, std::unique_ptr<UnaryNode>> value;
 };
 } // Parsing
 

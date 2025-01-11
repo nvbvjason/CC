@@ -11,7 +11,7 @@ i32 Parse::programParse(ProgramNode& program)
         return err;
     if (program.function->name != "main")
         return -1;
-    if (constexpr int endOfFileToken = 1; m_current < c_tokens.size() - endOfFileToken)
+    if (c_tokens[m_current].m_type != Lexing::TokenType::EndOfFile)
         return -2;
     return 0;
 }
@@ -59,10 +59,12 @@ std::pair<StatementNode*, i32> Parse::statementParse()
 std::pair<ExpressionNode*, i32> Parse::expressionParse()
 {
     auto expression = new ExpressionNode();
-    switch (Lexing::Token lexeme = advance(); lexeme.m_type) {
+    switch (const Lexing::Token lexeme = advance(); lexeme.m_type) {
         case Lexing::TokenType::Integer:
             expression->type = ExpressionNodeType::Constant;
-            expression->value = std::get<i32>(lexeme.m_data);
+            --m_current;
+            expression->value = std::stoi(lexeme.lexeme);
+            ++m_current;
             break;
         case Lexing::TokenType::Minus:
         case Lexing::TokenType::Tilde: {
@@ -75,8 +77,13 @@ std::pair<ExpressionNode*, i32> Parse::expressionParse()
             break;
         }
         case Lexing::TokenType::OpenParen: {
-            if (auto[expression, errExpression] = expressionParse(); errExpression != 0)
+            auto[innerExpression, errExpression] = expressionParse();
+            if (errExpression != 0) {
+                delete innerExpression;
                 return {expression, errExpression};
+            }
+            delete expression;
+            expression = innerExpression;
             if (!expect(Lexing::TokenType::CloseParen))
                 return {expression, m_current + 1};
             break;
@@ -112,7 +119,6 @@ std::pair<UnaryOperator, i32> Parse::unaryOperatorParse()
             unaryOperator = UnaryOperator::Complement;
             break;
         default:
-
             return {unaryOperator, m_current + 1};
     }
     return {unaryOperator, 0};

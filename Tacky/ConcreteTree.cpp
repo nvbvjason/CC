@@ -46,20 +46,20 @@ InstructionNode instructionTacky(const Parsing::ExpressionNode *expressionNode, 
             constantInstruction.value = static_cast<std::unique_ptr<ValueNode>>(returnValue);
             return constantInstruction;
         }
-        case Parsing::ExpressionNodeType::Unary: {
-            const Parsing::UnaryNode* unaryParsingNode = std::get<std::unique_ptr<Parsing::UnaryNode>>(expressionNode->value).get();
-            Parsing::ExpressionNode *inner = unaryParsingNode->expression.get();
-            instructions.push_back(instructionTacky(inner, instructions));
-            auto unaryNode = new UnaryNode();
-            unaryNode->type = convertUnaryOperation(unaryParsingNode->unaryOperator);
-            unaryNode->source = std::make_unique<ValueNode>(makeTemporaryName());
-            unaryNode->destination = std::make_unique<ValueNode>(makeTemporaryName());
-            InstructionNode instructionNode;
-            instructionNode.type = InstructionType::Unary;
-            instructionNode.value = static_cast<std::unique_ptr<UnaryNode>>(unaryNode);
-            instructions.push_back(instructionNode);
-            return instructionNode;
-        }
+        // case Parsing::ExpressionNodeType::Unary: {
+        //     const Parsing::UnaryNode* unaryParsingNode = std::get<std::unique_ptr<Parsing::UnaryNode>>(expressionNode->value).get();
+        //     Parsing::ExpressionNode *inner = unaryParsingNode->expression.get();
+        //     instructions.push_back(instructionTacky(inner, instructions));
+        //     auto unaryNode = new UnaryNode();
+        //     unaryNode->type = convertUnaryOperation(unaryParsingNode->unaryOperator);
+        //     unaryNode->source = std::make_unique<ValueNode>(makeTemporaryName());
+        //     unaryNode->destination = std::make_unique<ValueNode>(makeTemporaryName());
+        //     InstructionNode instructionNode;
+        //     instructionNode.type = InstructionType::Unary;
+        //     instructionNode.value = static_cast<std::unique_ptr<UnaryNode>>(unaryNode);
+        //     instructions.push_back(instructionNode);
+        //     return instructionNode;
+        // }
         default:
             throw std::invalid_argument("Unexpected expression type");
     }

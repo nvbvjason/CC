@@ -6,7 +6,7 @@
 #include "AbstractTree.hpp"
 
 namespace Parsing {
-    std::string astVisualizer(const Parsing::ProgramNode& programNode);
+    std::string astVisualizer(const ProgramNode& programNode);
     void functionVisualizer(i32 level, std::string& result, const FunctionNode& function);
     void expressionVisualizer(i32 level, std::string& result, const ExpressionNode& expression);
     void unaryNOdeVisualizer(i32 level, std::string& result, const UnaryNode& unary);
