@@ -3,10 +3,9 @@
 #ifndef CC_TACKY_ABSTRACT_TREE_HPP
 #define CC_TACKY_ABSTRACT_TREE_HPP
 
-#include <memory>
-
 #include "../AbbreviationsOfTypes.hpp"
 
+#include <memory>
 #include <string>
 #include <variant>
 #include <vector>
