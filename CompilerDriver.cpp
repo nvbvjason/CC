@@ -8,8 +8,11 @@
 #include <fstream>
 #include <filesystem>
 
+#include "Tacky/AbstractTree.hpp"
+
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& programNode);
+static i32 tacky(const Parsing::ProgramNode& parsingProgramNode, Tacky::ProgramNode& tackyProgramNode);
 static i32 codegen(const Parsing::ProgramNode& programNode, std::string& output);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
@@ -48,6 +51,11 @@ int CompilerDriver::run() const
         std::cout << astVisualizer(program) << '\n';
         return 0;
     }
+    Tacky::ProgramNode tackyProgram;
+    if (const i32 err = tacky(program, tackyProgram); err != 0)
+        return err;
+    if (argument == "--tacky")
+        return 0;
     std::string output;
     if (const i32 err = codegen(program, output); err != 0)
         return err;
@@ -78,6 +86,12 @@ i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& progra
     return 0;
 }
 
+i32 tacky(const Parsing::ProgramNode& parsingProgramNode, Tacky::ProgramNode& tackyProgramNode)
+{
+
+    return 1;
+}
+
 i32 codegen(const Parsing::ProgramNode& programNode, std::string &output)
 {
     const Parsing::ProgramNode* temp = &programNode;
@@ -93,7 +107,8 @@ static bool fileExists(const std::string &name)
 
 static bool isCommandLineArgumentValid(const std::string &argument)
 {
-    const std::vector<std::string> validArguments = {"",  "--printAst","--help", "-h", "--version", "--lex", "--parse", "--codegen"};
+    const std::vector<std::string> validArguments = {"",  "--printAst","--help", "-h", "--version",
+        "--lex", "--parse", "--tacky", "--codegen"};
     return std::any_of(validArguments.begin(), validArguments.end(), [&](const std::string &arg) {
         return arg == argument;
     });

@@ -31,7 +31,7 @@ struct ProgramNode {
 
 struct FunctionNode {
     std::string identifier;
-    std::vector<ValueNode> instructions;
+    std::vector<InstructionNode> instructions;
 };
 
 enum class InstructionType {
