@@ -4,41 +4,37 @@ namespace Tacky {
 static std::string makeTemporaryName();
 static UnaryOperationType convertUnaryOperation(Parsing::UnaryOperator unaryOperation);
 
-void programTacky(const Parsing::ProgramNode *parsingProgram, ProgramNode& tackyProgram)
+void programTacky(const Parsing::Program *parsingProgram, Program& tackyProgram)
 {
-    tackyProgram.function = static_cast<std::unique_ptr<FunctionNode>>(functionTacky(parsingProgram->function.get()));
+    tackyProgram.function = static_cast<std::unique_ptr<Function>>(functionTacky(parsingProgram->function.get()));
 }
 
-FunctionNode* functionTacky(const Parsing::FunctionNode* parsingFunction)
+Function* functionTacky(const Parsing::Function* parsingFunction)
 {
-    const auto functionTacky = new FunctionNode();
+    const auto functionTacky = new Function();
     functionTacky->identifier = parsingFunction->name;
-    const Parsing::ExpressionNode* parsingExpressionNode = parsingFunction->body->expression.get();
+    const Parsing::Expression* parsingExpressionNode = parsingFunction->body->expression.get();
     instructionTacky(parsingExpressionNode, functionTacky->instructions);
     return functionTacky;
 }
 
-ValueNode* instructionTacky(const Parsing::ExpressionNode *parsingExpression,
-                           std::vector<InstructionNode> &instructions)
+Value* instructionTacky(const Parsing::Expression *parsingExpression,
+                            std::vector<Instruction> &instructions)
 {
     switch (parsingExpression->type) {
-        case Parsing::ExpressionNodeType::Constant: {
-            InstructionNode constantInstruction;
-            constantInstruction.type = InstructionType::Return;
-            const auto returnValue = new ValueNode(std::get<i32>(parsingExpression->value));
-            constantInstruction.value = static_cast<std::unique_ptr<ValueNode>>(returnValue);
+        case Parsing::ExpressionType::Constant: {
+            const auto returnValue = new Value(std::get<i32>(parsingExpression->value));
             return returnValue;
         }
-        case Parsing::ExpressionNodeType::Unary: {
-            const auto unaryParsing = std::get<std::unique_ptr<Parsing::UnaryNode>>(parsingExpression->value).get();
-            const Parsing::ExpressionNode *inner = unaryParsing->expression.get();
-            const auto tackyUnary = new UnaryNode();
-            tackyUnary->type = convertUnaryOperation(unaryParsing->unaryOperator);
-            tackyUnary->source = std::make_unique<ValueNode>(makeTemporaryName());
-            tackyUnary->destination = std::make_unique<ValueNode>(makeTemporaryName());
-            InstructionNode instruction;
-            instruction.type = InstructionType::Unary;
-            instruction.value = static_cast<std::unique_ptr<UnaryNode>>(tackyUnary);
+        case Parsing::ExpressionType::Unary: {
+            const auto unaryParsing = std::get<std::unique_ptr<Parsing::Unary>>(parsingExpression->value).get();
+            const Parsing::Expression *inner = unaryParsing->expression.get();
+            Value* source = instructionTacky(inner, instructions);
+            const auto tackyUnary = new Unary();
+            tackyUnary->operation = convertUnaryOperation(unaryParsing->unaryOperator);
+            tackyUnary->source = static_cast<std::unique_ptr<Value>>(source);
+            tackyUnary->destination = std::make_unique<Value>(makeTemporaryName());
+            instructions.emplace_back(InstructionType::Unary, tackyUnary);
             return tackyUnary->destination.get();
         }
         default:

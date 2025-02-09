@@ -15,9 +15,9 @@ class Assembly {
     struct InstructionNode;
     struct OperandNode;
 
-    const Parsing::ProgramNode* c_program;
+    const Parsing::Program* c_program;
 public:
-    explicit Assembly(const Parsing::ProgramNode* program)
+    explicit Assembly(const Parsing::Program* program)
         : c_program(program) {}
     [[nodiscard]] i32 getOutput(std::string& output) const;
 
@@ -27,9 +27,9 @@ public:
     Assembly(const Assembly&) = delete;
     Assembly& operator=(const Assembly&) = delete;
 private:
-    [[nodiscard]] static std::string getFunction(const std::unique_ptr<Parsing::FunctionNode> &functionNode);
-    [[nodiscard]] static std::string getInstruction(const std::unique_ptr<Parsing::StatementNode>& returnNode);
-    [[nodiscard]] static std::string getOperand(const std::unique_ptr<Parsing::ExpressionNode>& constantNode);
+    [[nodiscard]] static std::string getFunction(const std::unique_ptr<Parsing::Function> &functionNode);
+    [[nodiscard]] static std::string getInstruction(const std::unique_ptr<Parsing::Statement>& returnNode);
+    [[nodiscard]] static std::string getOperand(const std::unique_ptr<Parsing::Expression>& constantNode);
 };
 
 }

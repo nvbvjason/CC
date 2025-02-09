@@ -1,7 +1,7 @@
 #include "AstVisualizer.hpp"
 
 namespace Parsing {
-std::string astVisualizer(const ProgramNode& programNode)
+std::string astVisualizer(const Program& programNode)
 {
     std::string result = "Program(\n";
     functionVisualizer(1, result, *programNode.function);
@@ -9,7 +9,7 @@ std::string astVisualizer(const ProgramNode& programNode)
     return result;
 }
 
-void functionVisualizer(const i32 level, std::string& result, const FunctionNode& function)
+void functionVisualizer(const i32 level, std::string& result, const Function& function)
 {
     const std::string outerLevelIdent(level, '\t');
     result += outerLevelIdent + "Function(\n";
@@ -21,23 +21,23 @@ void functionVisualizer(const i32 level, std::string& result, const FunctionNode
     result += outerLevelIdent + ")\n";
 }
 
-void expressionVisualizer(const i32 level, std::string& result, const ExpressionNode& expression)
+void expressionVisualizer(const i32 level, std::string& result, const Expression& expression)
 {
     const std::string outerLevelIdent(level, '\t');
     const std::string innerLevelIdent(level + 1, '\t');
     switch (expression.type) {
-        case ExpressionNodeType::Constant:
+        case ExpressionType::Constant:
             result += innerLevelIdent + "Constant(" + std::to_string(std::get<i32>(expression.value)) + ")\n";
             break;
-        case ExpressionNodeType::Unary:
-            unaryNOdeVisualizer(level + 1, result, *std::get<std::unique_ptr<UnaryNode>>(expression.value));
+        case ExpressionType::Unary:
+            unaryNOdeVisualizer(level + 1, result, *std::get<std::unique_ptr<Unary>>(expression.value));
             break;
         default:
             break;
     }
 }
 
-void unaryNOdeVisualizer(const i32 level, std::string& result, const UnaryNode& unary)
+void unaryNOdeVisualizer(const i32 level, std::string& result, const Unary& unary)
 {
     const std::string outerLevelIdent(level, '\t');
     result += outerLevelIdent + unaryOperatorVisualizer(unary.unaryOperator) + " (" + "\n";

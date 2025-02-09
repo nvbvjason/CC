@@ -39,7 +39,7 @@ TEST(Chpater1, parsingValid)
         Lexing::Lexer lexer(sourceCode);
         ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
         Parsing::Parse parser(lexemes);
-        Parsing::ProgramNode program;
+        Parsing::Program program;
         ASSERT_EQ(0, parser.programParse(program)) << path.path();
     }
 }
@@ -53,7 +53,7 @@ TEST(Chpater1, parsingInvalid)
         Lexing::Lexer lexer(sourceCode);
         ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
         Parsing::Parse parser(lexemes);
-        Parsing::ProgramNode program;
+        Parsing::Program program;
         ASSERT_NE(0, parser.programParse(program)) << path.path();
     }
 }
@@ -89,7 +89,7 @@ TEST(Chpater2, parsingValid)
         Lexing::Lexer lexer(sourceCode);
         ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
         Parsing::Parse parser(lexemes);
-        Parsing::ProgramNode program;
+        Parsing::Program program;
         ASSERT_EQ(0, parser.programParse(program)) << path.path();
     }
 }
@@ -104,7 +104,7 @@ TEST(Chpater2, parsingInvalid)
         if (lexer.getLexems(lexemes) != 0)
             return;
         Parsing::Parse parser(lexemes);
-        Parsing::ProgramNode program;
+        Parsing::Program program;
         ASSERT_NE(0, parser.programParse(program)) << path.path();
     }
 }

@@ -3,10 +3,10 @@
 
 namespace Parsing {
 
-i32 Parse::programParse(ProgramNode& program)
+i32 Parse::programParse(Program& program)
 {
     auto[functionNode, err] = functionParse();
-    program.function = static_cast<std::unique_ptr<FunctionNode>>(functionNode);
+    program.function = static_cast<std::unique_ptr<Function>>(functionNode);
     if (err != 0)
         return err;
     if (program.function->name != "main")
@@ -16,9 +16,9 @@ i32 Parse::programParse(ProgramNode& program)
     return 0;
 }
 
-std::pair<FunctionNode*, i32> Parse::functionParse()
+std::pair<Function*, i32> Parse::functionParse()
 {
-    const auto function = new FunctionNode();
+    const auto function = new Function();
     if (!expect(Lexing::TokenType::IntKeyword))
         return {function, m_current + 1};
     const Lexing::Token lexeme = advance();
@@ -34,7 +34,7 @@ std::pair<FunctionNode*, i32> Parse::functionParse()
     if (!expect(Lexing::TokenType::OpenBrace))
         return {function, m_current + 1};
     auto[statement, errStatement] = statementParse();
-    function->body = static_cast<std::unique_ptr<StatementNode>>(statement);
+    function->body = static_cast<std::unique_ptr<Statement>>(statement);
     if (errStatement != 0)
         return {function, errStatement};
     if (!expect(Lexing::TokenType::CloseBrace))
@@ -42,13 +42,13 @@ std::pair<FunctionNode*, i32> Parse::functionParse()
     return {function, 0};
 }
 
-std::pair<StatementNode*, i32> Parse::statementParse()
+std::pair<Statement*, i32> Parse::statementParse()
 {
-    auto statement = new StatementNode();
+    auto statement = new Statement();
     if (!expect(Lexing::TokenType::Return))
         return {statement, m_current + 1};
     auto [expression, errExpr] = expressionParse();
-    statement->expression = static_cast<std::unique_ptr<ExpressionNode>>(expression);
+    statement->expression = static_cast<std::unique_ptr<Expression>>(expression);
     if (errExpr != 0)
         return {statement, m_current + 1};
     if (!expect(Lexing::TokenType::Semicolon))
@@ -56,12 +56,12 @@ std::pair<StatementNode*, i32> Parse::statementParse()
     return {statement, 0};
 }
 
-std::pair<ExpressionNode*, i32> Parse::expressionParse()
+std::pair<Expression*, i32> Parse::expressionParse()
 {
-    auto expression = new ExpressionNode();
+    auto expression = new Expression();
     switch (const Lexing::Token lexeme = advance(); lexeme.m_type) {
         case Lexing::TokenType::Integer:
-            expression->type = ExpressionNodeType::Constant;
+            expression->type = ExpressionType::Constant;
             --m_current;
             expression->value = std::stoi(lexeme.lexeme);
             ++m_current;
@@ -69,9 +69,9 @@ std::pair<ExpressionNode*, i32> Parse::expressionParse()
         case Lexing::TokenType::Minus:
         case Lexing::TokenType::Tilde: {
             --m_current;
-            expression->type = ExpressionNodeType::Unary;
+            expression->type = ExpressionType::Unary;
             auto[unaryNode, errUnary] = unaryParse();
-            expression->value = static_cast<std::unique_ptr<UnaryNode>>(unaryNode);
+            expression->value = static_cast<std::unique_ptr<Unary>>(unaryNode);
             if (errUnary != 0)
                 return {expression, errUnary};
             break;
@@ -94,15 +94,15 @@ std::pair<ExpressionNode*, i32> Parse::expressionParse()
     return {expression, 0};
 }
 
-std::pair<UnaryNode*, i32> Parse::unaryParse()
+std::pair<Unary*, i32> Parse::unaryParse()
 {
-    auto unaryNode = new UnaryNode();
+    auto unaryNode = new Unary();
     auto[unaryOperator, errUnaryOperator] = unaryOperatorParse();
     if (errUnaryOperator != 0)
         return {unaryNode, errUnaryOperator};
     unaryNode->unaryOperator = unaryOperator;
     auto[expression, errExpression] = expressionParse();
-    unaryNode->expression = static_cast<std::unique_ptr<ExpressionNode>>(expression);
+    unaryNode->expression = static_cast<std::unique_ptr<Expression>>(expression);
     if (errExpression != 0)
         return  {unaryNode, errExpression};
     return {unaryNode, 0};

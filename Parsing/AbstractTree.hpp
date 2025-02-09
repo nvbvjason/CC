@@ -18,22 +18,22 @@
 
 namespace Parsing {
 
-struct ProgramNode;
-struct FunctionNode;
-struct StatementNode;
-struct ExpressionNode;
+struct Program;
+struct Function;
+struct Statement;
+struct Expression;
 
-struct ProgramNode {
-    std::unique_ptr<FunctionNode> function = nullptr;
+struct Program {
+    std::unique_ptr<Function> function = nullptr;
 };
 
-struct FunctionNode {
+struct Function {
     std::string name;
-    std::unique_ptr<StatementNode> body = nullptr;
+    std::unique_ptr<Statement> body = nullptr;
 };
 
-struct StatementNode {
-    std::unique_ptr<ExpressionNode> expression = nullptr;
+struct Statement {
+    std::unique_ptr<Expression> expression = nullptr;
 };
 
 enum class UnaryOperator {
@@ -41,19 +41,19 @@ enum class UnaryOperator {
     Invalid
 };
 
-struct UnaryNode {
+struct Unary {
     UnaryOperator unaryOperator = UnaryOperator::Invalid;
-    std::unique_ptr<ExpressionNode> expression = nullptr;
+    std::unique_ptr<Expression> expression = nullptr;
 };
 
-enum class ExpressionNodeType {
+enum class ExpressionType {
     Constant, Unary,
     Invalid
 };
 
-struct ExpressionNode {
-    ExpressionNodeType type = ExpressionNodeType::Invalid;
-    std::variant<i32, std::unique_ptr<ExpressionNode>, std::unique_ptr<UnaryNode>> value;
+struct Expression {
+    ExpressionType type = ExpressionType::Invalid;
+    std::variant<i32, std::unique_ptr<Expression>, std::unique_ptr<Unary>> value;
 };
 } // Parsing
 

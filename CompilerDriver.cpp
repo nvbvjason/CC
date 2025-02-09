@@ -9,11 +9,12 @@
 #include <filesystem>
 
 #include "Tacky/AbstractTree.hpp"
+#include "Tacky/ConcreteTree.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
-static i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& programNode);
-static i32 tacky(const Parsing::ProgramNode& parsingProgramNode, Tacky::ProgramNode& tackyProgramNode);
-static i32 codegen(const Parsing::ProgramNode& programNode, std::string& output);
+static i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
+static void tacky(const Parsing::Program& parsingProgram, Tacky::Program& tackyProgram);
+static void codegen(const Parsing::Program& programNode, std::string& output);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static std::string preProcess(const std::string &file);
@@ -42,7 +43,7 @@ int CompilerDriver::run() const
         return err;
     if (argument == "--lex")
         return 0;
-    Parsing::ProgramNode program;
+    Parsing::Program program;
     if (const i32 err = parse(tokens, program); err != 0)
         return err;
     if (argument == "--parse")
@@ -51,14 +52,12 @@ int CompilerDriver::run() const
         std::cout << astVisualizer(program) << '\n';
         return 0;
     }
-    Tacky::ProgramNode tackyProgram;
-    if (const i32 err = tacky(program, tackyProgram); err != 0)
-        return err;
+    Tacky::Program tackyProgram;
+    tacky(program, tackyProgram);
     if (argument == "--tacky")
         return 0;
     std::string output;
-    if (const i32 err = codegen(program, output); err != 0)
-        return err;
+    codegen(program, output);
     if (argument == "--codegen")
         return 0;
     std::string stem = std::filesystem::path(inputFile).stem();
@@ -78,7 +77,7 @@ i32 lex(std::vector<Lexing::Token> &lexemes, const std::string& inputFile)
     return 0;
 }
 
-i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& programNode)
+i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode)
 {
     Parsing::Parse parser(tokens);
     if (const i32 err = parser.programParse(programNode); err != 0)
@@ -86,17 +85,17 @@ i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::ProgramNode& progra
     return 0;
 }
 
-i32 tacky(const Parsing::ProgramNode& parsingProgramNode, Tacky::ProgramNode& tackyProgramNode)
+void tacky(const Parsing::Program& parsingProgram, Tacky::Program& tackyProgram)
 {
-
-    return 1;
+    const Parsing::Program *parsingProgramPtr = &parsingProgram;
+    programTacky(parsingProgramPtr, tackyProgram);
 }
 
-i32 codegen(const Parsing::ProgramNode& programNode, std::string &output)
+void codegen(const Parsing::Program& programNode, std::string &output)
 {
-    const Parsing::ProgramNode* temp = &programNode;
+    const Parsing::Program* temp = &programNode;
     const Codegen::Assembly astToAssembly(temp);
-    return astToAssembly.getOutput(output);
+    astToAssembly.getOutput(output);
 }
 
 static bool fileExists(const std::string &name)

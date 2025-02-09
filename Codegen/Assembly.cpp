@@ -39,7 +39,7 @@ i32 Assembly::getOutput(std::string &output) const
     return 0;
 }
 
-std::string Assembly::getFunction(const std::unique_ptr<Parsing::FunctionNode> &functionNode)
+std::string Assembly::getFunction(const std::unique_ptr<Parsing::Function> &functionNode)
 {
     std::string result = "    .globl " + functionNode->name + '\n';
     result += functionNode->name + ":\n";
@@ -49,12 +49,12 @@ std::string Assembly::getFunction(const std::unique_ptr<Parsing::FunctionNode> &
     return result;
 }
 
-std::string Assembly::getInstruction(const std::unique_ptr<Parsing::StatementNode>& returnNode)
+std::string Assembly::getInstruction(const std::unique_ptr<Parsing::Statement>& returnNode)
 {
     return std::format("    mov    ${}, %eax\n", getOperand(returnNode->expression));
 }
 
-std::string Assembly::getOperand(const std::unique_ptr<Parsing::ExpressionNode>& constantNode)
+std::string Assembly::getOperand(const std::unique_ptr<Parsing::Expression>& constantNode)
 {
     return std::to_string(std::get<i32>(constantNode->value));
 }

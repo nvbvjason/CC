@@ -27,11 +27,11 @@ public:
     Parse() = delete;
     explicit Parse(const std::vector<Lexing::Token> &c_tokens)
         : c_tokens(c_tokens) {}
-    i32 programParse(ProgramNode& program);
-    std::pair<FunctionNode*, i32> functionParse();
-    std::pair<StatementNode*, i32> statementParse();
-    std::pair<ExpressionNode*, i32> expressionParse();
-    std::pair<UnaryNode*, i32> unaryParse();
+    i32 programParse(Program& program);
+    std::pair<Function*, i32> functionParse();
+    std::pair<Statement*, i32> statementParse();
+    std::pair<Expression*, i32> expressionParse();
+    std::pair<Unary*, i32> unaryParse();
     std::pair<UnaryOperator, i32> unaryOperatorParse();
     [[nodiscard]] Lexing::Token advance()
     {

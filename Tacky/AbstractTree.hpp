@@ -19,19 +19,19 @@
 */
 
 namespace Tacky {
-struct ProgramNode;
-struct FunctionNode;
-struct InstructionNode;
-struct ValueNode;
-struct UnaryNode;
+struct Program;
+struct Function;
+struct Instruction;
+struct Value;
+struct Unary;
 
-struct ProgramNode {
-    std::unique_ptr<FunctionNode> function = nullptr;
+struct Program {
+    std::unique_ptr<Function> function = nullptr;
 };
 
-struct FunctionNode {
+struct Function {
     std::string identifier;
-    std::vector<InstructionNode> instructions;
+    std::vector<Instruction> instructions;
 };
 
 enum class InstructionType {
@@ -39,9 +39,11 @@ enum class InstructionType {
     Invalid
 };
 
-struct InstructionNode {
+struct Instruction {
     InstructionType type = InstructionType::Invalid;
-    std::variant<std::unique_ptr<ValueNode>, std::unique_ptr<UnaryNode>> value;
+    std::variant<std::unique_ptr<Value>, std::unique_ptr<Unary>> value;
+    Instruction(const InstructionType type, Unary* value)
+        : type(type), value(static_cast<std::unique_ptr<Unary>>(value)) {}
 };
 
 enum class UnaryOperationType {
@@ -49,17 +51,17 @@ enum class UnaryOperationType {
     Invalid
 };
 
-struct UnaryNode {
-    UnaryOperationType type = UnaryOperationType::Invalid;
-    std::unique_ptr<ValueNode> source = nullptr;
-    std::unique_ptr<ValueNode> destination = nullptr;
+struct Unary {
+    UnaryOperationType operation = UnaryOperationType::Invalid;
+    std::unique_ptr<Value> source = nullptr;
+    std::unique_ptr<Value> destination = nullptr;
 };
 
-struct ValueNode {
+struct Value {
     std::variant<i32, std::string> value;
-    explicit ValueNode(i32 value)
+    explicit Value(i32 value)
         : value(value) {}
-    explicit ValueNode(std::string value)
+    explicit Value(std::string value)
         : value(std::move(value)) {}
 };
 } // Tacky

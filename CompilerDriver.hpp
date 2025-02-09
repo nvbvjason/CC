@@ -22,6 +22,6 @@ public:
 };
 
 std::string getSourceCode(const std::string& inputFile);
-std::string astPrinter(const Parsing::ProgramNode &program);
+std::string astPrinter(const Parsing::Program &program);
 
 #endif // CC_PROGRAM_H
