@@ -42,7 +42,9 @@ add_executable(CC_run
         ${LEXING_FILES}
         ${PARSING_FILES}
         ${CODEGEN_FILES}
-        ${TACKY_FILES})
+        ${TACKY_FILES}
+        Codegen/AbstractTree.cpp
+        Codegen/AbstractTree.hpp)
 
 add_executable(CC_test
         test/main_test.cpp

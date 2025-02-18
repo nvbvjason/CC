@@ -18,7 +18,7 @@ static void codegen(const Parsing::Program& programNode, std::string& output);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static std::string preProcess(const std::string &file);
-static i32 assemble(const std::string& asmFile);
+static void assemble(const std::string& asmFile);
 
 int CompilerDriver::run() const
 {
