@@ -6,65 +6,73 @@ namespace Parsing {
 i32 Parse::programParse(Program& program)
 {
     auto[functionNode, err] = functionParse();
-    program.function = static_cast<std::unique_ptr<Function>>(functionNode);
+    program.function = std::unique_ptr<Function>(functionNode);
     if (err != 0)
         return err;
     if (program.function->name != "main")
-        return -1;
+        return ErrorCodes::MAIN_FUNCTION_EXPECTED;
     if (c_tokens[m_current].m_type != Lexing::TokenType::EndOfFile)
-        return -2;
+        return ErrorCodes::UNEXPECTED_TOKEN;
     return 0;
 }
 
 std::pair<Function*, i32> Parse::functionParse()
 {
-    const auto function = new Function();
+    auto function = std::make_unique<Function>();
     if (!expect(Lexing::TokenType::IntKeyword))
-        return {function, m_current + 1};
+        return {function.release(), m_current + 1};
     const Lexing::Token lexeme = advance();
     if (lexeme.m_type != Lexing::TokenType::Identifier)
-        return {function, m_current + 1};
+        return {function.release(), m_current + 1};
     function->name = lexeme.lexeme;
     if (!expect(Lexing::TokenType::OpenParen))
-        return {function, m_current + 1};
+        return {function.release(), m_current + 1};
     if (!expect(Lexing::TokenType::Void))
-        return {function, m_current + 1};
+        return {function.release(), m_current + 1};
     if (!expect(Lexing::TokenType::CloseParen))
-        return {function, m_current + 1};
+        return {function.release(), m_current + 1};
     if (!expect(Lexing::TokenType::OpenBrace))
-        return {function, m_current + 1};
+        return {function.release(), m_current + 1};
     auto[statement, errStatement] = statementParse();
     function->body = static_cast<std::unique_ptr<Statement>>(statement);
     if (errStatement != 0)
-        return {function, errStatement};
+        return {function.release(), errStatement};
     if (!expect(Lexing::TokenType::CloseBrace))
-        return {function, m_current + 1};
-    return {function, 0};
+        return {function.release(), m_current + 1};
+    return {function.release(), ErrorCodes::SUCCESS};
 }
 
 std::pair<Statement*, i32> Parse::statementParse()
 {
-    auto statement = new Statement();
+    auto statement = std::make_unique<Statement>();
     if (!expect(Lexing::TokenType::Return))
-        return {statement, m_current + 1};
-    auto [expression, errExpr] = expressionParse();
+        return {statement.release(), m_current + 1};
+    auto [expression, errExpr] = expressionParse(0);
     statement->expression = static_cast<std::unique_ptr<Expression>>(expression);
     if (errExpr != 0)
-        return {statement, m_current + 1};
+        return {statement.release(), m_current + 1};
     if (!expect(Lexing::TokenType::Semicolon))
-        return {statement, m_current + 1};
-    return {statement, 0};
+        return {statement.release(), m_current + 1};
+    return {statement.release(), 0};
 }
 
-std::pair<Expression*, i32> Parse::expressionParse()
+std::pair<Expression*, i32> Parse::expressionParse(const u16 depth)
 {
-    auto expression = new Expression();
+    constexpr u16 maxDepth = 1024;
+    if (maxDepth <= depth) {
+#ifdef DEBUG
+        std::cerr << "Recursion limit exceeded at token "
+                  << m_current << "\n";
+#endif
+        return {nullptr, ErrorCodes::RECURSION_DEPTH_EXCEEDED};
+    }
+    auto expression = std::make_unique<Expression>();
     switch (const Lexing::Token lexeme = advance(); lexeme.m_type) {
         case Lexing::TokenType::Integer:
             expression->type = ExpressionType::Constant;
             --m_current;
             expression->value = std::stoi(lexeme.lexeme);
-            ++m_current;
+            advance();
             break;
         case Lexing::TokenType::Minus:
         case Lexing::TokenType::Tilde: {
@@ -73,39 +81,38 @@ std::pair<Expression*, i32> Parse::expressionParse()
             auto[unaryNode, errUnary] = unaryParse();
             expression->value = static_cast<std::unique_ptr<Unary>>(unaryNode);
             if (errUnary != 0)
-                return {expression, errUnary};
+                return {expression.release(), errUnary};
             break;
         }
         case Lexing::TokenType::OpenParen: {
-            auto[innerExpression, errExpression] = expressionParse();
+            auto[innerExpression, errExpression] = expressionParse(depth + 1);
             if (errExpression != 0) {
                 delete innerExpression;
-                return {expression, errExpression};
+                return {expression.release(), errExpression};
             }
-            delete expression;
-            expression = innerExpression;
+            expression.reset(innerExpression);
             if (!expect(Lexing::TokenType::CloseParen))
-                return {expression, m_current + 1};
+                return {expression.release(), m_current + 1};
             break;
         }
         default:
-            return {expression, -1};
+            return {expression.release(), -1};
     }
-    return {expression, 0};
+    return {expression.release(), ErrorCodes::SUCCESS};
 }
 
 std::pair<Unary*, i32> Parse::unaryParse()
 {
-    auto unaryNode = new Unary();
+    auto unaryNode = std::make_unique<Unary>();
     auto[unaryOperator, errUnaryOperator] = unaryOperatorParse();
     if (errUnaryOperator != 0)
-        return {unaryNode, errUnaryOperator};
+        return {unaryNode.release(), errUnaryOperator};
     unaryNode->unaryOperator = unaryOperator;
-    auto[expression, errExpression] = expressionParse();
+    auto[expression, errExpression] = expressionParse(0);
     unaryNode->expression = static_cast<std::unique_ptr<Expression>>(expression);
     if (errExpression != 0)
-        return  {unaryNode, errExpression};
-    return {unaryNode, 0};
+        return  {unaryNode.release(), errExpression};
+    return {unaryNode.release(), ErrorCodes::SUCCESS};
 }
 
 std::pair<UnaryOperator, i32> Parse::unaryOperatorParse()
@@ -121,13 +128,13 @@ std::pair<UnaryOperator, i32> Parse::unaryOperatorParse()
         default:
             return {unaryOperator, m_current + 1};
     }
-    return {unaryOperator, 0};
+    return {unaryOperator, ErrorCodes::SUCCESS};
 }
 
 i32 Parse::match(const Lexing::TokenType &type)
 {
     if (type == c_tokens[m_current].m_type) {
-        ++m_current;
+        advance();
         return 0;
     }
     return m_current + 1;

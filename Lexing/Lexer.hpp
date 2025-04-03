@@ -11,13 +11,13 @@
 
 namespace Lexing {
 
-    static std::unordered_map<std::string, TokenType> keywords = {
+
+class Lexer {
+    std::unordered_map<std::string, TokenType> keywords = {
         { "return", TokenType::Return },
         { "int", TokenType::IntKeyword },
         { "void", TokenType::Void },
     };
-
-class Lexer {
     const std::string& c_source;
     i32 m_current = 0;
     i32 m_start = 0;
@@ -26,7 +26,10 @@ class Lexer {
     std::vector<Token> m_tokens;
 public:
     explicit Lexer(const std::string& input)
-        : c_source(input) {}
+        : c_source(input)
+    {
+
+    }
     [[nodiscard]] i32 getLexems(std::vector<Token>& lexemes);
 private:
     [[nodiscard]] bool isAtEnd() const { return c_source.size() <= m_current; }

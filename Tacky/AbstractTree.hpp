@@ -11,14 +11,17 @@
 #include <vector>
 
 /*
-    program = Program(function_definition)
-    function_definition = Function(identifier, instruction* body)
-    instruction = Return(val) | Unary(unary_operator, val src, val dst)
-    val = Constant(int) | Var(identifier)
-    unary_operator = Complement | Negate
+
+program = Program(function_definition)
+function_definition = Function(identifier, instruction* body)
+instruction = Return(val) | Unary(unary_operator, val src, val dst)
+val = Constant(int) | Var(identifier)
+unary_operator = Complement | Negate
+
 */
 
 namespace Tacky {
+
 struct Program;
 struct Function;
 struct Instruction;
@@ -57,7 +60,14 @@ struct Unary {
     std::unique_ptr<Value> destination = nullptr;
 };
 
+enum class ValueType {
+    Variable, Constant,
+
+    Invalid
+};
+
 struct Value {
+    ValueType type = ValueType::Invalid;
     std::variant<i32, std::string> value;
     explicit Value(i32 value)
         : value(value) {}

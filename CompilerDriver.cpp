@@ -1,6 +1,6 @@
 #include "CompilerDriver.hpp"
 #include "Lexing/Lexer.hpp"
-#include "Codegen/Assembly.hpp"
+#include "CodeGen/Assembly.hpp"
 #include "Parsing/ConcreteTree.hpp"
 #include "Parsing/AstVisualizer.hpp"
 

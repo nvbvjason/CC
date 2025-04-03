@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef ABSTRACTTREE_HPP
-#define ABSTRACTTREE_HPP
+#ifndef CC_ABSTRACTTREE_HPP
+#define CC_ABSTRACTTREE_HPP
 
 #include "../ShortTypes.hpp"
 
@@ -17,10 +17,15 @@ instruction = Mov(operand src, operand dst)
             | Allocate_stack(int)
             | Ret
 unary_operator = Neg | Not
-operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int)
+operand = Imm(int)
+        | Reg(reg)
+        | Pseudo(identifier)
+        | Stack(int)
 reg = AX | R10
 
 */
+
+namespace CodeGen {
 
 struct Program;
 struct Function;
@@ -59,7 +64,9 @@ struct Unary {
     Operand operand;
 };
 
-struct Return;
+struct Return {
+
+};
 
 enum class InstructionType {
     Mov, Unary, AllocateStack, Ret,
@@ -68,12 +75,12 @@ enum class InstructionType {
 };
 
 struct Instruction {
-    InstructionType type;
+    InstructionType type = InstructionType::Invalid;
     std::variant<Mov, Unary, i32, Return> value;
 };
 
 enum class UnaryOperator {
-    Negate, Not,
+    Neg, Not,
 
     Invalid
 };
@@ -84,4 +91,6 @@ enum class Register {
     Invalid
 };
 
-#endif //ABSTRACTTREE_HPP
+}
+
+#endif // CC_ABSTRACTTREE_HPP

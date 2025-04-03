@@ -19,11 +19,12 @@ Function* functionTacky(const Parsing::Function* parsingFunction)
 }
 
 Value* instructionTacky(const Parsing::Expression *parsingExpression,
-                            std::vector<Instruction> &instructions)
+                        std::vector<Instruction> &instructions)
 {
     switch (parsingExpression->type) {
         case Parsing::ExpressionType::Constant: {
             const auto returnValue = new Value(std::get<i32>(parsingExpression->value));
+            returnValue->type = ValueType::Constant;
             return returnValue;
         }
         case Parsing::ExpressionType::Unary: {
@@ -34,6 +35,7 @@ Value* instructionTacky(const Parsing::Expression *parsingExpression,
             tackyUnary->operation = convertUnaryOperation(unaryParsing->unaryOperator);
             tackyUnary->source = static_cast<std::unique_ptr<Value>>(source);
             tackyUnary->destination = std::make_unique<Value>(makeTemporaryName());
+            tackyUnary->destination->type = ValueType::Variable;
             instructions.emplace_back(InstructionType::Unary, tackyUnary);
             return tackyUnary->destination.get();
         }

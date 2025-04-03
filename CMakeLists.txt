@@ -23,8 +23,12 @@ set(PARSING_FILES
         Parsing/AstVisualizer.hpp)
 
 set(CODEGEN_FILES
-        Codegen/Assembly.cpp
-        Codegen/Assembly.hpp)
+        CodeGen/Assembly.cpp
+        CodeGen/Assembly.hpp
+        CodeGen/AbstractTree.cpp
+        CodeGen/AbstractTree.hpp
+        CodeGen/ConcreteTree.cpp
+        CodeGen/ConcreteTree.hpp)
 
 set(TACKY_FILES
         Tacky/AbstractTree.cpp
@@ -42,9 +46,7 @@ add_executable(CC_run
         ${LEXING_FILES}
         ${PARSING_FILES}
         ${CODEGEN_FILES}
-        ${TACKY_FILES}
-        Codegen/AbstractTree.cpp
-        Codegen/AbstractTree.hpp)
+        ${TACKY_FILES})
 
 add_executable(CC_test
         test/main_test.cpp
