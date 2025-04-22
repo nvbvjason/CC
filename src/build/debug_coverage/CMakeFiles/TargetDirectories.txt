@@ -1,4 +1,0 @@
-/home/jason/src/CC/src/build/debug_coverage/CMakeFiles/CC.dir
-/home/jason/src/CC/src/build/debug_coverage/CMakeFiles/CC_test.dir
-/home/jason/src/CC/src/build/debug_coverage/CMakeFiles/edit_cache.dir
-/home/jason/src/CC/src/build/debug_coverage/CMakeFiles/rebuild_cache.dir
