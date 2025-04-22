@@ -49,7 +49,8 @@ int CompilerDriver::run() const
     if (argument == "--parse")
         return 0;
     if (argument == "--printAst") {
-        std::cout << astVisualizer(program) << '\n';
+        Parsing::Visualizer visualizer;
+        std::cout << visualizer.visualize(program) << '\n';
         return 0;
     }
     Tacky::Program tackyProgram;

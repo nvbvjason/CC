@@ -1,48 +1,50 @@
 #include "AstVisualizer.hpp"
 
 namespace Parsing {
-std::string astVisualizer(const Program& programNode)
+
+std::string Visualizer::visualize(const Program& programNode)
 {
-    std::string result = "Program(\n";
-    functionVisualizer(1, result, *programNode.function);
-    result += ")\n";
-    return result;
+    result.clear();
+    result << "Program(\n";
+    function(*programNode.function, 1);
+    result << ")\n";
+    return result.str();
 }
 
-void functionVisualizer(const i32 level, std::string& result, const Function& function)
+void Visualizer::function(const Function& function, const i32 level)
 {
-    const std::string outerLevelIdent(level, '\t');
-    result += outerLevelIdent + "Function(\n";
-    const std::string innerLevelIdent(level + 1, '\t');
-    result += innerLevelIdent + "name=\"" + function.name + "\",\n";
-    result += innerLevelIdent + "body=Return(\n";
-    expressionVisualizer(level + 1, result, *function.body->expression);
-    result += innerLevelIdent + ")\n";
-    result += outerLevelIdent + ")\n";
+    const std::string outerLevelIdent = makeIndent(level);
+    const std::string innerLevelIdent = makeIndent(level + 1);
+    result << outerLevelIdent << "Function(\n"
+           << innerLevelIdent << "name=\"" << function.name << "\",\n"
+           << innerLevelIdent << "body=Return(\n";
+    expression(*function.body->expression, level + 1);
+    result << innerLevelIdent << ")\n"
+           << outerLevelIdent << ")\n";
 }
 
-void expressionVisualizer(const i32 level, std::string& result, const Expression& expression)
+void Visualizer::expression(const Expression& expression, const i32 level)
 {
-    const std::string outerLevelIdent(level, '\t');
-    const std::string innerLevelIdent(level + 1, '\t');
+    const std::string outerLevelIdent = makeIndent(level);
+    const std::string innerLevelIdent = makeIndent(level);
     switch (expression.type) {
         case ExpressionType::Constant:
-            result += innerLevelIdent + "Constant(" + std::to_string(std::get<i32>(expression.value)) + ")\n";
+            result << innerLevelIdent << "Constant(" << std::to_string(std::get<i32>(expression.value)) << ")\n";
             break;
         case ExpressionType::Unary:
-            unaryNOdeVisualizer(level + 1, result, *std::get<std::unique_ptr<Unary>>(expression.value));
+            unaryNode(*std::get<std::unique_ptr<Unary>>(expression.value), level + 1);
             break;
         default:
             break;
     }
 }
 
-void unaryNOdeVisualizer(const i32 level, std::string& result, const Unary& unary)
+void Visualizer::unaryNode(const Unary& unary, const i32 level)
 {
-    const std::string outerLevelIdent(level, '\t');
-    result += outerLevelIdent + unaryOperatorVisualizer(unary.unaryOperator) + " (" + "\n";
-    expressionVisualizer(level, result, *unary.expression);
-    result += outerLevelIdent + ")\n";
+    const std::string outerLevelIdent(level * indentLength, ident);
+    result << outerLevelIdent << unaryOperatorVisualizer(unary.unaryOperator) << " (" << "\n";
+    expression(*unary.expression, level + 1);
+    result << outerLevelIdent << ")\n";
 }
 
 std::string unaryOperatorVisualizer(const UnaryOperator& unaryOperator)
