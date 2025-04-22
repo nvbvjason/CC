@@ -1,0 +1,11 @@
+{
+"rules": [
+{
+"primary-output": "CMakeFiles/CC.dir/CodeGen/AbstractTree.cpp.o",
+"requires": [
+]
+}
+],
+"version": 0,
+"revision": 0
+}
