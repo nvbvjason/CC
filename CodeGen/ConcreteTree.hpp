@@ -36,7 +36,7 @@ Var(identifier)         Pseudo(identifier)
 namespace CodeGen {
 
 void programCodegen(const Tacky::Program &program, Program &programCodegen);
-Function *functionCodegen(const Tacky::Function *function);
+std::unique_ptr<Function> functionCodegen(const Tacky::Function *function);
 
 void returnInstructionCodegen(std::vector<Instruction>& instructions, const Tacky::Instruction &instruction);
 void unaryInstructionCodegen(std::vector<Instruction>& instructions, const Tacky::Instruction &instruction);

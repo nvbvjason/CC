@@ -12,22 +12,26 @@
 namespace Lexing {
 
 enum class TokenType : u16 {
+    // Bracketing Symbols
     OpenParen, CloseParen,
     OpenBrace, CloseBrace,
 
-    Semicolon, Tilde, Minus,
-
+    // Operators
+    Semicolon,
+    Tilde,
+    Minus,
     Decrement,
 
-    Return, Void,
-
+    // Keywords
+    Return,
+    Void,
     IntKeyword,
+
     Identifier,
 
     Integer,
 
     EndOfFile,
-
     Invalid
 };
 
@@ -36,11 +40,11 @@ struct Token {
     i32 m_line;
     u16 m_column;
     TokenType m_type;
-    std::string lexeme;
+    std::string m_lexeme;
     Token(const i32 line, const u16 column, const TokenType type, std::string lexeme)
-        : m_line(line), m_column(column), m_type(type), lexeme(std::move(lexeme)) {}
+        : m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
     Token(const i32 line, const u16 column, const TokenType type, std::string lexeme, const i32 value)
-        : m_data(value), m_line(line), m_column(column), m_type(type), lexeme(std::move(lexeme)) {}
+        : m_data(value), m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
     [[nodiscard]] i32 line() const { return m_line; }
     [[nodiscard]] u16 column() const { return m_column; }
     [[nodiscard]] std::string getTypeName() const;

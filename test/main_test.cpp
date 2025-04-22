@@ -15,7 +15,7 @@ TEST(Chpater1, lexingValid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
     }
 }
 
@@ -26,7 +26,7 @@ TEST(Chpater1, lexingInvalid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_NE(0, lexer.getLexems(lexemes)) << path.path();
+        ASSERT_NE(0, lexer.getLexemes(lexemes)) << path.path();
     }
 }
 
@@ -37,7 +37,7 @@ TEST(Chpater1, parsingValid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
         ASSERT_EQ(0, parser.programParse(program)) << path.path();
@@ -51,7 +51,7 @@ TEST(Chpater1, parsingInvalid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
         ASSERT_NE(0, parser.programParse(program)) << path.path();
@@ -76,7 +76,7 @@ TEST(Chpater2, lexingValid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
     }
 }
 
@@ -87,7 +87,7 @@ TEST(Chpater2, parsingValid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexems(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
         ASSERT_EQ(0, parser.programParse(program)) << path.path();
@@ -101,7 +101,7 @@ TEST(Chpater2, parsingInvalid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        if (lexer.getLexems(lexemes) != 0)
+        if (lexer.getLexemes(lexemes) != 0)
             return;
         Parsing::Parse parser(lexemes);
         Parsing::Program program;

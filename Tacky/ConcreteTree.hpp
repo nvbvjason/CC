@@ -25,8 +25,9 @@ emit_tacky(e, instructions)
 namespace Tacky {
 
 void programTacky(const Parsing::Program* parsingProgram, Program& tackyProgram);
-Function* functionTacky(const Parsing::Function* parsingFunction);
-Value* instructionTacky(const Parsing::Expression* parsingExpression, std::vector<Instruction>& instructions);
+std::unique_ptr<Function> functionTacky(const Parsing::Function* parsingFunction);
+std::unique_ptr<Value> instructionTacky(const Parsing::Expression* parsingExpression,
+                                        std::vector<Instruction>& instructions);
 } // Tacky
 
 #endif // CC_TACKY_CONCRETE_TREE_HPP

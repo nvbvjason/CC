@@ -27,7 +27,7 @@ namespace ErrorCodes {
     constexpr i32 RECURSION_DEPTH_EXCEEDED = -3;
 }
 
-class ParseError : public std::runtime_error {
+class ParseError final : public std::runtime_error {
     size_t m_position;
     Lexing::TokenType m_expected = Lexing::TokenType::Invalid;
     Lexing::TokenType m_received = Lexing::TokenType::Invalid;
@@ -62,8 +62,8 @@ public:
     std::pair<Unary*, i32> unaryParse();
     std::pair<UnaryOperator, i32> unaryOperatorParse();
 private:
-    i32 match(const Lexing::TokenType& type);
-    [[nodiscard]] Lexing::Token Parse::peek() const { return c_tokens[m_current]; }
+    size_t match(const Lexing::TokenType& type);
+    [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
     Lexing::Token advance()
     {
         if (c_tokens.size() <= m_current)

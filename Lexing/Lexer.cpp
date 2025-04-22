@@ -4,7 +4,7 @@
 
 namespace Lexing {
 
-i32 Lexer::getLexems(std::vector<Token>& lexemes)
+i32 Lexer::getLexemes(std::vector<Token>& lexemes)
 {
     while (!isAtEnd()) {
         m_start = m_current;

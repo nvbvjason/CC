@@ -6,12 +6,12 @@ namespace CodeGen {
 
 void programCodegen(const Tacky::Program &program, Program &programCodegen)
 {
-    programCodegen.function = static_cast<std::unique_ptr<Function>>(functionCodegen(program.function.get()));
+    programCodegen.function = functionCodegen(program.function.get());
 }
 
-Function *functionCodegen(const Tacky::Function *function)
+std::unique_ptr<Function> functionCodegen(const Tacky::Function *function)
 {
-    auto functionCodeGen = new Function();
+    auto functionCodeGen = std::make_unique<Function>();
     functionCodeGen->name = function->identifier;
     for (const Tacky::Instruction &instruction : function->instructions) {
         switch (instruction.type) {
@@ -57,11 +57,12 @@ void returnInstructionCodegen(std::vector<Instruction>& instructions, const Tack
     instructions.push_back(movInstruction);
     instructions.back().type = InstructionType::Mov;
     Mov mov;
-    mov.src.type = OperandType::Pseudo;
 
-    mov.src.value = std::get<std::string>(instruction.value);
+    mov.src.type = OperandType::Pseudo;
+    mov.src.value = std::get<std::string>(std::get<std::unique_ptr<Tacky::Value>>(instruction.value)->value);
     mov.dst.type = OperandType::Register;
     mov.dst.value = Register::AX;
+
     instructions.back().value = mov;
 
     Instruction returnInstruction;

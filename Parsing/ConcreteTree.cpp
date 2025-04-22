@@ -24,7 +24,7 @@ std::pair<Function*, i32> Parse::functionParse()
     const Lexing::Token lexeme = advance();
     if (lexeme.m_type != Lexing::TokenType::Identifier)
         return {function.release(), m_current + 1};
-    function->name = lexeme.lexeme;
+    function->name = lexeme.m_lexeme;
     if (!expect(Lexing::TokenType::OpenParen))
         return {function.release(), m_current + 1};
     if (!expect(Lexing::TokenType::Void))
@@ -58,8 +58,7 @@ std::pair<Statement*, i32> Parse::statementParse()
 
 std::pair<Expression*, i32> Parse::expressionParse(const u16 depth)
 {
-    constexpr u16 maxDepth = 1024;
-    if (maxDepth <= depth) {
+    if (constexpr u16 maxDepth = 1024; maxDepth <= depth) {
 #ifdef DEBUG
         std::cerr << "Recursion limit exceeded at token "
                   << m_current << "\n";
@@ -67,16 +66,13 @@ std::pair<Expression*, i32> Parse::expressionParse(const u16 depth)
         return {nullptr, ErrorCodes::RECURSION_DEPTH_EXCEEDED};
     }
     auto expression = std::make_unique<Expression>();
-    switch (const Lexing::Token lexeme = advance(); lexeme.m_type) {
+    switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case Lexing::TokenType::Integer:
             expression->type = ExpressionType::Constant;
-            --m_current;
-            expression->value = std::stoi(lexeme.lexeme);
-            advance();
+            expression->value = std::stoi(lexeme.m_lexeme);
             break;
         case Lexing::TokenType::Minus:
         case Lexing::TokenType::Tilde: {
-            --m_current;
             expression->type = ExpressionType::Unary;
             auto[unaryNode, errUnary] = unaryParse();
             expression->value = static_cast<std::unique_ptr<Unary>>(unaryNode);
@@ -85,6 +81,7 @@ std::pair<Expression*, i32> Parse::expressionParse(const u16 depth)
             break;
         }
         case Lexing::TokenType::OpenParen: {
+            advance();
             auto[innerExpression, errExpression] = expressionParse(depth + 1);
             if (errExpression != 0) {
                 delete innerExpression;
@@ -131,12 +128,12 @@ std::pair<UnaryOperator, i32> Parse::unaryOperatorParse()
     return {unaryOperator, ErrorCodes::SUCCESS};
 }
 
-i32 Parse::match(const Lexing::TokenType &type)
+size_t Parse::match(const Lexing::TokenType &type)
 {
     if (type == c_tokens[m_current].m_type) {
         advance();
         return 0;
     }
-    return m_current + 1;
+    return m_current + 1uz;
 }
 } // Parsing

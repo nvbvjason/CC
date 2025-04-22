@@ -18,7 +18,7 @@ static void codegen(const Parsing::Program& programNode, std::string& output);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static std::string preProcess(const std::string &file);
-static void assemble(const std::string& asmFile);
+static i32 assemble(const std::string& asmFile);
 
 int CompilerDriver::run() const
 {
@@ -72,7 +72,7 @@ i32 lex(std::vector<Lexing::Token> &lexemes, const std::string& inputFile)
 {
     const std::string source = preProcess(inputFile);
     Lexing::Lexer lexer(source);
-    if (const i32 err = lexer.getLexems(lexemes); err != 0)
+    if (const i32 err = lexer.getLexemes(lexemes); err != 0)
         return err;
     return 0;
 }

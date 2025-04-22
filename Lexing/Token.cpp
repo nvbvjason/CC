@@ -36,7 +36,7 @@ std::string Token::getTypeName() const
 
 std::ostream& operator<<(std::ostream& os, const Token& token)
 {
-    os << "line: " << token.line() << " column: " << token.column() << " type: " << token.getTypeName() << " lexeme: " << token.lexeme;
+    os << "line: " << token.line() << " column: " << token.column() << " type: " << token.getTypeName() << " lexeme: " << token.m_lexeme;
     return os;
 }
 
@@ -45,7 +45,7 @@ bool operator==(const Token &lhs, const Token &rhs)
     return lhs.line() == rhs.line()
         && lhs.column() == rhs.column()
         && lhs.m_type == rhs.m_type
-        && lhs.lexeme == rhs.lexeme;
+        && lhs.m_lexeme == rhs.m_lexeme;
 }
 
 bool operator!=(const Token &lhs, const Token &rhs)
