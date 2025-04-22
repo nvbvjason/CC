@@ -3,7 +3,7 @@
 #ifndef CC_ABSTRACTTREE_HPP
 #define CC_ABSTRACTTREE_HPP
 
-#include "../ShortTypes.hpp"
+#include "ShortTypes.hpp"
 
 #include <memory>
 #include <vector>

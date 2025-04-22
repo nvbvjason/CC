@@ -2,8 +2,9 @@
 
 #ifndef CC_CONCRETE_TREE_HPP
 #define CC_CONCRETE_TREE_HPP
+
 #include "AbstractTree.hpp"
-#include "../IR/AbstractTree.hpp"
+#include "IR/AbstractTree.hpp"
 
 /*
 Top-Level
@@ -35,16 +36,16 @@ Var(identifier)         Pseudo(identifier)
 
 namespace CodeGen {
 
-void programCodegen(const Tacky::Program &program, Program &programCodegen);
-std::unique_ptr<Function> functionCodegen(const Tacky::Function *function);
+void programCodegen(const IR::Program &program, Program &programCodegen);
+std::unique_ptr<Function> functionCodegen(const IR::Function *function);
 
-void returnInstructionCodegen(std::vector<Instruction>& instructions, const Tacky::Instruction &instruction);
-void unaryInstructionCodegen(std::vector<Instruction>& instructions, const Tacky::Instruction &instruction);
+void returnInstructionCodegen(std::vector<Instruction>& instructions, const IR::Instruction &instruction);
+void unaryInstructionCodegen(std::vector<Instruction>& instructions, const IR::Instruction &instruction);
 
-UnaryOperator unaryOperatorCodegen(Tacky::UnaryOperationType type);
+UnaryOperator unaryOperatorCodegen(IR::UnaryOperationType type);
 
-Operand constantOperandCodeGen(const Tacky::Value& value);
-Operand varOperandCodeGen(const Tacky::Value& value);
+Operand constantOperandCodeGen(const IR::Value& value);
+Operand varOperandCodeGen(const IR::Value& value);
 
 }
 

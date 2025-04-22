@@ -1,13 +1,12 @@
 #pragma once
 
-#ifndef CC_TACKY_ABSTRACT_TREE_HPP
-#define CC_TACKY_ABSTRACT_TREE_HPP
+#ifndef CC_IR_ABSTRACT_TREE_HPP
+#define CC_IR_ABSTRACT_TREE_HPP
 
-#include "../ShortTypes.hpp"
+#include "ShortTypes.hpp"
 
 #include <memory>
 #include <string>
-#include <variant>
 #include <vector>
 
 /*
@@ -20,7 +19,7 @@ unary_operator = Complement | Negate
 
 */
 
-namespace Tacky {
+namespace IR {
 
 struct Program;
 struct Function;
@@ -74,6 +73,6 @@ struct Value {
     explicit Value(std::string value)
         : value(std::move(value)) {}
 };
-} // Tacky
+} // IR
 
-#endif // CC_TACKY_ABSTRACT_TREE_HPP
+#endif // CC_IR_ABSTRACT_TREE_HPP

@@ -3,8 +3,7 @@
 #ifndef CC_CODEGEN_AST_TO_ASSEMBLY_HPP
 #define CC_CODEGEN_AST_TO_ASSEMBLY_HPP
 
-#include "../ShortTypes.hpp"
-#include "../Parsing/ConcreteTree.hpp"
+#include "Parsing/ConcreteTree.hpp"
 
 namespace Codegen {
 class Assembly {
@@ -17,7 +16,7 @@ class Assembly {
 public:
     explicit Assembly(const Parsing::Program* program)
         : c_program(program) {}
-    [[nodiscard]] i32 getOutput(std::string& output) const;
+    void getOutput(std::string& output) const;
 
     Assembly() = delete;
     Assembly(Assembly&&) = delete;

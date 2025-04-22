@@ -1,7 +1,7 @@
 #include "AbstractTree.hpp"
 
-namespace Tacky {
+namespace IR {
 
 
 
-} // Tacky
+} // IR

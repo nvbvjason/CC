@@ -3,7 +3,7 @@
 #ifndef CC_PARSING_ABSTRACT_TREE_HPP
 #define CC_PARSING_ABSTRACT_TREE_HPP
 
-#include "../ShortTypes.hpp"
+#include "ShortTypes.hpp"
 
 #include <memory>
 #include <string>

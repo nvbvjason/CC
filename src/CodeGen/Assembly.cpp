@@ -1,6 +1,7 @@
 #include "Assembly.hpp"
 
-#include <fstream>
+#include <string>
+#include <format>
 
 namespace Codegen {
 
@@ -33,10 +34,9 @@ struct Assembly::ProgramNode {
     FunctionNode function;
 };
 
-i32 Assembly::getOutput(std::string &output) const
+void Assembly::getOutput(std::string &output) const
 {
     output = getFunction(c_program->function);
-    return 0;
 }
 
 std::string Assembly::getFunction(const std::unique_ptr<Parsing::Function> &functionNode)

@@ -1,6 +1,8 @@
 #include "Lexer.hpp"
 
-#include <bits/ranges_algo.h>
+#include <string>
+#include <cctype>
+#include <algorithm>
 
 namespace Lexing {
 
@@ -112,8 +114,7 @@ void Lexer::integer()
 {
     while (isalnum(peek()))
         advance();
-    if (const std::string str = c_source.substr(m_start, m_current - m_start);
-        !std::ranges::all_of(str,isdigit))
+    if (const std::string str = c_source.substr(m_start, m_current - m_start); !std::ranges::all_of(str,isdigit))
         addToken(TokenType::Invalid);
     const i32 value = std::stoi(c_source.substr(m_start, m_current - m_start));
     addToken(TokenType::Integer, value);

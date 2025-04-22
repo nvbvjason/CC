@@ -14,7 +14,7 @@
 */
 
 #include "AbstractTree.hpp"
-#include "../Lexing/Token.hpp"
+#include "Lexing/Token.hpp"
 
 #include <vector>
 

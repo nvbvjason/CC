@@ -3,17 +3,16 @@
 #include "CodeGen/Assembly.hpp"
 #include "Parsing/ConcreteTree.hpp"
 #include "Parsing/AstVisualizer.hpp"
+#include "IR/AbstractTree.hpp"
+#include "IR/ConcreteTree.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 
-#include "IR/AbstractTree.hpp"
-#include "IR/ConcreteTree.hpp"
-
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
-static void tacky(const Parsing::Program& parsingProgram, Tacky::Program& tackyProgram);
+static void tacky(const Parsing::Program& parsingProgram, IR::Program& tackyProgram);
 static void codegen(const Parsing::Program& programNode, std::string& output);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
@@ -53,7 +52,7 @@ int CompilerDriver::run() const
         std::cout << visualizer.visualize(program) << '\n';
         return 0;
     }
-    Tacky::Program tackyProgram;
+    IR::Program tackyProgram;
     tacky(program, tackyProgram);
     if (argument == "--tacky")
         return 0;
@@ -86,10 +85,9 @@ i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNod
     return 0;
 }
 
-void tacky(const Parsing::Program& parsingProgram, Tacky::Program& tackyProgram)
+void tacky(const Parsing::Program& parsingProgram, IR::Program& tackyProgram)
 {
-    const Parsing::Program *parsingProgramPtr = &parsingProgram;
-    programTacky(parsingProgramPtr, tackyProgram);
+    IR::programTacky(&parsingProgram, tackyProgram);
 }
 
 void codegen(const Parsing::Program& programNode, std::string &output)

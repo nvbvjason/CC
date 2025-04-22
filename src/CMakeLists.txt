@@ -1,12 +1,3 @@
-cmake_minimum_required(VERSION 3.30)
-
-project(CC)
-
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-find_package(GTest REQUIRED)
-
 set(LEXING_FILES
         Lexing/Token.cpp
         Lexing/Token.hpp
@@ -30,40 +21,27 @@ set(CODEGEN_FILES
         CodeGen/ConcreteTree.cpp
         CodeGen/ConcreteTree.hpp)
 
-set(TACKY_FILES
+set(IR_FILES
         IR/AbstractTree.cpp
         IR/AbstractTree.hpp
         IR/ConcreteTree.cpp
         IR/ConcreteTree.hpp)
 
-add_executable(CC
+add_library(CC_lib STATIC
         main.cpp
-
         CompilerDriver.cpp
         CompilerDriver.hpp
-
         ShortTypes.hpp
         ${LEXING_FILES}
         ${PARSING_FILES}
         ${CODEGEN_FILES}
-        ${TACKY_FILES})
+        ${IR_FILES}
+)
 
-add_executable(CC_test
-        ../test/main_test.cpp
-        ../test/Lexer.cpp
-        ../test/Lexer.hpp
-        ../test/Parser.cpp
-        ../test/Parser.hpp
+target_include_directories(CC_lib PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
-        CompilerDriver.cpp
-        CompilerDriver.hpp
+add_executable(CC main.cpp)
 
-        ShortTypes.hpp
-        ${LEXING_FILES}
-        ${PARSING_FILES}
-        ${CODEGEN_FILES}
-        ${TACKY_FILES})
-
-target_link_libraries(CC_test GTest::gtest GTest::gtest_main)
-
-add_test(CC CC_test)
+target_link_libraries(CC PRIVATE CC_lib)

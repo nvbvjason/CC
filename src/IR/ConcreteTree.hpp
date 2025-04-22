@@ -1,10 +1,10 @@
 #pragma once
 
-#ifndef CC_TACKY_CONCRETE_TREE_HPP
-#define CC_TACKY_CONCRETE_TREE_HPP
+#ifndef CC_IR_CONCRETE_TREE_HPP
+#define CC_IR_CONCRETE_TREE_HPP
 
 #include "AbstractTree.hpp"
-#include "../Parsing/AbstractTree.hpp"
+#include "Parsing/AbstractTree.hpp"
 
 /*
 
@@ -22,12 +22,12 @@ emit_tacky(e, instructions)
 
 */
 
-namespace Tacky {
+namespace IR {
 
 void programTacky(const Parsing::Program* parsingProgram, Program& tackyProgram);
 std::unique_ptr<Function> functionTacky(const Parsing::Function* parsingFunction);
 std::unique_ptr<Value> instructionTacky(const Parsing::Expression* parsingExpression,
                                         std::vector<Instruction>& instructions);
-} // Tacky
+} // IR
 
-#endif // CC_TACKY_CONCRETE_TREE_HPP
+#endif // CC_IR_CONCRETE_TREE_HPP

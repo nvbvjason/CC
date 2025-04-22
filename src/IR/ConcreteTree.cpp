@@ -1,6 +1,9 @@
 #include "ConcreteTree.hpp"
 
-namespace Tacky {
+#include <stdexcept>
+
+namespace IR {
+
 static std::string makeTemporaryName();
 static UnaryOperationType convertUnaryOperation(Parsing::UnaryOperator unaryOperation);
 
@@ -63,4 +66,4 @@ UnaryOperationType convertUnaryOperation(const Parsing::UnaryOperator unaryOpera
     }
 }
 
-} // Tacky
+} // IR

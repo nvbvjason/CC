@@ -3,7 +3,7 @@
 #ifndef CC_LEXING_TOKEN_H
 #define CC_LEXING_TOKEN_H
 
-#include "../ShortTypes.hpp"
+#include "ShortTypes.hpp"
 
 #include <string>
 #include <utility>
