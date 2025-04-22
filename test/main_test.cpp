@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
-#include "../CompilerDriver.hpp"
-#include "../Lexing/Lexer.hpp"
-#include "../Parsing/ConcreteTree.hpp"
+#include "CompilerDriver.hpp"
+#include "Lexing/Lexer.hpp"
+#include "Parsing/ConcreteTree.hpp"
 
 #include <filesystem>
 #include <fstream>

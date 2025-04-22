@@ -45,3 +45,5 @@ target_include_directories(CC_lib PUBLIC
 add_executable(CC main.cpp)
 
 target_link_libraries(CC PRIVATE CC_lib)
+
+set_target_properties(CC_lib PROPERTIES PUBLIC_HEADER "${LEXING_FILES};${PARSING_FILES};${CODEGEN_FILES};${IR_FILES}")

@@ -1,5 +1,5 @@
-#include "../Lexing/Lexer.hpp"
-#include "../Lexing/Token.hpp"
+#include "Lexing/Lexer.hpp"
+#include "Lexing/Token.hpp"
 #include <gtest/gtest.h>
 
 namespace {
