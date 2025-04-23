@@ -6,97 +6,99 @@
 #include <filesystem>
 #include <fstream>
 
-const std::string testsFolderPath = "/home/jason/src/CC/writing-a-c-compiler-tests/tests/";
+namespace fs = std::filesystem;
 
-TEST(Chpater1, lexingValid)
+const fs::path testsFolderPath = fs::path(PROJECT_ROOT_DIR) / "test/external/writing-a-c-compiler-tests/tests";
+
+TEST(Chapter1, lexingValid)
 {
-    const std::string validPath = testsFolderPath + "chapter_1/valid";
+    const fs::path validPath = testsFolderPath / "chapter_1/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
     }
 }
 
-TEST(Chpater1, lexingInvalid)
+TEST(Chapter1, lexingInvalid)
 {
-    const std::string invalidPath = testsFolderPath + "chapter_1/invalid_lex";
+    const fs::path invalidPath = testsFolderPath / "chapter_1/invalid_lex";
     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_NE(0, lexer.getLexemes(lexemes)) << path.path();
+        ASSERT_NE(0, lexer.getLexemes(lexemes)) << path.path().string();
     }
 }
 
-TEST(Chpater1, parsingValid)
+TEST(Chapter1, parsingValid)
 {
-    const std::string validPath = testsFolderPath + "chapter_1/valid";
+    const fs::path validPath = testsFolderPath / "chapter_1/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
-        ASSERT_EQ(0, parser.programParse(program)) << path.path();
+        ASSERT_EQ(0, parser.programParse(program)) << path.path().string();
     }
 }
 
-TEST(Chpater1, parsingInvalid)
+TEST(Chapter1, parsingInvalid)
 {
-    const std::string invalidPath = testsFolderPath + "chapter_1/invalid_parse";
+    const fs::path invalidPath = testsFolderPath / "chapter_1/invalid_parse";
     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
-        ASSERT_NE(0, parser.programParse(program)) << path.path();
+        ASSERT_NE(0, parser.programParse(program)) << path.path().string();
     }
 }
 
-TEST(Chpater1, allvalid)
+TEST(Chapter1, allvalid)
 {
-    const std::string validPath = testsFolderPath + "chapter_1/valid";
+    const fs::path validPath = testsFolderPath / "chapter_1/valid";
     std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", ""};
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         args[1] = path.path();
         CompilerDriver program(args);
-        ASSERT_EQ(0, program.run()) << path.path();
+        ASSERT_EQ(0, program.run()) << path.path().string();
     }
 }
 
-TEST(Chpater2, lexingValid)
+TEST(Chapter2, lexingValid)
 {
-    const std::string validPath = testsFolderPath + "chapter_2/valid";
+    const fs::path validPath = testsFolderPath / "chapter_2/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
     }
 }
 
-TEST(Chpater2, parsingValid)
+TEST(Chapter2, parsingValid)
 {
-    const std::string validPath = testsFolderPath + "chapter_2/valid";
+    const fs::path validPath = testsFolderPath / "chapter_2/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path();
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
-        ASSERT_EQ(0, parser.programParse(program)) << path.path();
+        ASSERT_EQ(0, parser.programParse(program)) << path.path().string();
     }
 }
 
-TEST(Chpater2, parsingInvalid)
+TEST(Chapter2, parsingInvalid)
 {
-    const std::string validPath = testsFolderPath + "chapter_2/invalid_parse";
+    const fs::path validPath = testsFolderPath / "chapter_2/invalid_parse";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
@@ -105,7 +107,7 @@ TEST(Chpater2, parsingInvalid)
             return;
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
-        ASSERT_NE(0, parser.programParse(program)) << path.path();
+        ASSERT_NE(0, parser.programParse(program)) << path.path().string();
     }
 }
 

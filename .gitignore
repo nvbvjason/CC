@@ -5,3 +5,6 @@
 /AssemblyFiles/
 /AssemblyFiles/*
 !/AssemblyFiles/.gitkeep
+
+test/external/*
+!test/external/.gitkeep

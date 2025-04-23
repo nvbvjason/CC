@@ -2,15 +2,13 @@
 
 #include <filesystem>
 
-std::filesystem::path root;
-
 void cleanUp();
 
 int main(const int argc, char *argv[])
 {
+    cleanUp();
     const CompilerDriver program(std::vector<std::string>(argv, argv + argc));
     const i32 returnCode = program.run();
-    cleanUp();
     return returnCode;
 }
 
