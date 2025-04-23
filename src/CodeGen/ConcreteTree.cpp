@@ -16,10 +16,10 @@ std::unique_ptr<Function> function(const IR::Function *function)
     functionCodeGen->name = function->identifier;
     for (const IR::Instruction &instruction : function->instructions) {
         switch (instruction.type) {
-            case IR::InstructionType::Unary:
+            case IR::Instruction::Type::Unary:
                 unaryInstruction(functionCodeGen->instructions, instruction);
                 break;
-            case IR::InstructionType::Return:
+            case IR::Instruction::Type::Return:
                 returnInstruction(functionCodeGen->instructions, instruction);
                 break;
             default:
@@ -74,15 +74,15 @@ void returnInstruction(std::vector<Instruction>& instructions, const IR::Instruc
     instructions.back().value = ret;
 }
 
-UnaryOperator unaryOperator(const IR::UnaryOperationType type)
+UnaryOperator unaryOperator(const IR::Unary::OperationType type)
 {
     switch (type)
     {
-        case IR::UnaryOperationType::Complement:
+        case IR::Unary::OperationType::Complement:
             return UnaryOperator::Not;
-        case IR::UnaryOperationType::Negate:
+        case IR::Unary::OperationType::Negate:
             return UnaryOperator::Neg;
-        case IR::UnaryOperationType::Invalid:
+        case IR::Unary::OperationType::Invalid:
             return UnaryOperator::Invalid;
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");

@@ -42,7 +42,7 @@ std::unique_ptr<Function> function(const IR::Function *function);
 void returnInstruction(std::vector<Instruction>& instructions, const IR::Instruction &instruction);
 void unaryInstruction(std::vector<Instruction>& instructions, const IR::Instruction &instruction);
 
-UnaryOperator unaryOperator(IR::UnaryOperationType type);
+UnaryOperator unaryOperator(IR::Unary::OperationType type);
 
 Operand constantOperand(const IR::Value& value);
 Operand varOperand(const IR::Value& value);

@@ -5,7 +5,7 @@
 namespace IR {
 
 static std::string makeTemporaryName();
-static UnaryOperationType convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
+static Unary::OperationType convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 
 void programTacky(const Parsing::Program *parsingProgram, Program& tackyProgram)
 {
@@ -26,15 +26,15 @@ Value instructionTacky(const Parsing::Expr *parsingExpr,
 {
     if (const auto constant = dynamic_cast<const Parsing::ConstantExpr*>(parsingExpr)) {
         Value returnValue(constant->value);
-        returnValue.type = ValueType::Constant;
+        returnValue.type = Value::Type::Constant;
         return returnValue;
     }
     if (auto* unaryParsing = dynamic_cast<const Parsing::UnaryExpr*>(parsingExpr)) {
         const Parsing::Expr *inner = unaryParsing->operand.get();
         Value source = instructionTacky(inner, instructions);
-        UnaryOperationType operation = convertUnaryOperation(unaryParsing->op);
+        Unary::OperationType operation = convertUnaryOperation(unaryParsing->op);
         Value destination(makeTemporaryName());
-        destination.type = ValueType::Variable;
+        destination.type = Value::Type::Variable;
         instructions.emplace_back(operation, source, destination);
         return destination;
     }
@@ -49,13 +49,13 @@ std::string makeTemporaryName()
     return result;
 }
 
-UnaryOperationType convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
+Unary::OperationType convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
 {
     switch (unaryOperation) {
         case Parsing::UnaryExpr::Operator::Complement:
-            return UnaryOperationType::Complement;
+            return Unary::OperationType::Complement;
         case Parsing::UnaryExpr::Operator::Negate:
-            return UnaryOperationType::Negate;
+            return Unary::OperationType::Negate;
         default:
             throw std::invalid_argument("Invalid unary operation");
     }

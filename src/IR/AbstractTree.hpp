@@ -4,13 +4,12 @@
 #define CC_IR_ABSTRACT_TREE_HPP
 
 #include "ShortTypes.hpp"
+#include "AbstractTree.hpp"
 
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "AbstractTree.hpp"
 
 /*
 
@@ -30,14 +29,12 @@ struct Instruction;
 struct Value;
 struct Unary;
 
-enum class ValueType {
-    Variable, Constant,
-
-    Invalid
-};
-
 struct Value {
-    ValueType type = ValueType::Invalid;
+    enum class Type {
+        Variable, Constant,
+        Invalid
+    };
+    Type type = Type::Invalid;
     std::variant<i32, std::string> value;
     explicit Value(i32 value)
         : value(value) {}
@@ -45,16 +42,15 @@ struct Value {
         : value(std::move(value)) {}
 };
 
-enum class UnaryOperationType {
-    Complement, Negate,
-    Invalid
-};
-
 struct Unary {
-    UnaryOperationType operation = UnaryOperationType::Invalid;
+    enum class OperationType {
+        Complement, Negate,
+        Invalid
+    };
+    OperationType operation = OperationType::Invalid;
     Value source;
     Value destination;
-    Unary(const UnaryOperationType operation, Value source, Value destination)
+    Unary(const OperationType operation, Value source, Value destination)
         : operation(operation), source(std::move(source)), destination(std::move(destination)) {}
 };
 
@@ -67,18 +63,17 @@ struct Function {
     std::vector<Instruction> instructions;
 };
 
-enum class InstructionType {
-    Return, Unary,
-    Invalid
-};
-
 struct Instruction {
-    InstructionType type = InstructionType::Invalid;
+    enum class Type {
+        Return, Unary,
+        Invalid
+    };
+    Type type = Type::Invalid;
     std::variant<std::unique_ptr<Value>, std::unique_ptr<Unary>> value;
     explicit Instruction(const Value& v)
-        : type(InstructionType::Return), value(std::make_unique<Value>(v)) {}
-    Instruction(const UnaryOperationType type, const Value& src, const Value& dst)
-        : type(InstructionType::Unary), value(std::make_unique<Unary>(type, src, dst)) {}
+        : type(Type::Return), value(std::make_unique<Value>(v)) {}
+    Instruction(const Unary::OperationType type, const Value& src, const Value& dst)
+        : type(Type::Unary), value(std::make_unique<Unary>(type, src, dst)) {}
 };
 
 } // IR

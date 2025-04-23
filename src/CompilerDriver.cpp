@@ -12,7 +12,7 @@
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
-static void tacky(const Parsing::Program& parsingProgram, IR::Program& tackyProgram);
+static void ir(const Parsing::Program& parsingProgram, IR::Program& irProgram);
 static void codegen(const Parsing::Program& programNode, std::string& output);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
@@ -52,8 +52,8 @@ int CompilerDriver::run() const
         std::cout << visualizer.visualize(program) << '\n';
         return 0;
     }
-    IR::Program tackyProgram;
-    tacky(program, tackyProgram);
+    IR::Program irProgram;
+    ir(program, irProgram);
     if (argument == "--tacky")
         return 0;
     std::string output;
@@ -85,9 +85,9 @@ bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNo
     return true;
 }
 
-void tacky(const Parsing::Program& parsingProgram, IR::Program& tackyProgram)
+void ir(const Parsing::Program& parsingProgram, IR::Program& irProgram)
 {
-    IR::programTacky(&parsingProgram, tackyProgram);
+    IR::programTacky(&parsingProgram, irProgram);
 }
 
 void codegen(const Parsing::Program& programNode, std::string &output)
