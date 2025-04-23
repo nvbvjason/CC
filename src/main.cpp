@@ -14,6 +14,7 @@ int main(const int argc, char *argv[])
 
 void cleanUp()
 {
-    for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))
+    const std::filesystem::path generatedDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";
+    for (const auto& entry : std::filesystem::directory_iterator(generatedDir))
         remove_all(entry.path());
 }

@@ -122,22 +122,26 @@ std::string getSourceCode(const std::string &inputFile)
 static std::string preProcess(const std::string &file)
 {
     const std::filesystem::path inputFile(file);
+    const std::filesystem::path generatedFilesDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";
+    const std::filesystem::path generatedFile = generatedFilesDir / (inputFile.stem().string() + ".i");
     std::string command = "gcc -E -P ";
     command += inputFile.string();
     command += " -o ";
-    const std::string generatedFilesDir = "/home/jason/src/CC/generated_files/";
-    const std::string generatedFileName = generatedFilesDir + inputFile.stem().string() + ".i";
-    command += generatedFileName;
+    command += generatedFile.string();
     system(command.c_str());
-    return getSourceCode(generatedFileName);
+    return getSourceCode(generatedFile.string());
 }
 
 i32 assemble(const std::string &asmFile)
 {
-    std::string stem = std::filesystem::path().stem();
-    const std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
-    std::ofstream ofs(outputFileName);
+    const auto outputDir = std::filesystem::path(PROJECT_ROOT_DIR) / "AssemblyFiles";
+    std::filesystem::create_directories(outputDir);
+    const auto outputFile = outputDir / std::format("{}.s", std::filesystem::path(asmFile).stem().string());
+    std::ofstream ofs(outputFile);
+    if (!ofs) {
+        std::cerr << std::format("Error writing to {}\n", outputFile.string());
+        return -1;
+    }
     ofs << asmFile;
-    ofs.close();
     return 0;
 }
