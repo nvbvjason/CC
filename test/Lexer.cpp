@@ -18,6 +18,7 @@ namespace {
     std::vector<Lexing::Token> runLexerTest(const std::string& input) {
         Lexing::Lexer lexer(input);
         std::vector<Lexing::Token> tokens;
+        lexer.getLexemes(tokens);
         return tokens;
     }
 }
@@ -25,7 +26,7 @@ namespace {
 TEST(LexerTests, GetTokens) {
     auto tokens = runLexerTest(BASIC_PROGRAM);
 
-    ASSERT_EQ(tokens.size(), 10);
+    ASSERT_EQ(tokens.size(), 11);
 
     const Lexing::Token expected[] = {
         {1, 1, Lexing::TokenType::IntKeyword, "int"},
@@ -37,7 +38,8 @@ TEST(LexerTests, GetTokens) {
         {3, 5, Lexing::TokenType::Return, "return"},
         {3, 12, Lexing::TokenType::Integer, "100"},
         {3, 15, Lexing::TokenType::Semicolon, ";"},
-        {4, 1, Lexing::TokenType::CloseBrace, "}"}
+        {4, 1, Lexing::TokenType::CloseBrace, "}"},
+        {4, 2, Lexing::TokenType::EndOfFile, ""}
     };
 
     for(size_t i = 0; i < tokens.size(); ++i) {
@@ -47,7 +49,7 @@ TEST(LexerTests, GetTokens) {
 
 TEST(LexerTests, MultiLineComment) {
     auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);
-    EXPECT_TRUE(tokens.empty());
+    EXPECT_TRUE(tokens.size() == 1);
 }
 
 TEST(LexerTests, InvalidInput) {

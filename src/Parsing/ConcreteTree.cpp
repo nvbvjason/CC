@@ -70,6 +70,7 @@ std::pair<Expression*, i32> Parse::expressionParse(const u16 depth)
         case Lexing::TokenType::Integer:
             expression->type = ExpressionType::Constant;
             expression->value = std::stoi(lexeme.m_lexeme);
+            advance();
             break;
         case Lexing::TokenType::Minus:
         case Lexing::TokenType::Tilde: {

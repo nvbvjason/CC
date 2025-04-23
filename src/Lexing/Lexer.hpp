@@ -30,7 +30,7 @@ public:
     {
 
     }
-    [[nodiscard]] i32 getLexemes(std::vector<Token>& lexemes);
+    i32 getLexemes(std::vector<Token>& lexemes);
 private:
     [[nodiscard]] bool isAtEnd() const { return c_source.size() <= m_current; }
     [[nodiscard]] char peek() const;
