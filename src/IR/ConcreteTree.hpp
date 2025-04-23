@@ -26,8 +26,8 @@ namespace IR {
 
 void programTacky(const Parsing::Program* parsingProgram, Program& tackyProgram);
 std::unique_ptr<Function> functionTacky(const Parsing::Function* parsingFunction);
-std::unique_ptr<Value> instructionTacky(const Parsing::Expr* parsingExpression,
-                                        std::vector<Instruction>& instructions);
+Value instructionTacky(const Parsing::Expr* parsingExpression,
+                       std::vector<Instruction>& instructions);
 } // IR
 
 #endif // CC_IR_CONCRETE_TREE_HPP

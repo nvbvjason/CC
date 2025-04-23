@@ -17,27 +17,26 @@ std::unique_ptr<Function> functionTacky(const Parsing::Function* parsingFunction
     auto functionTacky = std::make_unique<Function>();
     functionTacky->identifier = parsingFunction->name;
     const Parsing::Expr* parsingExpressionNode = parsingFunction->body->expression.get();
-    instructionTacky(parsingExpressionNode, functionTacky->instructions);
+    functionTacky->instructions.emplace_back(instructionTacky(parsingExpressionNode, functionTacky->instructions));
     return functionTacky;
 }
 
-std::unique_ptr<Value> instructionTacky(const Parsing::Expr *parsingExpr,
-                                        std::vector<Instruction> &instructions)
+Value instructionTacky(const Parsing::Expr *parsingExpr,
+                       std::vector<Instruction> &instructions)
 {
     if (const auto constant = dynamic_cast<const Parsing::ConstantExpr*>(parsingExpr)) {
-        auto returnValue = std::make_unique<Value>(constant->value);
-        returnValue->type = ValueType::Constant;
+        Value returnValue(constant->value);
+        returnValue.type = ValueType::Constant;
         return returnValue;
     }
     if (auto* unaryParsing = dynamic_cast<const Parsing::UnaryExpr*>(parsingExpr)) {
         const Parsing::Expr *inner = unaryParsing->operand.get();
-        const auto tackyUnary = new Unary();
-        tackyUnary->source = instructionTacky(inner, instructions);
-        tackyUnary->operation = convertUnaryOperation(unaryParsing->op);
-        tackyUnary->destination = std::make_unique<Value>(makeTemporaryName());
-        tackyUnary->destination->type = ValueType::Variable;
-        instructions.emplace_back(InstructionType::Unary, tackyUnary);
-        return std::move(tackyUnary->destination);
+        Value source = instructionTacky(inner, instructions);
+        UnaryOperationType operation = convertUnaryOperation(unaryParsing->op);
+        Value destination(makeTemporaryName());
+        destination.type = ValueType::Variable;
+        instructions.emplace_back(operation, source, destination);
+        return destination;
     }
     throw std::invalid_argument("Unexpected expression type");
 }

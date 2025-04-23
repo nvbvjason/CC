@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef CC_PROGRAM_H
-#define CC_PROGRAM_H
+#ifndef CC_PROGRAM_HPP
+#define CC_PROGRAM_HPP
 
 #include "Parsing/ConcreteTree.hpp"
 
@@ -24,4 +24,4 @@ public:
 std::string getSourceCode(const std::string& inputFile);
 std::string astPrinter(const Parsing::Program &program);
 
-#endif // CC_PROGRAM_H
+#endif // CC_PROGRAM_HPP

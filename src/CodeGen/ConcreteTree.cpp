@@ -5,22 +5,22 @@
 
 namespace CodeGen {
 
-void programCodegen(const IR::Program &program, Program &programCodegen)
+void program(const IR::Program &program, Program &programCodegen)
 {
-    programCodegen.function = functionCodegen(program.function.get());
+    programCodegen.function = function(program.function.get());
 }
 
-std::unique_ptr<Function> functionCodegen(const IR::Function *function)
+std::unique_ptr<Function> function(const IR::Function *function)
 {
     auto functionCodeGen = std::make_unique<Function>();
     functionCodeGen->name = function->identifier;
     for (const IR::Instruction &instruction : function->instructions) {
         switch (instruction.type) {
             case IR::InstructionType::Unary:
-                unaryInstructionCodegen(functionCodeGen->instructions, instruction);
+                unaryInstruction(functionCodeGen->instructions, instruction);
                 break;
             case IR::InstructionType::Return:
-                returnInstructionCodegen(functionCodeGen->instructions, instruction);
+                returnInstruction(functionCodeGen->instructions, instruction);
                 break;
             default:
                 throw std::runtime_error("Unsupported instruction type");
@@ -29,7 +29,7 @@ std::unique_ptr<Function> functionCodegen(const IR::Function *function)
     return functionCodeGen;
 }
 
-void unaryInstructionCodegen(std::vector<Instruction>& instructions, const IR::Instruction &instruction)
+void unaryInstruction(std::vector<Instruction>& instructions, const IR::Instruction &instruction)
 {
     Instruction movInstruction;
     instructions.push_back(movInstruction);
@@ -37,22 +37,23 @@ void unaryInstructionCodegen(std::vector<Instruction>& instructions, const IR::I
     Mov mov;
     mov.src.type = OperandType::Pseudo;
     auto tackyUnary = std::get<std::unique_ptr<IR::Unary>>(instruction.value).get();
-    mov.src.value = std::get<std::string>(tackyUnary->source->value);
+    mov.src.value = std::get<std::string>(tackyUnary->source.value);
     mov.dst.type = OperandType::Pseudo;
-    mov.dst.value = std::get<std::string>(tackyUnary->destination->value);
+    mov.dst.value = std::get<std::string>(tackyUnary->destination.value);
     instructions.back().value = mov;
 
     Instruction unaryInstruction;
+
     instructions.push_back(unaryInstruction);
     instructions.back().type = InstructionType::Unary;
     Unary unary;
-    unary.oper = unaryOperatorCodegen(tackyUnary->operation);
+    unary.oper = unaryOperator(tackyUnary->operation);
     unary.operand.type = OperandType::Pseudo;
-    unary.operand.value = std::get<std::string>(tackyUnary->destination->value);
+    unary.operand.value = std::get<std::string>(tackyUnary->destination.value);
     instructions.back().value = unary;
 }
 
-void returnInstructionCodegen(std::vector<Instruction>& instructions, const IR::Instruction &instruction)
+void returnInstruction(std::vector<Instruction>& instructions, const IR::Instruction &instruction)
 {
     Instruction movInstruction;
     instructions.push_back(movInstruction);
@@ -73,7 +74,7 @@ void returnInstructionCodegen(std::vector<Instruction>& instructions, const IR::
     instructions.back().value = ret;
 }
 
-UnaryOperator unaryOperatorCodegen(const IR::UnaryOperationType type)
+UnaryOperator unaryOperator(const IR::UnaryOperationType type)
 {
     switch (type)
     {
@@ -83,11 +84,12 @@ UnaryOperator unaryOperatorCodegen(const IR::UnaryOperationType type)
             return UnaryOperator::Neg;
         case IR::UnaryOperationType::Invalid:
             return UnaryOperator::Invalid;
+        default:
+            throw std::invalid_argument("Invalid UnaryOperator type");
     }
-    throw std::invalid_argument("Invalid UnaryOperator type");
 }
 
-Operand constantOperandCodeGen(const IR::Value& value)
+Operand constantOperand(const IR::Value& value)
 {
     Operand result;
     result.type = OperandType::Imm;
@@ -95,7 +97,7 @@ Operand constantOperandCodeGen(const IR::Value& value)
     return result;
 }
 
-Operand varOperandCodeGen(const IR::Value& value)
+Operand varOperand(const IR::Value& value)
 {
     Operand result;
     result.type = OperandType::Pseudo;

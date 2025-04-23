@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef CC_LEXING_LEXER_H
-#define CC_LEXING_LEXER_H
+#ifndef CC_LEXING_LEXER_HPP
+#define CC_LEXING_LEXER_HPP
 
 #include "Token.hpp"
 
@@ -26,10 +26,7 @@ class Lexer {
     };
 public:
     explicit Lexer(const std::string& input)
-        : c_source(input)
-    {
-
-    }
+        : c_source(input) { }
     i32 getLexemes(std::vector<Token>& lexemes);
 private:
     [[nodiscard]] bool isAtEnd() const { return c_source.size() <= m_current; }
@@ -49,4 +46,4 @@ private:
 
 }
 
-#endif // CC_LEXING_LEXER_H
+#endif // CC_LEXING_LEXER_HPP
