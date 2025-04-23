@@ -21,7 +21,7 @@ unary_operator = Complement | Negate
 
 */
 
-namespace IR {
+namespace Ir {
 
 struct Program;
 struct Function;
@@ -43,14 +43,14 @@ struct Value {
 };
 
 struct Unary {
-    enum class OperationType {
+    enum class Operation {
         Complement, Negate,
         Invalid
     };
-    OperationType operation = OperationType::Invalid;
+    Operation operation = Operation::Invalid;
     Value source;
     Value destination;
-    Unary(const OperationType operation, Value source, Value destination)
+    Unary(const Operation operation, Value source, Value destination)
         : operation(operation), source(std::move(source)), destination(std::move(destination)) {}
 };
 
@@ -72,7 +72,7 @@ struct Instruction {
     std::variant<std::unique_ptr<Value>, std::unique_ptr<Unary>> value;
     explicit Instruction(const Value& v)
         : type(Type::Return), value(std::make_unique<Value>(v)) {}
-    Instruction(const Unary::OperationType type, const Value& src, const Value& dst)
+    Instruction(const Unary::Operation type, const Value& src, const Value& dst)
         : type(Type::Unary), value(std::make_unique<Unary>(type, src, dst)) {}
 };
 

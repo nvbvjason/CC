@@ -1,6 +1,6 @@
 #include "AbstractTree.hpp"
 
-namespace IR {
+namespace Ir {
 
 
 

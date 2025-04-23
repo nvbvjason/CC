@@ -27,15 +27,20 @@ void Visualizer::expression(const Expr& expr, const i32 level)
 {
     const std::string outerLevelIdent = makeIndent(level);
     const std::string innerLevelIdent = makeIndent(level);
-    if (auto* constant = dynamic_cast<const ConstantExpr*>(&expr)) {
-        result << innerLevelIdent << "Constant(" << std::to_string(constant->value) << ")\n";
-        return;
+    switch (expr.kind) {
+        case Expr::Kind::Constant: {
+            const auto constant = dynamic_cast<const ConstantExpr*>(&expr);
+            result << innerLevelIdent << "Constant(" << std::to_string(constant->value) << ")\n";
+            return;
+        }
+        case Expr::Kind::Unary: {
+            const auto unary = dynamic_cast<const UnaryExpr*>(&expr);
+            unaryNode(*unary, level + 1);
+            return;
+        }
+        default:
+            result << innerLevelIdent << "Unknow Expression(\n";
     }
-    if (auto* unary = dynamic_cast<const UnaryExpr*>(&expr)) {
-        unaryNode(*unary, level + 1);
-        return;
-    }
-    result << innerLevelIdent << "Unknow Expression(\n";
 }
 
 void Visualizer::unaryNode(const UnaryExpr& unary, const i32 level)

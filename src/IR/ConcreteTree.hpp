@@ -22,12 +22,17 @@ emit_tacky(e, instructions)c
 
 */
 
-namespace IR {
+namespace Ir {
 
-void programTacky(const Parsing::Program* parsingProgram, Program& tackyProgram);
-std::unique_ptr<Function> functionTacky(const Parsing::Function* parsingFunction);
-Value instructionTacky(const Parsing::Expr* parsingExpression,
-                       std::vector<Instruction>& instructions);
+void program(const Parsing::Program* parsingProgram, Program& tackyProgram);
+std::unique_ptr<Function> function(const Parsing::Function* parsingFunction);
+
+Value instruction(const Parsing::Expr* parsingExpr,
+                  std::vector<Instruction>& instructions);
+Value unaryInstruction(const Parsing::Expr *parsingExpr, std::vector<Instruction> &instructions);
+Value returnInstruction(const Parsing::Expr *parsingExpr);
+
+
 } // IR
 
 #endif // CC_IR_CONCRETE_TREE_HPP

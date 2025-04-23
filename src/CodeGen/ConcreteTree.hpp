@@ -36,16 +36,16 @@ Var(identifier)         Pseudo(identifier)
 
 namespace CodeGen {
 
-void program(const IR::Program &program, Program &programCodegen);
-std::unique_ptr<Function> function(const IR::Function *function);
+void program(const Ir::Program &program, Program &programCodegen);
+std::unique_ptr<Function> function(const Ir::Function *function);
 
-void returnInstruction(std::vector<Instruction>& instructions, const IR::Instruction &instruction);
-void unaryInstruction(std::vector<Instruction>& instructions, const IR::Instruction &instruction);
+void returnInstruction(std::vector<Instruction>& instructions, const Ir::Instruction &instruction);
+void unaryInstruction(std::vector<Instruction>& instructions, const Ir::Instruction &instruction);
 
-UnaryOperator unaryOperator(IR::Unary::OperationType type);
+UnaryOperator unaryOperator(Ir::Unary::Operation type);
 
-Operand constantOperand(const IR::Value& value);
-Operand varOperand(const IR::Value& value);
+Operand constantOperand(const Ir::Value& value);
+Operand varOperand(const Ir::Value& value);
 
 }
 

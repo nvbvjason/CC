@@ -5,21 +5,21 @@
 
 namespace CodeGen {
 
-void program(const IR::Program &program, Program &programCodegen)
+void program(const Ir::Program &program, Program &programCodegen)
 {
     programCodegen.function = function(program.function.get());
 }
 
-std::unique_ptr<Function> function(const IR::Function *function)
+std::unique_ptr<Function> function(const Ir::Function *function)
 {
     auto functionCodeGen = std::make_unique<Function>();
     functionCodeGen->name = function->identifier;
-    for (const IR::Instruction &instruction : function->instructions) {
+    for (const Ir::Instruction &instruction : function->instructions) {
         switch (instruction.type) {
-            case IR::Instruction::Type::Unary:
+            case Ir::Instruction::Type::Unary:
                 unaryInstruction(functionCodeGen->instructions, instruction);
                 break;
-            case IR::Instruction::Type::Return:
+            case Ir::Instruction::Type::Return:
                 returnInstruction(functionCodeGen->instructions, instruction);
                 break;
             default:
@@ -29,14 +29,14 @@ std::unique_ptr<Function> function(const IR::Function *function)
     return functionCodeGen;
 }
 
-void unaryInstruction(std::vector<Instruction>& instructions, const IR::Instruction &instruction)
+void unaryInstruction(std::vector<Instruction>& instructions, const Ir::Instruction &instruction)
 {
     Instruction movInstruction;
     instructions.push_back(movInstruction);
     instructions.back().type = InstructionType::Mov;
     Mov mov;
     mov.src.type = OperandType::Pseudo;
-    auto tackyUnary = std::get<std::unique_ptr<IR::Unary>>(instruction.value).get();
+    auto tackyUnary = std::get<std::unique_ptr<Ir::Unary>>(instruction.value).get();
     mov.src.value = std::get<std::string>(tackyUnary->source.value);
     mov.dst.type = OperandType::Pseudo;
     mov.dst.value = std::get<std::string>(tackyUnary->destination.value);
@@ -53,7 +53,7 @@ void unaryInstruction(std::vector<Instruction>& instructions, const IR::Instruct
     instructions.back().value = unary;
 }
 
-void returnInstruction(std::vector<Instruction>& instructions, const IR::Instruction &instruction)
+void returnInstruction(std::vector<Instruction>& instructions, const Ir::Instruction &instruction)
 {
     Instruction movInstruction;
     instructions.push_back(movInstruction);
@@ -61,7 +61,7 @@ void returnInstruction(std::vector<Instruction>& instructions, const IR::Instruc
     Mov mov;
 
     mov.src.type = OperandType::Pseudo;
-    mov.src.value = std::get<std::string>(std::get<std::unique_ptr<IR::Value>>(instruction.value)->value);
+    mov.src.value = std::get<std::string>(std::get<std::unique_ptr<Ir::Value>>(instruction.value)->value);
     mov.dst.type = OperandType::Register;
     mov.dst.value = Register::AX;
 
@@ -74,22 +74,22 @@ void returnInstruction(std::vector<Instruction>& instructions, const IR::Instruc
     instructions.back().value = ret;
 }
 
-UnaryOperator unaryOperator(const IR::Unary::OperationType type)
+UnaryOperator unaryOperator(const Ir::Unary::Operation type)
 {
     switch (type)
     {
-        case IR::Unary::OperationType::Complement:
+        case Ir::Unary::Operation::Complement:
             return UnaryOperator::Not;
-        case IR::Unary::OperationType::Negate:
+        case Ir::Unary::Operation::Negate:
             return UnaryOperator::Neg;
-        case IR::Unary::OperationType::Invalid:
+        case Ir::Unary::Operation::Invalid:
             return UnaryOperator::Invalid;
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");
     }
 }
 
-Operand constantOperand(const IR::Value& value)
+Operand constantOperand(const Ir::Value& value)
 {
     Operand result;
     result.type = OperandType::Imm;
@@ -97,7 +97,7 @@ Operand constantOperand(const IR::Value& value)
     return result;
 }
 
-Operand varOperand(const IR::Value& value)
+Operand varOperand(const Ir::Value& value)
 {
     Operand result;
     result.type = OperandType::Pseudo;
