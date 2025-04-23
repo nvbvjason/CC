@@ -1,4 +1,6 @@
 #include "ConcreteTree.hpp"
+
+#include "IR/AbstractTree.hpp"
 #include "Lexing/Token.hpp"
 
 namespace Parsing {
@@ -45,73 +47,59 @@ bool Parse::statementParse(Statement& statement)
 {
     if (!expect(Lexing::TokenType::Return))
         return false;
-    Expression expression;
-    if (!expressionParse(expression))
+    std::unique_ptr<Expr> expr = expressionParse();
+    if (expr == nullptr)
         return false;
-    statement.expression = std::make_unique<Expression>(std::move(expression));
+    statement.expression = std::move(expr);
     if (!expect(Lexing::TokenType::Semicolon))
         return false;
     return true;
 }
 
-bool Parse::expressionParse(Expression& expression)
+std::unique_ptr<Expr> Parse::expressionParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
-        case Lexing::TokenType::Integer:
-            expression.type = ExpressionType::Constant;
-            expression.value = std::stoi(lexeme.m_lexeme);
+        case Lexing::TokenType::Integer: {
+            auto constantExpr = std::make_unique<ConstantExpr>(std::stoi(lexeme.m_lexeme));
             if (advance().m_type == Lexing::TokenType::EndOfFile)
-                return false;
-            break;
-        case Lexing::TokenType::Minus:
-        case Lexing::TokenType::Tilde: {
-            expression.type = ExpressionType::Unary;
-            Unary unaryNode;
-            if (!unaryParse(unaryNode))
-                return false;
-            expression.value = std::make_unique<Unary>(std::move(unaryNode));
-            break;
+                return nullptr;
+            return constantExpr;
         }
+        case Lexing::TokenType::Minus:
+        case Lexing::TokenType::Tilde:
+            return unaryParse();
         case Lexing::TokenType::OpenParen: {
             if (advance().m_type == Lexing::TokenType::EndOfFile)
-                return false;
-            Expression innerExpression;
-            if (!expressionParse(innerExpression))
-                return false;
-            expression = std::move(innerExpression);
+                return nullptr;
+            auto expr = expressionParse();
             if (!expect(Lexing::TokenType::CloseParen))
-                return false;
-            break;
+                return nullptr;
+            return expr;
         }
         default:
-            return false;
+            return nullptr;
     }
-    return true;
 }
 
-bool Parse::unaryParse(Unary& unary)
+std::unique_ptr<UnaryExpr> Parse::unaryParse()
 {
-    UnaryOperator unaryOperator;
+    UnaryExpr::Operator unaryOperator;
     if (!unaryOperatorParse(unaryOperator))
-        return false;
-    if (unaryOperator == UnaryOperator::Invalid)
-        return false;
-    unary.unaryOperator = unaryOperator;
-    Expression expression;
-    if (!expressionParse(expression))
-        return false;
-    unary.expression = std::make_unique<Expression>(std::move(expression));
-    return true;
+        return nullptr;
+    std::unique_ptr<Expr> expr = expressionParse();
+    if (expr == nullptr)
+        return nullptr;
+    return std::make_unique<UnaryExpr>(unaryOperator, std::move(expr));
 }
 
-bool Parse::unaryOperatorParse(UnaryOperator& unaryOperator)
+bool Parse::unaryOperatorParse(UnaryExpr::Operator& unaryOperator)
 {
     switch (const auto type = advance(); type.m_type) {
         case Lexing::TokenType::Minus:
-            unaryOperator = UnaryOperator::Negate;
+            unaryOperator = UnaryExpr::Operator::Negate;
             break;
         case Lexing::TokenType::Tilde:
-            unaryOperator = UnaryOperator::Complement;
+            unaryOperator = UnaryExpr::Operator::Complement;
             break;
         default:
             return false;

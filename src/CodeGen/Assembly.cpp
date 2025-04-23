@@ -51,11 +51,11 @@ std::string Assembly::getFunction(const std::unique_ptr<Parsing::Function> &func
 
 std::string Assembly::getInstruction(const std::unique_ptr<Parsing::Statement>& returnNode)
 {
-    return std::format("    mov    ${}, %eax\n", getOperand(returnNode->expression));
+    return "";
 }
 
-std::string Assembly::getOperand(const std::unique_ptr<Parsing::Expression>& constantNode)
+std::string Assembly::getOperand(const std::unique_ptr<Parsing::Expr>& constantNode)
 {
-    return std::to_string(std::get<i32>(constantNode->value));
+    return "";
 }
 }

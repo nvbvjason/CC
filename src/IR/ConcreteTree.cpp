@@ -5,7 +5,7 @@
 namespace IR {
 
 static std::string makeTemporaryName();
-static UnaryOperationType convertUnaryOperation(Parsing::UnaryOperator unaryOperation);
+static UnaryOperationType convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 
 void programTacky(const Parsing::Program *parsingProgram, Program& tackyProgram)
 {
@@ -16,34 +16,30 @@ std::unique_ptr<Function> functionTacky(const Parsing::Function* parsingFunction
 {
     auto functionTacky = std::make_unique<Function>();
     functionTacky->identifier = parsingFunction->name;
-    const Parsing::Expression* parsingExpressionNode = parsingFunction->body->expression.get();
+    const Parsing::Expr* parsingExpressionNode = parsingFunction->body->expression.get();
     instructionTacky(parsingExpressionNode, functionTacky->instructions);
     return functionTacky;
 }
 
-std::unique_ptr<Value> instructionTacky(const Parsing::Expression *parsingExpression,
+std::unique_ptr<Value> instructionTacky(const Parsing::Expr *parsingExpr,
                                         std::vector<Instruction> &instructions)
 {
-    switch (parsingExpression->type) {
-        case Parsing::ExpressionType::Constant: {
-            auto returnValue = std::make_unique<Value>(std::get<i32>(parsingExpression->value));
-            returnValue->type = ValueType::Constant;
-            return returnValue;
-        }
-        case Parsing::ExpressionType::Unary: {
-            const auto unaryParsing = std::get<std::unique_ptr<Parsing::Unary>>(parsingExpression->value).get();
-            const Parsing::Expression *inner = unaryParsing->expression.get();
-            const auto tackyUnary = new Unary();
-            tackyUnary->source = instructionTacky(inner, instructions);
-            tackyUnary->operation = convertUnaryOperation(unaryParsing->unaryOperator);
-            tackyUnary->destination = std::make_unique<Value>(makeTemporaryName());
-            tackyUnary->destination->type = ValueType::Variable;
-            instructions.emplace_back(InstructionType::Unary, tackyUnary);
-            return std::move(tackyUnary->destination);
-        }
-        default:
-            throw std::invalid_argument("Unexpected expression type");
+    if (const auto constant = dynamic_cast<const Parsing::ConstantExpr*>(parsingExpr)) {
+        auto returnValue = std::make_unique<Value>(constant->value);
+        returnValue->type = ValueType::Constant;
+        return returnValue;
     }
+    if (auto* unaryParsing = dynamic_cast<const Parsing::UnaryExpr*>(parsingExpr)) {
+        const Parsing::Expr *inner = unaryParsing->operand.get();
+        const auto tackyUnary = new Unary();
+        tackyUnary->source = instructionTacky(inner, instructions);
+        tackyUnary->operation = convertUnaryOperation(unaryParsing->op);
+        tackyUnary->destination = std::make_unique<Value>(makeTemporaryName());
+        tackyUnary->destination->type = ValueType::Variable;
+        instructions.emplace_back(InstructionType::Unary, tackyUnary);
+        return std::move(tackyUnary->destination);
+    }
+    throw std::invalid_argument("Unexpected expression type");
 }
 
 std::string makeTemporaryName()
@@ -54,12 +50,12 @@ std::string makeTemporaryName()
     return result;
 }
 
-UnaryOperationType convertUnaryOperation(const Parsing::UnaryOperator unaryOperation)
+UnaryOperationType convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
 {
     switch (unaryOperation) {
-        case Parsing::UnaryOperator::Complement:
+        case Parsing::UnaryExpr::Operator::Complement:
             return UnaryOperationType::Complement;
-        case Parsing::UnaryOperator::Negate:
+        case Parsing::UnaryExpr::Operator::Negate:
             return UnaryOperationType::Negate;
         default:
             throw std::invalid_argument("Invalid unary operation");

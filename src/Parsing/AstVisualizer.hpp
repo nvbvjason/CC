@@ -16,11 +16,11 @@ class Visualizer {
 public:
     std::string visualize(const Program& programNode);
     void function(const Function& function, i32 level);
-    void expression(const Expression& expression, i32 level);
-    void unaryNode(const Unary& unary, i32 level);
+    void expression(const Expr& expression, i32 level);
+    void unaryNode(const UnaryExpr& unary, i32 level);
 };
 
-std::string unaryOperatorVisualizer(const UnaryOperator& unaryOperator);
+std::string unaryOperatorVisualizer(const UnaryExpr::Operator& unaryOperator);
 }
 
 #endif // CC_PARSING_AST_VISUALIZER_HPP

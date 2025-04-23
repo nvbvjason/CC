@@ -26,7 +26,7 @@ namespace IR {
 
 void programTacky(const Parsing::Program* parsingProgram, Program& tackyProgram);
 std::unique_ptr<Function> functionTacky(const Parsing::Function* parsingFunction);
-std::unique_ptr<Value> instructionTacky(const Parsing::Expression* parsingExpression,
+std::unique_ptr<Value> instructionTacky(const Parsing::Expr* parsingExpression,
                                         std::vector<Instruction>& instructions);
 } // IR
 

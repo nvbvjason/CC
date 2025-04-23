@@ -23,36 +23,35 @@ void Visualizer::function(const Function& function, const i32 level)
            << outerLevelIdent << ")\n";
 }
 
-void Visualizer::expression(const Expression& expression, const i32 level)
+void Visualizer::expression(const Expr& expr, const i32 level)
 {
     const std::string outerLevelIdent = makeIndent(level);
     const std::string innerLevelIdent = makeIndent(level);
-    switch (expression.type) {
-        case ExpressionType::Constant:
-            result << innerLevelIdent << "Constant(" << std::to_string(std::get<i32>(expression.value)) << ")\n";
-            break;
-        case ExpressionType::Unary:
-            unaryNode(*std::get<std::unique_ptr<Unary>>(expression.value), level + 1);
-            break;
-        default:
-            break;
+    if (auto* constant = dynamic_cast<const ConstantExpr*>(&expr)) {
+        result << innerLevelIdent << "Constant(" << std::to_string(constant->value) << ")\n";
+        return;
     }
+    if (auto* unary = dynamic_cast<const UnaryExpr*>(&expr)) {
+        unaryNode(*unary, level + 1);
+        return;
+    }
+    result << innerLevelIdent << "Unknow Expression(\n";
 }
 
-void Visualizer::unaryNode(const Unary& unary, const i32 level)
+void Visualizer::unaryNode(const UnaryExpr& unary, const i32 level)
 {
     const std::string outerLevelIdent(level * indentLength, ident);
-    result << outerLevelIdent << unaryOperatorVisualizer(unary.unaryOperator) << " (" << "\n";
-    expression(*unary.expression, level + 1);
+    result << outerLevelIdent << unaryOperatorVisualizer(unary.op) << " (" << "\n";
+    expression(*unary.operand, level + 1);
     result << outerLevelIdent << ")\n";
 }
 
-std::string unaryOperatorVisualizer(const UnaryOperator& unaryOperator)
+std::string unaryOperatorVisualizer(const UnaryExpr::Operator& unaryOperator)
 {
     switch (unaryOperator) {
-        case UnaryOperator::Complement:
+        case UnaryExpr::Operator::Complement:
             return "Complement()";
-        case UnaryOperator::Negate:
+        case UnaryExpr::Operator::Negate:
             return "Negate()";
         default:
             return "Error";

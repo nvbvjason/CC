@@ -3,10 +3,10 @@
 #ifndef CC_PARSING_ABSTRACT_TREE_HPP
 #define CC_PARSING_ABSTRACT_TREE_HPP
 
-#include "ShortTypes.hpp"
-
 #include <memory>
 #include <string>
+
+#include "ShortTypes.hpp"
 
 /*
     program = Program(function_definition)
@@ -21,7 +21,7 @@ namespace Parsing {
 struct Program;
 struct Function;
 struct Statement;
-struct Expression;
+struct Expr;
 
 struct Program {
     std::unique_ptr<Function> function = nullptr;
@@ -33,39 +33,46 @@ struct Function {
 };
 
 struct Statement {
-    std::unique_ptr<Expression> expression = nullptr;
+    std::unique_ptr<Expr> expression = nullptr;
 };
 
-enum class UnaryOperator {
-    Complement, Negate,
-    Invalid
+struct Expr {
+    enum class Kind {
+        Constant, Unary,
+        Invalid
+    };
+    Kind kind = Kind::Invalid;
+
+    Expr() = default;
+    virtual ~Expr() = default;
+    template<typename T>
+    [[nodiscard]] bool is() const { return typeid(*this) == typeid(T); }
+
+    template<typename T>
+    T* as() { return is<T>() ? static_cast<T*>(this) : nullptr; }
 };
 
-struct Unary {
-    UnaryOperator unaryOperator = UnaryOperator::Invalid;
-    std::unique_ptr<Expression> expression = nullptr;
-};
-
-enum class ExpressionType {
-    Constant, Unary,
-    Invalid
-};
-
-struct Expression {
-    ExpressionType type = ExpressionType::Invalid;
-    std::variant<i32, std::unique_ptr<Expression>, std::unique_ptr<Unary>> value;
-    Expression() = default;
-    Expression(Expression&& other) noexcept
-    : type(other.type), value(std::move(other.value)) {
-        other.type = ExpressionType::Invalid;
+struct ConstantExpr final : Expr {
+    i32 value;
+    explicit ConstantExpr(const i32 value) noexcept
+        : value(value)
+    {
+        kind = Kind::Constant;
     }
-    Expression& operator=(Expression&& other) noexcept {
-        if (this == &other)
-            return *this;
-        type = other.type;
-        value = std::move(other.value);
-        other.type = ExpressionType::Invalid;
-        return *this;
+};
+
+struct UnaryExpr final : Expr {
+    enum class Operator {
+        Complement, Negate,
+        Invalid
+    };
+    Operator op;
+    std::unique_ptr<Expr> operand;
+
+    UnaryExpr(const Operator op, std::unique_ptr<Expr> expr)
+        : op(op), operand(std::move(expr))
+    {
+        kind = Kind::Unary;
     }
 };
 } // Parsing

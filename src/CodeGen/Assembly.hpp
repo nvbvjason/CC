@@ -24,9 +24,9 @@ public:
     Assembly(const Assembly&) = delete;
     Assembly& operator=(const Assembly&) = delete;
 private:
-    [[nodiscard]] static std::string getFunction(const std::unique_ptr<Parsing::Function> &functionNode);
+    [[nodiscard]] static std::string getFunction(const std::unique_ptr<Parsing::Function>& functionNode);
     [[nodiscard]] static std::string getInstruction(const std::unique_ptr<Parsing::Statement>& returnNode);
-    [[nodiscard]] static std::string getOperand(const std::unique_ptr<Parsing::Expression>& constantNode);
+    [[nodiscard]] static std::string getOperand(const std::unique_ptr<Parsing::Expr>& constantNode);
 };
 
 }

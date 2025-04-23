@@ -30,9 +30,9 @@ public:
     [[nodiscard]] bool programParse(Program& program);
     [[nodiscard]] bool functionParse(Function& function);
     [[nodiscard]] bool statementParse(Statement& statement);
-    [[nodiscard]] bool expressionParse(Expression& expression);
-    [[nodiscard]] bool unaryParse(Unary& unary);
-    [[nodiscard]] bool unaryOperatorParse(UnaryOperator& unaryOperator);
+    [[nodiscard]] std::unique_ptr<Expr> expressionParse();
+    [[nodiscard]] std::unique_ptr<UnaryExpr> unaryParse();
+    [[nodiscard]] bool unaryOperatorParse(UnaryExpr::Operator& unaryOperator);
 private:
     bool match(const Lexing::TokenType& type);
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
