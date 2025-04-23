@@ -54,6 +54,19 @@ enum class ExpressionType {
 struct Expression {
     ExpressionType type = ExpressionType::Invalid;
     std::variant<i32, std::unique_ptr<Expression>, std::unique_ptr<Unary>> value;
+    Expression() = default;
+    Expression(Expression&& other) noexcept
+    : type(other.type), value(std::move(other.value)) {
+        other.type = ExpressionType::Invalid;
+    }
+    Expression& operator=(Expression&& other) noexcept {
+        if (this == &other)
+            return *this;
+        type = other.type;
+        value = std::move(other.value);
+        other.type = ExpressionType::Invalid;
+        return *this;
+    }
 };
 } // Parsing
 

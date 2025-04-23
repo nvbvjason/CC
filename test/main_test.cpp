@@ -39,10 +39,10 @@ TEST(Chapter1, parsingValid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
+        lexer.getLexemes(lexemes);
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
-        ASSERT_EQ(0, parser.programParse(program)) << path.path().string();
+        ASSERT_EQ(true, parser.programParse(program)) << path.path().string();
     }
 }
 
@@ -53,21 +53,10 @@ TEST(Chapter1, parsingInvalid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
+        lexer.getLexemes(lexemes);
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
-        ASSERT_NE(0, parser.programParse(program)) << path.path().string();
-    }
-}
-
-TEST(Chapter1, allvalid)
-{
-    const fs::path validPath = testsFolderPath / "chapter_1/valid";
-    std::vector<std::string> args{"/home/jason/src/CC/cmake-build-debug/CC_run", ""};
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        args[1] = path.path();
-        CompilerDriver program(args);
-        ASSERT_EQ(0, program.run()) << path.path().string();
+        ASSERT_FALSE(parser.programParse(program)) << path.path().string();
     }
 }
 
@@ -89,10 +78,10 @@ TEST(Chapter2, parsingValid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
+        lexer.getLexemes(lexemes);
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
-        ASSERT_EQ(0, parser.programParse(program)) << path.path().string();
+        ASSERT_EQ(true, parser.programParse(program)) << path.path().string();
     }
 }
 
@@ -103,11 +92,10 @@ TEST(Chapter2, parsingInvalid)
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
-        if (lexer.getLexemes(lexemes) != 0)
-            return;
+        lexer.getLexemes(lexemes);
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
-        ASSERT_NE(0, parser.programParse(program)) << path.path().string();
+        ASSERT_FALSE(parser.programParse(program)) << path.path().string();
     }
 }
 

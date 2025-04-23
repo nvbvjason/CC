@@ -11,7 +11,7 @@
 #include <filesystem>
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
-static i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
+static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void tacky(const Parsing::Program& parsingProgram, IR::Program& tackyProgram);
 static void codegen(const Parsing::Program& programNode, std::string& output);
 static bool fileExists(const std::string &name);
@@ -43,8 +43,8 @@ int CompilerDriver::run() const
     if (argument == "--lex")
         return 0;
     Parsing::Program program;
-    if (const i32 err = parse(tokens, program); err != 0)
-        return err;
+    if (!parse(tokens, program))
+        return 1;
     if (argument == "--parse")
         return 0;
     if (argument == "--printAst") {
@@ -77,12 +77,12 @@ i32 lex(std::vector<Lexing::Token> &lexemes, const std::string& inputFile)
     return 0;
 }
 
-i32 parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode)
+bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode)
 {
     Parsing::Parse parser(tokens);
-    if (const i32 err = parser.programParse(programNode); err != 0)
-        return err;
-    return 0;
+    if (!parser.programParse(programNode))
+        return false;
+    return true;
 }
 
 void tacky(const Parsing::Program& parsingProgram, IR::Program& tackyProgram)
