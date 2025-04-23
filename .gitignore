@@ -1,4 +1,5 @@
 /build/
+/.idea/
 /generated_files/
 /writing-a-c-compiler-tests/
 /AssemblyFiles/
