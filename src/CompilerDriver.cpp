@@ -14,8 +14,8 @@
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
-static void ir(const Parsing::Program& parsingProgram, Ir::Program& irProgram);
-static void codegen(const Ir::Program& irProgram, CodeGen::Program& codegenProgram);
+static Ir::Program ir(const Parsing::Program& parsingProgram);
+static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static std::string preProcess(const std::string &file);
@@ -54,12 +54,10 @@ int CompilerDriver::run() const
         std::cout << visualizer.visualize(program) << '\n';
         return 0;
     }
-    Ir::Program irProgram;
-    ir(program, irProgram);
+    Ir::Program irProgram = ir(program);
     if (argument == "--tacky")
         return 0;
-    CodeGen::Program codegenProgram;
-    codegen(irProgram, codegenProgram);
+    CodeGen::Program codegenProgram = codegen(irProgram);
     if (argument == "--codegen")
         return 0;
     std::string output;
@@ -88,15 +86,19 @@ bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNo
     return true;
 }
 
-void ir(const Parsing::Program& parsingProgram, Ir::Program& irProgram)
+Ir::Program ir(const Parsing::Program& parsingProgram)
 {
+    Ir::Program irProgram;
     Ir::program(&parsingProgram, irProgram);
+    return irProgram;
 }
 
-void codegen(const Ir::Program& irProgram, CodeGen::Program& codegenProgram)
+CodeGen::Program codegen(const Ir::Program& irProgram)
 {
+    CodeGen::Program codegenProgram;
     CodeGen::program(irProgram, codegenProgram);
     CodeGen::replacingPseudoRegisters(codegenProgram);
+    return codegenProgram;
 }
 
 static bool fileExists(const std::string &name)
