@@ -1,11 +1,12 @@
 #pragma once
 
-#ifndef CC_ABSTRACTTREE_HPP
-#define CC_ABSTRACTTREE_HPP
+#ifndef CC_CODEGEN_ABSTRACTTREE_HPP
+#define CC_CODEGEN_ABSTRACTTREE_HPP
 
 #include "ShortTypes.hpp"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 /*
@@ -29,10 +30,8 @@ namespace CodeGen {
 
 struct Program;
 struct Function;
-struct Instruction;
-enum class UnaryOperator;
+struct Inst;
 struct Operand;
-enum class Register;
 
 struct Program {
     std::unique_ptr<Function> function;
@@ -40,57 +39,116 @@ struct Program {
 
 struct Function {
     std::string name;
-    std::vector<Instruction> instructions;
+    std::vector<std::unique_ptr<Inst>> instructions;
 };
 
-enum class OperandType {
-    Imm, Register, Pseudo, Stack,
+struct Inst {
+    enum class Kind {
+        Move, Unary, AllocateStack, Ret,
 
-    Invalid
+        Invalid
+    };
+    Kind kind = Kind::Invalid;
+
+    ~Inst() = default;
+
+    explicit Inst(const Kind k)
+        : kind(k) {}
+
+    Inst() = delete;
+};
+
+struct MoveInst final : Inst {
+    std::unique_ptr<Operand> source;
+    std::unique_ptr<Operand> destination;
+
+    MoveInst(std::unique_ptr<Operand> src, std::unique_ptr<Operand> dst)
+        : Inst(Kind::Move), source(std::move(src)), destination(std::move(dst)) {}
+
+    MoveInst() = delete;
+};
+
+struct UnaryInst final : Inst {
+    enum class Operator {
+        Neg, Not,
+
+        Invalid
+    };
+    Operator oper;
+    std::unique_ptr<Operand> destination = nullptr;
+
+    UnaryInst(const Operator op, std::unique_ptr<Operand> dst)
+        : Inst(Kind::Unary), oper(op), destination(std::move(dst)) {}
+
+    UnaryInst() = delete;
+};
+
+struct InstAllocStack final : Inst {
+    i32 alloc;
+    explicit InstAllocStack(i32 alloc)
+        : Inst(Kind::AllocateStack), alloc(alloc) {}
+
+    InstAllocStack() = delete;
+};
+
+struct InstRet final : Inst {
+    InstRet()
+        : Inst(Kind::Ret) {}
 };
 
 struct Operand {
-    OperandType type;
-    std::variant<i32, Register, std::string> value;
+    enum class Kind {
+        Imm, Register, Pseudo, Stack,
+
+        Invalid
+    };
+    Kind kind;
+
+    ~Operand() = default;
+
+    explicit Operand(const Kind k)
+        : kind(k) {}
+
+    Operand() = delete;
 };
 
-struct Mov {
-    Operand src;
-    Operand dst;
+struct OperandImm final : Operand {
+    i32 value;
+    explicit OperandImm(const i32 value)
+        : Operand(Kind::Imm), value(value) {}
+
+    OperandImm() = delete;
 };
 
-struct Unary {
-    UnaryOperator oper;
-    Operand operand;
+struct OperandRegister final : Operand {
+    enum class Kind {
+        AX, R10,
+
+        Invalid
+    };
+    Kind kind;
+    explicit OperandRegister(const Kind k)
+        : Operand(Operand::Kind::Register), kind(k) {}
+
+    OperandRegister() = delete;
 };
 
-struct Return {
+struct OperandPseudo final : Operand {
+    std::string identifier;
+    explicit OperandPseudo(std::string identifier)
+        : Operand(Kind::Pseudo), identifier(std::move(identifier)) {}
 
+    OperandPseudo() = delete;
 };
 
-enum class InstructionType {
-    Mov, Unary, AllocateStack, Ret,
+struct OperandStack final : Operand {
+    i32 value;
+    explicit OperandStack(const i32 value)
+        : Operand(Kind::Stack), value(value) {}
 
-    Invalid
-};
-
-struct Instruction {
-    InstructionType type = InstructionType::Invalid;
-    std::variant<Mov, Unary, i32, Return> value;
-};
-
-enum class UnaryOperator {
-    Neg, Not,
-
-    Invalid
-};
-
-enum class Register {
-    AX, R10,
-
-    Invalid
+    OperandStack() = delete;
 };
 
 }
 
-#endif // CC_ABSTRACTTREE_HPP
+#endif // CC_CODEGEN_ABSTRACTTREE_HPP

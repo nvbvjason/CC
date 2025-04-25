@@ -1,4 +1,6 @@
 #include "ConcreteTree.hpp"
+#include "IR/ConcreteTree.hpp"
+
 #include "AbstractTree.hpp"
 
 #include <stdexcept>
@@ -14,14 +16,18 @@ std::unique_ptr<Function> function(const Ir::Function *function)
 {
     auto functionCodeGen = std::make_unique<Function>();
     functionCodeGen->name = function->identifier;
-    for (const Ir::Instruction &instruction : function->instructions) {
-        switch (instruction.type) {
-            case Ir::Instruction::Type::Unary:
-                unaryInstruction(functionCodeGen->instructions, instruction);
+    for (const std::unique_ptr<Ir::Instruction>& inst : function->instructions) {
+        switch (inst->type) {
+            case Ir::Instruction::Type::Unary: {
+                const auto irUnary = dynamic_cast<Ir::UnaryInst*>(inst.get());
+                unaryInst(functionCodeGen->instructions, irUnary);
                 break;
-            case Ir::Instruction::Type::Return:
-                returnInstruction(functionCodeGen->instructions, instruction);
+            }
+            case Ir::Instruction::Type::Return: {
+                const auto irReturn = dynamic_cast<Ir::ReturnInst*>(inst.get());
+                returnInst(functionCodeGen->instructions, irReturn);
                 break;
+            }
             default:
                 throw std::runtime_error("Unsupported instruction type");
         }
@@ -29,80 +35,59 @@ std::unique_ptr<Function> function(const Ir::Function *function)
     return functionCodeGen;
 }
 
-void unaryInstruction(std::vector<Instruction>& instructions, const Ir::Instruction &instruction)
+void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary)
 {
-    Instruction movInstruction;
-    instructions.push_back(movInstruction);
-    instructions.back().type = InstructionType::Mov;
-    Mov mov;
-    mov.src.type = OperandType::Pseudo;
-    auto tackyUnary = std::get<std::unique_ptr<Ir::Unary>>(instruction.value).get();
-    mov.src.value = std::get<std::string>(tackyUnary->source.value);
-    mov.dst.type = OperandType::Pseudo;
-    mov.dst.value = std::get<std::string>(tackyUnary->destination.value);
-    instructions.back().value = mov;
+    std::unique_ptr<Operand> src = operand(irUnary->source);
+    std::unique_ptr<Operand> dst = operand(irUnary->destination);
+    auto moveInst = std::make_unique<MoveInst>(std::move(src), std::move(dst));
+    insts.push_back(std::move(moveInst));
 
-    Instruction unaryInstruction;
-
-    instructions.push_back(unaryInstruction);
-    instructions.back().type = InstructionType::Unary;
-    Unary unary;
-    unary.oper = unaryOperator(tackyUnary->operation);
-    unary.operand.type = OperandType::Pseudo;
-    unary.operand.value = std::get<std::string>(tackyUnary->destination.value);
-    instructions.back().value = unary;
+    UnaryInst::Operator oper = unaryOperator(irUnary->operation);
+    auto unaryInst = std::make_unique<UnaryInst>(oper, std::move(dst));
+    insts.push_back(std::move(unaryInst));
 }
 
-void returnInstruction(std::vector<Instruction>& instructions, const Ir::Instruction &instruction)
+void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
 {
-    Instruction movInstruction;
-    instructions.push_back(movInstruction);
-    instructions.back().type = InstructionType::Mov;
-    Mov mov;
-
-    mov.src.type = OperandType::Pseudo;
-    mov.src.value = std::get<std::string>(std::get<std::unique_ptr<Ir::Value>>(instruction.value)->value);
-    mov.dst.type = OperandType::Register;
-    mov.dst.value = Register::AX;
-
-    instructions.back().value = mov;
-
-    Instruction returnInstruction;
-    instructions.push_back(returnInstruction);
-    instructions.back().type = InstructionType::Ret;
-    Return ret;
-    instructions.back().value = ret;
+    std::unique_ptr<Operand> val = operand(inst->returnValue);
+    std::unique_ptr<Operand> operandRegister = std::make_unique<OperandRegister>(OperandRegister::Kind::R10);
+    auto moveInst = std::make_unique<MoveInst>(std::move(val), std::move(operandRegister));
+    insts.push_back(std::move(moveInst));
+    auto instRet = std::make_unique<InstRet>();
+    insts.push_back(std::move(instRet));
 }
 
-UnaryOperator unaryOperator(const Ir::Unary::Operation type)
+UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 {
     switch (type)
     {
-        case Ir::Unary::Operation::Complement:
-            return UnaryOperator::Not;
-        case Ir::Unary::Operation::Negate:
-            return UnaryOperator::Neg;
-        case Ir::Unary::Operation::Invalid:
-            return UnaryOperator::Invalid;
+        case Ir::UnaryInst::Operation::Complement:
+            return UnaryInst::Operator::Not;
+        case Ir::UnaryInst::Operation::Negate:
+            return UnaryInst::Operator::Neg;
+        case Ir::UnaryInst::Operation::Invalid:
+            return UnaryInst::Operator::Invalid;
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");
     }
 }
 
-Operand constantOperand(const Ir::Value& value)
+std::unique_ptr<Operand> operand(const std::unique_ptr<Ir::Value>& value)
 {
-    Operand result;
-    result.type = OperandType::Imm;
-    result.value = std::get<i32>(value.value);
-    return result;
+    switch (value->type) {
+        case Ir::Value::Type::Constant: {
+            const auto valueConst = dynamic_cast<Ir::ValueConst*>(value.get());
+            return std::make_unique<OperandImm>(valueConst->value);
+        }
+        case Ir::Value::Type::Variable: {
+            const auto valueConst = dynamic_cast<Ir::ValueVar*>(value.get());
+            return std::make_unique<OperandPseudo>(valueConst->value);
+        }
+        default:
+            throw std::invalid_argument("Invalid UnaryOperator type");
+    }
 }
 
-Operand varOperand(const Ir::Value& value)
-{
-    Operand result;
-    result.type = OperandType::Pseudo;
-    result.value = std::get<std::string>(value.value);
-    return result;
-}
+
 
 }

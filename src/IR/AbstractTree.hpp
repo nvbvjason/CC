@@ -7,6 +7,7 @@
 #include "AbstractTree.hpp"
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,32 +28,6 @@ struct Program;
 struct Function;
 struct Instruction;
 struct Value;
-struct Unary;
-
-struct Value {
-    enum class Type {
-        Variable, Constant,
-        Invalid
-    };
-    Type type = Type::Invalid;
-    std::variant<i32, std::string> value;
-    explicit Value(i32 value)
-        : value(value) {}
-    explicit Value(std::string value)
-        : value(std::move(value)) {}
-};
-
-struct Unary {
-    enum class Operation {
-        Complement, Negate,
-        Invalid
-    };
-    Operation operation = Operation::Invalid;
-    Value source;
-    Value destination;
-    Unary(const Operation operation, Value source, Value destination)
-        : operation(operation), source(std::move(source)), destination(std::move(destination)) {}
-};
 
 struct Program {
     std::unique_ptr<Function> function = nullptr;
@@ -60,7 +35,7 @@ struct Program {
 
 struct Function {
     std::string identifier;
-    std::vector<Instruction> instructions;
+    std::vector<std::unique_ptr<Instruction>> instructions;
 };
 
 struct Instruction {
@@ -69,11 +44,56 @@ struct Instruction {
         Invalid
     };
     Type type = Type::Invalid;
-    std::variant<std::unique_ptr<Value>, std::unique_ptr<Unary>> value;
-    explicit Instruction(const Value& v)
-        : type(Type::Return), value(std::make_unique<Value>(v)) {}
-    Instruction(const Unary::Operation type, const Value& src, const Value& dst)
-        : type(Type::Unary), value(std::make_unique<Unary>(type, src, dst)) {}
+
+    Instruction() = delete;
+
+    virtual ~Instruction() = default;
+protected:
+    explicit Instruction(const Type t)
+        : type(t) {}
+};
+
+struct ReturnInst final : Instruction {
+    std::unique_ptr<Value> returnValue;
+    explicit ReturnInst(std::unique_ptr<Value> v)
+        : Instruction(Type::Return), returnValue(std::move(v)) {}
+};
+
+struct UnaryInst final : Instruction {
+    enum class Operation {
+        Complement, Negate,
+        Invalid
+    };
+    Operation operation = Operation::Invalid;
+    std::unique_ptr<Value> source;
+    std::unique_ptr<Value> destination;
+    UnaryInst(const Operation op, std::unique_ptr<Value> src, std::unique_ptr<Value> dst)
+        : Instruction(Type::Unary), operation(op), source(std::move(src)), destination(std::move(dst)) {}
+};
+
+struct Value {
+    enum class Type {
+        Variable, Constant,
+        Invalid
+    };
+    Type type = Type::Invalid;
+    Value() = delete;
+    virtual ~Value() = default;
+protected:
+    explicit Value(const Type t)
+        : type(t) {}
+};
+
+struct ValueVar final : Value {
+    std::string value;
+    explicit ValueVar(std::string  v)
+        : Value(Type::Variable), value(std::move(v)) {}
+};
+
+struct ValueConst final : Value {
+    i32 value;
+    explicit ValueConst(const i32 v)
+        : Value(Type::Constant), value(v) {}
 };
 
 } // IR

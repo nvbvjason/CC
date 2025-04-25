@@ -5,7 +5,7 @@
 namespace Ir {
 
 static std::string makeTemporaryName();
-static Unary::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
+static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 
 void program(const Parsing::Program *parsingProgram, Program& tackyProgram)
 {
@@ -17,32 +17,33 @@ std::unique_ptr<Function> function(const Parsing::Function* parsingFunction)
     auto functionTacky = std::make_unique<Function>();
     functionTacky->identifier = parsingFunction->name;
     const Parsing::Expr* parsingExpressionNode = parsingFunction->body->expression.get();
-    functionTacky->instructions.emplace_back(instruction(parsingExpressionNode, functionTacky->instructions));
+    auto lastValue = instruction(parsingExpressionNode, functionTacky->instructions);
+    functionTacky->instructions.push_back(std::make_unique<ReturnInst>(std::move(lastValue)));
     return functionTacky;
 }
 
-Value unaryInstruction(const Parsing::Expr *parsingExpr, std::vector<Instruction> &instructions)
+std::unique_ptr<ValueVar> unaryInstruction(const Parsing::Expr *parsingExpr,
+                                           std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto unaryParsing = dynamic_cast<const Parsing::UnaryExpr*>(parsingExpr);
     const Parsing::Expr *inner = unaryParsing->operand.get();
-    Value source = instruction(inner, instructions);
-    Unary::Operation operation = convertUnaryOperation(unaryParsing->op);
-    Value destination(makeTemporaryName());
-    destination.type = Value::Type::Variable;
-    instructions.emplace_back(operation, source, destination);
+    auto source = instruction(inner, instructions);
+    UnaryInst::Operation operation = convertUnaryOperation(unaryParsing->op);
+    auto destination = std::make_unique<ValueVar>(makeTemporaryName());
+    instructions.emplace_back(
+        std::make_unique<UnaryInst>(operation, std::move(source), std::move(destination))
+    );
     return destination;
 }
 
-Value returnInstruction(const Parsing::Expr *parsingExpr)
+std::unique_ptr<ValueConst> returnInstruction(const Parsing::Expr *parsingExpr)
 {
     const auto constant = dynamic_cast<const Parsing::ConstantExpr*>(parsingExpr);
-    Value returnValue(constant->value);
-    returnValue.type = Value::Type::Constant;
-    return returnValue;
+    return std::make_unique<ValueConst>(constant->value);
 }
 
-Value instruction(const Parsing::Expr *parsingExpr,
-                  std::vector<Instruction> &instructions)
+std::unique_ptr<Value> instruction(const Parsing::Expr *parsingExpr,
+                                   std::vector<std::unique_ptr<Instruction>> &instructions)
 {
     switch (parsingExpr->kind) {
         case Parsing::Expr::Kind::Constant: {
@@ -64,13 +65,13 @@ std::string makeTemporaryName()
     return result;
 }
 
-Unary::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
+UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
 {
     switch (unaryOperation) {
         case Parsing::UnaryExpr::Operator::Complement:
-            return Unary::Operation::Complement;
+            return UnaryInst::Operation::Complement;
         case Parsing::UnaryExpr::Operator::Negate:
-            return Unary::Operation::Negate;
+            return UnaryInst::Operation::Negate;
         default:
             throw std::invalid_argument("Invalid unary operation");
     }

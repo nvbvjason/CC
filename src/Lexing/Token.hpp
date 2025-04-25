@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <ostream>
+#include <variant>
 
 namespace Lexing {
 

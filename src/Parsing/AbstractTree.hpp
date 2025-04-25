@@ -43,8 +43,12 @@ struct Expr {
     };
     Kind kind = Kind::Invalid;
 
-    Expr() = default;
+    Expr() = delete;
     virtual ~Expr() = default;
+
+    explicit Expr(const Kind kind)
+        : kind(kind) {}
+
     template<typename T>
     [[nodiscard]] bool is() const { return typeid(*this) == typeid(T); }
 
@@ -55,10 +59,9 @@ struct Expr {
 struct ConstantExpr final : Expr {
     i32 value;
     explicit ConstantExpr(const i32 value) noexcept
-        : value(value)
-    {
-        kind = Kind::Constant;
-    }
+        : Expr(Kind::Constant), value(value) {}
+
+    ConstantExpr() = delete;
 };
 
 struct UnaryExpr final : Expr {
@@ -70,10 +73,9 @@ struct UnaryExpr final : Expr {
     std::unique_ptr<Expr> operand;
 
     UnaryExpr(const Operator op, std::unique_ptr<Expr> expr)
-        : op(op), operand(std::move(expr))
-    {
-        kind = Kind::Unary;
-    }
+        : Expr(Kind::Unary), op(op), operand(std::move(expr)) {}
+
+    UnaryExpr() = delete;
 };
 } // Parsing
 
