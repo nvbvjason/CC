@@ -28,9 +28,9 @@ void program(const Parsing::Program* parsingProgram, Program& tackyProgram);
 std::unique_ptr<Function> function(const Parsing::Function* parsingFunction);
 
 std::unique_ptr<Value> instruction(const Parsing::Expr* parsingExpr,
-                                   std::vector<std::unique_ptr<Instruction>>& instructions);
+                                   std::vector<std::shared_ptr<Instruction>>& instructions);
 std::unique_ptr<ValueVar> unaryInstruction(const Parsing::Expr *parsingExpr,
-                                           std::vector<std::unique_ptr<Instruction>> &instructions);
+                                           std::vector<std::shared_ptr<Instruction>> &instructions);
 std::unique_ptr<ValueConst> returnInstruction(const Parsing::Expr *parsingExpr);
 
 

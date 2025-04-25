@@ -30,12 +30,12 @@ struct Instruction;
 struct Value;
 
 struct Program {
-    std::unique_ptr<Function> function = nullptr;
+    std::shared_ptr<Function> function = nullptr;
 };
 
 struct Function {
     std::string identifier;
-    std::vector<std::unique_ptr<Instruction>> instructions;
+    std::vector<std::shared_ptr<Instruction>> instructions;
 };
 
 struct Instruction {
@@ -54,8 +54,8 @@ protected:
 };
 
 struct ReturnInst final : Instruction {
-    std::unique_ptr<Value> returnValue;
-    explicit ReturnInst(std::unique_ptr<Value> v)
+    std::shared_ptr<Value> returnValue;
+    explicit ReturnInst(std::shared_ptr<Value> v)
         : Instruction(Type::Return), returnValue(std::move(v)) {}
 };
 
@@ -65,9 +65,9 @@ struct UnaryInst final : Instruction {
         Invalid
     };
     Operation operation = Operation::Invalid;
-    std::unique_ptr<Value> source;
-    std::unique_ptr<Value> destination;
-    UnaryInst(const Operation op, std::unique_ptr<Value> src, std::unique_ptr<Value> dst)
+    std::shared_ptr<Value> source;
+    std::shared_ptr<Value> destination;
+    UnaryInst(const Operation op, std::shared_ptr<Value>&& src, std::shared_ptr<Value>&& dst)
         : Instruction(Type::Unary), operation(op), source(std::move(src)), destination(std::move(dst)) {}
 };
 

@@ -24,16 +24,16 @@ struct Statement;
 struct Expr;
 
 struct Program {
-    std::unique_ptr<Function> function = nullptr;
+    std::shared_ptr<Function> function = nullptr;
 };
 
 struct Function {
     std::string name;
-    std::unique_ptr<Statement> body = nullptr;
+    std::shared_ptr<Statement> body = nullptr;
 };
 
 struct Statement {
-    std::unique_ptr<Expr> expression = nullptr;
+    std::shared_ptr<Expr> expression = nullptr;
 };
 
 struct Expr {
@@ -70,9 +70,9 @@ struct UnaryExpr final : Expr {
         Invalid
     };
     Operator op;
-    std::unique_ptr<Expr> operand;
+    std::shared_ptr<Expr> operand;
 
-    UnaryExpr(const Operator op, std::unique_ptr<Expr> expr)
+    UnaryExpr(const Operator op, std::shared_ptr<Expr> expr)
         : Expr(Kind::Unary), op(op), operand(std::move(expr)) {}
 
     UnaryExpr() = delete;

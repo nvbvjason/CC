@@ -23,7 +23,7 @@ std::unique_ptr<Function> function(const Parsing::Function* parsingFunction)
 }
 
 std::unique_ptr<ValueVar> unaryInstruction(const Parsing::Expr *parsingExpr,
-                                           std::vector<std::unique_ptr<Instruction>>& instructions)
+                                           std::vector<std::shared_ptr<Instruction>>& instructions)
 {
     const auto unaryParsing = dynamic_cast<const Parsing::UnaryExpr*>(parsingExpr);
     const Parsing::Expr *inner = unaryParsing->operand.get();
@@ -43,7 +43,7 @@ std::unique_ptr<ValueConst> returnInstruction(const Parsing::Expr *parsingExpr)
 }
 
 std::unique_ptr<Value> instruction(const Parsing::Expr *parsingExpr,
-                                   std::vector<std::unique_ptr<Instruction>> &instructions)
+                                   std::vector<std::shared_ptr<Instruction>> &instructions)
 {
     switch (parsingExpr->kind) {
         case Parsing::Expr::Kind::Constant: {

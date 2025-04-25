@@ -16,7 +16,7 @@ std::unique_ptr<Function> function(const Ir::Function *function)
 {
     auto functionCodeGen = std::make_unique<Function>();
     functionCodeGen->name = function->identifier;
-    for (const std::unique_ptr<Ir::Instruction>& inst : function->instructions) {
+    for (const std::shared_ptr<Ir::Instruction>& inst : function->instructions) {
         switch (inst->type) {
             case Ir::Instruction::Type::Unary: {
                 const auto irUnary = dynamic_cast<Ir::UnaryInst*>(inst.get());
@@ -35,11 +35,11 @@ std::unique_ptr<Function> function(const Ir::Function *function)
     return functionCodeGen;
 }
 
-void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary)
+void unaryInst(std::vector<std::shared_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary)
 {
-    std::unique_ptr<Operand> src = operand(irUnary->source);
-    std::unique_ptr<Operand> dst = operand(irUnary->destination);
-    auto moveInst = std::make_unique<MoveInst>(std::move(src), std::move(dst));
+    std::shared_ptr<Operand> src = operand(irUnary->source);
+    std::shared_ptr<Operand> dst = operand(irUnary->destination);
+    auto moveInst = std::make_shared<MoveInst>(std::move(src), std::move(dst));
     insts.push_back(std::move(moveInst));
 
     UnaryInst::Operator oper = unaryOperator(irUnary->operation);
@@ -47,11 +47,11 @@ void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* i
     insts.push_back(std::move(unaryInst));
 }
 
-void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
+void returnInst(std::vector<std::shared_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
 {
-    std::unique_ptr<Operand> val = operand(inst->returnValue);
-    std::unique_ptr<Operand> operandRegister = std::make_unique<OperandRegister>(OperandRegister::Kind::R10);
-    auto moveInst = std::make_unique<MoveInst>(std::move(val), std::move(operandRegister));
+    std::shared_ptr<Operand> val = operand(inst->returnValue);
+    std::shared_ptr<Operand> operandRegister = std::make_shared<OperandRegister>(OperandRegister::Kind::R10);
+    auto moveInst = std::make_shared<MoveInst>(std::move(val), std::move(operandRegister));
     insts.push_back(std::move(moveInst));
     auto instRet = std::make_unique<InstRet>();
     insts.push_back(std::move(instRet));
@@ -72,7 +72,7 @@ UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
     }
 }
 
-std::unique_ptr<Operand> operand(const std::unique_ptr<Ir::Value>& value)
+std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
 {
     switch (value->type) {
         case Ir::Value::Type::Constant: {

@@ -39,12 +39,12 @@ namespace CodeGen {
 void program(const Ir::Program &program, Program &programCodegen);
 std::unique_ptr<Function> function(const Ir::Function *function);
 
-void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
-void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst);
+void unaryInst(std::vector<std::shared_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
+void returnInst(std::vector<std::shared_ptr<Inst>>& insts, const Ir::ReturnInst* inst);
 
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 
-std::unique_ptr<Operand> operand(const std::unique_ptr<Ir::Value>& value);
+std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 
 }
 

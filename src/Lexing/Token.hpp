@@ -33,6 +33,7 @@ enum class TokenType : u16 {
     Integer,
 
     EndOfFile,
+
     Invalid
 };
 

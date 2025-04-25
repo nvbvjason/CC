@@ -34,12 +34,12 @@ struct Inst;
 struct Operand;
 
 struct Program {
-    std::unique_ptr<Function> function;
+    std::shared_ptr<Function> function;
 };
 
 struct Function {
     std::string name;
-    std::vector<std::unique_ptr<Inst>> instructions;
+    std::vector<std::shared_ptr<Inst>> instructions;
 };
 
 struct Inst {
@@ -59,10 +59,10 @@ struct Inst {
 };
 
 struct MoveInst final : Inst {
-    std::unique_ptr<Operand> source;
-    std::unique_ptr<Operand> destination;
+    std::shared_ptr<Operand> source;
+    std::shared_ptr<Operand> destination;
 
-    MoveInst(std::unique_ptr<Operand> src, std::unique_ptr<Operand> dst)
+    MoveInst(std::shared_ptr<Operand>&& src, std::shared_ptr<Operand>&& dst)
         : Inst(Kind::Move), source(std::move(src)), destination(std::move(dst)) {}
 
     MoveInst() = delete;
@@ -75,9 +75,9 @@ struct UnaryInst final : Inst {
         Invalid
     };
     Operator oper;
-    std::unique_ptr<Operand> destination = nullptr;
+    std::shared_ptr<Operand> destination = nullptr;
 
-    UnaryInst(const Operator op, std::unique_ptr<Operand> dst)
+    UnaryInst(const Operator op, std::shared_ptr<Operand> dst)
         : Inst(Kind::Unary), oper(op), destination(std::move(dst)) {}
 
     UnaryInst() = delete;

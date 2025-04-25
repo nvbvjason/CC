@@ -39,7 +39,7 @@ void Assembly::getOutput(std::string &output) const
     output = getFunction(c_program->function);
 }
 
-std::string Assembly::getFunction(const std::unique_ptr<Parsing::Function> &functionNode)
+std::string Assembly::getFunction(const std::shared_ptr<Parsing::Function> &functionNode)
 {
     std::string result = "    .globl " + functionNode->name + '\n';
     result += functionNode->name + ":\n";
@@ -49,12 +49,12 @@ std::string Assembly::getFunction(const std::unique_ptr<Parsing::Function> &func
     return result;
 }
 
-std::string Assembly::getInstruction(const std::unique_ptr<Parsing::Statement>& returnNode)
+std::string Assembly::getInstruction(const std::shared_ptr<Parsing::Statement>& returnNode)
 {
     return "";
 }
 
-std::string Assembly::getOperand(const std::unique_ptr<Parsing::Expr>& constantNode)
+std::string Assembly::getOperand(const std::shared_ptr<Parsing::Expr>& constantNode)
 {
     return "";
 }

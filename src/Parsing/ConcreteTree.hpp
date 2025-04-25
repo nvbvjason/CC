@@ -30,8 +30,8 @@ public:
     [[nodiscard]] bool programParse(Program& program);
     [[nodiscard]] bool functionParse(Function& function);
     [[nodiscard]] bool statementParse(Statement& statement);
-    [[nodiscard]] std::unique_ptr<Expr> expressionParse();
-    [[nodiscard]] std::unique_ptr<UnaryExpr> unaryParse();
+    [[nodiscard]] std::shared_ptr<Expr> expressionParse();
+    [[nodiscard]] std::shared_ptr<UnaryExpr> unaryParse();
     [[nodiscard]] bool unaryOperatorParse(UnaryExpr::Operator& unaryOperator);
 private:
     bool match(const Lexing::TokenType& type);

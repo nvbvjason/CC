@@ -47,7 +47,7 @@ bool Parse::statementParse(Statement& statement)
 {
     if (!expect(Lexing::TokenType::Return))
         return false;
-    std::unique_ptr<Expr> expr = expressionParse();
+    std::shared_ptr<Expr> expr = expressionParse();
     if (expr == nullptr)
         return false;
     statement.expression = std::move(expr);
@@ -56,7 +56,7 @@ bool Parse::statementParse(Statement& statement)
     return true;
 }
 
-std::unique_ptr<Expr> Parse::expressionParse()
+std::shared_ptr<Expr> Parse::expressionParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case Lexing::TokenType::Integer: {
@@ -81,12 +81,12 @@ std::unique_ptr<Expr> Parse::expressionParse()
     }
 }
 
-std::unique_ptr<UnaryExpr> Parse::unaryParse()
+std::shared_ptr<UnaryExpr> Parse::unaryParse()
 {
     UnaryExpr::Operator unaryOperator;
     if (!unaryOperatorParse(unaryOperator))
         return nullptr;
-    std::unique_ptr<Expr> expr = expressionParse();
+    std::shared_ptr<Expr> expr = expressionParse();
     if (expr == nullptr)
         return nullptr;
     return std::make_unique<UnaryExpr>(unaryOperator, std::move(expr));
