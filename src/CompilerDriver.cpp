@@ -1,19 +1,21 @@
 #include "CompilerDriver.hpp"
 #include "Lexing/Lexer.hpp"
-#include "CodeGen/Assembly.hpp"
 #include "Parsing/ConcreteTree.hpp"
 #include "Parsing/AstVisualizer.hpp"
 #include "IR/AbstractTree.hpp"
 #include "IR/ConcreteTree.hpp"
+#include "CodeGen/AbstractTree.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 
+#include "CodeGen/ConcreteTree.hpp"
+
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void ir(const Parsing::Program& parsingProgram, Ir::Program& irProgram);
-static void codegen(const Parsing::Program& programNode, std::string& output);
+static void codegen(const Ir::Program& irProgram, CodeGen::Program& codegenProgram);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static std::string preProcess(const std::string &file);
@@ -56,10 +58,11 @@ int CompilerDriver::run() const
     ir(program, irProgram);
     if (argument == "--tacky")
         return 0;
-    std::string output;
-    codegen(program, output);
+    CodeGen::Program codegenProgram;
+    codegen(irProgram, codegenProgram);
     if (argument == "--codegen")
         return 0;
+    std::string output;
     std::string stem = std::filesystem::path(inputFile).stem();
     std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
     std::ofstream ofs(outputFileName);
@@ -90,11 +93,10 @@ void ir(const Parsing::Program& parsingProgram, Ir::Program& irProgram)
     Ir::program(&parsingProgram, irProgram);
 }
 
-void codegen(const Parsing::Program& programNode, std::string &output)
+void codegen(const Ir::Program& irProgram, CodeGen::Program& codegenProgram)
 {
-    const Parsing::Program* temp = &programNode;
-    const Codegen::Assembly astToAssembly(temp);
-    astToAssembly.getOutput(output);
+    CodeGen::program(irProgram, codegenProgram);
+    CodeGen::replacingPseudoRegisters(codegenProgram);
 }
 
 static bool fileExists(const std::string &name)

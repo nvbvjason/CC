@@ -50,7 +50,7 @@ struct Inst {
     };
     Kind kind = Kind::Invalid;
 
-    ~Inst() = default;
+    virtual ~Inst() = default;
 
     explicit Inst(const Kind k)
         : kind(k) {}
@@ -104,7 +104,7 @@ struct Operand {
     };
     Kind kind;
 
-    ~Operand() = default;
+    virtual ~Operand() = default;
 
     explicit Operand(const Kind k)
         : kind(k) {}

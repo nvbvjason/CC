@@ -4,6 +4,9 @@
 #include "AbstractTree.hpp"
 
 #include <stdexcept>
+#include <unordered_map>
+
+#include "Parsing/AstVisualizer.hpp"
 
 namespace CodeGen {
 
@@ -88,6 +91,36 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
     }
 }
 
+void replacePseudoRegister(std::unordered_map<std::string, i32>& map, i32& stackPtr, std::shared_ptr<Operand>& operand)
+{
+    if (operand->kind == Operand::Kind::Pseudo) {
+        const auto operandPseudo = dynamic_cast<OperandPseudo*>(operand.get());
+        if (!map.contains(operandPseudo->identifier)) {
+            stackPtr -= 4;
+            map[operandPseudo->identifier] = stackPtr;
+        }
+        operand = std::make_shared<OperandStack>(map.at(operandPseudo->identifier));
+    }
+}
 
+i32 replacingPseudoRegisters(Program &programCodegen)
+{
+    std::shared_ptr<Function> function = programCodegen.function;
+    std::vector<std::shared_ptr<Inst>> instructions = function->instructions;
+    std::unordered_map<std::string, i32> map;
+    i32 stackPtr = 0;
+    for (std::shared_ptr<Inst>& inst : instructions) {
+        if (inst->kind == Inst::Kind::Move) {
+            const auto moveInst = dynamic_cast<MoveInst*>(inst.get());
+            replacePseudoRegister(map, stackPtr, moveInst->source);
+            replacePseudoRegister(map, stackPtr, moveInst->destination);
+        }
+        if (inst->kind == Inst::Kind::Unary) {
+            const auto unaryInst = dynamic_cast<UnaryInst*>(inst.get());
+            replacePseudoRegister(map, stackPtr, unaryInst->destination);
+        }
+    }
+    return stackPtr;
+}
 
 }

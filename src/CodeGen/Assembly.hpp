@@ -5,7 +5,7 @@
 
 #include "Parsing/ConcreteTree.hpp"
 
-namespace Codegen {
+namespace CodeGen {
 class Assembly {
     struct ProgramNode;
     struct FunctionNode;
@@ -29,6 +29,6 @@ private:
     [[nodiscard]] static std::string getOperand(const std::shared_ptr<Parsing::Expr>& constantNode);
 };
 
-}
+} // CodeGen
 
 #endif // CC_CODEGEN_AST_TO_ASSEMBLY_HPP

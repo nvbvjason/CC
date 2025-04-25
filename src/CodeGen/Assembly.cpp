@@ -3,7 +3,7 @@
 #include <string>
 #include <format>
 
-namespace Codegen {
+namespace CodeGen {
 
 struct Assembly::OperandNode {
     struct Imm {
@@ -58,4 +58,4 @@ std::string Assembly::getOperand(const std::shared_ptr<Parsing::Expr>& constantN
 {
     return "";
 }
-}
+ // CodeGen

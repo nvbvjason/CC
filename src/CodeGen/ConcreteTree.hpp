@@ -3,6 +3,8 @@
 #ifndef CC_CONCRETE_TREE_HPP
 #define CC_CONCRETE_TREE_HPP
 
+#include <unordered_map>
+
 #include "AbstractTree.hpp"
 #include "IR/AbstractTree.hpp"
 
@@ -45,6 +47,8 @@ void returnInst(std::vector<std::shared_ptr<Inst>>& insts, const Ir::ReturnInst*
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 
 std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
+
+i32 replacingPseudoRegisters(Program &programCodegen);
 
 }
 
