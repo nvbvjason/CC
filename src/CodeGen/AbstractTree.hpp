@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
+#include <list>
 
 /*
 
@@ -39,7 +39,7 @@ struct Program {
 
 struct Function {
     std::string name;
-    std::vector<std::shared_ptr<Inst>> instructions;
+    std::list<std::shared_ptr<Inst>> instructions;
 };
 
 struct Inst {

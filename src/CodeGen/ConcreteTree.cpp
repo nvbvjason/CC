@@ -38,7 +38,7 @@ std::unique_ptr<Function> function(const Ir::Function *function)
     return functionCodeGen;
 }
 
-void unaryInst(std::vector<std::shared_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary)
+void unaryInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary)
 {
     std::shared_ptr<Operand> src = operand(irUnary->source);
     std::shared_ptr<Operand> dst = operand(irUnary->destination);
@@ -50,7 +50,7 @@ void unaryInst(std::vector<std::shared_ptr<Inst>>& insts, const Ir::UnaryInst* i
     insts.push_back(std::move(unaryInst));
 }
 
-void returnInst(std::vector<std::shared_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
+void returnInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
 {
     std::shared_ptr<Operand> val = operand(inst->returnValue);
     std::shared_ptr<Operand> operandRegister = std::make_shared<OperandRegister>(OperandRegister::Kind::R10);
@@ -105,8 +105,7 @@ void replacePseudoRegister(std::unordered_map<std::string, i32>& map, i32& stack
 
 i32 replacingPseudoRegisters(Program &programCodegen)
 {
-    std::shared_ptr<Function> function = programCodegen.function;
-    std::vector<std::shared_ptr<Inst>> instructions = function->instructions;
+    std::list<std::shared_ptr<Inst>> instructions = programCodegen.function->instructions;
     std::unordered_map<std::string, i32> map;
     i32 stackPtr = 0;
     for (std::shared_ptr<Inst>& inst : instructions) {
@@ -121,6 +120,34 @@ i32 replacingPseudoRegisters(Program &programCodegen)
         }
     }
     return stackPtr;
+}
+
+void fixUpInstructions(Program &programCodegen, i32 stackAlloc)
+{
+    std::list<std::shared_ptr<Inst>> instructions = programCodegen.function->instructions;
+    auto stackAllocationNode = std::make_shared<InstAllocStack>(stackAlloc);
+    instructions.insert(instructions.begin(), std::move(stackAllocationNode));
+    auto it = instructions.begin();
+    while (it != instructions.end()) {
+        auto current = it++;
+        const auto& inst = *current;
+        if (inst->kind != Inst::Kind::Move)
+            continue;
+        const auto moveInst = dynamic_cast<MoveInst*>(inst.get());
+        if (moveInst->source->kind == Operand::Kind::Stack &&
+            moveInst->destination->kind == Operand::Kind::Stack) {
+            auto src = moveInst->source;
+            auto dst = moveInst->destination;
+            auto first = std::make_shared<MoveInst>(
+                std::move(src), std::make_shared<OperandRegister>(OperandRegister::Kind::R10)
+            );
+            auto second = std::make_shared<MoveInst>(
+                std::make_shared<OperandRegister>(OperandRegister::Kind::R10), std::move(dst)
+            );
+            current = instructions.erase(current);
+            instructions.insert(current, {first, second});
+        }
+    }
 }
 
 }

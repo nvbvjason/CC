@@ -5,12 +5,11 @@
 #include "IR/AbstractTree.hpp"
 #include "IR/ConcreteTree.hpp"
 #include "CodeGen/AbstractTree.hpp"
+#include "CodeGen/ConcreteTree.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-
-#include "CodeGen/ConcreteTree.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
