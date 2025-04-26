@@ -53,10 +53,10 @@ void unaryInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::UnaryInst* irU
 void returnInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
 {
     std::shared_ptr<Operand> val = operand(inst->returnValue);
-    std::shared_ptr<Operand> operandRegister = std::make_shared<OperandRegister>(OperandRegister::Kind::R10);
+    std::shared_ptr<Operand> operandRegister = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10);
     auto moveInst = std::make_shared<MoveInst>(val, operandRegister);
     insts.push_back(std::move(moveInst));
-    auto instRet = std::make_unique<InstRet>();
+    auto instRet = std::make_unique<ReturnInst>();
     insts.push_back(std::move(instRet));
 }
 
@@ -80,11 +80,11 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
     switch (value->type) {
         case Ir::Value::Type::Constant: {
             const auto valueConst = dynamic_cast<Ir::ValueConst*>(value.get());
-            return std::make_shared<OperandImm>(valueConst->value);
+            return std::make_shared<ImmOperand>(valueConst->value);
         }
         case Ir::Value::Type::Variable: {
             const auto valueConst = dynamic_cast<Ir::ValueVar*>(value.get());
-            return std::make_shared<OperandPseudo>(valueConst->value);
+            return std::make_shared<PseudoOperand>(valueConst->value);
         }
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");
@@ -94,12 +94,12 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
 void replacePseudoRegister(std::unordered_map<std::string, i32>& map, i32& stackPtr, std::shared_ptr<Operand>& operand)
 {
     if (operand->kind == Operand::Kind::Pseudo) {
-        const auto operandPseudo = dynamic_cast<OperandPseudo*>(operand.get());
+        const auto operandPseudo = dynamic_cast<PseudoOperand*>(operand.get());
         if (!map.contains(operandPseudo->identifier)) {
             stackPtr -= 4;
             map[operandPseudo->identifier] = stackPtr;
         }
-        operand = std::make_shared<OperandStack>(map.at(operandPseudo->identifier));
+        operand = std::make_shared<StackOperand>(map.at(operandPseudo->identifier));
     }
 }
 
@@ -125,7 +125,7 @@ i32 replacingPseudoRegisters(Program &programCodegen)
 void fixUpInstructions(Program &programCodegen, i32 stackAlloc)
 {
     std::list<std::shared_ptr<Inst>>& instructions = programCodegen.function->instructions;
-    auto stackAllocationNode = std::make_shared<InstAllocStack>(stackAlloc);
+    auto stackAllocationNode = std::make_shared<AllocStackInst>(stackAlloc);
     instructions.insert(instructions.begin(), std::move(stackAllocationNode));
     for (auto it = instructions.begin(); it != instructions.end(); ++it) {
         const auto& inst = *it;
@@ -137,10 +137,10 @@ void fixUpInstructions(Program &programCodegen, i32 stackAlloc)
             auto src = moveInst->source;
             auto dst = moveInst->destination;
             auto first = std::make_shared<MoveInst>(
-                src, std::make_shared<OperandRegister>(OperandRegister::Kind::R10)
+                src, std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10)
             );
             auto second = std::make_shared<MoveInst>(
-                std::make_shared<OperandRegister>(OperandRegister::Kind::R10), dst
+                std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10), dst
             );
             instructions.insert(it, {first, second});
             it = instructions.erase(it);

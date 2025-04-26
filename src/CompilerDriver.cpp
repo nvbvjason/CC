@@ -11,6 +11,8 @@
 #include <fstream>
 #include <filesystem>
 
+#include "CodeGen/Assembly.hpp"
+
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static Ir::Program ir(const Parsing::Program& parsingProgram);
@@ -59,7 +61,7 @@ int CompilerDriver::run() const
     CodeGen::Program codegenProgram = codegen(irProgram);
     if (argument == "--codegen")
         return 0;
-    std::string output;
+    std::string output = CodeGen::assembleProgram(codegenProgram);
     std::string stem = std::filesystem::path(inputFile).stem();
     std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
     std::ofstream ofs(outputFileName);

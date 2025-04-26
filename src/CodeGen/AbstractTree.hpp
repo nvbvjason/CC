@@ -83,16 +83,16 @@ struct UnaryInst final : Inst {
     UnaryInst() = delete;
 };
 
-struct InstAllocStack final : Inst {
+struct AllocStackInst final : Inst {
     i32 alloc;
-    explicit InstAllocStack(i32 alloc)
+    explicit AllocStackInst(i32 alloc)
         : Inst(Kind::AllocateStack), alloc(alloc) {}
 
-    InstAllocStack() = delete;
+    AllocStackInst() = delete;
 };
 
-struct InstRet final : Inst {
-    InstRet()
+struct ReturnInst final : Inst {
+    ReturnInst()
         : Inst(Kind::Ret) {}
 };
 
@@ -112,41 +112,41 @@ struct Operand {
     Operand() = delete;
 };
 
-struct OperandImm final : Operand {
+struct ImmOperand final : Operand {
     i32 value;
-    explicit OperandImm(const i32 value)
+    explicit ImmOperand(const i32 value)
         : Operand(Kind::Imm), value(value) {}
 
-    OperandImm() = delete;
+    ImmOperand() = delete;
 };
 
-struct OperandRegister final : Operand {
+struct RegisterOperand final : Operand {
     enum class Kind {
         AX, R10,
 
         Invalid
     };
     Kind kind;
-    explicit OperandRegister(const Kind k)
+    explicit RegisterOperand(const Kind k)
         : Operand(Operand::Kind::Register), kind(k) {}
 
-    OperandRegister() = delete;
+    RegisterOperand() = delete;
 };
 
-struct OperandPseudo final : Operand {
+struct PseudoOperand final : Operand {
     std::string identifier;
-    explicit OperandPseudo(std::string identifier)
+    explicit PseudoOperand(std::string identifier)
         : Operand(Kind::Pseudo), identifier(std::move(identifier)) {}
 
-    OperandPseudo() = delete;
+    PseudoOperand() = delete;
 };
 
-struct OperandStack final : Operand {
+struct StackOperand final : Operand {
     i32 value;
-    explicit OperandStack(const i32 value)
+    explicit StackOperand(const i32 value)
         : Operand(Kind::Stack), value(value) {}
 
-    OperandStack() = delete;
+    StackOperand() = delete;
 };
 
 }
