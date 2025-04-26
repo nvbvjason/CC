@@ -30,9 +30,10 @@ std::shared_ptr<Function> function(const Parsing::Function* parsingFunction);
 std::shared_ptr<Value> instruction(const Parsing::Expr* parsingExpr,
                                    std::vector<std::shared_ptr<Instruction>>& instructions);
 std::shared_ptr<ValueVar> unaryInstruction(const Parsing::Expr *parsingExpr,
-                                           std::vector<std::shared_ptr<Instruction>> &instructions);
+                                           std::vector<std::shared_ptr<Instruction>>& instructions);
+std::shared_ptr<Value> binaryInstruction(const Parsing::Expr *parsingExpr,
+                                         std::vector<std::shared_ptr<Instruction>>& instructions);
 std::shared_ptr<ValueConst> returnInstruction(const Parsing::Expr *parsingExpr);
-
 
 } // IR
 
