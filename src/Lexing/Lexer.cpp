@@ -68,6 +68,7 @@ void Lexer::scanToken()
                     advance();
                 }
                 advance();
+                advance();
             }
             else
                 addToken(TokenType::ForwardSlash);

@@ -47,9 +47,54 @@ TEST(LexerTests, GetTokens) {
     }
 }
 
-TEST(LexerTests, MultiLineComment) {
+TEST(LexerTests, Percent)
+{
+    std::string input = "%";
+    auto tokens = runLexerTest(input);
+
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::TokenType::Percent, "%"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " Percent mismatch";
+}
+
+TEST(LexerTests, Plus)
+{
+    std::string input = "+";
+    auto tokens = runLexerTest(input);
+
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::TokenType::Plus, "+"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " Plus mismatch";
+}
+
+TEST(LexerTests, Asterisk)
+{
+    std::string input = "*";
+    auto tokens = runLexerTest(input);
+
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::TokenType::Asterisk, "*"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " Asterisk mismatch";
+}
+
+TEST(LexerTests, ForwardSlash)
+{
+    std::string input = "/";
+    auto tokens = runLexerTest(input);
+
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::TokenType::ForwardSlash, "/"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " ForwardSlash mismatch";
+}
+
+TEST(LexerTests, MultiLineComment)
+{
     auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);
-    EXPECT_TRUE(tokens.size() == 1);
+    EXPECT_TRUE(tokens.size() == 1) << " " << tokens.size();
 }
 
 TEST(LexerTests, InvalidInput) {
