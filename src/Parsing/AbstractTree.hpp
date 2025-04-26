@@ -12,8 +12,11 @@
     program = Program(function_definition)
     function_definition = Function(identifier names, statement body)
     statement = Return(exp)
-    exp = Constant(int) | Unary(unary_operator, exp)
+    exp = Constant(int)
+        | Unary(unary_operator, exp)
+        | Binary(binary_operator, exp, exp)
     unary_operator = Complement | Negate
+    binary_operator = Add | Subtract | Multiply | Divide | Remainder
 */
 
 namespace Parsing {
@@ -38,7 +41,7 @@ struct Statement {
 
 struct Expr {
     enum class Kind {
-        Constant, Unary,
+        Constant, Unary, Binary,
         Invalid
     };
     Kind kind = Kind::Invalid;
@@ -76,6 +79,18 @@ struct UnaryExpr final : Expr {
         : Expr(Kind::Unary), op(op), operand(std::move(expr)) {}
 
     UnaryExpr() = delete;
+};
+
+struct BinaryExpr final : Expr {
+    enum class Operator {
+        Add, Subtract, Multiply, Divide, Remainder,
+        Invalid
+    };
+    Operator op;
+    std::shared_ptr<Expr> lhs;
+    std::shared_ptr<Expr> rhs;
+    BinaryExpr(const Operator op, const std::shared_ptr<Expr>& lhs, const std::shared_ptr<Expr>& rhs)
+        : Expr(Kind::Binary), op(op), lhs(lhs), rhs(rhs) {}
 };
 } // Parsing
 

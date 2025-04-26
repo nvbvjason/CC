@@ -49,9 +49,8 @@ TEST(LexerTests, GetTokens) {
 
 TEST(LexerTests, Percent)
 {
-    std::string input = "%";
-    auto tokens = runLexerTest(input);
-
+    const std::string input = "%";
+    const auto tokens = runLexerTest(input);
     const Lexing::Token expected[] = {
         {1, 1, Lexing::TokenType::Percent, "%"}
     };
@@ -60,9 +59,8 @@ TEST(LexerTests, Percent)
 
 TEST(LexerTests, Plus)
 {
-    std::string input = "+";
-    auto tokens = runLexerTest(input);
-
+    const std::string input = "+";
+    const auto tokens = runLexerTest(input);
     const Lexing::Token expected[] = {
         {1, 1, Lexing::TokenType::Plus, "+"}
     };
@@ -71,9 +69,8 @@ TEST(LexerTests, Plus)
 
 TEST(LexerTests, Asterisk)
 {
-    std::string input = "*";
-    auto tokens = runLexerTest(input);
-
+    const std::string input = "*";
+    const auto tokens = runLexerTest(input);
     const Lexing::Token expected[] = {
         {1, 1, Lexing::TokenType::Asterisk, "*"}
     };
@@ -82,9 +79,8 @@ TEST(LexerTests, Asterisk)
 
 TEST(LexerTests, ForwardSlash)
 {
-    std::string input = "/";
-    auto tokens = runLexerTest(input);
-
+    const std::string input = "/";
+    const auto tokens = runLexerTest(input);
     const Lexing::Token expected[] = {
         {1, 1, Lexing::TokenType::ForwardSlash, "/"}
     };
@@ -93,7 +89,7 @@ TEST(LexerTests, ForwardSlash)
 
 TEST(LexerTests, MultiLineComment)
 {
-    auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);
+    const auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);
     EXPECT_TRUE(tokens.size() == 1) << " " << tokens.size();
 }
 

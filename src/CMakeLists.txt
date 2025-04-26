@@ -38,11 +38,14 @@ add_library(CC_lib STATIC
         ${IR_FILES}
 )
 
+
 target_include_directories(CC_lib PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_executable(CC main.cpp)
+
+target_compile_options(CC PRIVATE -Wswitch -Werror=switch)
 
 target_link_libraries(CC PRIVATE CC_lib)
 

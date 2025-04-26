@@ -103,7 +103,7 @@ void replacePseudoRegister(std::unordered_map<std::string, i32>& map, i32& stack
     }
 }
 
-i32 replacingPseudoRegisters(Program &programCodegen)
+i32 replacingPseudoRegisters(Program& programCodegen)
 {
     std::list<std::shared_ptr<Inst>> instructions = programCodegen.function->instructions;
     std::unordered_map<std::string, i32> map;
@@ -122,7 +122,7 @@ i32 replacingPseudoRegisters(Program &programCodegen)
     return stackPtr;
 }
 
-void fixUpInstructions(Program &programCodegen, i32 stackAlloc)
+void fixUpInstructions(Program& programCodegen, i32 stackAlloc)
 {
     std::list<std::shared_ptr<Inst>>& instructions = programCodegen.function->instructions;
     stackAlloc = -stackAlloc;
