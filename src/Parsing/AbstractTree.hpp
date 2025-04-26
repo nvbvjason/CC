@@ -91,6 +91,8 @@ struct BinaryExpr final : Expr {
     std::shared_ptr<Expr> rhs;
     BinaryExpr(const Operator op, const std::shared_ptr<Expr>& lhs, const std::shared_ptr<Expr>& rhs)
         : Expr(Kind::Binary), op(op), lhs(lhs), rhs(rhs) {}
+
+    BinaryExpr() = delete;
 };
 } // Parsing
 

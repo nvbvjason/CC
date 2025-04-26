@@ -14,9 +14,9 @@ i32 Lexer::getLexemes(std::vector<Token>& lexemes)
     }
     lexemes = m_tokens;
     for (const Token& lexeme : lexemes)
-        if (lexeme.m_type == TokenType::Invalid)
+        if (lexeme.m_type == Token::Type::Invalid)
             return 1;
-    lexemes.emplace_back(m_line, m_column, TokenType::EndOfFile, "");
+    lexemes.emplace_back(m_line, m_column, Token::Type::EndOfFile, "");
     return 0;
 }
 
@@ -24,38 +24,38 @@ void Lexer::scanToken()
 {
     switch (const char ch = advance()) {
         case '(':
-            addToken(TokenType::OpenParen);
+            addToken(Token::Type::OpenParen);
             break;
         case ')':
-            addToken(TokenType::CloseParen);
+            addToken(Token::Type::CloseParen);
             break;
         case '{':
-            addToken(TokenType::OpenBrace);
+            addToken(Token::Type::OpenBrace);
             break;
         case '}':
-            addToken(TokenType::CloseBrace);
+            addToken(Token::Type::CloseBrace);
             break;
         case ';':
-            addToken(TokenType::Semicolon);
+            addToken(Token::Type::Semicolon);
             break;
         case '~':
-            addToken(TokenType::Tilde);
+            addToken(Token::Type::Tilde);
             break;
         case '%':
-            addToken(TokenType::Percent);
+            addToken(Token::Type::Percent);
             break;
         case '*':
-            addToken(TokenType::Asterisk);
+            addToken(Token::Type::Asterisk);
             break;
         case '+':
-            addToken(TokenType::Plus);
+            addToken(Token::Type::Plus);
             break;
         case '-':
             if (match('-')) {
-                addToken(TokenType::Decrement);
+                addToken(Token::Type::Decrement);
                 break;
             }
-            addToken(TokenType::Minus);
+            addToken(Token::Type::Minus);
             break;
         case '/':
             if (match('/'))
@@ -71,7 +71,7 @@ void Lexer::scanToken()
                 advance();
             }
             else
-                addToken(TokenType::ForwardSlash);
+                addToken(Token::Type::ForwardSlash);
             break;
         case ' ':
         case '\t':
@@ -88,7 +88,7 @@ void Lexer::scanToken()
             else if (isalpha(ch))
                 identifier();
             else
-                addToken(TokenType::Invalid);
+                addToken(Token::Type::Invalid);
             break;
     }
 }
@@ -127,9 +127,9 @@ void Lexer::integer()
     while (isalnum(peek()))
         advance();
     if (const std::string str = c_source.substr(m_start, m_current - m_start); !std::ranges::all_of(str,isdigit))
-        addToken(TokenType::Invalid);
+        addToken(Token::Type::Invalid);
     const i32 value = std::stoi(c_source.substr(m_start, m_current - m_start));
-    addToken(TokenType::Integer, value);
+    addToken(Token::Type::Integer, value);
 }
 
 void Lexer::identifier()
@@ -139,20 +139,20 @@ void Lexer::identifier()
     const std::string text = c_source.substr(m_start, m_current - m_start);
     const auto iden = keywords.find(text);
     if (iden == keywords.end()) {
-        addToken(TokenType::Identifier);
+        addToken(Token::Type::Identifier);
         return;
     }
     addToken(iden->second);
 }
 
-void Lexer::addToken(TokenType type, i32 value)
+void Lexer::addToken(Token::Type type, i32 value)
 {
     std::string text = c_source.substr(m_start, m_current - m_start);
     m_tokens.emplace_back(m_line, m_column, type, text, value);
     m_column += m_current - m_start;
 }
 
-void Lexer::addToken(const TokenType type)
+void Lexer::addToken(const Token::Type type)
 {
     std::string text = c_source.substr(m_start, m_current - m_start);
     m_tokens.emplace_back(m_line, m_column, type, text);

@@ -19,10 +19,10 @@ class Lexer {
     i32 m_line = 1;
     u16 m_column = 1;
     std::vector<Token> m_tokens;
-    static inline std::unordered_map<std::string, TokenType> keywords = {
-        { "return", TokenType::Return },
-        { "int", TokenType::IntKeyword },
-        { "void", TokenType::Void },
+    static inline std::unordered_map<std::string, Token::Type> keywords = {
+        { "return", Token::Type::Return },
+        { "int", Token::Type::IntKeyword },
+        { "void", Token::Type::Void },
     };
 public:
     explicit Lexer(const std::string& input)
@@ -38,8 +38,8 @@ private:
     void integer();
     void identifier();
     void scanToken();
-    void addToken(TokenType type);
-    void addToken(TokenType type, i32 value);
+    void addToken(Token::Type type);
+    void addToken(Token::Type type, i32 value);
 };
 
 

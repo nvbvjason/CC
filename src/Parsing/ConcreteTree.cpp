@@ -1,5 +1,4 @@
 #include "ConcreteTree.hpp"
-
 #include "IR/AbstractTree.hpp"
 #include "Lexing/Token.hpp"
 
@@ -13,66 +12,88 @@ bool Parse::programParse(Program& program)
     program.function = std::make_unique<Function>(std::move(function));
     if (program.function->name != "main")
         return false;
-    if (c_tokens[m_current].m_type != Lexing::TokenType::EndOfFile)
+    if (c_tokens[m_current].m_type != Lexing::Token::Type::EndOfFile)
         return false;
     return true;
 }
 
 bool Parse::functionParse(Function& function)
 {
-    if (!expect(Lexing::TokenType::IntKeyword))
+    if (!expect(Lexing::Token::Type::IntKeyword))
         return false;
     const Lexing::Token lexeme = advance();
-    if (lexeme.m_type != Lexing::TokenType::Identifier)
+    if (lexeme.m_type != Lexing::Token::Type::Identifier)
         return false;
     function.name = lexeme.m_lexeme;
-    if (!expect(Lexing::TokenType::OpenParen))
+    if (!expect(Lexing::Token::Type::OpenParen))
         return false;
-    if (!expect(Lexing::TokenType::Void))
+    if (!expect(Lexing::Token::Type::Void))
         return false;
-    if (!expect(Lexing::TokenType::CloseParen))
+    if (!expect(Lexing::Token::Type::CloseParen))
         return false;
-    if (!expect(Lexing::TokenType::OpenBrace))
+    if (!expect(Lexing::Token::Type::OpenBrace))
         return false;
     Statement statement;
-    if (!statementParse(statement))
+    if (!stmtParse(statement))
         return false;
-    function.body = std::make_unique<Statement>(std::move(statement));
-    if (!expect(Lexing::TokenType::CloseBrace))
+    function.body = std::make_shared<Statement>(std::move(statement));
+    if (!expect(Lexing::Token::Type::CloseBrace))
         return false;
     return true;
 }
 
-bool Parse::statementParse(Statement& statement)
+bool Parse::stmtParse(Statement& statement)
 {
-    if (!expect(Lexing::TokenType::Return))
+    if (!expect(Lexing::Token::Type::Return))
         return false;
-    std::shared_ptr<Expr> expr = expressionParse();
+    const std::shared_ptr<Expr> expr = exprParse(0);
     if (expr == nullptr)
         return false;
-    statement.expression = std::move(expr);
-    if (!expect(Lexing::TokenType::Semicolon))
+    statement.expression = expr;
+    if (!expect(Lexing::Token::Type::Semicolon))
         return false;
     return true;
 }
 
-std::shared_ptr<Expr> Parse::expressionParse()
+std::shared_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
+{
+    auto left = factorParse();
+    if (left == nullptr)
+        return nullptr;
+    Lexing::Token token = peek();
+    const i32 nextPrecedence = precedence(token.m_type);
+    while ((token.m_type == Lexing::Token::Type::Plus ||
+              token.m_type == Lexing::Token::Type::Minus) &&
+            minPrecedence <= nextPrecedence) {
+        if (advance().m_type == Lexing::Token::Type::EndOfFile)
+            return nullptr;
+        BinaryExpr::Operator op;
+        if (!binaryOperatorParse(op))
+            return nullptr;
+        auto right = exprParse(nextPrecedence + 1);
+        left = std::make_shared<BinaryExpr>(op, left, right);
+        token = peek();
+    }
+    return left;
+}
+
+std::shared_ptr<Expr> Parse::factorParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
-        case Lexing::TokenType::Integer: {
-            auto constantExpr = std::make_unique<ConstantExpr>(std::stoi(lexeme.m_lexeme));
-            if (advance().m_type == Lexing::TokenType::EndOfFile)
+        case Lexing::Token::Type::Integer: {
+            auto constantExpr = std::make_shared<ConstantExpr>(std::stoi(lexeme.m_lexeme));
+            if (advance().m_type == Lexing::Token::Type::EndOfFile)
                 return nullptr;
             return constantExpr;
         }
-        case Lexing::TokenType::Minus:
-        case Lexing::TokenType::Tilde:
-            return unaryParse();
-        case Lexing::TokenType::OpenParen: {
-            if (advance().m_type == Lexing::TokenType::EndOfFile)
+        case Lexing::Token::Type::Minus:
+        case Lexing::Token::Type::Tilde:
+            return unaryExprParse();
+        case Lexing::Token::Type::OpenParen: {
+            if (advance().m_type == Lexing::Token::Type::EndOfFile)
                 return nullptr;
-            auto expr = expressionParse();
-            if (!expect(Lexing::TokenType::CloseParen))
+            auto expr = factorParse();
+            if (!expect(Lexing::Token::Type::CloseParen))
                 return nullptr;
             return expr;
         }
@@ -81,12 +102,12 @@ std::shared_ptr<Expr> Parse::expressionParse()
     }
 }
 
-std::shared_ptr<UnaryExpr> Parse::unaryParse()
+std::shared_ptr<Expr> Parse::unaryExprParse()
 {
     UnaryExpr::Operator unaryOperator;
     if (!unaryOperatorParse(unaryOperator))
         return nullptr;
-    std::shared_ptr<Expr> expr = expressionParse();
+    std::shared_ptr<Expr> expr = exprParse(0);
     if (expr == nullptr)
         return nullptr;
     return std::make_unique<UnaryExpr>(unaryOperator, std::move(expr));
@@ -95,25 +116,63 @@ std::shared_ptr<UnaryExpr> Parse::unaryParse()
 bool Parse::unaryOperatorParse(UnaryExpr::Operator& unaryOperator)
 {
     switch (const auto type = advance(); type.m_type) {
-        case Lexing::TokenType::Minus:
+        case Lexing::Token::Type::Minus:
             unaryOperator = UnaryExpr::Operator::Negate;
-            break;
-        case Lexing::TokenType::Tilde:
+            return true;
+        case Lexing::Token::Type::Tilde:
             unaryOperator = UnaryExpr::Operator::Complement;
-            break;
+            return true;
         default:
             return false;
     }
-    return true;
+
 }
 
-bool Parse::match(const Lexing::TokenType &type)
+bool Parse::binaryOperatorParse(BinaryExpr::Operator& binaryOperator)
+{
+    switch (const auto type = advance(); type.m_type) {
+         case Lexing::Token::Type::Plus:
+            binaryOperator = BinaryExpr::Operator::Add;
+            return true;
+        case Lexing::Token::Type::Minus:
+            binaryOperator = BinaryExpr::Operator::Subtract;
+            return true;
+        case Lexing::Token::Type::Asterisk:
+            binaryOperator = BinaryExpr::Operator::Multiply;
+            return true;
+        case Lexing::Token::Type::ForwardSlash:
+            binaryOperator = BinaryExpr::Operator::Divide;
+            return true;
+        case Lexing::Token::Type::Percent:
+            binaryOperator = BinaryExpr::Operator::Remainder;
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool Parse::match(const Lexing::Token::Type &type)
 {
     if (type == c_tokens[m_current].m_type) {
-        if (advance().m_type == Lexing::TokenType::EndOfFile)
+        if (advance().m_type == Lexing::Token::Type::EndOfFile)
             return false;
         return true;
     }
     return false;
+}
+
+i32 Parse::precedence(const Lexing::Token::Type type)
+{
+    switch (type) {
+        case Lexing::Token::Type::Asterisk:
+        case Lexing::Token::Type::ForwardSlash:
+        case Lexing::Token::Type::Percent:
+            return 50;
+        case Lexing::Token::Type::Plus:
+        case Lexing::Token::Type::Minus:
+            return 45;
+        default:
+            return 0;
+    }
 }
 } // Parsing

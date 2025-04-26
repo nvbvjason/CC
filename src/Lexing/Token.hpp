@@ -12,43 +12,43 @@
 
 namespace Lexing {
 
-enum class TokenType : u16 {
-    // Bracketing Symbols
-    OpenParen, CloseParen,
-    OpenBrace, CloseBrace,
-
-    // Operators
-    Semicolon,
-    Tilde,
-    Plus, Minus,
-    Decrement,
-    Asterisk,
-    ForwardSlash,
-    Percent,
-
-    // Keywords
-    Return,
-    Void,
-    IntKeyword,
-
-    Identifier,
-
-    Integer,
-
-    EndOfFile,
-
-    Invalid
-};
 
 struct Token {
+    enum class Type : u16 {
+        // Bracketing Symbols
+        OpenParen, CloseParen,
+        OpenBrace, CloseBrace,
+
+        // Operators
+        Semicolon,
+        Tilde,
+        Plus, Minus,
+        Decrement,
+        Asterisk,
+        ForwardSlash,
+        Percent,
+
+        // Keywords
+        Return,
+        Void,
+        IntKeyword,
+
+        Identifier,
+
+        Integer,
+
+        EndOfFile,
+
+        Invalid
+    };
     std::variant<i32> m_data;
     i32 m_line;
     u16 m_column;
-    TokenType m_type;
+    Type m_type;
     std::string m_lexeme;
-    Token(const i32 line, const u16 column, const TokenType type, std::string lexeme)
+    Token(const i32 line, const u16 column, const Type type, std::string lexeme)
         : m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
-    Token(const i32 line, const u16 column, const TokenType type, std::string lexeme, const i32 value)
+    Token(const i32 line, const u16 column, const Type type, std::string lexeme, const i32 value)
         : m_data(value), m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
     [[nodiscard]] i32 line() const { return m_line; }
     [[nodiscard]] u16 column() const { return m_column; }

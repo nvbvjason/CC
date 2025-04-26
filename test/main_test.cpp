@@ -99,6 +99,20 @@ TEST(Chapter2, parsingInvalid)
     }
 }
 
+TEST(Chapter3, parsingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_3/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Token> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        lexer.getLexemes(lexemes);
+        Parsing::Parse parser(lexemes);
+        Parsing::Program program;
+        ASSERT_EQ(true, parser.programParse(program)) << path.path().string();
+    }
+}
+
 void cleanUp()
 {
     for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))
