@@ -15,14 +15,18 @@ program = Program(function_definition)
 function_definition = Function(identifier name, instruciton* instructions)
 instruction = Mov(operand src, operand dst)
             | Unary(unary_operator, operand)
+            | Binary(binary_operator, operand, operand)
+            | Idiv(operand)
+            | Cdq
             | Allocate_stack(int)
             | Ret
 unary_operator = Neg | Not
+binary_operator = Add | Sub | Mult
 operand = Imm(int)
         | Reg(reg)
         | Pseudo(identifier)
         | Stack(int)
-reg = AX | R10
+reg = AX | DX | R10 | R11
 
 */
 
@@ -44,8 +48,7 @@ struct Function {
 
 struct Inst {
     enum class Kind {
-        Move, Unary, AllocateStack, Ret,
-
+        Move, Unary, Binary, Idiv, Cdq, AllocateStack, Ret,
         Invalid
     };
     Kind kind = Kind::Invalid;
@@ -81,6 +84,33 @@ struct UnaryInst final : Inst {
         : Inst(Kind::Unary), oper(op), destination(std::move(dst)) {}
 
     UnaryInst() = delete;
+};
+
+struct BinaryInst final : Inst {
+    enum class Operator {
+        Add, Sub, Mul, Div, Mod,
+        Invalid
+    };
+    Operator oper;
+    std::shared_ptr<Operand> lhs;
+    std::shared_ptr<Operand> rhs;
+    BinaryInst(const Operator op, std::shared_ptr<Operand> lhs, std::shared_ptr<Operand> rhs)
+        :Inst(Kind::Binary), oper(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+
+    BinaryInst() = delete;
+};
+
+struct IdivInst final : Inst {
+    std::shared_ptr<Operand> operand;
+    IdivInst(std::shared_ptr<Operand> operand)
+        : Inst(Kind::Idiv), operand(std::move(operand)) {}
+
+    IdivInst() = delete;
+};
+
+struct CdqInst final : Inst {
+    explicit CdqInst()
+        : Inst(Kind::Cdq) {}
 };
 
 struct AllocStackInst final : Inst {
@@ -122,8 +152,7 @@ struct ImmOperand final : Operand {
 
 struct RegisterOperand final : Operand {
     enum class Kind {
-        AX, R10,
-
+        AX, DX, R10, R11,
         Invalid
     };
     Kind kind;

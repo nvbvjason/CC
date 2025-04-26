@@ -31,6 +31,11 @@ std::unique_ptr<Function> function(const Ir::Function *function)
                 returnInst(functionCodeGen->instructions, irReturn);
                 break;
             }
+            case Ir::Instruction::Type::Binary: {
+                const auto irBinary = dynamic_cast<Ir::BinaryInst*>(inst.get());
+                binaryInst(functionCodeGen->instructions, irBinary);
+                break;
+            }
             default:
                 throw std::runtime_error("Unsupported instruction type");
         }
@@ -42,12 +47,84 @@ void unaryInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::UnaryInst* irU
 {
     std::shared_ptr<Operand> src = operand(irUnary->source);
     std::shared_ptr<Operand> dst = operand(irUnary->destination);
-    auto moveInst = std::make_shared<MoveInst>(src, dst);
-    insts.push_back(std::move(moveInst));
+    const auto moveInst = std::make_shared<MoveInst>(src, dst);
+    insts.push_back(moveInst);
 
     UnaryInst::Operator oper = unaryOperator(irUnary->operation);
     auto unaryInst = std::make_unique<UnaryInst>(oper, dst);
     insts.push_back(std::move(unaryInst));
+}
+
+void binaryInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
+{
+    switch (irBinary->operation) {
+        case Ir::BinaryInst::Operation::Add:
+        case Ir::BinaryInst::Operation::Subtract:
+        case Ir::BinaryInst::Operation::Multiply:
+            binaryOtherInst(insts, irBinary);
+            break;
+        case Ir::BinaryInst::Operation::Divide:
+            binaryDivideInst(insts, irBinary);
+            break;
+        case Ir::BinaryInst::Operation::Remainder:
+            binaryRemainderInst(insts, irBinary);
+            break;
+        default:
+            throw std::runtime_error("Unsupported binary operation");
+    }
+}
+
+
+void binaryDivideInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
+{
+    std::shared_ptr<Operand> src1 = operand(irBinary->source1);
+    std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Kind::AX);
+    const auto firstMoveInst = std::make_shared<MoveInst>(src1, regAX);
+    insts.push_back(firstMoveInst);
+
+    const auto cdq = std::make_shared<CdqInst>();
+    insts.push_back(cdq);
+
+    std::shared_ptr<Operand> src2 = operand(irBinary->source2);
+    const auto idiv = std::make_shared<IdivInst>(src2);
+    insts.push_back(idiv);
+
+    std::shared_ptr<Operand> dst = operand(irBinary->destination);
+    const auto secondMoveInst = std::make_shared<MoveInst>(regAX, dst);
+    insts.push_back(secondMoveInst);
+}
+
+void binaryRemainderInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
+{
+    std::shared_ptr<Operand> src1 = operand(irBinary->source1);
+    std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Kind::AX);
+    const auto firstMoveInst = std::make_shared<MoveInst>(src1, regAX);
+    insts.push_back(firstMoveInst);
+
+    const auto cdq = std::make_shared<CdqInst>();
+    insts.push_back(cdq);
+
+    std::shared_ptr<Operand> src2 = operand(irBinary->source2);
+    const auto idiv = std::make_shared<IdivInst>(src2);
+    insts.push_back(idiv);
+
+    std::shared_ptr<Operand> dst = operand(irBinary->destination);
+    const auto regDX = std::make_shared<RegisterOperand>(RegisterOperand::Kind::DX);
+    const auto secondMoveInst = std::make_shared<MoveInst>(regDX, dst);
+    insts.push_back(secondMoveInst);
+}
+
+void binaryOtherInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
+{
+    std::shared_ptr<Operand> src1 = operand(irBinary->source1);
+    std::shared_ptr<Operand> dst = operand(irBinary->destination);
+    const auto moveInst = std::make_shared<MoveInst>(src1, dst);
+    insts.push_back(moveInst);
+
+    BinaryInst::Operator oper = binaryOperator(irBinary->operation);
+    std::shared_ptr<Operand> src2 = operand(irBinary->source2);
+    auto binaryInst = std::make_unique<BinaryInst>(oper, src2, dst);
+    insts.push_back(std::move(binaryInst));
 }
 
 void returnInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
@@ -74,6 +151,28 @@ UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
             throw std::invalid_argument("Invalid UnaryOperator type");
     }
 }
+
+BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type)
+{
+    switch (type)
+    {
+        case Ir::BinaryInst::Operation::Add:
+            return BinaryInst::Operator::Add;
+        case Ir::BinaryInst::Operation::Subtract:
+            return BinaryInst::Operator::Sub;
+        case Ir::BinaryInst::Operation::Multiply:
+            return BinaryInst::Operator::Mul;
+        case Ir::BinaryInst::Operation::Divide:
+            return BinaryInst::Operator::Div;
+        case Ir::BinaryInst::Operation::Remainder:
+            return BinaryInst::Operator::Mod;
+        case Ir::BinaryInst::Operation::Invalid:
+            return BinaryInst::Operator::Invalid;
+        default:
+            throw std::invalid_argument("Invalid UnaryOperator type");
+    }
+}
+
 
 std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
 {
