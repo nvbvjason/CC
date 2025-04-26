@@ -28,7 +28,7 @@ void asmInstruction(std::string& result, const std::shared_ptr<Inst>& instructio
     switch (instruction->kind) {
         case Inst::Kind::AllocateStack: {
             const auto instAllocStack = dynamic_cast<AllocStackInst*>(instruction.get());
-            result += "    subq     %" + std::to_string(instAllocStack->alloc) + ", %rsp\n";
+            result += formatAsm("subq", "$" + std::to_string(instAllocStack->alloc) + ", %rsp");
             return;
         }
         case Inst::Kind::Move: {
@@ -46,8 +46,7 @@ void asmInstruction(std::string& result, const std::shared_ptr<Inst>& instructio
         }
         case Inst::Kind::Unary: {
             const auto unaryInst = dynamic_cast<UnaryInst*>(instruction.get());
-            result += "    " + asmUnaryOperator(unaryInst->oper) + "     "
-                             + asmOperand(unaryInst->destination) + "\n";
+            result += formatAsm(asmUnaryOperator(unaryInst->oper), asmOperand(unaryInst->destination));
             return;
         }
         case Inst::Kind::Invalid: {
