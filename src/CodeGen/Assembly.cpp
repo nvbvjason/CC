@@ -1,29 +1,29 @@
 #include "Assembly.hpp"
 
 #include <string>
-#include <format>
+#include <iomanip>
 
 namespace CodeGen {
 
-std::string assembleProgram(const Program& program)
+std::string asmProgram(const Program& program)
 {
     std::string result;
-    assembleFunction(result, program.function);
-    result += "    .section .note.GNU-stack,\"\",@progbits\n";
+    asmFunction(result, program.function);
+    result += formatAsm(".section", ".note.GNU-stack,\"\",@progbits");
     return result;
 }
 
-void assembleFunction(std::string& result, const std::shared_ptr<Function>& functionNode)
+void asmFunction(std::string& result, const std::shared_ptr<Function>& functionNode)
 {
-    result += "    .globl " + functionNode->name + '\n';
-    result += functionNode->name + ":\n";
-    result += "    pushq    %rbp\n";
-    result += "    movq     %rsp, %rbp\n";
+    result += formatAsm(".globl", functionNode->name);
+    result += formatAsm(functionNode->name);
+    result += formatAsm("pushq", "%rbp");
+    result += formatAsm("movq","%rsp, %rbp");
     for (const std::shared_ptr<Inst>& inst : functionNode->instructions)
-        assembleInstruction(result, inst);
+        asmInstruction(result, inst);
 }
 
-void assembleInstruction(std::string& result, const std::shared_ptr<Inst>& instruction)
+void asmInstruction(std::string& result, const std::shared_ptr<Inst>& instruction)
 {
     switch (instruction->kind) {
         case Inst::Kind::AllocateStack: {
@@ -33,38 +33,39 @@ void assembleInstruction(std::string& result, const std::shared_ptr<Inst>& instr
         }
         case Inst::Kind::Move: {
             const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
-            result += "    movl     %" + assembleOperand(moveInst->source) + ", "
-                                       + assembleOperand(moveInst->destination) + '\n';
+            const std::string operand =  "%" + asmOperand(moveInst->source) + ", "
+                                             + asmOperand(moveInst->destination);
+            result += formatAsm("movl", operand);;
             return;
         }
         case Inst::Kind::Ret: {
-            result += "    movq     %rbp, %rsp\n";
-            result += "    popq     %rbp\n";
-            result += "    ret\n";
+            result += formatAsm("movq", "%rbp, %rsp");
+            result += formatAsm("popq", "%rbp");
+            result += formatAsm("ret");
             return;
         }
         case Inst::Kind::Unary: {
             const auto unaryInst = dynamic_cast<UnaryInst*>(instruction.get());
-            result += "    " + assembleUnaryOperator(unaryInst->oper) + "     "
-                             + assembleOperand(unaryInst->destination) + "\n";
+            result += "    " + asmUnaryOperator(unaryInst->oper) + "     "
+                             + asmOperand(unaryInst->destination) + "\n";
             return;
         }
         case Inst::Kind::Invalid: {
-            result += "invalid\n";
+            result += formatAsm("invalid");
             return;
         }
         default:
-            result += "not set";
+            result += formatAsm("not set");
             return;
     }
 }
 
-std::string assembleOperand(const std::shared_ptr<Operand>& operand)
+std::string asmOperand(const std::shared_ptr<Operand>& operand)
 {
     switch (operand->kind) {
         case Operand::Kind::Register: {
             const auto registerOperand = dynamic_cast<RegisterOperand*>(operand.get());
-            return assembleRegister(registerOperand);
+            return asmRegister(registerOperand);
         }
         case Operand::Kind::Pseudo:
             return "invalid pseudo";
@@ -83,7 +84,7 @@ std::string assembleOperand(const std::shared_ptr<Operand>& operand)
     }
 }
 
-std::string assembleRegister(const RegisterOperand* reg)
+std::string asmRegister(const RegisterOperand* reg)
 {
     switch (reg->kind) {
         case RegisterOperand::Kind::R10:
@@ -97,7 +98,7 @@ std::string assembleRegister(const RegisterOperand* reg)
     }
 }
 
-std::string assembleUnaryOperator(const UnaryInst::Operator oper)
+std::string asmUnaryOperator(const UnaryInst::Operator oper)
 {
     switch (oper) {
         case UnaryInst::Operator::Neg:
@@ -109,6 +110,22 @@ std::string assembleUnaryOperator(const UnaryInst::Operator oper)
         default:
             return "not set";
     }
+}
+
+std::string formatAsm(const std::string& mnemonic,
+                      const std::string& operands,
+                      const std::string& comment)
+{
+    constexpr int mnemonicWidth = 8;
+    constexpr int operandsWidth = 16;
+
+    std::ostringstream oss;
+    oss << "    " << std::left << std::setw(mnemonicWidth) << mnemonic
+        << std::setw(operandsWidth) << operands;
+    if (!comment.empty())
+        oss << "# " << comment;
+    oss << "\n";
+    return oss.str();
 }
 
 } // CodeGen

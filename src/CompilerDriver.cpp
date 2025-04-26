@@ -61,7 +61,7 @@ int CompilerDriver::run() const
     CodeGen::Program codegenProgram = codegen(irProgram);
     if (argument == "--codegen")
         return 0;
-    std::string output = CodeGen::assembleProgram(codegenProgram);
+    std::string output = CodeGen::asmProgram(codegenProgram);
     std::string stem = std::filesystem::path(inputFile).stem();
     std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
     std::ofstream ofs(outputFileName);
