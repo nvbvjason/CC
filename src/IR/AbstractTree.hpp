@@ -67,7 +67,7 @@ struct UnaryInst final : Instruction {
     Operation operation = Operation::Invalid;
     std::shared_ptr<Value> source;
     std::shared_ptr<Value> destination;
-    UnaryInst(const Operation op, std::shared_ptr<Value>&& src, std::shared_ptr<Value>&& dst)
+    UnaryInst(const Operation op, std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
         : Instruction(Type::Unary), operation(op), source(std::move(src)), destination(std::move(dst)) {}
 };
 
@@ -86,7 +86,7 @@ protected:
 
 struct ValueVar final : Value {
     std::string value;
-    explicit ValueVar(std::string  v)
+    explicit ValueVar(std::string v)
         : Value(Type::Variable), value(std::move(v)) {}
 };
 

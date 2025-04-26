@@ -12,37 +12,36 @@ void program(const Parsing::Program *parsingProgram, Program& tackyProgram)
     tackyProgram.function = function(parsingProgram->function.get());
 }
 
-std::unique_ptr<Function> function(const Parsing::Function* parsingFunction)
+std::shared_ptr<Function> function(const Parsing::Function* parsingFunction)
 {
-    auto functionTacky = std::make_unique<Function>();
+    auto functionTacky = std::make_shared<Function>();
     functionTacky->identifier = parsingFunction->name;
     const Parsing::Expr* parsingExpressionNode = parsingFunction->body->expression.get();
     auto lastValue = instruction(parsingExpressionNode, functionTacky->instructions);
-    functionTacky->instructions.push_back(std::make_unique<ReturnInst>(std::move(lastValue)));
+    functionTacky->instructions.push_back(std::make_shared<ReturnInst>(lastValue));
     return functionTacky;
 }
 
-std::unique_ptr<ValueVar> unaryInstruction(const Parsing::Expr *parsingExpr,
+std::shared_ptr<ValueVar> unaryInstruction(const Parsing::Expr *parsingExpr,
                                            std::vector<std::shared_ptr<Instruction>>& instructions)
 {
     const auto unaryParsing = dynamic_cast<const Parsing::UnaryExpr*>(parsingExpr);
     const Parsing::Expr *inner = unaryParsing->operand.get();
     auto source = instruction(inner, instructions);
     UnaryInst::Operation operation = convertUnaryOperation(unaryParsing->op);
-    auto destination = std::make_unique<ValueVar>(makeTemporaryName());
-    instructions.emplace_back(
-        std::make_unique<UnaryInst>(operation, std::move(source), std::move(destination))
-    );
+    auto destination = std::make_shared<ValueVar>(makeTemporaryName());
+    instructions.push_back(std::make_shared<UnaryInst>(operation, source, destination));
     return destination;
 }
 
-std::unique_ptr<ValueConst> returnInstruction(const Parsing::Expr *parsingExpr)
+std::shared_ptr<ValueConst> returnInstruction(const Parsing::Expr *parsingExpr)
 {
     const auto constant = dynamic_cast<const Parsing::ConstantExpr*>(parsingExpr);
-    return std::make_unique<ValueConst>(constant->value);
+    auto result = std::make_shared<ValueConst>(constant->value);
+    return result;
 }
 
-std::unique_ptr<Value> instruction(const Parsing::Expr *parsingExpr,
+std::shared_ptr<Value> instruction(const Parsing::Expr *parsingExpr,
                                    std::vector<std::shared_ptr<Instruction>> &instructions)
 {
     switch (parsingExpr->kind) {

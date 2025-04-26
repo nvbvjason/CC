@@ -96,7 +96,8 @@ CodeGen::Program codegen(const Ir::Program& irProgram)
 {
     CodeGen::Program codegenProgram;
     CodeGen::program(irProgram, codegenProgram);
-    CodeGen::replacingPseudoRegisters(codegenProgram);
+    const i32 stackAlloc = CodeGen::replacingPseudoRegisters(codegenProgram);
+    CodeGen::fixUpInstructions(codegenProgram, stackAlloc);
     return codegenProgram;
 }
 

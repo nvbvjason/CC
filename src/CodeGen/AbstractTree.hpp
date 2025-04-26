@@ -62,7 +62,7 @@ struct MoveInst final : Inst {
     std::shared_ptr<Operand> source;
     std::shared_ptr<Operand> destination;
 
-    MoveInst(std::shared_ptr<Operand>&& src, std::shared_ptr<Operand>&& dst)
+    MoveInst(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst)
         : Inst(Kind::Move), source(std::move(src)), destination(std::move(dst)) {}
 
     MoveInst() = delete;
