@@ -20,8 +20,11 @@ enum class TokenType : u16 {
     // Operators
     Semicolon,
     Tilde,
-    Minus,
+    Plus, Minus,
     Decrement,
+    Asterisk,
+    ForwardSlash,
+    Percent,
 
     // Keywords
     Return,

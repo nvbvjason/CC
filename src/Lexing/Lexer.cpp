@@ -41,6 +41,15 @@ void Lexer::scanToken()
         case '~':
             addToken(TokenType::Tilde);
             break;
+        case '%':
+            addToken(TokenType::Percent);
+            break;
+        case '*':
+            addToken(TokenType::Asterisk);
+            break;
+        case '+':
+            addToken(TokenType::Plus);
+            break;
         case '-':
             if (match('-')) {
                 addToken(TokenType::Decrement);
@@ -60,6 +69,8 @@ void Lexer::scanToken()
                 }
                 advance();
             }
+            else
+                addToken(TokenType::ForwardSlash);
             break;
         case ' ':
         case '\t':

@@ -29,6 +29,16 @@ std::string Token::getTypeName() const
             return "Invalid Token";
         case TokenType::Identifier:
             return "Identifier";
+        case TokenType::Plus:
+            return "Plus";
+        case TokenType::Minus:
+            return "Minus";
+        case TokenType::Asterisk:
+            return "Asterisk";
+        case TokenType::ForwardSlash:
+            return "ForwardSlash";
+        case TokenType::Percent:
+            return "Percent";
         default:
             return "Unknown Token";
     }
