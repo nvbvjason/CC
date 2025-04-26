@@ -103,6 +103,8 @@ TEST(Chapter3, parsingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_3/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file())
+            continue;
         const std::string sourceCode = getSourceCode(path.path());
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
@@ -110,6 +112,22 @@ TEST(Chapter3, parsingValid)
         Parsing::Parse parser(lexemes);
         Parsing::Program program;
         ASSERT_EQ(true, parser.programParse(program)) << path.path().string();
+    }
+}
+
+TEST(Chapter3, parsingInvalid)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_3/invalid_parse";
+    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+        if (!path.is_regular_file())
+            continue;
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Token> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        lexer.getLexemes(lexemes);
+        Parsing::Parse parser(lexemes);
+        Parsing::Program program;
+        ASSERT_FALSE(parser.programParse(program)) << path.path().string();
     }
 }
 

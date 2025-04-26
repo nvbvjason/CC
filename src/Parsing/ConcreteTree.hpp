@@ -39,7 +39,6 @@ public:
     [[nodiscard]] bool binaryOperatorParse(BinaryExpr::Operator& binaryOperator);
 private:
     bool match(const Lexing::Token::Type& type);
-    [[nodiscard]] static i32 precedence(Lexing::Token::Type type);
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
     [[nodiscard]] Lexing::Token advance() { return c_tokens[m_current++]; }
     [[nodiscard]] bool expect(const Lexing::Token::Type type)
@@ -51,6 +50,9 @@ private:
         }
         return false;
     }
+
+    [[nodiscard]] static i32 precedence(Lexing::Token::Type type);
+    [[nodiscard]] static bool isBinaryOperator(Lexing::Token::Type type);
 };
 } // Parsing
 

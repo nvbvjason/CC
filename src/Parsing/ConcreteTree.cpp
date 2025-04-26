@@ -36,7 +36,7 @@ bool Parse::functionParse(Function& function)
     Statement statement;
     if (!stmtParse(statement))
         return false;
-    function.body = std::make_shared<Statement>(std::move(statement));
+    function.body = std::make_shared<Statement>(statement);
     if (!expect(Lexing::Token::Type::CloseBrace))
         return false;
     return true;
@@ -62,15 +62,13 @@ std::shared_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
         return nullptr;
     Lexing::Token token = peek();
     const i32 nextPrecedence = precedence(token.m_type);
-    while ((token.m_type == Lexing::Token::Type::Plus ||
-              token.m_type == Lexing::Token::Type::Minus) &&
-            minPrecedence <= nextPrecedence) {
-        if (advance().m_type == Lexing::Token::Type::EndOfFile)
-            return nullptr;
+    while (isBinaryOperator(token.m_type) && minPrecedence <= nextPrecedence) {
         BinaryExpr::Operator op;
         if (!binaryOperatorParse(op))
             return nullptr;
         auto right = exprParse(nextPrecedence + 1);
+        if (right == nullptr)
+            return nullptr;
         left = std::make_shared<BinaryExpr>(op, left, right);
         token = peek();
     }
@@ -92,7 +90,7 @@ std::shared_ptr<Expr> Parse::factorParse()
         case Lexing::Token::Type::OpenParen: {
             if (advance().m_type == Lexing::Token::Type::EndOfFile)
                 return nullptr;
-            auto expr = factorParse();
+            auto expr = exprParse(0);
             if (!expect(Lexing::Token::Type::CloseParen))
                 return nullptr;
             return expr;
@@ -173,6 +171,20 @@ i32 Parse::precedence(const Lexing::Token::Type type)
             return 45;
         default:
             return 0;
+    }
+}
+
+bool Parse::isBinaryOperator(const Lexing::Token::Type type)
+{
+    switch (type) {
+        case Lexing::Token::Type::Plus:
+        case Lexing::Token::Type::Minus:
+        case Lexing::Token::Type::ForwardSlash:
+        case Lexing::Token::Type::Percent:
+        case Lexing::Token::Type::Asterisk:
+            return true;
+        default:
+            return false;
     }
 }
 } // Parsing
