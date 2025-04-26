@@ -14,9 +14,10 @@ void asmInstruction(std::string& result, const std::shared_ptr<Inst>& instructio
 std::string asmOperand(const std::shared_ptr<Operand>& operand);
 std::string asmRegister(const RegisterOperand* reg);
 std::string asmUnaryOperator(UnaryInst::Operator oper);
-std::string formatAsm(const std::string& mnemonic,
-                      const std::string& operands = "",
-                      const std::string& comment = "");
+std::string asmFormatLabel(const std::string& name);
+std::string asmFormatInstruction(const std::string& mnemonic,
+                                 const std::string& operands = "",
+                                 const std::string& comment = "");
 } // CodeGen
 
 #endif // CC_CODEGEN_AST_TO_ASSEMBLY_HPP

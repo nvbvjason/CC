@@ -9,16 +9,16 @@ std::string asmProgram(const Program& program)
 {
     std::string result;
     asmFunction(result, program.function);
-    result += formatAsm(".section", ".note.GNU-stack,\"\",@progbits");
+    result += ".section .note.GNU-stack,\"\",@progbits\n";
     return result;
 }
 
 void asmFunction(std::string& result, const std::shared_ptr<Function>& functionNode)
 {
-    result += formatAsm(".globl", functionNode->name);
-    result += formatAsm(functionNode->name);
-    result += formatAsm("pushq", "%rbp");
-    result += formatAsm("movq","%rsp, %rbp");
+    result += ".globl    " + functionNode->name + '\n';
+    result += asmFormatLabel(functionNode->name);
+    result += asmFormatInstruction("pushq", "%rbp");
+    result += asmFormatInstruction("movq","%rsp, %rbp");
     for (const std::shared_ptr<Inst>& inst : functionNode->instructions)
         asmInstruction(result, inst);
 }
@@ -28,33 +28,32 @@ void asmInstruction(std::string& result, const std::shared_ptr<Inst>& instructio
     switch (instruction->kind) {
         case Inst::Kind::AllocateStack: {
             const auto instAllocStack = dynamic_cast<AllocStackInst*>(instruction.get());
-            result += formatAsm("subq", "$" + std::to_string(instAllocStack->alloc) + ", %rsp");
+            result += asmFormatInstruction("subq", "$" + std::to_string(instAllocStack->alloc) + ", %rsp");
             return;
         }
         case Inst::Kind::Move: {
             const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
-            const std::string operand =  "%" + asmOperand(moveInst->source) + ", "
-                                             + asmOperand(moveInst->destination);
-            result += formatAsm("movl", operand);;
+            const std::string operand = asmOperand(moveInst->source) + ", " + asmOperand(moveInst->destination);
+            result += asmFormatInstruction("movl", operand);;
             return;
         }
         case Inst::Kind::Ret: {
-            result += formatAsm("movq", "%rbp, %rsp");
-            result += formatAsm("popq", "%rbp");
-            result += formatAsm("ret");
+            result += asmFormatInstruction("movq", "%rbp, %rsp");
+            result += asmFormatInstruction("popq", "%rbp");
+            result += asmFormatInstruction("ret");
             return;
         }
         case Inst::Kind::Unary: {
             const auto unaryInst = dynamic_cast<UnaryInst*>(instruction.get());
-            result += formatAsm(asmUnaryOperator(unaryInst->oper), asmOperand(unaryInst->destination));
+            result += asmFormatInstruction(asmUnaryOperator(unaryInst->oper), asmOperand(unaryInst->destination));
             return;
         }
         case Inst::Kind::Invalid: {
-            result += formatAsm("invalid");
+            result += asmFormatInstruction("invalid");
             return;
         }
         default:
-            result += formatAsm("not set");
+            result += asmFormatInstruction("not set");
             return;
     }
 }
@@ -111,7 +110,12 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper)
     }
 }
 
-std::string formatAsm(const std::string& mnemonic,
+std::string asmFormatLabel(const std::string& name)
+{
+    return name + ":\n";
+}
+
+std::string asmFormatInstruction(const std::string& mnemonic,
                       const std::string& operands,
                       const std::string& comment)
 {

@@ -53,7 +53,7 @@ void unaryInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::UnaryInst* irU
 void returnInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
 {
     std::shared_ptr<Operand> val = operand(inst->returnValue);
-    std::shared_ptr<Operand> operandRegister = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10);
+    std::shared_ptr<Operand> operandRegister = std::make_shared<RegisterOperand>(RegisterOperand::Kind::AX);
     auto moveInst = std::make_shared<MoveInst>(val, operandRegister);
     insts.push_back(std::move(moveInst));
     auto instRet = std::make_unique<ReturnInst>();
@@ -125,6 +125,7 @@ i32 replacingPseudoRegisters(Program &programCodegen)
 void fixUpInstructions(Program &programCodegen, i32 stackAlloc)
 {
     std::list<std::shared_ptr<Inst>>& instructions = programCodegen.function->instructions;
+    stackAlloc = -stackAlloc;
     auto stackAllocationNode = std::make_shared<AllocStackInst>(stackAlloc);
     instructions.insert(instructions.begin(), std::move(stackAllocationNode));
     for (auto it = instructions.begin(); it != instructions.end(); ++it) {

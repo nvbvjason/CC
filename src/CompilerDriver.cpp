@@ -63,7 +63,7 @@ int CompilerDriver::run() const
         return 0;
     std::string output = CodeGen::asmProgram(codegenProgram);
     std::string stem = std::filesystem::path(inputFile).stem();
-    std::string outputFileName = std::format("/home/jason/src/CC/AssemblyFiles/{}.s", stem);
+    std::string outputFileName = std::format("/home/jason/src/CC/generated_files/{}.s", stem);
     std::ofstream ofs(outputFileName);
     ofs << output;
     ofs.close();
