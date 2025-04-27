@@ -76,7 +76,9 @@ struct UnaryInst final : Instruction {
 
 struct BinaryInst final : Instruction {
     enum class Operation {
-        Add, Subtract, Multiply, Divide, Remainder
+        Add, Subtract, Multiply, Divide, Remainder,
+        BitwiseAnd, BitwiseOr, BitwiseXor,
+        LeftShift, RightShift,
     };
     Operation operation;
     std::shared_ptr<Value> source1;

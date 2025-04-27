@@ -106,6 +106,18 @@ BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binar
             return BinaryInst::Operation::Divide;
         case Parsing::BinaryExpr::Operator::Remainder:
             return BinaryInst::Operation::Remainder;
+
+        case Parsing::BinaryExpr::Operator::BitwiseAnd:
+            return BinaryInst::Operation::BitwiseAnd;
+        case Parsing::BinaryExpr::Operator::BitwiseOr:
+            return BinaryInst::Operation::BitwiseOr;
+        case Parsing::BinaryExpr::Operator::BitwiseXor:
+            return BinaryInst::Operation::BitwiseXor;
+
+        case Parsing::BinaryExpr::Operator::LeftShift:
+            return BinaryInst::Operation::LeftShift;
+        case Parsing::BinaryExpr::Operator::RightShift:
+            return BinaryInst::Operation::RightShift;
         default:
             throw std::invalid_argument("Invalid binary operation");
     }
