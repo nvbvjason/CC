@@ -19,7 +19,9 @@ set(CODEGEN_FILES
         CodeGen/AbstractTree.cpp
         CodeGen/AbstractTree.hpp
         CodeGen/ConcreteTree.cpp
-        CodeGen/ConcreteTree.hpp)
+        CodeGen/ConcreteTree.hpp
+        CodeGen/PseudoRegisterReplacer.cpp
+        CodeGen/PseudoRegisterReplacer.hpp)
 
 set(IR_FILES
         IR/AbstractTree.cpp
