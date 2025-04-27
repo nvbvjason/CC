@@ -47,6 +47,9 @@ void Lexer::scanToken()
         case '*':
             addToken(Token::Type::Asterisk);
             break;
+        case '^':
+            addToken(Token::Type::Circumflex);
+            break;
         case '&':
             addToken(Token::Type::Ampersand);
             break;

@@ -127,6 +127,16 @@ TEST(LexerTests, RightShift)
     EXPECT_EQ(tokens[0], expected[0]) << " RightShift mismatch";
 }
 
+TEST(LexerTests, Circumflex)
+{
+    const std::string input = "^";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::Circumflex, "^"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " Circumflex mismatch";
+}
+
 TEST(LexerTests, MultiLineComment)
 {
     const auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);

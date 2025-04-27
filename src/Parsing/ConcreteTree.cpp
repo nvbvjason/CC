@@ -144,6 +144,21 @@ bool Parse::binaryOperatorParse(BinaryExpr::Operator& binaryOperator)
         case Lexing::Token::Type::Percent:
             binaryOperator = BinaryExpr::Operator::Remainder;
             return true;
+        case Lexing::Token::Type::Ampersand:
+            binaryOperator = BinaryExpr::Operator::BitwiseAnd;
+            return true;
+        case Lexing::Token::Type::Pipe:
+            binaryOperator = BinaryExpr::Operator::BitwiseOr;
+            return true;
+        case Lexing::Token::Type::Circumflex:
+            binaryOperator = BinaryExpr::Operator::BitwiseXor;
+            return true;
+        case Lexing::Token::Type::LeftShift:
+            binaryOperator = BinaryExpr::Operator::LeftShift;
+            return true;
+        case Lexing::Token::Type::RightShift:
+            binaryOperator = BinaryExpr::Operator::RightShift;
+            return true;
         default:
             return false;
     }
@@ -158,17 +173,28 @@ bool Parse::match(const Lexing::Token::Type &type)
     }
     return false;
 }
-
+// https://en.cppreference.com/w/c/language/operator_precedence
 i32 Parse::precedence(const Lexing::Token::Type type)
 {
+    constexpr i32 precedenceMult = 1024;
+    constexpr i32 precedenceLevels = 16;
     switch (type) {
         case Lexing::Token::Type::Asterisk:
         case Lexing::Token::Type::ForwardSlash:
         case Lexing::Token::Type::Percent:
-            return 50;
+            return (precedenceLevels - 3) * precedenceMult;
         case Lexing::Token::Type::Plus:
         case Lexing::Token::Type::Minus:
-            return 45;
+            return (precedenceLevels - 4) * precedenceMult;
+        case Lexing::Token::Type::LeftShift:
+        case Lexing::Token::Type::RightShift:
+            return (precedenceLevels - 5) * precedenceMult;
+        case Lexing::Token::Type::Ampersand:
+            return (precedenceLevels - 8) * precedenceMult;
+        case Lexing::Token::Type::Circumflex:
+            return (precedenceLevels - 9) * precedenceMult;
+        case Lexing::Token::Type::Pipe:
+            return (precedenceLevels - 10) * precedenceMult;
         default:
             return 0;
     }
@@ -182,6 +208,11 @@ bool Parse::isBinaryOperator(const Lexing::Token::Type type)
         case Lexing::Token::Type::ForwardSlash:
         case Lexing::Token::Type::Percent:
         case Lexing::Token::Type::Asterisk:
+        case Lexing::Token::Type::LeftShift:
+        case Lexing::Token::Type::RightShift:
+        case Lexing::Token::Type::Ampersand:
+        case Lexing::Token::Type::Pipe:
+        case Lexing::Token::Type::Circumflex:
             return true;
         default:
             return false;

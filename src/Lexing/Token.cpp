@@ -47,6 +47,8 @@ std::string Token::getTypeName() const
             return "LeftShift";
         case Type::RightShift:
             return "RightShift";
+        case Type::Circumflex:
+            return "Circumflex";
         default:
             return "Unknown Token";
     }

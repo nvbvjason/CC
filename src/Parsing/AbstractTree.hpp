@@ -84,6 +84,8 @@ struct UnaryExpr final : Expr {
 struct BinaryExpr final : Expr {
     enum class Operator {
         Add, Subtract, Multiply, Divide, Remainder,
+        LeftShift, RightShift,
+        BitwiseAnd, BitwiseOr, BitwiseXor,
         Invalid
     };
     Operator op;

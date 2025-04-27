@@ -28,6 +28,7 @@ struct Token {
         Percent,
         Ampersand,
         Pipe,
+        Circumflex,
 
         Decrement,
         LeftShift, RightShift,
