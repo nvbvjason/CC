@@ -13,17 +13,17 @@ std::string asmProgram(const Program& program)
     return result;
 }
 
-void asmFunction(std::string& result, const std::shared_ptr<Function>& functionNode)
+void asmFunction(std::string& result, const std::unique_ptr<Function>& functionNode)
 {
     result += ".globl    " + functionNode->name + '\n';
     result += asmFormatLabel(functionNode->name);
     result += asmFormatInstruction("pushq", "%rbp");
     result += asmFormatInstruction("movq","%rsp, %rbp");
-    for (const std::shared_ptr<Inst>& inst : functionNode->instructions)
+    for (const std::unique_ptr<Inst>& inst : functionNode->instructions)
         asmInstruction(result, inst);
 }
 
-void asmInstruction(std::string& result, const std::shared_ptr<Inst>& instruction)
+void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction)
 {
     switch (instruction->kind) {
         case Inst::Kind::AllocateStack: {
@@ -46,10 +46,6 @@ void asmInstruction(std::string& result, const std::shared_ptr<Inst>& instructio
         case Inst::Kind::Unary: {
             const auto unaryInst = dynamic_cast<UnaryInst*>(instruction.get());
             result += asmFormatInstruction(asmUnaryOperator(unaryInst->oper), asmOperand(unaryInst->destination));
-            return;
-        }
-        case Inst::Kind::Invalid: {
-            result += asmFormatInstruction("invalid");
             return;
         }
         default:
@@ -75,8 +71,6 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
             const auto stackOperand = dynamic_cast<StackOperand*>(operand.get());
             return std::to_string(stackOperand->value) + "(%rbp)";
         }
-        case Operand::Kind::Invalid:
-            return "invalid";
         default:
             return "not set";
     }
@@ -84,13 +78,11 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
 
 std::string asmRegister(const RegisterOperand* reg)
 {
-    switch (reg->kind) {
-        case RegisterOperand::Kind::R10:
+    switch (reg->type) {
+        case RegisterOperand::Type::R10:
             return "%r10d";
-        case RegisterOperand::Kind::AX:
+        case RegisterOperand::Type::AX:
             return "%eax";
-        case RegisterOperand::Kind::Invalid:
-            return "invalid";
         default:
             return "not set";
     }
@@ -103,8 +95,6 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper)
             return "negl";
         case UnaryInst::Operator::Not:
             return "notl";
-        case UnaryInst::Operator::Invalid:
-            return "invalid";
         default:
             return "not set";
     }

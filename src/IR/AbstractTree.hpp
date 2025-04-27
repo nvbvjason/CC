@@ -43,10 +43,9 @@ struct Function {
 
 struct Instruction {
     enum class Type {
-        Return, Unary, Binary,
-        Invalid
+        Return, Unary, Binary
     };
-    Type type = Type::Invalid;
+    Type type;
 
     Instruction() = delete;
 
@@ -64,10 +63,9 @@ struct ReturnInst final : Instruction {
 
 struct UnaryInst final : Instruction {
     enum class Operation {
-        Complement, Negate,
-        Invalid
+        Complement, Negate
     };
-    Operation operation = Operation::Invalid;
+    Operation operation;
     std::shared_ptr<Value> source;
     std::shared_ptr<Value> destination;
     UnaryInst(const Operation op, std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
@@ -78,10 +76,9 @@ struct UnaryInst final : Instruction {
 
 struct BinaryInst final : Instruction {
     enum class Operation {
-        Add, Subtract, Multiply, Divide, Remainder,
-        Invalid
+        Add, Subtract, Multiply, Divide, Remainder
     };
-    Operation operation = Operation::Invalid;
+    Operation operation;
     std::shared_ptr<Value> source1;
     std::shared_ptr<Value> source2;
     std::shared_ptr<Value> destination;
@@ -96,10 +93,9 @@ struct BinaryInst final : Instruction {
 
 struct Value {
     enum class Type {
-        Variable, Constant,
-        Invalid
+        Variable, Constant
     };
-    Type type = Type::Invalid;
+    Type type;
     Value() = delete;
     virtual ~Value() = default;
 protected:

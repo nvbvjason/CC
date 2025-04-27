@@ -106,8 +106,6 @@ BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binar
             return BinaryInst::Operation::Divide;
         case Parsing::BinaryExpr::Operator::Remainder:
             return BinaryInst::Operation::Remainder;
-        case Parsing::BinaryExpr::Operator::Invalid:
-            return BinaryInst::Operation::Invalid;
         default:
             throw std::invalid_argument("Invalid binary operation");
     }

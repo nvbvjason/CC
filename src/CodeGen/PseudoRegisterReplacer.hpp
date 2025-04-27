@@ -13,7 +13,6 @@ class PseudoRegisterReplacer final : public InstVisitor {
     std::unordered_map<std::string, i32> pseudoMap;
     i32 stackPtr = 0;
 public:
-    void replaceIfPseudo(std::shared_ptr<Operand>& operand);
 
     [[nodiscard]] i32 stackPointer() const { return stackPtr; }
 
@@ -25,6 +24,8 @@ public:
     void visit(CdqInst&) override {}
     void visit(AllocStackInst&) override {}
     void visit(ReturnInst&) override {}
+private:
+    void replaceIfPseudo(std::shared_ptr<Operand>& operand);
 };
 
 } // CodeGen

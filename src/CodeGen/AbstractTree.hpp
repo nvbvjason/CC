@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <utility>
-#include <list>
+#include <vector>
 
 /*
 
@@ -38,22 +38,22 @@ struct Inst;
 struct Operand;
 
 struct InstVisitor;
+struct InstVisitorTransform;
 
 struct Program {
-    std::shared_ptr<Function> function;
+    std::unique_ptr<Function> function;
 };
 
 struct Function {
     std::string name;
-    std::list<std::shared_ptr<Inst>> instructions;
+    std::vector<std::unique_ptr<Inst>> instructions;
 };
 
 struct Inst {
     enum class Kind {
-        Move, Unary, Binary, Idiv, Cdq, AllocateStack, Ret,
-        Invalid
+        Move, Unary, Binary, Idiv, Cdq, AllocateStack, Ret
     };
-    Kind kind = Kind::Invalid;
+    Kind kind;
 
     virtual ~Inst() = default;
 
@@ -69,8 +69,8 @@ struct MoveInst final : Inst {
     std::shared_ptr<Operand> source;
     std::shared_ptr<Operand> destination;
 
-    MoveInst(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst)
-        : Inst(Kind::Move), source(std::move(src)), destination(std::move(dst)) {}
+    MoveInst(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst)
+        : Inst(Kind::Move), source(src), destination(dst) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -79,15 +79,13 @@ struct MoveInst final : Inst {
 
 struct UnaryInst final : Inst {
     enum class Operator {
-        Neg, Not,
-
-        Invalid
+        Neg, Not
     };
     Operator oper;
-    std::shared_ptr<Operand> destination = nullptr;
+    std::shared_ptr<Operand> destination;
 
-    UnaryInst(const Operator op, std::shared_ptr<Operand> dst)
-        : Inst(Kind::Unary), oper(op), destination(std::move(dst)) {}
+    UnaryInst(const Operator op, const std::shared_ptr<Operand>& dst)
+        : Inst(Kind::Unary), oper(op), destination(dst) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -96,14 +94,13 @@ struct UnaryInst final : Inst {
 
 struct BinaryInst final : Inst {
     enum class Operator {
-        Add, Sub, Mul, Div, Mod,
-        Invalid
+        Add, Sub, Mul
     };
     Operator oper;
     std::shared_ptr<Operand> lhs;
     std::shared_ptr<Operand> rhs;
-    BinaryInst(const Operator op, std::shared_ptr<Operand> lhs, std::shared_ptr<Operand> rhs)
-        :Inst(Kind::Binary), oper(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+    BinaryInst(const Operator op, const std::shared_ptr<Operand>& lhs, const std::shared_ptr<Operand>& rhs)
+        :Inst(Kind::Binary), oper(op), lhs(lhs), rhs(rhs) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -112,8 +109,8 @@ struct BinaryInst final : Inst {
 
 struct IdivInst final : Inst {
     std::shared_ptr<Operand> operand;
-    explicit IdivInst(std::shared_ptr<Operand> operand)
-        : Inst(Kind::Idiv), operand(std::move(operand)) {}
+    explicit IdivInst(const std::shared_ptr<Operand>& operand)
+        : Inst(Kind::Idiv), operand(operand) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -146,17 +143,16 @@ struct ReturnInst final : Inst {
 
 struct Operand {
     enum class Kind {
-        Imm, Register, Pseudo, Stack,
-        Invalid
+        Imm, Register, Pseudo, Stack
     };
     Kind kind;
 
     virtual ~Operand() = default;
 
+    Operand() = delete;
+protected:
     explicit Operand(const Kind k)
         : kind(k) {}
-
-    Operand() = delete;
 };
 
 struct ImmOperand final : Operand {
@@ -168,13 +164,12 @@ struct ImmOperand final : Operand {
 };
 
 struct RegisterOperand final : Operand {
-    enum class Kind {
-        AX, DX, R10, R11,
-        Invalid
+    enum class Type {
+        AX, DX, R10, R11
     };
-    Kind kind;
-    explicit RegisterOperand(const Kind k)
-        : Operand(Operand::Kind::Register), kind(k) {}
+    Type type;
+    explicit RegisterOperand(const Type k)
+        : Operand(Operand::Kind::Register), type(k) {}
 
     RegisterOperand() = delete;
 };

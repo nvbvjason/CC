@@ -51,14 +51,14 @@ namespace CodeGen {
 void program(const Ir::Program &program, Program &programCodegen);
 std::unique_ptr<Function> function(const Ir::Function *function);
 
-void unaryInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
+void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
 
-void binaryInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
-void binaryDivideInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
-void binaryRemainderInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
-void binaryOtherInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
+void binaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
+void binaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
+void binaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
+void binaryOtherInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
 
-void returnInst(std::list<std::shared_ptr<Inst>>& insts, const Ir::ReturnInst* inst);
+void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst);
 
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
@@ -67,6 +67,19 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 
 [[nodiscard]] i32 replacingPseudoRegisters(Program &programCodegen);
 void fixUpInstructions(Program &programCodegen, i32 stackAlloc);
+
+void fixUpMoveInst(std::vector<std::unique_ptr<Inst>>& instructions,
+                   std::vector<std::unique_ptr<Inst>>::iterator& it,
+                   const std::unique_ptr<Inst>& inst);
+void fixUpImulInst(std::vector<std::unique_ptr<Inst>>& instructions,
+                   std::vector<std::unique_ptr<Inst>>::iterator& it,
+                   const BinaryInst* binaryInst);
+void fixUpBinaryInst(std::vector<std::unique_ptr<Inst>>& instructions,
+                    std::vector<std::unique_ptr<Inst>>::iterator& it,
+                    const std::unique_ptr<Inst>& inst);
+void fixUpIdivInst(std::vector<std::unique_ptr<Inst>>& instructions,
+                   std::vector<std::unique_ptr<Inst>>::iterator& it,
+                   const std::unique_ptr<Inst>& inst);
 
 }
 
