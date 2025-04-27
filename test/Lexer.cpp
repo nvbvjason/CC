@@ -87,6 +87,46 @@ TEST(LexerTests, ForwardSlash)
     EXPECT_EQ(tokens[0], expected[0]) << " ForwardSlash mismatch";
 }
 
+TEST(LexerTests, Pipe)
+{
+    const std::string input = "|";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::Pipe, "|"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " Pipe mismatch";
+}
+
+TEST(LexerTests, Ampersand)
+{
+    const std::string input = "&";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::Ampersand, "&"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " Ampersand mismatch";
+}
+
+TEST(LexerTests, LeftShift)
+{
+    const std::string input = "<<";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::LeftShift, "<<"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " LeftShift mismatch";
+}
+
+TEST(LexerTests, RightShift)
+{
+    const std::string input = ">>";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::RightShift, ">>"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " RightShift mismatch";
+}
+
 TEST(LexerTests, MultiLineComment)
 {
     const auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);

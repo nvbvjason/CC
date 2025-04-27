@@ -47,8 +47,26 @@ void Lexer::scanToken()
         case '*':
             addToken(Token::Type::Asterisk);
             break;
+        case '&':
+            addToken(Token::Type::Ampersand);
+            break;
+        case '|':
+            addToken(Token::Type::Pipe);
+            break;
         case '+':
             addToken(Token::Type::Plus);
+            break;
+        case '>':
+            if (match('>')) {
+                addToken(Token::Type::RightShift);
+                break;
+            }
+            break;
+        case '<':
+            if (match('<')) {
+                addToken(Token::Type::LeftShift);
+                break;
+            }
             break;
         case '-':
             if (match('-')) {

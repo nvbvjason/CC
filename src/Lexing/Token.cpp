@@ -39,6 +39,14 @@ std::string Token::getTypeName() const
             return "ForwardSlash";
         case Type::Percent:
             return "Percent";
+        case Type::Ampersand:
+            return "Ampersand";
+        case Type::Pipe:
+            return "Pipe";
+        case Type::LeftShift:
+            return "LeftShift";
+        case Type::RightShift:
+            return "RightShift";
         default:
             return "Unknown Token";
     }

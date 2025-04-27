@@ -23,10 +23,14 @@ struct Token {
         Semicolon,
         Tilde,
         Plus, Minus,
-        Decrement,
         Asterisk,
         ForwardSlash,
         Percent,
+        Ampersand,
+        Pipe,
+
+        Decrement,
+        LeftShift, RightShift,
 
         // Keywords
         Return,
