@@ -14,6 +14,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
 std::string asmOperand(const std::shared_ptr<Operand>& operand);
 std::string asmRegister(const RegisterOperand* reg);
 std::string asmUnaryOperator(UnaryInst::Operator oper);
+std::string asmBinaryOperator(BinaryInst::Operator oper);
 std::string asmFormatLabel(const std::string& name);
 std::string asmFormatInstruction(const std::string& mnemonic,
                                  const std::string& operands = "",

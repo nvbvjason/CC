@@ -48,6 +48,12 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             result += asmFormatInstruction(asmUnaryOperator(unaryInst->oper), asmOperand(unaryInst->destination));
             return;
         }
+        case Inst::Kind::Binary: {
+            const auto binaryInst = dynamic_cast<BinaryInst*>(instruction.get());
+            std::string operands = asmOperand(binaryInst->lhs) + ", " + asmOperand(binaryInst->rhs);
+            result += asmFormatInstruction(asmBinaryOperator(binaryInst->oper), operands);
+            return;
+        }
         default:
             result += asmFormatInstruction("not set");
             return;
@@ -83,6 +89,10 @@ std::string asmRegister(const RegisterOperand* reg)
             return "%r10d";
         case RegisterOperand::Type::AX:
             return "%eax";
+        case RegisterOperand::Type::R11:
+            return "%r11d";
+        case RegisterOperand::Type::DX:
+            return "%edx";
         default:
             return "not set";
     }
@@ -95,6 +105,20 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper)
             return "negl";
         case UnaryInst::Operator::Not:
             return "notl";
+        default:
+            return "not set";
+    }
+}
+
+std::string asmBinaryOperator(BinaryInst::Operator oper)
+{
+    switch (oper) {
+        case BinaryInst::Operator::Mul:
+            return "imull";
+        case BinaryInst::Operator::Add:
+            return "addl";
+        case BinaryInst::Operator::Sub:
+            return "subl";
         default:
             return "not set";
     }
