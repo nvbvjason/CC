@@ -54,8 +54,17 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             result += asmFormatInstruction(asmBinaryOperator(binaryInst->oper), operands);
             return;
         }
+        case Inst::Kind::Cdq: {
+            result += asmFormatInstruction("cdq");
+            return;
+        }
+        case Inst::Kind::Idiv: {
+            const auto idivInst = dynamic_cast<IdivInst*>(instruction.get());
+            result += asmFormatInstruction("idivl", asmOperand(idivInst->operand));
+            return;
+        }
         default:
-            result += asmFormatInstruction("not set");
+            result += asmFormatInstruction("not set asmInstruction");
             return;
     }
 }
@@ -78,7 +87,7 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
             return std::to_string(stackOperand->value) + "(%rbp)";
         }
         default:
-            return "not set";
+            return "not set asmOperand";
     }
 }
 
@@ -94,7 +103,7 @@ std::string asmRegister(const RegisterOperand* reg)
         case RegisterOperand::Type::DX:
             return "%edx";
         default:
-            return "not set";
+            return "not set asmRegister";
     }
 }
 
@@ -106,7 +115,7 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper)
         case UnaryInst::Operator::Not:
             return "notl";
         default:
-            return "not set";
+            return "not set asmUnaryOperator";
     }
 }
 
@@ -120,7 +129,7 @@ std::string asmBinaryOperator(BinaryInst::Operator oper)
         case BinaryInst::Operator::Sub:
             return "subl";
         default:
-            return "not set";
+            return "not set asmBinaryOperator";
     }
 }
 
