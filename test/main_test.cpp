@@ -10,6 +10,19 @@ namespace fs = std::filesystem;
 
 const fs::path testsFolderPath = fs::path(PROJECT_ROOT_DIR) / "test/external/writing-a-c-compiler-tests/tests";
 
+std::string removeLinesStartingWithHash(const std::string& input)
+{
+    std::istringstream iss(input);
+    std::string line;
+    std::string result;
+    while (std::getline(iss, line))
+        if (line.empty() || line[0] != '#')
+            result += line + '\n';
+    if (!result.empty())
+        result.pop_back();
+    return result;
+}
+
 TEST(Chapter1, lexingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_1/valid";
@@ -137,7 +150,8 @@ TEST(Chapter3, parsingValidExtra)
     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
         if (!path.is_regular_file())
             continue;
-        const std::string sourceCode = getSourceCode(path.path());
+        std::string sourceCode = getSourceCode(path.path());
+        sourceCode = removeLinesStartingWithHash(sourceCode);
         std::vector<Lexing::Token> lexemes;
         Lexing::Lexer lexer(sourceCode);
         lexer.getLexemes(lexemes);
