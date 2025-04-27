@@ -221,10 +221,10 @@ void fixUpImulInst(std::vector<std::unique_ptr<Inst>>& instructions,
     auto first = std::make_unique<MoveInst>(dst, regR11);
 
     BinaryInst::Operator oper = binaryInst->oper;
-    auto second = std::make_unique<BinaryInst>(oper, dst, regR11);
-
     auto src = binaryInst->lhs;
-    auto third = std::make_unique<MoveInst>(regR11, src);
+    auto second = std::make_unique<BinaryInst>(oper, src, regR11);
+
+    auto third = std::make_unique<MoveInst>(regR11, dst);
 
     *it = std::move(first);
     constexpr i32 movePast = 1;
