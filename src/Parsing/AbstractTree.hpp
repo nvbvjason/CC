@@ -15,10 +15,14 @@
     exp = Constant(int)
         | Unary(unary_operator, exp)
         | Binary(binary_operator, exp, exp)
-    unary_operator = Complement | Negate
+    unary_operator = Complement | Negate | Not
     binary_operator = Add | Subtract | Multiply | Divide | Remainder |
                       BitwiseAnd | BitwiseOr | BitwiseXor |
-                      LeftShift | RightShift
+                      LeftShift | RightShift |
+                      And | Or |
+                      Equal | NotEqual |
+                      Less | LessThan | LessOrEqual
+                      Greater | GreaterThan | GreaterOrEqual
 */
 
 namespace Parsing {
@@ -71,7 +75,7 @@ struct ConstantExpr final : Expr {
 
 struct UnaryExpr final : Expr {
     enum class Operator {
-        Complement, Negate,
+        Complement, Negate, Not,
         Invalid
     };
     Operator op;
@@ -86,8 +90,12 @@ struct UnaryExpr final : Expr {
 struct BinaryExpr final : Expr {
     enum class Operator {
         Add, Subtract, Multiply, Divide, Remainder,
-        LeftShift, RightShift,
         BitwiseAnd, BitwiseOr, BitwiseXor,
+        LeftShift, RightShift,
+        And, Or,
+        Equal, NotEqual,
+        Less, LessThan, LessOrEqual,
+        Greater, GreaterThan, GreaterOrEqual,
         Invalid
     };
     Operator op;

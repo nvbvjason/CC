@@ -9,8 +9,9 @@
     <statement>  ::= "return" <exp> ";"
     <exp>        ::= <factor> | <exp> <binop> <exp>
     <factor>     ::= <int> | <unop> <exp> | "(" <exp> ")"
-    <unop>       ::= "-" | "~"
-    <binop>      ::= "-" | "+" | "*" | "/" | "%"
+    <unop>       ::= "-" | "~" | "!"
+    <binop>      ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|" |
+                     "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">="
     <identifier> ::= ? An identifier token ?
     <int>        ::= ? A constant token ?
 */
@@ -39,6 +40,7 @@ public:
     [[nodiscard]] bool binaryOperatorParse(BinaryExpr::Operator& binaryOperator);
 private:
     bool match(const Lexing::Token::Type& type);
+    static i32 calculatePrecedence();
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
     [[nodiscard]] Lexing::Token advance() { return c_tokens[m_current++]; }
     [[nodiscard]] bool expect(const Lexing::Token::Type type)
@@ -51,6 +53,7 @@ private:
         return false;
     }
 
+    [[nodiscard]] static i32 getPrecedenceLevel(Lexing::Token::Type type);
     [[nodiscard]] static i32 precedence(Lexing::Token::Type type);
     [[nodiscard]] static bool isBinaryOperator(Lexing::Token::Type type);
 };
