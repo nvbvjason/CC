@@ -50,26 +50,58 @@ void Lexer::scanToken()
         case '^':
             addToken(Token::Type::Circumflex);
             break;
-        case '&':
-            addToken(Token::Type::Ampersand);
+        case '!':
+            if (match('=')) {
+                addToken(Token::Type::LogicalNotEqual);
+                break;
+            }
+            addToken(Token::Type::ExclamationMark);
             break;
-        case '|':
-            addToken(Token::Type::Pipe);
+        case '=':
+            if (match('=')) {
+                addToken(Token::Type::LogicalEqual);
+                break;
+            }
+            addToken(Token::Type::Invalid);
             break;
         case '+':
             addToken(Token::Type::Plus);
+            break;
+        case '&':
+            if (match('&')) {
+                addToken(Token::Type::LogicalAnd);
+                break;
+            }
+            addToken(Token::Type::Ampersand);
+            break;
+        case '|':
+            if (match('|')) {
+                addToken(Token::Type::LogicalOr);
+                break;
+            }
+            addToken(Token::Type::Pipe);
             break;
         case '>':
             if (match('>')) {
                 addToken(Token::Type::RightShift);
                 break;
             }
+            if (match('=')) {
+                addToken(Token::Type::GreaterEqual);
+                break;
+            }
+            addToken(Token::Type::Greater);
             break;
         case '<':
             if (match('<')) {
                 addToken(Token::Type::LeftShift);
                 break;
             }
+            if (match('=')) {
+                addToken(Token::Type::LessEqual);
+                break;
+            }
+            addToken(Token::Type::Less);
             break;
         case '-':
             if (match('-')) {

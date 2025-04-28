@@ -28,7 +28,7 @@ operand = Imm(int)
         | Reg(reg)
         | Pseudo(identifier)
         | Stack(int)
-reg = AX | DX | R10 | R11
+reg = AX | DX | R10 | R11 | CX | CL
 
 */
 

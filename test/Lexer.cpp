@@ -137,6 +137,96 @@ TEST(LexerTests, Circumflex)
     EXPECT_EQ(tokens[0], expected[0]) << " Circumflex mismatch";
 }
 
+TEST(LexerTests, LogicalAnd)
+{
+    const std::string input = "&&";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::LogicalAnd, "&&"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " LogicalAnd mismatch";
+}
+
+TEST(LexerTests, LogicalOr)
+{
+    const std::string input = "||";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::LogicalOr, "||"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " LogicalOr mismatch";
+}
+
+TEST(LexerTests, LogicalNotEqual)
+{
+    const std::string input = "!=";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::LogicalNotEqual, "!="}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " LogicalNotEqual mismatch";
+}
+
+TEST(LexerTests, LogicalEqual)
+{
+    const std::string input = "==";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::LogicalEqual, "=="}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " LogicalEqual mismatch";
+}
+
+TEST(LexerTests, Less)
+{
+    const std::string input = "<";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::Less, "<"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " Less mismatch";
+}
+
+TEST(LexerTests, LessEqual)
+{
+    const std::string input = "<=";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::LessEqual, "<="}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " LessEqual mismatch";
+}
+
+TEST(LexerTests, Greater)
+{
+    const std::string input = ">";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::Greater, ">"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " Greater mismatch";
+}
+
+TEST(LexerTests, GreaterEqual)
+{
+    const std::string input = ">=";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::GreaterEqual, ">="}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " GreaterEqual mismatch";
+}
+
+TEST(LexerTests, ExclamationMark)
+{
+    const std::string input = "!";
+    const auto tokens = runLexerTest(input);
+    const Lexing::Token expected[] = {
+        {1, 1, Lexing::Token::Type::ExclamationMark, "!"}
+    };
+    EXPECT_EQ(tokens[0], expected[0]) << " ExclamationMark mismatch";
+}
+
 TEST(LexerTests, MultiLineComment)
 {
     const auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);

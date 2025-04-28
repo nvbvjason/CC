@@ -112,6 +112,19 @@ TEST(Chapter2, parsingInvalid)
     }
 }
 
+TEST(Chapter3, lexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_3/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file())
+            continue;
+        const std::string sourceCode = getSourceCode(path.path());
+        std::vector<Lexing::Token> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
+    }
+}
+
 TEST(Chapter3, parsingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_3/valid";
@@ -177,6 +190,18 @@ TEST(Chapter3, parsingInvalidExtra)
     }
 }
 
+TEST(Chapter4, lexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_4/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file())
+            continue;
+        const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(path.path()));
+        std::vector<Lexing::Token> lexemes;
+        Lexing::Lexer lexer(sourceCode);
+        ASSERT_EQ(0, lexer.getLexemes(lexemes)) << path.path().string();
+    }
+}
 void cleanUp()
 {
     for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))

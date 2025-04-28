@@ -16,7 +16,9 @@
         | Unary(unary_operator, exp)
         | Binary(binary_operator, exp, exp)
     unary_operator = Complement | Negate
-    binary_operator = Add | Subtract | Multiply | Divide | Remainder
+    binary_operator = Add | Subtract | Multiply | Divide | Remainder |
+                      BitwiseAnd | BitwiseOr | BitwiseXor |
+                      LeftShift | RightShift
 */
 
 namespace Parsing {

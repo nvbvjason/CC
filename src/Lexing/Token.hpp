@@ -16,35 +16,53 @@ namespace Lexing {
 struct Token {
     enum class Type : u16 {
         // Bracketing Symbols
-        OpenParen, CloseParen,
-        OpenBrace, CloseBrace,
+        OpenParen,       CloseParen,      // (  )
+        OpenBrace,       CloseBrace,      // {  }
 
-        // Operators
-        Semicolon,
-        Tilde,
-        Plus, Minus,
-        Asterisk,
-        ForwardSlash,
-        Percent,
-        Ampersand,
-        Pipe,
-        Circumflex,
+        // Punctuation & Symbols
+        Semicolon,                       // ;
+        Tilde,                           // ~
+        ExclamationMark,                 // !
 
-        Decrement,
-        LeftShift, RightShift,
+        // Arithmetic Operators
+        Plus,                            // +
+        Minus,                           // -
+        Asterisk,                        // *
+        ForwardSlash,                    // /
+        Percent,                         // %
+
+        // Bitwise Operators
+        Ampersand,                       // &
+        Pipe,                            // |
+        Circumflex,                      // ^
+        LeftShift,                       // <<
+        RightShift,                      // >>
+
+        // Special Operators
+        Decrement,                       // --
+
+        // Logical Operators
+        LogicalAnd,                      // &&
+        LogicalOr,                       // ||
+        LogicalNotEqual,                 // !=
+        LogicalEqual,                    // ==
+        Less,                            // <
+        LessEqual,                       // <=
+        Greater,                         // >
+        GreaterEqual,                    // >=
 
         // Keywords
-        Return,
-        Void,
-        IntKeyword,
+        Return,                          // 'return'
+        Void,                            // 'void'
+        IntKeyword,                      // 'int'
 
-        Identifier,
+        // Identifiers & Literals
+        Identifier,                      // User-defined names
+        Integer,                         // Numeric literals
 
-        Integer,
-
-        EndOfFile,
-
-        Invalid
+        // Special Tokens
+        EndOfFile,                       // EOF marker
+        Invalid                          // Invalid token
     };
     std::variant<i32> m_data;
     i32 m_line;
