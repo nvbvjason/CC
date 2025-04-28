@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 
 namespace {
+    using TokenType = Lexing::Token::Type;
+
     const std::string BASIC_PROGRAM =
         "int main(void) {\n"
         "// int main return\n"
@@ -20,6 +22,16 @@ namespace {
         std::vector<Lexing::Token> tokens;
         lexer.getLexemes(tokens);
         return tokens;
+    }
+    void TestSingleTokenLexing(const std::string& input, Lexing::Token::Type expectedType)
+    {
+        constexpr i32 endOfFile = 1;
+        const auto tokens = runLexerTest(input);
+        ASSERT_EQ(tokens.size(), 1 + endOfFile) << "Expected exactly one token for input: " << input;
+        const Lexing::Token expected{
+            1, 1, expectedType, input
+        };
+        EXPECT_EQ(tokens[0], expected) << "Token mismatch for input: " << input;
     }
 }
 
@@ -49,182 +61,92 @@ TEST(LexerTests, GetTokens) {
 
 TEST(LexerTests, Percent)
 {
-    const std::string input = "%";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::Percent, "%"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " Percent mismatch";
+    TestSingleTokenLexing("%", TokenType::Percent);
 }
 
 TEST(LexerTests, Plus)
 {
-    const std::string input = "+";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::Plus, "+"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " Plus mismatch";
+    TestSingleTokenLexing("+", TokenType::Plus);
 }
 
 TEST(LexerTests, Asterisk)
 {
-    const std::string input = "*";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::Asterisk, "*"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " Asterisk mismatch";
+    TestSingleTokenLexing("*", TokenType::Asterisk);
 }
 
 TEST(LexerTests, ForwardSlash)
 {
-    const std::string input = "/";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::ForwardSlash, "/"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " ForwardSlash mismatch";
+    TestSingleTokenLexing("/", TokenType::ForwardSlash);
 }
 
 TEST(LexerTests, Pipe)
 {
-    const std::string input = "|";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::Pipe, "|"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " Pipe mismatch";
+    TestSingleTokenLexing("|", TokenType::Pipe);
 }
 
 TEST(LexerTests, Ampersand)
 {
-    const std::string input = "&";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::Ampersand, "&"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " Ampersand mismatch";
+    TestSingleTokenLexing("&", TokenType::Ampersand);
 }
 
 TEST(LexerTests, LeftShift)
 {
-    const std::string input = "<<";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::LeftShift, "<<"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " LeftShift mismatch";
+    TestSingleTokenLexing("<<", TokenType::LeftShift);
 }
 
 TEST(LexerTests, RightShift)
 {
-    const std::string input = ">>";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::RightShift, ">>"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " RightShift mismatch";
+    TestSingleTokenLexing(">>", TokenType::RightShift);
 }
 
 TEST(LexerTests, Circumflex)
 {
-    const std::string input = "^";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::Circumflex, "^"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " Circumflex mismatch";
+    TestSingleTokenLexing("^", TokenType::Circumflex);
 }
 
 TEST(LexerTests, LogicalAnd)
 {
-    const std::string input = "&&";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::LogicalAnd, "&&"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " LogicalAnd mismatch";
+    TestSingleTokenLexing("&&", TokenType::LogicalAnd);
 }
 
 TEST(LexerTests, LogicalOr)
 {
-    const std::string input = "||";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::LogicalOr, "||"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " LogicalOr mismatch";
+    TestSingleTokenLexing("||", TokenType::LogicalOr);
 }
 
 TEST(LexerTests, LogicalNotEqual)
 {
-    const std::string input = "!=";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::LogicalNotEqual, "!="}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " LogicalNotEqual mismatch";
+    TestSingleTokenLexing("!=", TokenType::LogicalNotEqual);
 }
 
 TEST(LexerTests, LogicalEqual)
 {
-    const std::string input = "==";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::LogicalEqual, "=="}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " LogicalEqual mismatch";
+    TestSingleTokenLexing("==", TokenType::LogicalEqual);
 }
 
 TEST(LexerTests, Less)
 {
-    const std::string input = "<";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::Less, "<"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " Less mismatch";
+    TestSingleTokenLexing("<", TokenType::Less);
 }
 
 TEST(LexerTests, LessEqual)
 {
-    const std::string input = "<=";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::LessEqual, "<="}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " LessEqual mismatch";
+    TestSingleTokenLexing("<=", TokenType::LessEqual);
 }
 
 TEST(LexerTests, Greater)
 {
-    const std::string input = ">";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::Greater, ">"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " Greater mismatch";
+    TestSingleTokenLexing(">", TokenType::Greater);
 }
 
 TEST(LexerTests, GreaterEqual)
 {
-    const std::string input = ">=";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::GreaterEqual, ">="}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " GreaterEqual mismatch";
+    TestSingleTokenLexing(">=", TokenType::GreaterEqual);
 }
 
 TEST(LexerTests, ExclamationMark)
 {
-    const std::string input = "!";
-    const auto tokens = runLexerTest(input);
-    const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::ExclamationMark, "!"}
-    };
-    EXPECT_EQ(tokens[0], expected[0]) << " ExclamationMark mismatch";
+    TestSingleTokenLexing("!", TokenType::ExclamationMark);
 }
 
 TEST(LexerTests, MultiLineComment)
