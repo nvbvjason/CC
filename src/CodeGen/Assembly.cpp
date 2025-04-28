@@ -37,12 +37,6 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             result += asmFormatInstruction("movl", operand);;
             return;
         }
-        case Inst::Kind::Ret: {
-            result += asmFormatInstruction("movq", "%rbp, %rsp");
-            result += asmFormatInstruction("popq", "%rbp");
-            result += asmFormatInstruction("ret");
-            return;
-        }
         case Inst::Kind::Unary: {
             const auto unaryInst = dynamic_cast<UnaryInst*>(instruction.get());
             result += asmFormatInstruction(asmUnaryOperator(unaryInst->oper), asmOperand(unaryInst->destination));
@@ -61,6 +55,12 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Idiv: {
             const auto idivInst = dynamic_cast<IdivInst*>(instruction.get());
             result += asmFormatInstruction("idivl", asmOperand(idivInst->operand));
+            return;
+        }
+        case Inst::Kind::Ret: {
+            result += asmFormatInstruction("movq", "%rbp, %rsp");
+            result += asmFormatInstruction("popq", "%rbp");
+            result += asmFormatInstruction("ret");
             return;
         }
         default:
@@ -102,6 +102,10 @@ std::string asmRegister(const RegisterOperand* reg)
             return "%r11d";
         case RegisterOperand::Type::DX:
             return "%edx";
+        case RegisterOperand::Type::CX:
+            return "%ecx";
+        case RegisterOperand::Type::CL:
+            return "%cl";
         default:
             return "not set asmRegister";
     }
@@ -128,6 +132,18 @@ std::string asmBinaryOperator(BinaryInst::Operator oper)
             return "addl";
         case BinaryInst::Operator::Sub:
             return "subl";
+
+        case BinaryInst::Operator::BitwiseAnd:
+            return "andl";
+        case BinaryInst::Operator::BitwiseOr:
+            return "orl";
+        case BinaryInst::Operator::BitwiseXor:
+            return "xorl";
+
+        case BinaryInst::Operator::LeftShift:
+            return "shll";
+        case BinaryInst::Operator::RightShift:
+            return "shrl";
         default:
             return "not set asmBinaryOperator";
     }

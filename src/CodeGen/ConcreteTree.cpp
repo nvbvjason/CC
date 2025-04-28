@@ -61,6 +61,11 @@ void binaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst*
         case Ir::BinaryInst::Operation::Add:
         case Ir::BinaryInst::Operation::Subtract:
         case Ir::BinaryInst::Operation::Multiply:
+        case Ir::BinaryInst::Operation::BitwiseAnd:
+        case Ir::BinaryInst::Operation::BitwiseOr:
+        case Ir::BinaryInst::Operation::BitwiseXor:
+        case Ir::BinaryInst::Operation::LeftShift:
+        case Ir::BinaryInst::Operation::RightShift:
             binaryOtherInst(insts, irBinary);
             break;
         case Ir::BinaryInst::Operation::Divide:
@@ -74,67 +79,56 @@ void binaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst*
     }
 }
 
+
 void binaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary->source1);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX);
-    auto firstMoveInst = std::make_unique<MoveInst>(src1, regAX);
-    insts.push_back(std::move(firstMoveInst));
+    insts.push_back(std::make_unique<MoveInst>(src1, regAX));
 
-    auto cdq = std::make_unique<CdqInst>();
-    insts.push_back(std::move(cdq));
+    insts.push_back(std::make_unique<CdqInst>());
 
     std::shared_ptr<Operand> src2 = operand(irBinary->source2);
-    auto idiv = std::make_unique<IdivInst>(src2);
-    insts.push_back(std::move(idiv));
+    insts.push_back(std::make_unique<IdivInst>(src2));
 
     std::shared_ptr<Operand> dst = operand(irBinary->destination);
-    auto secondMoveInst = std::make_unique<MoveInst>(regAX, dst);
-    insts.push_back(std::move(secondMoveInst));
+    insts.push_back(std::make_unique<MoveInst>(regAX, dst));
 }
 
 void binaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary->source1);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX);
-    auto firstMoveInst = std::make_unique<MoveInst>(src1, regAX);
-    insts.push_back(std::move(firstMoveInst));
+    insts.push_back(std::make_unique<MoveInst>(src1, regAX));
 
-    auto cdq = std::make_unique<CdqInst>();
-    insts.push_back(std::move(cdq));
+    insts.push_back(std::make_unique<CdqInst>());
 
     std::shared_ptr<Operand> src2 = operand(irBinary->source2);
-    auto idiv = std::make_unique<IdivInst>(src2);
-    insts.push_back(std::move(idiv));
+    insts.push_back(std::make_unique<IdivInst>(src2));
 
     std::shared_ptr<Operand> dst = operand(irBinary->destination);
     const auto regDX = std::make_shared<RegisterOperand>(RegisterOperand::Type::DX);
-    auto secondMoveInst = std::make_unique<MoveInst>(regDX, dst);
-    insts.push_back(std::move(secondMoveInst));
+    insts.push_back(std::make_unique<MoveInst>(regDX, dst));
 }
 
 void binaryOtherInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary->source1);
     std::shared_ptr<Operand> dst = operand(irBinary->destination);
-    auto moveInst = std::make_unique<MoveInst>(src1, dst);
-    insts.push_back(std::move(moveInst));
+    insts.push_back(std::make_unique<MoveInst>(src1, dst));
 
     BinaryInst::Operator oper = binaryOperator(irBinary->operation);
     std::shared_ptr<Operand> src2 = operand(irBinary->source2);
-    auto binaryInst = std::make_unique<BinaryInst>(oper, src2, dst);
-    insts.push_back(std::move(binaryInst));
+    insts.push_back(std::make_unique<BinaryInst>(oper, src2, dst));
 }
 
 void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
 {
     std::shared_ptr<Operand> val = operand(inst->returnValue);
     std::shared_ptr<Operand> operandRegister = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX);
-    auto moveInst = std::make_unique<MoveInst>(val, operandRegister);
-    insts.push_back(std::move(moveInst));
+    insts.push_back(std::make_unique<MoveInst>(val, operandRegister));
 
-    auto instRet = std::make_unique<ReturnInst>();
-    insts.push_back(std::move(instRet));
+    insts.push_back(std::make_unique<ReturnInst>());
 }
 
 UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
@@ -160,6 +154,18 @@ BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
             return BinaryInst::Operator::Sub;
         case Ir::BinaryInst::Operation::Multiply:
             return BinaryInst::Operator::Mul;
+
+        case Ir::BinaryInst::Operation::BitwiseAnd:
+            return BinaryInst::Operator::BitwiseAnd;
+        case Ir::BinaryInst::Operation::BitwiseOr:
+            return BinaryInst::Operator::BitwiseOr;
+        case Ir::BinaryInst::Operation::BitwiseXor:
+            return BinaryInst::Operator::BitwiseXor;
+
+        case Ir::BinaryInst::Operation::LeftShift:
+            return BinaryInst::Operator::LeftShift;
+        case Ir::BinaryInst::Operation::RightShift:
+            return BinaryInst::Operator::RightShift;
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");
     }
@@ -242,6 +248,11 @@ void fixUpBinaryInst(std::vector<std::unique_ptr<Inst>>& instructions,
         fixUpImulInst(instructions, it, binaryInst);
         return;
     }
+    if (binaryInst->oper == BinaryInst::Operator::LeftShift ||
+             binaryInst->oper == BinaryInst::Operator::RightShift) {
+        fixUpShiftInst(instructions, it, binaryInst);
+        return;
+    }
     auto src = binaryInst->lhs;
     auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
     auto first = std::make_unique<MoveInst>(src, regR10);
@@ -249,6 +260,24 @@ void fixUpBinaryInst(std::vector<std::unique_ptr<Inst>>& instructions,
     BinaryInst::Operator oper = binaryInst->oper;
     auto dst = binaryInst->rhs;
     auto second = std::make_unique<BinaryInst>(oper, regR10, dst);
+
+    *it = std::move(first);
+    constexpr i32 movePastFirst = 1;
+    it = instructions.insert(it + movePastFirst, std::move(second));
+}
+
+void fixUpShiftInst(std::vector<std::unique_ptr<Inst>>& instructions,
+                    std::vector<std::unique_ptr<Inst>>::iterator& it,
+                    const BinaryInst* binaryInst)
+{
+    auto src = binaryInst->lhs;
+    auto regCX = std::make_shared<RegisterOperand>(RegisterOperand::Type::CX);
+    auto first = std::make_unique<MoveInst>(src, regCX);
+
+    BinaryInst::Operator oper = binaryInst->oper;
+    auto dst = binaryInst->rhs;
+    auto regCL = std::make_shared<RegisterOperand>(RegisterOperand::Type::CL);
+    auto second = std::make_unique<BinaryInst>(oper, regCL, dst);
 
     *it = std::move(first);
     constexpr i32 movePastFirst = 1;

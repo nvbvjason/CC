@@ -21,7 +21,9 @@ instruction = Mov(operand src, operand dst)
             | Allocate_stack(int)
             | Ret
 unary_operator = Neg | Not
-binary_operator = Add | Sub | Mult
+binary_operator = Add | Sub | Mult |
+                  BitwiseOr | BitwiseAnd | BitwiseXor |
+                  LeftShift | RightShift
 operand = Imm(int)
         | Reg(reg)
         | Pseudo(identifier)
@@ -94,7 +96,9 @@ struct UnaryInst final : Inst {
 
 struct BinaryInst final : Inst {
     enum class Operator {
-        Add, Sub, Mul
+        Add, Sub, Mul,
+        BitwiseAnd, BitwiseOr, BitwiseXor,
+        LeftShift, RightShift,
     };
     Operator oper;
     std::shared_ptr<Operand> lhs;
@@ -165,7 +169,7 @@ struct ImmOperand final : Operand {
 
 struct RegisterOperand final : Operand {
     enum class Type {
-        AX, DX, R10, R11
+        AX, DX, R10, R11, CX, CL
     };
     Type type;
     explicit RegisterOperand(const Type k)

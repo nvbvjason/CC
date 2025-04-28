@@ -57,6 +57,7 @@ void binaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst*
 void binaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
 void binaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
 void binaryOtherInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
+void binaryShiftInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
 
 void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst);
 
@@ -80,6 +81,9 @@ void fixUpBinaryInst(std::vector<std::unique_ptr<Inst>>& instructions,
 void fixUpIdivInst(std::vector<std::unique_ptr<Inst>>& instructions,
                    std::vector<std::unique_ptr<Inst>>::iterator& it,
                    const std::unique_ptr<Inst>& inst);
+void fixUpShiftInst(std::vector<std::unique_ptr<Inst>>& instructions,
+                    std::vector<std::unique_ptr<Inst>>::iterator& it,
+                    const BinaryInst* binaryInst);
 
 }
 

@@ -21,8 +21,9 @@ instruction = Return(val)
             | Binary(binary_operator, val src1, val src2, val dst)
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate
-binary_operator = Add | Subtract | Multiplay | Divide | Remainder
-
+binary_operator = Add | Subtract | Multiplay | Divide | Remainder |
+                  BitwiseOr | BitwiseAnd | BitwiseXor |
+                  Leftshift | Rightshift
 */
 
 namespace Ir {
