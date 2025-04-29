@@ -48,7 +48,6 @@ struct Inst;
 struct Operand;
 
 struct InstVisitor;
-struct InstVisitorTransform;
 
 struct Program {
     std::unique_ptr<Function> function;

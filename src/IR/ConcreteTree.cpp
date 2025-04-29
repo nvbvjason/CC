@@ -28,9 +28,9 @@ std::shared_ptr<ValueVar> unaryInst(const Parsing::Expr *parsingExpr,
                                            std::vector<std::shared_ptr<Instruction>>& instructions)
 {
     const auto unaryParsing = dynamic_cast<const Parsing::UnaryExpr*>(parsingExpr);
+    UnaryInst::Operation operation = convertUnaryOperation(unaryParsing->op);
     const Parsing::Expr *inner = unaryParsing->operand.get();
     auto source = inst(inner, instructions);
-    UnaryInst::Operation operation = convertUnaryOperation(unaryParsing->op);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
     instructions.push_back(std::make_shared<UnaryInst>(operation, source, destination));
     return destination;
@@ -138,7 +138,7 @@ UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator un
     }
 }
 
-BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation)
+BinaryInst::Operation convertBinaryOperation(const Parsing::BinaryExpr::Operator binaryOperation)
 {
     using Parse = Parsing::BinaryExpr::Operator;
     using Ir = BinaryInst::Operation;

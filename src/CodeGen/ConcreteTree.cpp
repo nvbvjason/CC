@@ -36,6 +36,35 @@ std::unique_ptr<Function> function(const Ir::Function *function)
                 binaryInst(functionCodeGen->instructions, irBinary);
                 break;
             }
+            case Ir::Instruction::Type::Label: {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+                const auto irLabel = static_cast<Ir::LabelInst*>(inst.get());
+                generateLabelInst(functionCodeGen->instructions, irLabel);
+                break;
+            }
+            case Ir::Instruction::Type::Jump: {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+                const auto irJump = static_cast<Ir::JumpInst*>(inst.get());
+                generateJumpInst(functionCodeGen->instructions, irJump);
+            }
+            case Ir::Instruction::Type::JumpIfZero: {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+                const auto irJumpIfZero = static_cast<Ir::JumpIfZeroInst*>(inst.get());
+                generateJumpIfZeroInst(functionCodeGen->instructions, irJumpIfZero);
+                break;
+            }
+            case Ir::Instruction::Type::JumpIfNotZero: {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+                const auto irJumpIfNotZero = static_cast<Ir::JumpIfNotZeroInst*>(inst.get());
+                generateJumpIfNotZeroInst(functionCodeGen->instructions, irJumpIfNotZero);
+                break;
+            }
+            case Ir::Instruction::Type::Copy: {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+                const auto irCopy = static_cast<Ir::CopyInst*>(inst.get());
+                generateCopyInst(functionCodeGen->instructions, irCopy);
+                break;
+            }
             default:
                 throw std::runtime_error("Unsupported instruction type");
         }
@@ -43,36 +72,99 @@ std::unique_ptr<Function> function(const Ir::Function *function)
     return functionCodeGen;
 }
 
+void generateJumpInst(std::vector<std::unique_ptr<Inst>>& insts,
+                      const Ir::JumpInst* irJump)
+{
+    Identifier iden(irJump->target.value);
+    insts.push_back(std::make_unique<JmpInst>(iden));
+}
+
+void generateJumpIfZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
+                            const Ir::JumpIfZeroInst* jumpIfZero)
+{
+    std::shared_ptr<Operand> condition = operand(jumpIfZero->condition);
+    insts.push_back(std::make_unique<CmpInst>(std::make_shared<ImmOperand>(0), condition));
+
+    Identifier target(jumpIfZero->target.value);
+    insts.push_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::E, target));
+}
+
+void generateJumpIfNotZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
+                               const Ir::JumpIfNotZeroInst* jumpIfNotZero)
+{
+    std::shared_ptr<Operand> condition = operand(jumpIfNotZero->condition);
+    insts.push_back(std::make_unique<CmpInst>(std::make_shared<ImmOperand>(0), condition));
+
+    Identifier target(jumpIfNotZero->target.value);
+    insts.push_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::NE, target));
+}
+
+void generateCopyInst(std::vector<std::unique_ptr<Inst>>& insts, Ir::CopyInst* type)
+{
+    std::shared_ptr<Operand> src = operand(type->source);
+    std::shared_ptr<Operand> dst = operand(type->destination);
+    insts.push_back(std::make_unique<MoveInst>(src, dst));
+}
+
+void generateLabelInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::LabelInst* irLabel)
+{
+    Identifier label(irLabel->target.value);
+    insts.push_back(std::make_unique<LabelInst>(label));
+}
+
 void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary)
 {
+    UnaryInst::Operator oper = unaryOperator(irUnary->operation);
+    if (oper == UnaryInst::Operator::Not) {
+        generateUnaryNotInst(insts, irUnary);
+        return;
+    }
     std::shared_ptr<Operand> src = operand(irUnary->source);
     std::shared_ptr<Operand> dst = operand(irUnary->destination);
-    auto moveInst = std::make_unique<MoveInst>(src, dst);
-    insts.push_back(std::move(moveInst));
+    insts.push_back(std::make_unique<MoveInst>(src, dst));
 
-    UnaryInst::Operator oper = unaryOperator(irUnary->operation);
-    auto unaryInst = std::make_unique<UnaryInst>(oper, dst);
-    insts.push_back(std::move(unaryInst));
+    insts.push_back(std::make_unique<UnaryInst>(oper, dst));
+}
+
+void generateUnaryNotInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary)
+{
+    std::shared_ptr<Operand> src = operand(irUnary->source);
+    auto immOperand = std::make_shared<ImmOperand>(0);
+    insts.push_back(std::make_unique<CmpInst>(immOperand, src));
+
+    std::shared_ptr<Operand> dst = operand(irUnary->destination);
+    insts.push_back(std::make_unique<MoveInst>(immOperand, dst));
+
+    insts.push_back(std::make_unique<SetCCInst>(BinaryInst::CondCode::E, dst));
 }
 
 void binaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
+    using IrOper = Ir::BinaryInst::Operation;
     switch (irBinary->operation) {
-        case Ir::BinaryInst::Operation::Add:
-        case Ir::BinaryInst::Operation::Subtract:
-        case Ir::BinaryInst::Operation::Multiply:
-        case Ir::BinaryInst::Operation::BitwiseAnd:
-        case Ir::BinaryInst::Operation::BitwiseOr:
-        case Ir::BinaryInst::Operation::BitwiseXor:
-        case Ir::BinaryInst::Operation::LeftShift:
-        case Ir::BinaryInst::Operation::RightShift:
-            binaryOtherInst(insts, irBinary);
+        case IrOper::Add:
+        case IrOper::Subtract:
+        case IrOper::Multiply:
+        case IrOper::BitwiseAnd:
+        case IrOper::BitwiseOr:
+        case IrOper::BitwiseXor:
+        case IrOper::LeftShift:
+        case IrOper::RightShift:
+            generateBinaryBasicInst(insts, irBinary);
             break;
-        case Ir::BinaryInst::Operation::Divide:
-            binaryDivideInst(insts, irBinary);
+        case IrOper::Divide:
+            generateBinaryDivideInst(insts, irBinary);
             break;
-        case Ir::BinaryInst::Operation::Remainder:
-            binaryRemainderInst(insts, irBinary);
+        case IrOper::Remainder:
+            generateBinaryRemainderInst(insts, irBinary);
+            break;
+        case IrOper::Equal:
+        case IrOper::NotEqual:
+        case IrOper::LessThan:
+        case IrOper::LessOrEqual:
+        case IrOper::GreaterThan:
+        case IrOper::GreaterOrEqual:
+            generateBinaryCondInst(insts, irBinary);
             break;
         default:
             throw std::runtime_error("Unsupported binary operation");
@@ -80,7 +172,7 @@ void binaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst*
 }
 
 
-void binaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
+void generateBinaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary->source1);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX);
@@ -95,7 +187,21 @@ void binaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::Binar
     insts.push_back(std::make_unique<MoveInst>(regAX, dst));
 }
 
-void binaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
+void generateBinaryCondInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
+{
+    std::shared_ptr<Operand> src1 = operand(irBinary->source1);
+    std::shared_ptr<Operand> src2 = operand(irBinary->source2);
+    insts.push_back(std::make_unique<CmpInst>(src2, src1));
+
+    std::shared_ptr<Operand> dst = operand(irBinary->destination);
+    std::shared_ptr<Operand> imm = std::make_shared<ImmOperand>(0);
+    insts.push_back(std::make_unique<MoveInst>(imm, dst));
+
+    BinaryInst::CondCode cc = condCode(irBinary->operation);
+    insts.push_back(std::make_unique<SetCCInst>(cc, dst));
+}
+
+void generateBinaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary->source1);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX);
@@ -111,7 +217,7 @@ void binaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::Bi
     insts.push_back(std::make_unique<MoveInst>(regDX, dst));
 }
 
-void binaryOtherInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
+void generateBinaryBasicInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary->source1);
     std::shared_ptr<Operand> dst = operand(irBinary->destination);
@@ -146,28 +252,39 @@ UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 
 BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
 {
-    switch (type)
-    {
-        case Ir::BinaryInst::Operation::Add:
-            return BinaryInst::Operator::Add;
-        case Ir::BinaryInst::Operation::Subtract:
-            return BinaryInst::Operator::Sub;
-        case Ir::BinaryInst::Operation::Multiply:
-            return BinaryInst::Operator::Mul;
+    using IrOper = Ir::BinaryInst::Operation;
+    using AsmOper = BinaryInst::Operator;
 
-        case Ir::BinaryInst::Operation::BitwiseAnd:
-            return BinaryInst::Operator::BitwiseAnd;
-        case Ir::BinaryInst::Operation::BitwiseOr:
-            return BinaryInst::Operator::BitwiseOr;
-        case Ir::BinaryInst::Operation::BitwiseXor:
-            return BinaryInst::Operator::BitwiseXor;
+    switch (type) {
+        case IrOper::Add:          return AsmOper::Add;
+        case IrOper::Subtract:     return AsmOper::Sub;
+        case IrOper::Multiply:     return AsmOper::Mul;
 
-        case Ir::BinaryInst::Operation::LeftShift:
-            return BinaryInst::Operator::LeftShift;
-        case Ir::BinaryInst::Operation::RightShift:
-            return BinaryInst::Operator::RightShift;
+        case IrOper::BitwiseAnd:   return AsmOper::BitwiseAnd;
+        case IrOper::BitwiseOr:    return AsmOper::BitwiseOr;
+        case IrOper::BitwiseXor:   return AsmOper::BitwiseXor;
+
+        case IrOper::LeftShift:    return AsmOper::LeftShift;
+        case IrOper::RightShift:   return AsmOper::RightShift;
         default:
-            throw std::invalid_argument("Invalid UnaryOperator type");
+            throw std::invalid_argument("Invalid BinaryOperation type: " + std::to_string(static_cast<int>(type)));
+    }
+}
+
+BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation type)
+{
+    using IrOper = Ir::BinaryInst::Operation;
+    using BinCond = BinaryInst::CondCode;
+
+    switch (type) {
+        case IrOper::Equal:             return BinCond::E;
+        case IrOper::NotEqual:          return BinCond::NE;
+        case IrOper::LessThan:          return BinCond::L;
+        case IrOper::LessOrEqual:       return BinCond::LE;
+        case IrOper::GreaterThan:       return BinCond::G;
+        case IrOper::GreaterOrEqual:    return BinCond::GE;
+        default:
+            throw std::invalid_argument("Invalid BinaryOperation type");
     }
 }
 
