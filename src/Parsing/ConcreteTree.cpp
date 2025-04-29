@@ -12,45 +12,45 @@ bool Parse::programParse(Program& program)
     program.function = std::make_unique<Function>(std::move(function));
     if (program.function->name != "main")
         return false;
-    if (c_tokens[m_current].m_type != Lexing::Token::Type::EndOfFile)
+    if (c_tokens[m_current].m_type != TokenType::EndOfFile)
         return false;
     return true;
 }
 
 bool Parse::functionParse(Function& function)
 {
-    if (!expect(Lexing::Token::Type::IntKeyword))
+    if (!expect(TokenType::IntKeyword))
         return false;
     const Lexing::Token lexeme = advance();
-    if (lexeme.m_type != Lexing::Token::Type::Identifier)
+    if (lexeme.m_type != TokenType::Identifier)
         return false;
     function.name = lexeme.m_lexeme;
-    if (!expect(Lexing::Token::Type::OpenParen))
+    if (!expect(TokenType::OpenParen))
         return false;
-    if (!expect(Lexing::Token::Type::Void))
+    if (!expect(TokenType::Void))
         return false;
-    if (!expect(Lexing::Token::Type::CloseParen))
+    if (!expect(TokenType::CloseParen))
         return false;
-    if (!expect(Lexing::Token::Type::OpenBrace))
+    if (!expect(TokenType::OpenBrace))
         return false;
     Statement statement;
     if (!stmtParse(statement))
         return false;
     function.body = std::make_shared<Statement>(statement);
-    if (!expect(Lexing::Token::Type::CloseBrace))
+    if (!expect(TokenType::CloseBrace))
         return false;
     return true;
 }
 
 bool Parse::stmtParse(Statement& statement)
 {
-    if (!expect(Lexing::Token::Type::Return))
+    if (!expect(TokenType::Return))
         return false;
     const std::shared_ptr<Expr> expr = exprParse(0);
     if (expr == nullptr)
         return false;
     statement.expression = expr;
-    if (!expect(Lexing::Token::Type::Semicolon))
+    if (!expect(TokenType::Semicolon))
         return false;
     return true;
 }
@@ -78,21 +78,21 @@ std::shared_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
 std::shared_ptr<Expr> Parse::factorParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
-        case Lexing::Token::Type::Integer: {
+        case TokenType::Integer: {
             auto constantExpr = std::make_shared<ConstantExpr>(std::stoi(lexeme.m_lexeme));
-            if (advance().m_type == Lexing::Token::Type::EndOfFile)
+            if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;
         }
-        case Lexing::Token::Type::Minus:
-        case Lexing::Token::Type::Tilde:
-        case Lexing::Token::Type::ExclamationMark:
+        case TokenType::Minus:
+        case TokenType::Tilde:
+        case TokenType::ExclamationMark:
             return unaryExprParse();
-        case Lexing::Token::Type::OpenParen: {
-            if (advance().m_type == Lexing::Token::Type::EndOfFile)
+        case TokenType::OpenParen: {
+            if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             auto expr = exprParse(0);
-            if (!expect(Lexing::Token::Type::CloseParen))
+            if (!expect(TokenType::CloseParen))
                 return nullptr;
             return expr;
         }
@@ -115,13 +115,13 @@ std::shared_ptr<Expr> Parse::unaryExprParse()
 bool Parse::unaryOperatorParse(UnaryExpr::Operator& unaryOperator)
 {
     switch (const auto type = advance(); type.m_type) {
-        case Lexing::Token::Type::Minus:
+        case TokenType::Minus:
             unaryOperator = UnaryExpr::Operator::Negate;
             return true;
-        case Lexing::Token::Type::Tilde:
+        case TokenType::Tilde:
             unaryOperator = UnaryExpr::Operator::Complement;
             return true;
-        case Lexing::Token::Type::ExclamationMark:
+        case TokenType::ExclamationMark:
             unaryOperator = UnaryExpr::Operator::Not;
             return true;
         default:
@@ -133,60 +133,60 @@ bool Parse::unaryOperatorParse(UnaryExpr::Operator& unaryOperator)
 bool Parse::binaryOperatorParse(BinaryExpr::Operator& binaryOperator)
 {
     switch (const auto type = advance(); type.m_type) {
-         case Lexing::Token::Type::Plus:
+         case TokenType::Plus:
             binaryOperator = BinaryExpr::Operator::Add;
             return true;
-        case Lexing::Token::Type::Minus:
+        case TokenType::Minus:
             binaryOperator = BinaryExpr::Operator::Subtract;
             return true;
-        case Lexing::Token::Type::Asterisk:
+        case TokenType::Asterisk:
             binaryOperator = BinaryExpr::Operator::Multiply;
             return true;
-        case Lexing::Token::Type::ForwardSlash:
+        case TokenType::ForwardSlash:
             binaryOperator = BinaryExpr::Operator::Divide;
             return true;
-        case Lexing::Token::Type::Percent:
+        case TokenType::Percent:
             binaryOperator = BinaryExpr::Operator::Remainder;
             return true;
 
-        case Lexing::Token::Type::Ampersand:
+        case TokenType::Ampersand:
             binaryOperator = BinaryExpr::Operator::BitwiseAnd;
             return true;
-        case Lexing::Token::Type::Pipe:
+        case TokenType::Pipe:
             binaryOperator = BinaryExpr::Operator::BitwiseOr;
             return true;
-        case Lexing::Token::Type::Circumflex:
+        case TokenType::Circumflex:
             binaryOperator = BinaryExpr::Operator::BitwiseXor;
             return true;
-        case Lexing::Token::Type::LeftShift:
+        case TokenType::LeftShift:
             binaryOperator = BinaryExpr::Operator::LeftShift;
             return true;
-        case Lexing::Token::Type::RightShift:
+        case TokenType::RightShift:
             binaryOperator = BinaryExpr::Operator::RightShift;
             return true;
 
-        case Lexing::Token::Type::LogicalAnd:
+        case TokenType::LogicalAnd:
             binaryOperator = BinaryExpr::Operator::And;
             return true;
-        case Lexing::Token::Type::LogicalOr:
+        case TokenType::LogicalOr:
             binaryOperator = BinaryExpr::Operator::Or;
             return true;
-        case Lexing::Token::Type::LogicalEqual:
+        case TokenType::LogicalEqual:
             binaryOperator = BinaryExpr::Operator::Equal;
             return true;
-        case Lexing::Token::Type::LogicalNotEqual:
+        case TokenType::LogicalNotEqual:
             binaryOperator = BinaryExpr::Operator::NotEqual;
             return true;
-        case Lexing::Token::Type::Greater:
+        case TokenType::Greater:
             binaryOperator = BinaryExpr::Operator::Greater;
             return true;
-        case Lexing::Token::Type::Less:
+        case TokenType::Less:
             binaryOperator = BinaryExpr::Operator::Less;
             return true;
-        case Lexing::Token::Type::LessEqual:
+        case TokenType::LessEqual:
             binaryOperator = BinaryExpr::Operator::LessThan;
             return true;
-        case Lexing::Token::Type::GreaterEqual:
+        case TokenType::GreaterEqual:
             binaryOperator = BinaryExpr::Operator::GreaterThan;
             return true;
         default:
@@ -194,10 +194,10 @@ bool Parse::binaryOperatorParse(BinaryExpr::Operator& binaryOperator)
     }
 }
 
-bool Parse::match(const Lexing::Token::Type &type)
+bool Parse::match(const TokenType &type)
 {
     if (type == c_tokens[m_current].m_type) {
-        if (advance().m_type == Lexing::Token::Type::EndOfFile)
+        if (advance().m_type == TokenType::EndOfFile)
             return false;
         return true;
     }
@@ -205,75 +205,75 @@ bool Parse::match(const Lexing::Token::Type &type)
 }
 
 // https://en.cppreference.com/w/c/language/operator_precedence
-i32 Parse::getPrecedenceLevel(const Lexing::Token::Type type)
+i32 Parse::getPrecedenceLevel(const TokenType type)
 {
     switch (type) {
-        case Lexing::Token::Type::Decrement:
+        case TokenType::Decrement:
             return 1;
-        case Lexing::Token::Type::ExclamationMark:
+        case TokenType::ExclamationMark:
             return 2;
-        case Lexing::Token::Type::Asterisk:
-        case Lexing::Token::Type::ForwardSlash:
-        case Lexing::Token::Type::Percent:
+        case TokenType::Asterisk:
+        case TokenType::ForwardSlash:
+        case TokenType::Percent:
             return 3;
-        case Lexing::Token::Type::Plus:
-        case Lexing::Token::Type::Minus:
+        case TokenType::Plus:
+        case TokenType::Minus:
             return 4;
-        case Lexing::Token::Type::LeftShift:
-        case Lexing::Token::Type::RightShift:
+        case TokenType::LeftShift:
+        case TokenType::RightShift:
             return 5;
-        case Lexing::Token::Type::Less:
-        case Lexing::Token::Type::LessEqual:
-        case Lexing::Token::Type::Greater:
-        case Lexing::Token::Type::GreaterEqual:
+        case TokenType::Less:
+        case TokenType::LessEqual:
+        case TokenType::Greater:
+        case TokenType::GreaterEqual:
             return 6;
-        case Lexing::Token::Type::LogicalEqual:
-        case Lexing::Token::Type::LogicalNotEqual:
+        case TokenType::LogicalEqual:
+        case TokenType::LogicalNotEqual:
             return 7;
-        case Lexing::Token::Type::Ampersand:
+        case TokenType::Ampersand:
             return 8;
-        case Lexing::Token::Type::Circumflex:
+        case TokenType::Circumflex:
             return 9;
-        case Lexing::Token::Type::Pipe:
+        case TokenType::Pipe:
             return 10;
-        case Lexing::Token::Type::LogicalAnd:
+        case TokenType::LogicalAnd:
             return 11;
-        case Lexing::Token::Type::LogicalOr:
+        case TokenType::LogicalOr:
             return 12;
         default:
             return 0;
     }
 }
 
-i32 Parse::precedence(const Lexing::Token::Type type)
+i32 Parse::precedence(const TokenType type)
 {
     constexpr i32 precedenceMult = 1024;
     constexpr i32 precedenceLevels = 16;
     return (precedenceLevels - getPrecedenceLevel(type)) * precedenceMult;
 }
 
-bool Parse::isBinaryOperator(const Lexing::Token::Type type)
+bool Parse::isBinaryOperator(const TokenType type)
 {
     switch (type) {
-        case Lexing::Token::Type::Plus:
-        case Lexing::Token::Type::Minus:
-        case Lexing::Token::Type::ForwardSlash:
-        case Lexing::Token::Type::Percent:
-        case Lexing::Token::Type::Asterisk:
-        case Lexing::Token::Type::LeftShift:
-        case Lexing::Token::Type::RightShift:
-        case Lexing::Token::Type::Ampersand:
-        case Lexing::Token::Type::Pipe:
-        case Lexing::Token::Type::Circumflex:
+        case TokenType::Plus:
+        case TokenType::Minus:
+        case TokenType::ForwardSlash:
+        case TokenType::Percent:
+        case TokenType::Asterisk:
+        case TokenType::LeftShift:
+        case TokenType::RightShift:
+        case TokenType::Ampersand:
+        case TokenType::Pipe:
+        case TokenType::Circumflex:
 
-        case Lexing::Token::Type::LogicalAnd:
-        case Lexing::Token::Type::LogicalOr:
-        case Lexing::Token::Type::LogicalEqual:
-        case Lexing::Token::Type::LogicalNotEqual:
-        case Lexing::Token::Type::Greater:
-        case Lexing::Token::Type::Less:
-        case Lexing::Token::Type::LessEqual:
-        case Lexing::Token::Type::GreaterEqual:
+        case TokenType::LogicalAnd:
+        case TokenType::LogicalOr:
+        case TokenType::LogicalEqual:
+        case TokenType::LogicalNotEqual:
+        case TokenType::Greater:
+        case TokenType::Less:
+        case TokenType::LessEqual:
+        case TokenType::GreaterEqual:
             return true;
         default:
             return false;

@@ -24,6 +24,7 @@
 namespace Parsing {
 
 class Parse {
+    using TokenType = Lexing::Token::Type;
     std::vector<Lexing::Token> c_tokens;
     size_t m_current = 0;
 public:
@@ -39,23 +40,23 @@ public:
     [[nodiscard]] bool unaryOperatorParse(UnaryExpr::Operator& unaryOperator);
     [[nodiscard]] bool binaryOperatorParse(BinaryExpr::Operator& binaryOperator);
 private:
-    bool match(const Lexing::Token::Type& type);
+    bool match(const TokenType& type);
     static i32 calculatePrecedence();
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
     [[nodiscard]] Lexing::Token advance() { return c_tokens[m_current++]; }
     [[nodiscard]] bool expect(const Lexing::Token::Type type)
     {
         if (peek().m_type == type) {
-            if (advance().m_type == Lexing::Token::Type::EndOfFile)
+            if (advance().m_type == TokenType::EndOfFile)
                 return false;
             return true;
         }
         return false;
     }
 
-    [[nodiscard]] static i32 getPrecedenceLevel(Lexing::Token::Type type);
-    [[nodiscard]] static i32 precedence(Lexing::Token::Type type);
-    [[nodiscard]] static bool isBinaryOperator(Lexing::Token::Type type);
+    [[nodiscard]] static i32 getPrecedenceLevel(TokenType type);
+    [[nodiscard]] static i32 precedence(TokenType type);
+    [[nodiscard]] static bool isBinaryOperator(TokenType type);
 };
 } // Parsing
 

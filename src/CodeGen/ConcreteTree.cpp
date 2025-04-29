@@ -182,7 +182,7 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
         case Ir::Value::Type::Variable: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             const auto valueConst = static_cast<Ir::ValueVar*>(value.get());
-            return std::make_shared<PseudoOperand>(valueConst->value);
+            return std::make_shared<PseudoOperand>(valueConst->value.value);
         }
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");
