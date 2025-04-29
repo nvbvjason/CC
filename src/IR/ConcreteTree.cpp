@@ -1,12 +1,11 @@
 #include "ConcreteTree.hpp"
+#include "Parsing/AbstractTree.hpp"
 
 #include <stdexcept>
 
-#include "Parsing/AbstractTree.hpp"
-
 namespace Ir {
 
-static std::string makeTemporaryName();
+static Identifier makeTemporaryName();
 static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation);
 
@@ -73,12 +72,12 @@ std::shared_ptr<Value> instruction(const Parsing::Expr *parsingExpr,
     }
 }
 
-std::string makeTemporaryName()
+Identifier makeTemporaryName()
 {
     static i32 id = 0;
     std::string result = "tmp.";
     result += std::to_string(id++);
-    return result;
+    return {result};
 }
 
 UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
@@ -88,6 +87,8 @@ UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator un
             return UnaryInst::Operation::Complement;
         case Parsing::UnaryExpr::Operator::Negate:
             return UnaryInst::Operation::Negate;
+        case Parsing::UnaryExpr::Operator::Not:
+            return UnaryInst::Operation::Not;
         default:
             throw std::invalid_argument("Invalid unary operation");
     }
@@ -95,29 +96,32 @@ UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator un
 
 BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation)
 {
+    using Parse = Parsing::BinaryExpr::Operator;
+    using Ir = BinaryInst::Operation;
+
     switch (binaryOperation) {
-        case Parsing::BinaryExpr::Operator::Add:
-            return BinaryInst::Operation::Add;
-        case Parsing::BinaryExpr::Operator::Subtract:
-            return BinaryInst::Operation::Subtract;
-        case Parsing::BinaryExpr::Operator::Multiply:
-            return BinaryInst::Operation::Multiply;
-        case Parsing::BinaryExpr::Operator::Divide:
-            return BinaryInst::Operation::Divide;
-        case Parsing::BinaryExpr::Operator::Remainder:
-            return BinaryInst::Operation::Remainder;
+        case Parse::Add:            return Ir::Add;
+        case Parse::Subtract:       return Ir::Subtract;
+        case Parse::Multiply:       return Ir::Multiply;
+        case Parse::Divide:         return Ir::Divide;
+        case Parse::Remainder:      return Ir::Remainder;
 
-        case Parsing::BinaryExpr::Operator::BitwiseAnd:
-            return BinaryInst::Operation::BitwiseAnd;
-        case Parsing::BinaryExpr::Operator::BitwiseOr:
-            return BinaryInst::Operation::BitwiseOr;
-        case Parsing::BinaryExpr::Operator::BitwiseXor:
-            return BinaryInst::Operation::BitwiseXor;
+        case Parse::BitwiseAnd:     return Ir::BitwiseAnd;
+        case Parse::BitwiseOr:      return Ir::BitwiseOr;
+        case Parse::BitwiseXor:     return Ir::BitwiseXor;
 
-        case Parsing::BinaryExpr::Operator::LeftShift:
-            return BinaryInst::Operation::LeftShift;
-        case Parsing::BinaryExpr::Operator::RightShift:
-            return BinaryInst::Operation::RightShift;
+        case Parse::LeftShift:      return Ir::LeftShift;
+        case Parse::RightShift:     return Ir::RightShift;
+
+        case Parse::And:            return Ir::And;
+        case Parse::Or:             return Ir::Or;
+        case Parse::Equal:          return Ir::Equal;
+        case Parse::NotEqual:       return Ir::NotEqual;
+        case Parse::Greater:        return Ir::GreaterThan;
+        case Parse::GreaterOrEqual: return Ir::GreaterOrEqual;
+        case Parse::LessThan:       return Ir::LessThan;
+        case Parse::LessOrEqual:    return Ir::LessOrEqual;
+
         default:
             throw std::invalid_argument("Invalid binary operation");
     }

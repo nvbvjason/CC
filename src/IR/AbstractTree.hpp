@@ -19,11 +19,18 @@ function_definition = Function(identifier, instruction* body)
 instruction = Return(val)
             | Unary(unary_operator, val src, val dst)
             | Binary(binary_operator, val src1, val src2, val dst)
+            | Copy(val src, val dst)
+            | Jump(identifier target)
+            | JumpIfZero(val condition, identifier target)
+            | JumpIfNotZero(val condition, identifier target)
+            | Label(identifier)
 val = Constant(int) | Var(identifier)
-unary_operator = Complement | Negate
+unary_operator = Complement | Negate | Not
 binary_operator = Add | Subtract | Multiplay | Divide | Remainder |
                   BitwiseOr | BitwiseAnd | BitwiseXor |
-                  Leftshift | Rightshift
+                  Leftshift | Rightshift |
+                  And | Or | Equal | NotEqual |
+                  LessThan | LessOrEqual | GreaterThan | GreaterOrEqual
 */
 
 namespace Ir {
@@ -32,6 +39,11 @@ struct Program;
 struct Function;
 struct Instruction;
 struct Value;
+struct Identifier;
+
+struct Identifier {
+    std::string value;
+};
 
 struct Program {
     std::shared_ptr<Function> function = nullptr;
@@ -44,7 +56,7 @@ struct Function {
 
 struct Instruction {
     enum class Type {
-        Return, Unary, Binary
+        Return, Unary, Binary, Copy, Jump, JumpIfZero, JumpIfNotZero, Label
     };
     Type type;
 
@@ -64,7 +76,7 @@ struct ReturnInst final : Instruction {
 
 struct UnaryInst final : Instruction {
     enum class Operation {
-        Complement, Negate
+        Complement, Negate, Not
     };
     Operation operation;
     std::shared_ptr<Value> source;
@@ -80,6 +92,8 @@ struct BinaryInst final : Instruction {
         Add, Subtract, Multiply, Divide, Remainder,
         BitwiseAnd, BitwiseOr, BitwiseXor,
         LeftShift, RightShift,
+        And, Or, Equal, NotEqual,
+        LessThan, LessOrEqual, GreaterThan, GreaterOrEqual,
     };
     Operation operation;
     std::shared_ptr<Value> source1;
@@ -92,6 +106,49 @@ struct BinaryInst final : Instruction {
         : Instruction(Type::Binary), operation(op), source1(src1), source2(src2), destination(dst) {}
 
     BinaryInst() = delete;
+};
+
+struct CopyInst final : Instruction {
+    std::shared_ptr<Value> source;
+    std::shared_ptr<Value> destination;
+    CopyInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
+        : Instruction(Type::Copy), source(std::move(src)), destination(std::move(dst)) {}
+
+    CopyInst() = delete;
+};
+
+struct JumpInst final : Instruction {
+    Identifier target;
+    explicit JumpInst(Identifier target)
+        : Instruction(Type::Jump), target(std::move(target)) {}
+
+    JumpInst() = delete;
+};
+
+struct JumpIfZeroInst final : Instruction {
+    std::shared_ptr<Value> condition;
+    Identifier target;
+    JumpIfZeroInst(std::shared_ptr<Value> condition, Identifier target)
+        : Instruction(Type::JumpIfZero), condition(std::move(condition)), target(std::move(target)) {}
+
+    JumpIfZeroInst() = delete;
+};
+
+struct JumpIfNotZeroInst final : Instruction {
+    std::shared_ptr<Value> condition;
+    Identifier target;
+    JumpIfNotZeroInst(std::shared_ptr<Value> condition, Identifier target)
+        : Instruction(Type::JumpIfNotZero), condition(std::move(condition)), target(std::move(target)) {}
+
+    JumpIfNotZeroInst() = delete;
+};
+
+struct LabelInst final : Instruction {
+    Identifier target;
+    explicit LabelInst(Identifier target)
+        : Instruction(Type::Label), target(std::move(target)) {}
+
+    LabelInst() = delete;
 };
 
 struct Value {
@@ -107,8 +164,8 @@ protected:
 };
 
 struct ValueVar final : Value {
-    std::string value;
-    explicit ValueVar(std::string v)
+    Identifier value;
+    explicit ValueVar(Identifier v)
         : Value(Type::Variable), value(std::move(v)) {}
 
     ValueVar() = delete;
