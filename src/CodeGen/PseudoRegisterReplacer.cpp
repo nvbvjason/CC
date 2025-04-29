@@ -34,4 +34,15 @@ void PseudoRegisterReplacer::visit(IdivInst& idiv)
 {
     replaceIfPseudo(idiv.operand);
 }
+
+void PseudoRegisterReplacer::visit(CmpInst& cmp) override
+{
+    replaceIfPseudo(cmp.lhs);
+    replaceIfPseudo(cmp.rhs);
+}
+
+void PseudoRegisterReplacer::visit(SetCCInst& setCC) override
+{
+    replaceIfPseudo(setCC.operand);
+}
 } // namespace CodeGen

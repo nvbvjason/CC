@@ -20,14 +20,14 @@ public:
     void visit(UnaryInst& unary) override;
     void visit(BinaryInst& binary) override;
     void visit(IdivInst& idiv) override;
+    void visit(CmpInst&) override;
+    void visit(SetCCInst&) override;
 
     void visit(CdqInst&) override {}
     void visit(AllocStackInst&) override {}
     void visit(ReturnInst&) override {}
-    void visit(CmpInst&) override {}
     void visit(JmpInst&) override {}
     void visit(JmpCCInst&) override {}
-    void visit(SetCCInst&) override {}
     void visit(LabelInst&) override {}
 private:
     void replaceIfPseudo(std::shared_ptr<Operand>& operand);
