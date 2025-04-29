@@ -19,54 +19,98 @@ std::shared_ptr<Function> function(const Parsing::Function* parsingFunction)
     auto functionTacky = std::make_shared<Function>();
     functionTacky->identifier = parsingFunction->name;
     const Parsing::Expr* parsingExpressionNode = parsingFunction->body->expression.get();
-    auto lastValue = instruction(parsingExpressionNode, functionTacky->instructions);
+    auto lastValue = inst(parsingExpressionNode, functionTacky->instructions);
     functionTacky->instructions.push_back(std::make_shared<ReturnInst>(lastValue));
     return functionTacky;
 }
 
-std::shared_ptr<ValueVar> unaryInstruction(const Parsing::Expr *parsingExpr,
+std::shared_ptr<ValueVar> unaryInst(const Parsing::Expr *parsingExpr,
                                            std::vector<std::shared_ptr<Instruction>>& instructions)
 {
     const auto unaryParsing = dynamic_cast<const Parsing::UnaryExpr*>(parsingExpr);
     const Parsing::Expr *inner = unaryParsing->operand.get();
-    auto source = instruction(inner, instructions);
+    auto source = inst(inner, instructions);
     UnaryInst::Operation operation = convertUnaryOperation(unaryParsing->op);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
     instructions.push_back(std::make_shared<UnaryInst>(operation, source, destination));
     return destination;
 }
 
-std::shared_ptr<Value> binaryInstruction(const Parsing::Expr *parsingExpr,
+std::shared_ptr<Value> binaryInst(const Parsing::Expr *parsingExpr,
                                          std::vector<std::shared_ptr<Instruction>>& instructions)
 {
     const auto binaryParsing = dynamic_cast<const Parsing::BinaryExpr*>(parsingExpr);
-    const Parsing::Expr *lhs = binaryParsing->lhs.get();
-    auto source1 = instruction(lhs, instructions);
-    const Parsing::Expr *rhs = binaryParsing->rhs.get();
-    auto source2 = instruction(rhs, instructions);
     BinaryInst::Operation operation = convertBinaryOperation(binaryParsing->op);
+    if (operation == BinaryInst::Operation::Add)
+        return binaryAndInst(binaryParsing, instructions);
+    if (operation == BinaryInst::Operation::Or)
+        return binaryOrInst(binaryParsing, instructions);
+    const Parsing::Expr *lhs = binaryParsing->lhs.get();
+    auto source1 = inst(lhs, instructions);
+    const Parsing::Expr *rhs = binaryParsing->rhs.get();
+    auto source2 = inst(rhs, instructions);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
     instructions.push_back(std::make_shared<BinaryInst>(operation, source1, source2, destination));
     return destination;
 }
 
-std::shared_ptr<ValueConst> returnInstruction(const Parsing::Expr *parsingExpr)
+std::shared_ptr<Value> binaryAndInst(const Parsing::BinaryExpr* const binaryExpr,
+                                     std::vector<std::shared_ptr<Instruction>>& instructions)
+{
+    auto result = std::make_shared<ValueConst>(-1);
+    auto lhs = inst(binaryExpr->lhs.get(), instructions);
+    Identifier falseLabelIden = makeTemporaryName();
+    instructions.push_back(std::make_shared<JumpIfZeroInst>(lhs, falseLabelIden));
+    auto rhs = inst(binaryExpr->rhs.get(), instructions);
+    instructions.push_back(std::make_shared<JumpIfZeroInst>(rhs, falseLabelIden));
+    auto oneVal = std::make_shared<ValueConst>(1);
+    instructions.push_back(std::make_shared<CopyInst>(oneVal, result));
+    Identifier endLabelIden = makeTemporaryName();
+    instructions.push_back(std::make_shared<JumpInst>(endLabelIden));
+    instructions.push_back(std::make_shared<LabelInst>(falseLabelIden));
+    auto zeroVal = std::make_shared<ValueConst>(0);
+    instructions.push_back(std::make_shared<CopyInst>(zeroVal, result));
+    instructions.push_back(std::make_shared<LabelInst>(endLabelIden));
+    return result;
+}
+
+std::shared_ptr<Value> binaryOrInst(const Parsing::BinaryExpr* binaryExpr,
+                                    std::vector<std::shared_ptr<Instruction>>& instructions)
+{
+    auto result = std::make_shared<ValueConst>(-1);
+    auto lhs = inst(binaryExpr->lhs.get(), instructions);
+    Identifier trueLabelIden = makeTemporaryName();
+    instructions.push_back(std::make_shared<JumpIfNotZeroInst>(lhs, trueLabelIden));
+    auto rhs = inst(binaryExpr->rhs.get(), instructions);
+    instructions.push_back(std::make_shared<JumpIfNotZeroInst>(rhs, trueLabelIden));
+    auto zeroVal = std::make_shared<ValueConst>(0);
+    instructions.push_back(std::make_shared<CopyInst>(zeroVal, result));
+    Identifier endLabelIden = makeTemporaryName();
+    instructions.push_back(std::make_shared<JumpInst>(endLabelIden));
+    instructions.push_back(std::make_shared<LabelInst>(trueLabelIden));
+    auto oneVal = std::make_shared<ValueConst>(1);
+    instructions.push_back(std::make_shared<CopyInst>(oneVal, result));
+    instructions.push_back(std::make_shared<LabelInst>(endLabelIden));
+    return result;
+}
+
+std::shared_ptr<ValueConst> returnInst(const Parsing::Expr *parsingExpr)
 {
     const auto constant = dynamic_cast<const Parsing::ConstantExpr*>(parsingExpr);
     auto result = std::make_shared<ValueConst>(constant->value);
     return result;
 }
 
-std::shared_ptr<Value> instruction(const Parsing::Expr *parsingExpr,
+std::shared_ptr<Value> inst(const Parsing::Expr *parsingExpr,
                                    std::vector<std::shared_ptr<Instruction>> &instructions)
 {
     switch (parsingExpr->kind) {
         case Parsing::Expr::Kind::Constant:
-            return returnInstruction(parsingExpr);
+            return returnInst(parsingExpr);
         case Parsing::Expr::Kind::Unary:
-            return unaryInstruction(parsingExpr, instructions);
+            return unaryInst(parsingExpr, instructions);
         case Parsing::Expr::Kind::Binary:
-            return binaryInstruction(parsingExpr, instructions);
+            return binaryInst(parsingExpr, instructions);
         default:
             throw std::invalid_argument("Unexpected expression type");
     }

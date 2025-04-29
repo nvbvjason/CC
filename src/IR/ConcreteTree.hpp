@@ -27,13 +27,17 @@ namespace Ir {
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram);
 std::shared_ptr<Function> function(const Parsing::Function* parsingFunction);
 
-std::shared_ptr<Value> instruction(const Parsing::Expr* parsingExpr,
-                                   std::vector<std::shared_ptr<Instruction>>& instructions);
-std::shared_ptr<ValueVar> unaryInstruction(const Parsing::Expr *parsingExpr,
-                                           std::vector<std::shared_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> binaryInstruction(const Parsing::Expr *parsingExpr,
-                                         std::vector<std::shared_ptr<Instruction>>& instructions);
-std::shared_ptr<ValueConst> returnInstruction(const Parsing::Expr *parsingExpr);
+std::shared_ptr<Value> inst(const Parsing::Expr* parsingExpr,
+                            std::vector<std::shared_ptr<Instruction>>& instructions);
+std::shared_ptr<ValueVar> unaryInst(const Parsing::Expr *parsingExpr,
+                                    std::vector<std::shared_ptr<Instruction>>& instructions);
+std::shared_ptr<Value> binaryInst(const Parsing::Expr *parsingExpr,
+                                  std::vector<std::shared_ptr<Instruction>>& instructions);
+std::shared_ptr<Value> binaryAndInst(const Parsing::Expr *parsingExpr,
+                                     std::vector<std::shared_ptr<Instruction>>& instructions);
+std::shared_ptr<Value> binaryOrInst(const Parsing::BinaryExpr* binaryExpr,
+                                    std::vector<std::shared_ptr<Instruction>>& instructions);
+std::shared_ptr<ValueConst> returnInst(const Parsing::Expr *parsingExpr);
 
 } // IR
 
