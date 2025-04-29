@@ -33,7 +33,7 @@ std::shared_ptr<ValueVar> unaryInst(const Parsing::Expr *parsingExpr,
                                     std::vector<std::shared_ptr<Instruction>>& instructions);
 std::shared_ptr<Value> binaryInst(const Parsing::Expr *parsingExpr,
                                   std::vector<std::shared_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> binaryAndInst(const Parsing::Expr *parsingExpr,
+std::shared_ptr<Value> binaryAndInst(const Parsing::BinaryExpr *parsingExpr,
                                      std::vector<std::shared_ptr<Instruction>>& instructions);
 std::shared_ptr<Value> binaryOrInst(const Parsing::BinaryExpr* binaryExpr,
                                     std::vector<std::shared_ptr<Instruction>>& instructions);

@@ -24,8 +24,15 @@ public:
     void visit(CdqInst&) override {}
     void visit(AllocStackInst&) override {}
     void visit(ReturnInst&) override {}
+    void visit(CmpInst&) override {}
+    void visit(JmpInst&) override {}
+    void visit(JmpCCInst&) override {}
+    void visit(SetCCInst&) override {}
+    void visit(LabelInst&) override {}
 private:
     void replaceIfPseudo(std::shared_ptr<Operand>& operand);
+
+public:
 };
 
 } // CodeGen
