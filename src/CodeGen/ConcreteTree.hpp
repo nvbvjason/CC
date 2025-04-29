@@ -87,6 +87,9 @@ void fixUpInstructions(Program &programCodegen, i32 stackAlloc);
 void fixUpMoveInst(std::vector<std::unique_ptr<Inst>>& instructions,
                    std::vector<std::unique_ptr<Inst>>::iterator& it,
                    const std::unique_ptr<Inst>& inst);
+void fixUpCmpInst(std::vector<std::unique_ptr<Inst>>& instructions,
+                  std::vector<std::unique_ptr<Inst>>::iterator& it,
+                  const std::unique_ptr<Inst>& inst);
 void fixUpImulInst(std::vector<std::unique_ptr<Inst>>& instructions,
                    std::vector<std::unique_ptr<Inst>>::iterator& it,
                    const BinaryInst* binaryInst);

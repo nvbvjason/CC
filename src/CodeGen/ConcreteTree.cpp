@@ -335,6 +335,39 @@ void fixUpMoveInst(std::vector<std::unique_ptr<Inst>>& instructions,
     }
 }
 
+void fixUpCmpInst(std::vector<std::unique_ptr<Inst>>& instructions,
+                  std::vector<std::unique_ptr<Inst>>::iterator& it,
+                  const std::unique_ptr<Inst>& inst)
+{
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    const auto cmpInst = static_cast<CmpInst*>(inst.get());
+    if (cmpInst->lhs->kind == Operand::Kind::Stack &&
+        cmpInst->rhs->kind == Operand::Kind::Stack) {
+        auto lhs = cmpInst->lhs;
+        auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
+        auto first = std::make_unique<MoveInst>(lhs, regR10);
+
+        auto rhs = cmpInst->rhs;
+        auto second = std::make_unique<CmpInst>(regR10, rhs);
+
+        *it = std::move(first);
+        constexpr i32 movePastFirst = 1;
+        it = instructions.insert(it + movePastFirst, std::move(second));
+    }
+    else if (cmpInst->lhs->kind == Operand::Kind::Imm) {
+        auto rhs = cmpInst->rhs;
+        auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11);
+        auto first = std::make_unique<MoveInst>(rhs, regR11);
+
+        auto lhs = cmpInst->lhs;
+        auto second = std::make_unique<CmpInst>(lhs, regR11);
+
+        *it = std::move(first);
+        constexpr i32 movePastFirst = 1;
+        it = instructions.insert(it + movePastFirst, std::move(second));
+    }
+}
+
 void fixUpImulInst(std::vector<std::unique_ptr<Inst>>& instructions,
                    std::vector<std::unique_ptr<Inst>>::iterator& it,
                    const BinaryInst* binaryInst)
