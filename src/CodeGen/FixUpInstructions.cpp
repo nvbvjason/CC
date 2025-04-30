@@ -76,7 +76,7 @@ void FixUpInstructions::visit(CmpInst& cmpInst) {
         auto second = std::make_unique<CmpInst>(regR10, cmpInst.rhs);
         insert(std::move(first), std::move(second));
     }
-    else if (cmpInst.lhs->kind == Operand::Kind::Imm) {
+    else if (cmpInst.rhs->kind == Operand::Kind::Imm) {
         auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11);
         auto first = std::make_unique<MoveInst>(cmpInst.rhs, regR11);
         auto second = std::make_unique<CmpInst>(cmpInst.lhs, regR11);

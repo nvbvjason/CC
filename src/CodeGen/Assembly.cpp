@@ -207,7 +207,7 @@ std::string asmBinaryOperator(BinaryInst::Operator oper)
         case BinaryInst::Operator::LeftShift:
             return "shll";
         case BinaryInst::Operator::RightShift:
-            return "shrl";
+            return "sarl";
         default:
             return "not set asmBinaryOperator";
     }
