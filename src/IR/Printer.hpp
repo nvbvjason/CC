@@ -1,42 +1,38 @@
 #pragma once
 
 #include "AbstractTree.hpp"
+
 #include <ostream>
+#include <sstream>
 #include <string>
 
 namespace Ir {
 
 class Printer {
-    std::ostream& out;
+    std::ostringstream m_oss;
     size_t indentLevel = 0;
-
-    void printIndent()
-    {
-        for (size_t i = 0; i < indentLevel; ++i)
-            out << "  ";
-    }
-
 public:
-    explicit Printer(std::ostream& os)
-        : out(os) {}
+    Printer() = default;
 
-    void print(const Program& program);
+    std::string print(const Program& program);
     void print(const Function& function);
     void print(const Instruction& instruction);
-    void print(const Value& value) const;
-    void print(const Identifier& identifier) const;
+    void print(const Value& value);
+    void print(const Identifier& identifier);
 
 private:
-    void visit(const ReturnInst& inst) const;
-    void visit(const UnaryInst& inst) const;
-    void visit(const BinaryInst& inst) const;
-    void visit(const CopyInst& inst) const;
-    void visit(const JumpInst& inst) const;
-    void visit(const JumpIfZeroInst& inst) const;
-    void visit(const JumpIfNotZeroInst& inst) const;
-    void visit(const LabelInst& inst) const;
-    void visit(const ValueVar& val) const;
-    void visit(const ValueConst& val) const;
+    void visit(const ReturnInst& inst);
+    void visit(const UnaryInst& inst);
+    void visit(const BinaryInst& inst);
+    void visit(const CopyInst& inst);
+    void visit(const JumpInst& inst);
+    void visit(const JumpIfZeroInst& inst);
+    void visit(const JumpIfNotZeroInst& inst);
+    void visit(const LabelInst& inst);
+    void visit(const ValueVar& val);
+    void visit(const ValueConst& val);
+
+    void printIndent();
 };
 
 std::string to_string(UnaryInst::Operation op);

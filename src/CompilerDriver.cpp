@@ -23,6 +23,7 @@ static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static std::string preProcess(const std::string &file);
 static i32 assemble(const std::string& asmFile);
+static i32 printParsingAst(Parsing::Program program);
 
 int CompilerDriver::run() const
 {
@@ -52,10 +53,8 @@ int CompilerDriver::run() const
         return 1;
     if (argument == "--parse")
         return 0;
-    if (argument == "--printAst") {
-        Parsing::ASTPrinter::print(program);
-        return 0;
-    }
+    if (argument == "--printAst")
+        return printParsingAst(program);
     Ir::Program irProgram = ir(program);
     if (argument == "--tacky")
         return 0;
@@ -72,6 +71,13 @@ int CompilerDriver::run() const
     std::ofstream ofs(outputFileName);
     ofs << output;
     ofs.close();
+    return 0;
+}
+
+i32 printParsingAst(Parsing::Program program)
+{
+    Parsing::ASTPrinter printer;
+    std::cout << printer.print(&program);
     return 0;
 }
 
@@ -101,8 +107,8 @@ Ir::Program ir(const Parsing::Program& parsingProgram)
 
 void printIr(const Ir::Program& irProgram)
 {
-    Ir::Printer printer(std::cout);
-    printer.print(irProgram);
+    Ir::Printer printer;
+    std::cout << printer.print(irProgram);
 }
 
 CodeGen::Program codegen(const Ir::Program& irProgram)

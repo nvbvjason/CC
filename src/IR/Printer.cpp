@@ -3,52 +3,32 @@
 
 namespace Ir {
 
-void Printer::print(const Program& program)
+std::string Printer::print(const Program& program)
 {
-    out << "Program:\n";
+    m_oss << "Program:\n";
     indentLevel++;
-    if (program.function) {
+    if (program.function)
         print(*program.function);
-    } else {
+    else {
         printIndent();
-        out << "<empty>\n";
+        m_oss << "<empty>\n";
     }
     indentLevel--;
+    return m_oss.str();
 }
 
 void Printer::print(const Function& function)
 {
     printIndent();
-    out << "Function " << function.identifier << ":\n";
+    m_oss << "Function " << function.identifier << ":\n";
     indentLevel++;
     for (const auto& inst : function.instructions)
         print(*inst);
     indentLevel--;
 }
 
-void Printer::print(const Instruction& instruction) {
-    printIndent();
-    switch (instruction.type) {
-        case Instruction::Type::Return:
-            visit(static_cast<const ReturnInst&>(instruction)); break;
-        case Instruction::Type::Unary:
-            visit(static_cast<const UnaryInst&>(instruction)); break;
-        case Instruction::Type::Binary:
-            visit(static_cast<const BinaryInst&>(instruction)); break;
-        case Instruction::Type::Copy:
-            visit(static_cast<const CopyInst&>(instruction)); break;
-        case Instruction::Type::Jump:
-            visit(static_cast<const JumpInst&>(instruction)); break;
-        case Instruction::Type::JumpIfZero:
-            visit(static_cast<const JumpIfZeroInst&>(instruction)); break;
-        case Instruction::Type::JumpIfNotZero:
-            visit(static_cast<const JumpIfNotZeroInst&>(instruction)); break;
-        case Instruction::Type::Label:
-            visit(static_cast<const LabelInst&>(instruction)); break;
-    }
-}
 
-void Printer::print(const Value& value) const
+void Printer::print(const Value& value)
 {
     switch (value.type) {
         case Value::Type::Variable:
@@ -58,91 +38,91 @@ void Printer::print(const Value& value) const
     }
 }
 
-void Printer::print(const Identifier& identifier) const
+void Printer::print(const Identifier& identifier)
 {
-    out << identifier.value;
+    m_oss << identifier.value;
 }
 
 // Instruction visitors
-void Printer::visit(const ReturnInst& inst) const
+void Printer::visit(const ReturnInst& inst)
 {
-    out << "Return ";
+    m_oss << "Return ";
     print(*inst.returnValue);
-    out << "\n";
+    m_oss << "\n";
 }
 
-void Printer::visit(const UnaryInst& inst) const
+void Printer::visit(const UnaryInst& inst)
 {
-    out << to_string(inst.operation) << " ";
+    m_oss << to_string(inst.operation) << " ";
     print(*inst.source);
-    out << " -> ";
+    m_oss << " -> ";
     print(*inst.destination);
-    out << "\n";
+    m_oss << "\n";
 }
 
-void Printer::visit(const BinaryInst& inst) const
+void Printer::visit(const BinaryInst& inst)
 {
-    out << to_string(inst.operation) << " ";
+    m_oss << to_string(inst.operation) << " ";
     print(*inst.source1);
-    out << ", ";
+    m_oss << ", ";
     print(*inst.source2);
-    out << " -> ";
+    m_oss << " -> ";
     print(*inst.destination);
-    out << "\n";
+    m_oss << "\n";
 }
 
-void Printer::visit(const CopyInst& inst) const
+void Printer::visit(const CopyInst& inst)
 {
-    out << "Copy ";
+    m_oss << "Copy ";
     print(*inst.source);
-    out << " -> ";
+    m_oss << " -> ";
     print(*inst.destination);
-    out << "\n";
+    m_oss << "\n";
 }
 
-void Printer::visit(const JumpInst& inst) const
+void Printer::visit(const JumpInst& inst)
 {
-    out << "Jump ";
+    m_oss << "Jump ";
     print(inst.target);
-    out << "\n";
+    m_oss << "\n";
 }
 
-void Printer::visit(const JumpIfZeroInst& inst) const
+void Printer::visit(const JumpIfZeroInst& inst)
 {
-    out << "JumpIfZero ";
+    m_oss << "JumpIfZero ";
     print(*inst.condition);
-    out << ", ";
+    m_oss << ", ";
     print(inst.target);
-    out << "\n";
+    m_oss << "\n";
 }
 
-void Printer::visit(const JumpIfNotZeroInst& inst) const
+void Printer::visit(const JumpIfNotZeroInst& inst)
 {
-    out << "JumpIfNotZero ";
+    m_oss << "JumpIfNotZero ";
     print(*inst.condition);
-    out << ", ";
+    m_oss << ", ";
     print(inst.target);
-    out << "\n";
+    m_oss << "\n";
 }
 
-void Printer::visit(const LabelInst& inst) const
+void Printer::visit(const LabelInst& inst)
 {
-    out << "Label ";
+    m_oss << "Label ";
     print(inst.target);
-    out << ":\n";
+    m_oss << ":\n";
 }
 
 // Value visitors
-void Printer::visit(const ValueVar& val) const
+void Printer::visit(const ValueVar& val)
 {
-    out << "Var(";
+    m_oss << "Var(";
     print(val.value);
-    out << ")";
+    m_oss << ")";
 }
 
-void Printer::visit(const ValueConst& val) const
+void Printer::visit(const ValueConst& val)
 {
-    out << "Const(" << val.value << ")";
+    m_oss << "Const(" << val.value << ")";
 }
 
 std::string to_string(UnaryInst::Operation op)
@@ -155,7 +135,7 @@ std::string to_string(UnaryInst::Operation op)
     return "UnknownUnaryOp";
 }
 
-    std::string to_string(BinaryInst::Operation op)
+std::string to_string(BinaryInst::Operation op)
 {
     switch (op) {
         case BinaryInst::Operation::Add:            return "Add";
@@ -178,6 +158,37 @@ std::string to_string(UnaryInst::Operation op)
         case BinaryInst::Operation::GreaterOrEqual: return "GreaterOrEqual";
     }
     return "UnknownBinaryOp";
+}
+
+void Printer::print(const Instruction& instruction) {
+    printIndent();
+    switch (instruction.type) {
+        case Instruction::Type::Return:
+            visit(static_cast<const ReturnInst&>(instruction)); break;
+        case Instruction::Type::Unary:
+            visit(static_cast<const UnaryInst&>(instruction)); break;
+        case Instruction::Type::Binary:
+            visit(static_cast<const BinaryInst&>(instruction)); break;
+        case Instruction::Type::Copy:
+            visit(static_cast<const CopyInst&>(instruction)); break;
+        case Instruction::Type::Jump:
+            visit(static_cast<const JumpInst&>(instruction)); break;
+        case Instruction::Type::JumpIfZero:
+            visit(static_cast<const JumpIfZeroInst&>(instruction)); break;
+        case Instruction::Type::JumpIfNotZero:
+            visit(static_cast<const JumpIfNotZeroInst&>(instruction)); break;
+        case Instruction::Type::Label:
+            visit(static_cast<const LabelInst&>(instruction)); break;
+        default:
+            m_oss << "Unknown Instruction\n";
+            break;
+    }
+}
+
+void Printer::printIndent()
+{
+    for (size_t i = 0; i < indentLevel * 2; ++i)
+        m_oss << ' ';
 }
 
 } // namespace Ir
