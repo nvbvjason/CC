@@ -13,6 +13,7 @@
 
 #include "CodeGen/Assembly.hpp"
 #include "IR/Printer.hpp"
+#include "Parsing/AstPrinter.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
@@ -53,8 +54,7 @@ int CompilerDriver::run() const
     if (argument == "--parse")
         return 0;
     if (argument == "--printAst") {
-        Parsing::Visualizer visualizer;
-        std::cout << visualizer.visualize(program) << '\n';
+        Parsing::ASTPrinter::print(program);
         return 0;
     }
     Ir::Program irProgram = ir(program);

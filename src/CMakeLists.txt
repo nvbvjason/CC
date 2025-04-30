@@ -10,8 +10,8 @@ set(PARSING_FILES
         Parsing/ConcreteTree.hpp
         Parsing/AbstractTree.cpp
         Parsing/AbstractTree.hpp
-        Parsing/AstVisualizer.cpp
-        Parsing/AstVisualizer.hpp)
+        Parsing/AstPrinter.cpp
+        Parsing/AstPrinter.hpp)
 
 set(CODEGEN_FILES
         CodeGen/Assembly.cpp
