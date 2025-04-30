@@ -5,14 +5,13 @@
 #include "IR/ConcreteTree.hpp"
 #include "CodeGen/AbstractTree.hpp"
 #include "CodeGen/ConcreteTree.hpp"
+#include "CodeGen/Assembly.hpp"
+#include "IR/Printer.hpp"
+#include "Parsing/AstPrinter.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-
-#include "CodeGen/Assembly.hpp"
-#include "IR/Printer.hpp"
-#include "Parsing/AstPrinter.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
@@ -22,7 +21,7 @@ static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static std::string preProcess(const std::string &file);
-static i32 assemble(const std::string& asmFile);
+static void assemble(const std::string& asmFile, const std::string& outputFile);
 static i32 printParsingAst(Parsing::Program program);
 
 int CompilerDriver::run() const
@@ -71,6 +70,7 @@ int CompilerDriver::run() const
     std::ofstream ofs(outputFileName);
     ofs << output;
     ofs.close();
+    assemble(outputFileName, inputFile.substr(0, inputFile.length() - 2));
     return 0;
 }
 
@@ -155,16 +155,8 @@ static std::string preProcess(const std::string &file)
     return getSourceCode(generatedFile.string());
 }
 
-i32 assemble(const std::string &asmFile)
+void assemble(const std::string& asmFile, const std::string& outputFile)
 {
-    const auto outputDir = std::filesystem::path(PROJECT_ROOT_DIR) / "AssemblyFiles";
-    std::filesystem::create_directories(outputDir);
-    const auto outputFile = outputDir / std::format("{}.s", std::filesystem::path(asmFile).stem().string());
-    std::ofstream ofs(outputFile);
-    if (!ofs) {
-        std::cerr << std::format("Error writing to {}\n", outputFile.string());
-        return -1;
-    }
-    ofs << asmFile;
-    return 0;
+    const std::string command = "gcc " + asmFile + " -o " + outputFile;
+    system(command.c_str());
 }

@@ -61,17 +61,14 @@ std::shared_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
     if (left == nullptr)
         return nullptr;
     Lexing::Token nextToken = peek();
-    i32 nextPrecedence = precedence(nextToken.m_type);
-    while (isBinaryOperator(nextToken.m_type) && minPrecedence <= nextPrecedence) {
-        BinaryExpr::Operator op;
-        if (!binaryOperatorParse(op))
-            return nullptr;
-        auto right = exprParse(nextPrecedence + 1);
+    while (isBinaryOperator(nextToken.m_type) && minPrecedence <= precedence(binaryOperator(nextToken.m_type))) {
+        BinaryExpr::Operator op = binaryOperator(nextToken.m_type);
+        advance();
+        auto right = exprParse(precedence(binaryOperator(nextToken.m_type)) + 1);
         if (right == nullptr)
             return nullptr;
         left = std::make_shared<BinaryExpr>(op, left, right);
         nextToken = peek();
-        nextPrecedence = precedence(nextToken.m_type);
     }
     return left;
 }
@@ -104,93 +101,73 @@ std::shared_ptr<Expr> Parse::factorParse()
 
 std::shared_ptr<Expr> Parse::unaryExprParse()
 {
-    UnaryExpr::Operator unaryOperator;
-    if (!unaryOperatorParse(unaryOperator))
+    if (!isUnaryOperator(peek().m_type))
         return nullptr;
-    std::shared_ptr<Expr> expr = exprParse(0);
+    UnaryExpr::Operator oper = unaryOperator(peek().m_type);
+    advance();
+    std::shared_ptr<Expr> expr = exprParse(precedence(oper));
     if (expr == nullptr)
         return nullptr;
-    return std::make_unique<UnaryExpr>(unaryOperator, std::move(expr));
+    return std::make_unique<UnaryExpr>(oper, std::move(expr));
 }
 
-bool Parse::unaryOperatorParse(UnaryExpr::Operator& unaryOperator)
+UnaryExpr::Operator Parse::unaryOperator(const TokenType type)
 {
-    switch (const auto type = advance(); type.m_type) {
+    switch (type) {
         case TokenType::Minus:
-            unaryOperator = UnaryExpr::Operator::Negate;
-            return true;
+            return UnaryExpr::Operator::Negate;
         case TokenType::Tilde:
-            unaryOperator = UnaryExpr::Operator::Complement;
-            return true;
+            return UnaryExpr::Operator::Complement;
         case TokenType::ExclamationMark:
-            unaryOperator = UnaryExpr::Operator::Not;
-            return true;
+            return UnaryExpr::Operator::Not;
         default:
-            return false;
+            throw std::runtime_error("Invalid unary operator");
     }
 }
 
-bool Parse::binaryOperatorParse(BinaryExpr::Operator& binaryOperator)
+BinaryExpr::Operator Parse::binaryOperator(const TokenType type)
 {
-    switch (const auto type = advance(); type.m_type) {
+    switch (type) {
          case TokenType::Plus:
-            binaryOperator = BinaryExpr::Operator::Add;
-            return true;
+            return BinaryExpr::Operator::Add;
         case TokenType::Minus:
-            binaryOperator = BinaryExpr::Operator::Subtract;
-            return true;
+            return BinaryExpr::Operator::Subtract;
         case TokenType::Asterisk:
-            binaryOperator = BinaryExpr::Operator::Multiply;
-            return true;
+            return BinaryExpr::Operator::Multiply;
         case TokenType::ForwardSlash:
-            binaryOperator = BinaryExpr::Operator::Divide;
-            return true;
+            return BinaryExpr::Operator::Divide;
         case TokenType::Percent:
-            binaryOperator = BinaryExpr::Operator::Remainder;
-            return true;
+            return BinaryExpr::Operator::Remainder;
 
         case TokenType::Ampersand:
-            binaryOperator = BinaryExpr::Operator::BitwiseAnd;
-            return true;
+            return BinaryExpr::Operator::BitwiseAnd;
         case TokenType::Pipe:
-            binaryOperator = BinaryExpr::Operator::BitwiseOr;
-            return true;
+            return BinaryExpr::Operator::BitwiseOr;
         case TokenType::Circumflex:
-            binaryOperator = BinaryExpr::Operator::BitwiseXor;
-            return true;
+            return BinaryExpr::Operator::BitwiseXor;
         case TokenType::LeftShift:
-            binaryOperator = BinaryExpr::Operator::LeftShift;
-            return true;
+            return BinaryExpr::Operator::LeftShift;
         case TokenType::RightShift:
-            binaryOperator = BinaryExpr::Operator::RightShift;
-            return true;
+            return BinaryExpr::Operator::RightShift;
 
         case TokenType::LogicalAnd:
-            binaryOperator = BinaryExpr::Operator::And;
-            return true;
+            return BinaryExpr::Operator::And;
         case TokenType::LogicalOr:
-            binaryOperator = BinaryExpr::Operator::Or;
-            return true;
+            return BinaryExpr::Operator::Or;
         case TokenType::LogicalEqual:
-            binaryOperator = BinaryExpr::Operator::Equal;
-            return true;
+            return BinaryExpr::Operator::Equal;
         case TokenType::LogicalNotEqual:
-            binaryOperator = BinaryExpr::Operator::NotEqual;
-            return true;
+            return BinaryExpr::Operator::NotEqual;
         case TokenType::Greater:
-            binaryOperator = BinaryExpr::Operator::GreaterThan;
-            return true;
+            return BinaryExpr::Operator::GreaterThan;
         case TokenType::Less:
-            binaryOperator = BinaryExpr::Operator::LessThan;
-            return true;
+            return BinaryExpr::Operator::LessThan;
         case TokenType::LessOrEqual:
-            binaryOperator = BinaryExpr::Operator::LessOrEqual;
-            return true;
+            return BinaryExpr::Operator::LessOrEqual;
         case TokenType::GreaterOrEqual:
-            binaryOperator = BinaryExpr::Operator::GreaterOrEqual;
-            return true;
+            return BinaryExpr::Operator::GreaterOrEqual;
         default:
-            return false;
+            throw std::runtime_error("Invalid binary operator");
     }
 }
 
@@ -203,53 +180,70 @@ bool Parse::match(const TokenType &type)
     }
     return false;
 }
+// https://en.cppreference.com/w/c/language/operator_precedence
+i32 Parse::getPrecedenceLevel(const UnaryExpr::Operator oper)
+{
+    using Operator = UnaryExpr::Operator;
+    switch (oper) {
+        case Operator::Complement:
+        case Operator::Negate:
+        case Operator::Not:
+            return 2;
+        default:
+            return 0;
+    }
+}
+
+i32 Parse::precedence(const UnaryExpr::Operator oper)
+{
+    constexpr i32 precedenceMult = 1024;
+    constexpr i32 precedenceLevels = 16;
+    return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
+}
 
 // https://en.cppreference.com/w/c/language/operator_precedence
-i32 Parse::getPrecedenceLevel(const TokenType type)
+i32 Parse::getPrecedenceLevel(const BinaryExpr::Operator oper)
 {
-    switch (type) {
-        case TokenType::Decrement:
-            return 1;
-        case TokenType::ExclamationMark:
-            return 2;
-        case TokenType::Asterisk:
-        case TokenType::ForwardSlash:
-        case TokenType::Percent:
+    using Operator = BinaryExpr::Operator;
+    switch (oper) {
+        case Operator::Multiply:
+        case Operator::Divide:
+        case Operator::Remainder:
             return 3;
-        case TokenType::Plus:
-        case TokenType::Minus:
+        case Operator::Add:
+        case Operator::Subtract:
             return 4;
-        case TokenType::LeftShift:
-        case TokenType::RightShift:
+        case Operator::LeftShift:
+        case Operator::RightShift:
             return 5;
-        case TokenType::Less:
-        case TokenType::LessOrEqual:
-        case TokenType::Greater:
-        case TokenType::GreaterOrEqual:
+        case Operator::LessThan:
+        case Operator::LessOrEqual:
+        case Operator::GreaterThan:
+        case Operator::GreaterOrEqual:
             return 6;
-        case TokenType::LogicalEqual:
-        case TokenType::LogicalNotEqual:
+        case Operator::Equal:
+        case Operator::NotEqual:
             return 7;
-        case TokenType::Ampersand:
+        case Operator::BitwiseAnd:
             return 8;
-        case TokenType::Circumflex:
+        case Operator::BitwiseXor:
             return 9;
-        case TokenType::Pipe:
+        case Operator::BitwiseOr:
             return 10;
-        case TokenType::LogicalAnd:
+        case Operator::And:
             return 11;
-        case TokenType::LogicalOr:
+        case Operator::Or:
             return 12;
         default:
             return 0;
     }
 }
 
-i32 Parse::precedence(const TokenType type)
+i32 Parse::precedence(const BinaryExpr::Operator oper)
 {
     constexpr i32 precedenceMult = 1024;
     constexpr i32 precedenceLevels = 16;
-    return (precedenceLevels - getPrecedenceLevel(type)) * precedenceMult;
+    return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
 }
 
 bool Parse::isBinaryOperator(const TokenType type)
@@ -274,6 +268,18 @@ bool Parse::isBinaryOperator(const TokenType type)
         case TokenType::Less:
         case TokenType::LessOrEqual:
         case TokenType::GreaterOrEqual:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool Parse::isUnaryOperator(const TokenType type)
+{
+    switch (type) {
+        case TokenType::Minus:
+        case TokenType::Tilde:
+        case TokenType::ExclamationMark:
             return true;
         default:
             return false;

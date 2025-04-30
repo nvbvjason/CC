@@ -37,13 +37,12 @@ public:
     [[nodiscard]] std::shared_ptr<Expr> exprParse(i32 minPrecedence);
     [[nodiscard]] std::shared_ptr<Expr> factorParse();
     [[nodiscard]] std::shared_ptr<Expr> unaryExprParse();
-    [[nodiscard]] bool unaryOperatorParse(UnaryExpr::Operator& unaryOperator);
-    [[nodiscard]] bool binaryOperatorParse(BinaryExpr::Operator& binaryOperator);
+    [[nodiscard]] static UnaryExpr::Operator unaryOperator(TokenType type);
+    [[nodiscard]] static BinaryExpr::Operator binaryOperator(TokenType type);
 private:
     bool match(const TokenType& type);
-    static i32 calculatePrecedence();
+    Lexing::Token advance() { return c_tokens[m_current++]; }
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
-    [[nodiscard]] Lexing::Token advance() { return c_tokens[m_current++]; }
     [[nodiscard]] bool expect(const Lexing::Token::Type type)
     {
         if (peek().m_type == type) {
@@ -54,9 +53,12 @@ private:
         return false;
     }
 
-    [[nodiscard]] static i32 getPrecedenceLevel(TokenType type);
-    [[nodiscard]] static i32 precedence(TokenType type);
+    [[nodiscard]] static i32 getPrecedenceLevel(BinaryExpr::Operator oper);
+    [[nodiscard]] static i32 precedence(BinaryExpr::Operator oper);
+    [[nodiscard]] static i32 getPrecedenceLevel(UnaryExpr::Operator oper);
+    [[nodiscard]] static i32 precedence(UnaryExpr::Operator oper);
     [[nodiscard]] static bool isBinaryOperator(TokenType type);
+    [[nodiscard]] static bool isUnaryOperator(TokenType type);
 };
 } // namespace Parsing
 
