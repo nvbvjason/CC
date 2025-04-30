@@ -84,11 +84,11 @@ protected:
 };
 
 struct MoveInst final : Inst {
-    std::shared_ptr<Operand> source;
-    std::shared_ptr<Operand> destination;
+    std::shared_ptr<Operand> src;
+    std::shared_ptr<Operand> dst;
 
     MoveInst(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst)
-        : Inst(Kind::Move), source(src), destination(dst) {}
+        : Inst(Kind::Move), src(src), dst(dst) {}
 
     void accept(InstVisitor& visitor) override;
 

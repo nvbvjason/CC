@@ -33,7 +33,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Move: {
             const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
-            const std::string operand = asmOperand(moveInst->source) + ", " + asmOperand(moveInst->destination);
+            const std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
             result += asmFormatInstruction("movl", operand);;
             return;
         }

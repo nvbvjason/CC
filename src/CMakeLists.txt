@@ -22,6 +22,8 @@ set(CODEGEN_FILES
         CodeGen/ConcreteTree.hpp
         CodeGen/PseudoRegisterReplacer.cpp
         CodeGen/PseudoRegisterReplacer.hpp
+        CodeGen/FixUpInstructions.cpp
+        CodeGen/FixUpInstructions.hpp
 )
 
 set(IR_FILES

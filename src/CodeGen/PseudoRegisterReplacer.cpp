@@ -15,8 +15,8 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
 
 void PseudoRegisterReplacer::visit(MoveInst& move)
 {
-    replaceIfPseudo(move.source);
-    replaceIfPseudo(move.destination);
+    replaceIfPseudo(move.src);
+    replaceIfPseudo(move.dst);
 }
 
 void PseudoRegisterReplacer::visit(UnaryInst& unary)
@@ -35,13 +35,13 @@ void PseudoRegisterReplacer::visit(IdivInst& idiv)
     replaceIfPseudo(idiv.operand);
 }
 
-void PseudoRegisterReplacer::visit(CmpInst& cmp) override
+void PseudoRegisterReplacer::visit(CmpInst& cmp)
 {
     replaceIfPseudo(cmp.lhs);
     replaceIfPseudo(cmp.rhs);
 }
 
-void PseudoRegisterReplacer::visit(SetCCInst& setCC) override
+void PseudoRegisterReplacer::visit(SetCCInst& setCC)
 {
     replaceIfPseudo(setCC.operand);
 }

@@ -5,6 +5,8 @@
 
 #include <stdexcept>
 
+#include "FixUpInstructions.hpp"
+
 namespace CodeGen {
 
 void program(const Ir::Program &program, Program &programCodegen)
@@ -314,158 +316,10 @@ i32 replacingPseudoRegisters(Program& programCodegen)
     return pseudoRegisterReplacer.stackPointer();
 }
 
-void fixUpMoveInst(std::vector<std::unique_ptr<Inst>>& instructions,
-                   std::vector<std::unique_ptr<Inst>>::iterator& it,
-                   const std::unique_ptr<Inst>& inst)
+void fixUpInstructions(Program& programCodegen, const i32 stackAlloc)
 {
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    const auto moveInst = static_cast<MoveInst*>(inst.get());
-    if (moveInst->source->kind == Operand::Kind::Stack &&
-        moveInst->destination->kind == Operand::Kind::Stack) {
-        auto src = moveInst->source;
-        auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
-        auto first = std::make_unique<MoveInst>(src, regR10);
-
-        auto dst = moveInst->destination;
-        auto second = std::make_unique<MoveInst>(regR10, dst);
-
-        *it = std::move(first);
-        constexpr i32 movePastFirst = 1;
-        it = instructions.insert(it + movePastFirst, std::move(second));
-    }
-}
-
-void fixUpCmpInst(std::vector<std::unique_ptr<Inst>>& instructions,
-                  std::vector<std::unique_ptr<Inst>>::iterator& it,
-                  const std::unique_ptr<Inst>& inst)
-{
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    const auto cmpInst = static_cast<CmpInst*>(inst.get());
-    if (cmpInst->lhs->kind == Operand::Kind::Stack &&
-        cmpInst->rhs->kind == Operand::Kind::Stack) {
-        auto lhs = cmpInst->lhs;
-        auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
-        auto first = std::make_unique<MoveInst>(lhs, regR10);
-
-        auto rhs = cmpInst->rhs;
-        auto second = std::make_unique<CmpInst>(regR10, rhs);
-
-        *it = std::move(first);
-        constexpr i32 movePastFirst = 1;
-        it = instructions.insert(it + movePastFirst, std::move(second));
-    }
-    else if (cmpInst->lhs->kind == Operand::Kind::Imm) {
-        auto rhs = cmpInst->rhs;
-        auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11);
-        auto first = std::make_unique<MoveInst>(rhs, regR11);
-
-        auto lhs = cmpInst->lhs;
-        auto second = std::make_unique<CmpInst>(lhs, regR11);
-
-        *it = std::move(first);
-        constexpr i32 movePastFirst = 1;
-        it = instructions.insert(it + movePastFirst, std::move(second));
-    }
-}
-
-void fixUpImulInst(std::vector<std::unique_ptr<Inst>>& instructions,
-                   std::vector<std::unique_ptr<Inst>>::iterator& it,
-                   const BinaryInst* binaryInst)
-{
-    auto dst = binaryInst->rhs;
-    auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11);
-    auto first = std::make_unique<MoveInst>(dst, regR11);
-
-    BinaryInst::Operator oper = binaryInst->oper;
-    auto src = binaryInst->lhs;
-    auto second = std::make_unique<BinaryInst>(oper, src, regR11);
-
-    auto third = std::make_unique<MoveInst>(regR11, dst);
-
-    *it = std::move(first);
-    constexpr i32 movePast = 1;
-    it = instructions.insert(it + movePast, std::move(second));
-    it = instructions.insert(it + movePast, std::move(third));
-}
-
-void fixUpBinaryInst(std::vector<std::unique_ptr<Inst>>& instructions,
-                    std::vector<std::unique_ptr<Inst>>::iterator& it,
-                    const std::unique_ptr<Inst>& inst)
-{
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    const auto binaryInst = static_cast<BinaryInst*>(inst.get());
-    if (binaryInst->oper == BinaryInst::Operator::Mul) {
-        fixUpImulInst(instructions, it, binaryInst);
-        return;
-    }
-    if (binaryInst->oper == BinaryInst::Operator::LeftShift ||
-             binaryInst->oper == BinaryInst::Operator::RightShift) {
-        fixUpShiftInst(instructions, it, binaryInst);
-        return;
-    }
-    auto src = binaryInst->lhs;
-    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
-    auto first = std::make_unique<MoveInst>(src, regR10);
-
-    BinaryInst::Operator oper = binaryInst->oper;
-    auto dst = binaryInst->rhs;
-    auto second = std::make_unique<BinaryInst>(oper, regR10, dst);
-
-    *it = std::move(first);
-    constexpr i32 movePastFirst = 1;
-    it = instructions.insert(it + movePastFirst, std::move(second));
-}
-
-void fixUpShiftInst(std::vector<std::unique_ptr<Inst>>& instructions,
-                    std::vector<std::unique_ptr<Inst>>::iterator& it,
-                    const BinaryInst* binaryInst)
-{
-    auto src = binaryInst->lhs;
-    auto regCX = std::make_shared<RegisterOperand>(RegisterOperand::Type::CX);
-    auto first = std::make_unique<MoveInst>(src, regCX);
-
-    BinaryInst::Operator oper = binaryInst->oper;
-    auto dst = binaryInst->rhs;
-    auto regCL = std::make_shared<RegisterOperand>(RegisterOperand::Type::CL);
-    auto second = std::make_unique<BinaryInst>(oper, regCL, dst);
-
-    *it = std::move(first);
-    constexpr i32 movePastFirst = 1;
-    it = instructions.insert(it + movePastFirst, std::move(second));
-}
-
-void fixUpIdivInst(std::vector<std::unique_ptr<Inst>>& instructions,
-                   std::vector<std::unique_ptr<Inst>>::iterator& it,
-                   const std::unique_ptr<Inst>& inst)
-{
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    const auto idivInst = static_cast<IdivInst*>(inst.get());
-    auto src = idivInst->operand;
-    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
-    auto first = std::make_unique<MoveInst>(src, regR10);
-
-    auto second = std::make_unique<IdivInst>(regR10);
-
-    *it = std::move(first);
-    constexpr i32 movePastFirst = 1;
-    it = instructions.insert(it + movePastFirst, std::move(second));
-}
-
-void fixUpInstructions(Program& programCodegen, i32 stackAlloc)
-{
-    std::vector<std::unique_ptr<Inst>>& instructions = programCodegen.function->instructions;
-    stackAlloc = -stackAlloc;
-    auto stackAllocationNode = std::make_unique<AllocStackInst>(stackAlloc);
-    instructions.insert(instructions.begin(), std::move(stackAllocationNode));
-    for (auto it = instructions.begin(); it != instructions.end(); ++it) {
-        const auto& inst = *it;
-        if (inst->kind == Inst::Kind::Move)
-            fixUpMoveInst(instructions, it, inst);
-        else if (inst->kind == Inst::Kind::Binary)
-            fixUpBinaryInst(instructions, it, inst);
-        else if (inst->kind == Inst::Kind::Idiv)
-            fixUpIdivInst(instructions, it, inst);
-    }
+    FixUpInstructions fixUpInstructions(programCodegen.function->instructions, stackAlloc);
+    fixUpInstructions.fixUp();
 }
 
 }// namespace CodeGen
