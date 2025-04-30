@@ -3,18 +3,23 @@
 #ifndef CC_PARSING_ABSTRACT_TREE_HPP
 #define CC_PARSING_ABSTRACT_TREE_HPP
 
+#include "ShortTypes.hpp"
+
 #include <memory>
 #include <string>
-
-#include "ShortTypes.hpp"
+#include <vector>
 
 /*
     program = Program(function_definition)
-    function_definition = Function(identifier names, statement body)
-    statement = Return(exp)
+    function_definition = Function(identifier names, block_item* body)
+    block_item = S(statement) | D(declaration)
+    declaration = Declaration(identifier name, exp? init)
+    statement = Return(exp) | Expression(exp) | Null
     exp = Constant(int)
+        | Var(identifier)
         | Unary(unary_operator, exp)
         | Binary(binary_operator, exp, exp)
+        | Assignment(exp, exp)
     unary_operator = Complement | Negate | Not
     binary_operator = Add | Subtract | Multiply | Divide | Remainder |
                       BitwiseAnd | BitwiseOr | BitwiseXor |
@@ -29,39 +34,108 @@ namespace Parsing {
 
 struct Program;
 struct Function;
+struct BlockItem;
+struct Declaration;
 struct Statement;
 struct Expr;
 
 struct Program {
-    std::shared_ptr<Function> function = nullptr;
+    std::unique_ptr<Function> function = nullptr;
 };
 
 struct Function {
     std::string name;
-    std::shared_ptr<Statement> body = nullptr;
+    std::vector<std::unique_ptr<Statement>> body;
+};
+
+struct BlockItem {
+    enum class Kind {
+        Declaration, Statement
+    };
+    Kind kind;
+
+    BlockItem() = delete;
+    virtual ~BlockItem() = default;
+protected:
+    explicit BlockItem(const Kind kind)
+        : kind(kind) {}
+};
+
+struct StatementBlockItem final : BlockItem {
+    std::unique_ptr<Statement> statement;
+    explicit StatementBlockItem(std::unique_ptr<Statement>& stmt)
+        : BlockItem(Kind::Statement), statement(std::move(stmt)) {}
+
+    StatementBlockItem() = delete;
+};
+
+struct DeclarationBlockItem final : BlockItem {
+    std::unique_ptr<Declaration> declaration;
+    explicit DeclarationBlockItem(std::unique_ptr<Declaration>& decl)
+        : BlockItem(Kind::Declaration), declaration(std::move(decl)) {}
+
+    DeclarationBlockItem() = delete;
+};
+
+struct Declaration {
+    std::string name;
+    std::unique_ptr<Expr> init = nullptr;
+    explicit Declaration(std::string name)
+        : name(std::move(name)) {}
+    Declaration(std::string name, std::unique_ptr<Expr>& init)
+        : name(std::move(name)), init(std::move(init)) {}
+
+    Declaration() = delete;
 };
 
 struct Statement {
-    std::shared_ptr<Expr> expression = nullptr;
+    enum class Kind {
+        Return, Expression, Null
+    };
+    Kind kind;
+    std::unique_ptr<Expr> expression;
+
+    Statement() = delete;
+    virtual ~Statement() = default;
+protected:
+    explicit Statement(const Kind kind)
+        : kind(kind) {}
+};
+
+struct ReturnStatement final : Statement {
+    std::unique_ptr<Expr> expression;
+    explicit ReturnStatement(std::unique_ptr<Expr>& expr)
+        : Statement(Kind::Return), expression(std::move(expr)) {}
+
+    ReturnStatement() = delete;
+};
+
+struct ExpressionStatement final : Statement {
+    std::unique_ptr<Expr> expression;
+    explicit ExpressionStatement(std::unique_ptr<Expr>& expr)
+        : Statement(Kind::Expression), expression(std::move(expr)) {}
+
+    ExpressionStatement() = delete;
+};
+
+
+struct NullStatement final : Statement {
+    NullStatement()
+        : Statement(Kind::Null) {}
 };
 
 struct Expr {
     enum class Kind {
-        Constant, Unary, Binary
+        Constant, Var, Unary, Binary, Assignment
     };
     Kind kind;
 
     Expr() = delete;
     virtual ~Expr() = default;
 
+protected:
     explicit Expr(const Kind kind)
         : kind(kind) {}
-
-    template<typename T>
-    [[nodiscard]] bool is() const { return typeid(*this) == typeid(T); }
-
-    template<typename T>
-    T* as() { return is<T>() ? static_cast<T*>(this) : nullptr; }
 };
 
 struct ConstantExpr final : Expr {
@@ -70,6 +144,14 @@ struct ConstantExpr final : Expr {
         : Expr(Kind::Constant), value(value) {}
 
     ConstantExpr() = delete;
+};
+
+struct VarExpr final : Expr {
+    std::string name;
+    explicit VarExpr(std::string name) noexcept
+        : Expr(Kind::Var), name(std::move(name)) {}
+
+    VarExpr() = delete;
 };
 
 struct UnaryExpr final : Expr {
@@ -103,6 +185,16 @@ struct BinaryExpr final : Expr {
 
     BinaryExpr() = delete;
 };
+
+struct AssignmentExpr final : Expr {
+    std::unique_ptr<Expr> lhs;
+    std::unique_ptr<Expr> rhs;
+    AssignmentExpr(std::unique_ptr<Expr>& lhs, std::unique_ptr<Expr>& rhs)
+        : Expr(Kind::Assignment), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+
+    AssignmentExpr() = delete;
+};
+
 } // Parsing
 
 #endif // CC_PARSING_ABSTRACT_TREE_HPP
