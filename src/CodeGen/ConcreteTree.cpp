@@ -116,11 +116,11 @@ void generateLabelInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::Labe
 
 void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary)
 {
-    UnaryInst::Operator oper = unaryOperator(irUnary->operation);
-    if (oper == UnaryInst::Operator::Not) {
+    if (irUnary->operation == Ir::UnaryInst::Operation::Not) {
         generateUnaryNotInst(insts, irUnary);
         return;
     }
+    UnaryInst::Operator oper = unaryOperator(irUnary->operation);
     std::shared_ptr<Operand> src = operand(irUnary->source);
     std::shared_ptr<Operand> dst = operand(irUnary->destination);
     insts.push_back(std::make_unique<MoveInst>(src, dst));

@@ -58,6 +58,6 @@ private:
     [[nodiscard]] static i32 precedence(TokenType type);
     [[nodiscard]] static bool isBinaryOperator(TokenType type);
 };
-} // Parsing
+} // namespace Parsing
 
 #endif // CC_PARSING_CONCRETE_TREE_HPP

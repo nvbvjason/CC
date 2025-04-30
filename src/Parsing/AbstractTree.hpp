@@ -47,10 +47,9 @@ struct Statement {
 
 struct Expr {
     enum class Kind {
-        Constant, Unary, Binary,
-        Invalid
+        Constant, Unary, Binary
     };
-    Kind kind = Kind::Invalid;
+    Kind kind;
 
     Expr() = delete;
     virtual ~Expr() = default;
@@ -75,8 +74,7 @@ struct ConstantExpr final : Expr {
 
 struct UnaryExpr final : Expr {
     enum class Operator {
-        Complement, Negate, Not,
-        Invalid
+        Complement, Negate, Not
     };
     Operator op;
     std::shared_ptr<Expr> operand;
@@ -94,9 +92,8 @@ struct BinaryExpr final : Expr {
         LeftShift, RightShift,
         And, Or,
         Equal, NotEqual,
-        Less, LessThan, LessOrEqual,
-        Greater, GreaterThan, GreaterOrEqual,
-        Invalid
+        LessThan, LessOrEqual,
+        GreaterThan, GreaterOrEqual
     };
     Operator op;
     std::shared_ptr<Expr> lhs;

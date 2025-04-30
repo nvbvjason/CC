@@ -63,9 +63,57 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             result += asmFormatInstruction("ret");
             return;
         }
+        case Inst::Kind::Cmp: {
+            const auto cmpInst = dynamic_cast<CmpInst*>(instruction.get());
+            const std::string operands = asmOperand(cmpInst->lhs) + ", " + asmOperand(cmpInst->rhs);
+            result += asmFormatInstruction("cmpl", operands);
+            return;
+        }
+        case Inst::Kind::Jmp: {
+            const auto jmpInst = dynamic_cast<JmpInst*>(instruction.get());
+            result += asmFormatInstruction("jmp", createLabel(jmpInst->target.value));
+            return;
+        }
+        case Inst::Kind::JmpCC: {
+            const auto jmpCCInst = dynamic_cast<JmpCCInst*>(instruction.get());
+            result += asmFormatInstruction("j" + condCode(jmpCCInst->condition), createLabel(jmpCCInst->target.value));
+            return;
+        }
+        case Inst::Kind::SetCC: {
+            const auto setCCInst = dynamic_cast<SetCCInst*>(instruction.get());
+            result += asmFormatInstruction("set" + condCode(setCCInst->condition), asmByteOperand(setCCInst->operand));
+            return;
+        }
+        case Inst::Kind::Label: {
+            const auto labelInst = dynamic_cast<LabelInst*>(instruction.get());
+            result += asmFormatLabel(createLabel(labelInst->target.value));
+            return;
+        }
         default:
             result += asmFormatInstruction("not set asmInstruction");
             return;
+    }
+}
+
+std::string asmByteOperand(const std::shared_ptr<Operand>& operand)
+{
+    switch (operand->kind) {
+        case Operand::Kind::Register: {
+            const auto registerOperand = dynamic_cast<RegisterOperand*>(operand.get());
+            return asmByteRegister(registerOperand);
+        }
+        case Operand::Kind::Pseudo:
+            return "invalid pseudo";
+        case Operand::Kind::Imm: {
+            const auto immOperand = dynamic_cast<ImmOperand*>(operand.get());
+            return "$" + std::to_string(immOperand->value);
+        }
+        case Operand::Kind::Stack: {
+            const auto stackOperand = dynamic_cast<StackOperand*>(operand.get());
+            return std::to_string(stackOperand->value) + "(%rbp)";
+        }
+        default:
+            return "not set asmOperand";
     }
 }
 
@@ -111,6 +159,22 @@ std::string asmRegister(const RegisterOperand* reg)
     }
 }
 
+std::string asmByteRegister(const RegisterOperand* reg)
+{
+    switch (reg->type) {
+        case RegisterOperand::Type::R10:
+            return "%r10b";
+        case RegisterOperand::Type::AX:
+            return "%al";
+        case RegisterOperand::Type::R11:
+            return "%r11b";
+        case RegisterOperand::Type::DX:
+            return "%dl";
+        default:
+            return "not set asmByteRegister";
+    }
+}
+
 std::string asmUnaryOperator(const UnaryInst::Operator oper)
 {
     switch (oper) {
@@ -152,6 +216,31 @@ std::string asmBinaryOperator(BinaryInst::Operator oper)
 std::string asmFormatLabel(const std::string& name)
 {
     return name + ":\n";
+}
+
+std::string createLabel(const std::string& name)
+{
+    return ".L" + name;
+}
+
+std::string condCode(const BinaryInst::CondCode condCode)
+{
+    switch (condCode) {
+        case BinaryInst::CondCode::E:
+            return "e";
+        case BinaryInst::CondCode::NE:
+            return "ne";
+        case BinaryInst::CondCode::L:
+            return "l";
+        case BinaryInst::CondCode::LE:
+            return "le";
+        case BinaryInst::CondCode::G:
+            return "g";
+        case BinaryInst::CondCode::GE:
+            return "ge";
+        default:
+            return "not set condCode";
+    }
 }
 
 std::string asmFormatInstruction(const std::string& mnemonic,

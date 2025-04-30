@@ -10,42 +10,40 @@ void FixUpInstructions::fixUp() {
     while (!m_insts.empty()) {
         auto inst = std::move(m_insts.front());
         m_insts.erase(m_insts.begin());
-        if (inst->kind == Inst::Kind::Move) {
+        if (inst->kind == Inst::Kind::Move)
             visit(*static_cast<MoveInst*>(inst.get()));
-        } else if (inst->kind == Inst::Kind::Binary) {
+        else if (inst->kind == Inst::Kind::Binary)
             visit(*static_cast<BinaryInst*>(inst.get()));
-        } else if (inst->kind == Inst::Kind::Cmp) {
+        else if (inst->kind == Inst::Kind::Cmp)
             visit(*static_cast<CmpInst*>(inst.get()));
-        } else if (inst->kind == Inst::Kind::Idiv) {
+        else if (inst->kind == Inst::Kind::Idiv)
             visit(*static_cast<IdivInst*>(inst.get()));
-        } else {
+        else
             m_copy.push_back(std::move(inst));
-        }
     }
     m_insts.swap(m_copy);
 }
 
+
+
 void FixUpInstructions::visit(MoveInst& moveInst) {
-    if (moveInst.src->kind == Operand::Kind::Stack &&
-        moveInst.dst->kind == Operand::Kind::Stack) {
+    if (areBothOnTheStack(moveInst)) {
         auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
         auto first = std::make_unique<MoveInst>(moveInst.src, regR10);
         auto second = std::make_unique<MoveInst>(regR10, moveInst.dst);
         insert(std::move(first), std::move(second));
-    } else {
-        insert(std::make_unique<MoveInst>(moveInst));
     }
+    else
+        insert(std::make_unique<MoveInst>(moveInst));
 }
 
 void FixUpInstructions::visit(BinaryInst& binaryInst) {
-    if (binaryInst.oper == BinaryInst::Operator::LeftShift ||
-        binaryInst.oper == BinaryInst::Operator::RightShift) {
+    if (isBinaryShift(binaryInst))
         binaryShift(binaryInst);
-    } else if (binaryInst.oper == BinaryInst::Operator::Mul) {
+    else if (binaryInst.oper == BinaryInst::Operator::Mul)
         binaryMul(binaryInst);
-    } else {
+    else
         binaryOthers(binaryInst);
-    }
 }
 
 void FixUpInstructions::binaryShift(BinaryInst& binaryInst) {
@@ -72,20 +70,20 @@ void FixUpInstructions::binaryOthers(BinaryInst& binaryInst) {
 }
 
 void FixUpInstructions::visit(CmpInst& cmpInst) {
-    if (cmpInst.rhs->kind == Operand::Kind::Stack &&
-        cmpInst.lhs->kind != Operand::Kind::Stack) {
+    if (areBothOnTheStack(cmpInst)) {
         auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
         auto first = std::make_unique<MoveInst>(cmpInst.lhs, regR10);
         auto second = std::make_unique<CmpInst>(regR10, cmpInst.rhs);
         insert(std::move(first), std::move(second));
-    } else if (cmpInst.lhs->kind == Operand::Kind::Imm) {
+    }
+    else if (cmpInst.lhs->kind == Operand::Kind::Imm) {
         auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11);
         auto first = std::make_unique<MoveInst>(cmpInst.rhs, regR11);
         auto second = std::make_unique<CmpInst>(cmpInst.lhs, regR11);
         insert(std::move(first), std::move(second));
-    } else {
-        insert(std::make_unique<CmpInst>(cmpInst));
     }
+    else
+        insert(std::make_unique<CmpInst>(cmpInst));
 }
 
 void FixUpInstructions::visit(IdivInst& idivInst) {
@@ -94,4 +92,5 @@ void FixUpInstructions::visit(IdivInst& idivInst) {
     auto second = std::make_unique<IdivInst>(regR10);
     insert(std::move(first), std::move(second));
 }
+
 } // namespace CodeGen

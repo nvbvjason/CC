@@ -34,7 +34,6 @@ public:
     void visit(ReturnInst&) override {}
 
     void fixUp();
-
 private:
     template<typename... InstPtrs>
     void insert(InstPtrs&&... others) {
@@ -44,7 +43,29 @@ private:
     void binaryShift(BinaryInst& binaryInst);
     void binaryMul(BinaryInst& binaryInst);
     void binaryOthers(BinaryInst& binaryInst);
+
+    static inline bool isBinaryShift(const BinaryInst& binaryInst);
+    static inline bool areBothOnTheStack(MoveInst& moveInst);
+    static inline bool areBothOnTheStack(CmpInst& cmpInst);
 };
+
+inline bool FixUpInstructions::isBinaryShift(const BinaryInst& binaryInst)
+{
+    return binaryInst.oper == BinaryInst::Operator::LeftShift ||
+           binaryInst.oper == BinaryInst::Operator::RightShift;
+}
+
+inline bool FixUpInstructions::areBothOnTheStack(MoveInst& moveInst)
+{
+    return moveInst.src->kind == Operand::Kind::Stack &&
+           moveInst.dst->kind == Operand::Kind::Stack;
+}
+
+inline bool FixUpInstructions::areBothOnTheStack(CmpInst& cmpInst)
+{
+    return cmpInst.lhs->kind == Operand::Kind::Stack &&
+           cmpInst.rhs->kind == Operand::Kind::Stack;
+}
 
 } // namespace CodeGen
 

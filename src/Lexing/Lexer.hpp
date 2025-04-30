@@ -41,8 +41,6 @@ private:
     void addToken(Token::Type type);
 };
 
-
-
 }
 
 #endif // CC_LEXING_LEXER_HPP

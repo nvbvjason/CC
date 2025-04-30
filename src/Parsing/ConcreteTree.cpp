@@ -12,7 +12,7 @@ bool Parse::programParse(Program& program)
     program.function = std::make_unique<Function>(std::move(function));
     if (program.function->name != "main")
         return false;
-    if (c_tokens[m_current].m_type != TokenType::EndOfFile)
+    if (peek().m_type != TokenType::EndOfFile)
         return false;
     return true;
 }
@@ -60,9 +60,9 @@ std::shared_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
     auto left = factorParse();
     if (left == nullptr)
         return nullptr;
-    Lexing::Token token = peek();
-    const i32 nextPrecedence = getPrecedenceLevel(token.m_type);
-    while (isBinaryOperator(token.m_type) && minPrecedence <= nextPrecedence) {
+    Lexing::Token nextToken = peek();
+    i32 nextPrecedence = precedence(nextToken.m_type);
+    while (isBinaryOperator(nextToken.m_type) && minPrecedence <= nextPrecedence) {
         BinaryExpr::Operator op;
         if (!binaryOperatorParse(op))
             return nullptr;
@@ -70,7 +70,8 @@ std::shared_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
         if (right == nullptr)
             return nullptr;
         left = std::make_shared<BinaryExpr>(op, left, right);
-        token = peek();
+        nextToken = peek();
+        nextPrecedence = precedence(nextToken.m_type);
     }
     return left;
 }
@@ -127,7 +128,6 @@ bool Parse::unaryOperatorParse(UnaryExpr::Operator& unaryOperator)
         default:
             return false;
     }
-
 }
 
 bool Parse::binaryOperatorParse(BinaryExpr::Operator& binaryOperator)
@@ -178,16 +178,16 @@ bool Parse::binaryOperatorParse(BinaryExpr::Operator& binaryOperator)
             binaryOperator = BinaryExpr::Operator::NotEqual;
             return true;
         case TokenType::Greater:
-            binaryOperator = BinaryExpr::Operator::Greater;
+            binaryOperator = BinaryExpr::Operator::GreaterThan;
             return true;
         case TokenType::Less:
-            binaryOperator = BinaryExpr::Operator::Less;
-            return true;
-        case TokenType::LessEqual:
             binaryOperator = BinaryExpr::Operator::LessThan;
             return true;
-        case TokenType::GreaterEqual:
-            binaryOperator = BinaryExpr::Operator::GreaterThan;
+        case TokenType::LessOrEqual:
+            binaryOperator = BinaryExpr::Operator::LessOrEqual;
+            return true;
+        case TokenType::GreaterOrEqual:
+            binaryOperator = BinaryExpr::Operator::GreaterOrEqual;
             return true;
         default:
             return false;
@@ -196,7 +196,7 @@ bool Parse::binaryOperatorParse(BinaryExpr::Operator& binaryOperator)
 
 bool Parse::match(const TokenType &type)
 {
-    if (type == c_tokens[m_current].m_type) {
+    if (type == peek().m_type) {
         if (advance().m_type == TokenType::EndOfFile)
             return false;
         return true;
@@ -223,9 +223,9 @@ i32 Parse::getPrecedenceLevel(const TokenType type)
         case TokenType::RightShift:
             return 5;
         case TokenType::Less:
-        case TokenType::LessEqual:
+        case TokenType::LessOrEqual:
         case TokenType::Greater:
-        case TokenType::GreaterEqual:
+        case TokenType::GreaterOrEqual:
             return 6;
         case TokenType::LogicalEqual:
         case TokenType::LogicalNotEqual:
@@ -272,8 +272,8 @@ bool Parse::isBinaryOperator(const TokenType type)
         case TokenType::LogicalNotEqual:
         case TokenType::Greater:
         case TokenType::Less:
-        case TokenType::LessEqual:
-        case TokenType::GreaterEqual:
+        case TokenType::LessOrEqual:
+        case TokenType::GreaterOrEqual:
             return true;
         default:
             return false;

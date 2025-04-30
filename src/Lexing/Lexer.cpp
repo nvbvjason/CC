@@ -87,7 +87,7 @@ void Lexer::scanToken()
                 break;
             }
             if (match('=')) {
-                addToken(Token::Type::GreaterEqual);
+                addToken(Token::Type::GreaterOrEqual);
                 break;
             }
             addToken(Token::Type::Greater);
@@ -98,7 +98,7 @@ void Lexer::scanToken()
                 break;
             }
             if (match('=')) {
-                addToken(Token::Type::LessEqual);
+                addToken(Token::Type::LessOrEqual);
                 break;
             }
             addToken(Token::Type::Less);

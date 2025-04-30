@@ -24,6 +24,21 @@ std::shared_ptr<Function> function(const Parsing::Function* parsingFunction)
     return functionTacky;
 }
 
+std::shared_ptr<Value> inst(const Parsing::Expr *parsingExpr,
+                            std::vector<std::shared_ptr<Instruction>> &instructions)
+{
+    switch (parsingExpr->kind) {
+        case Parsing::Expr::Kind::Constant:
+            return returnInst(parsingExpr);
+        case Parsing::Expr::Kind::Unary:
+            return unaryInst(parsingExpr, instructions);
+        case Parsing::Expr::Kind::Binary:
+            return binaryInst(parsingExpr, instructions);
+        default:
+            throw std::invalid_argument("Unexpected expression type");
+    }
+}
+
 std::shared_ptr<ValueVar> unaryInst(const Parsing::Expr *parsingExpr,
                                            std::vector<std::shared_ptr<Instruction>>& instructions)
 {
@@ -37,19 +52,21 @@ std::shared_ptr<ValueVar> unaryInst(const Parsing::Expr *parsingExpr,
 }
 
 std::shared_ptr<Value> binaryInst(const Parsing::Expr *parsingExpr,
-                                         std::vector<std::shared_ptr<Instruction>>& instructions)
+                                  std::vector<std::shared_ptr<Instruction>>& instructions)
 {
     const auto binaryParsing = dynamic_cast<const Parsing::BinaryExpr*>(parsingExpr);
     BinaryInst::Operation operation = convertBinaryOperation(binaryParsing->op);
-    if (operation == BinaryInst::Operation::Add)
+    if (operation == BinaryInst::Operation::And)
         return binaryAndInst(binaryParsing, instructions);
     if (operation == BinaryInst::Operation::Or)
         return binaryOrInst(binaryParsing, instructions);
     const Parsing::Expr *lhs = binaryParsing->lhs.get();
-    auto source1 = inst(lhs, instructions);
     const Parsing::Expr *rhs = binaryParsing->rhs.get();
+    auto source1 = inst(lhs, instructions);
     auto source2 = inst(rhs, instructions);
+
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
+
     instructions.push_back(std::make_shared<BinaryInst>(operation, source1, source2, destination));
     return destination;
 }
@@ -101,21 +118,6 @@ std::shared_ptr<ValueConst> returnInst(const Parsing::Expr *parsingExpr)
     return result;
 }
 
-std::shared_ptr<Value> inst(const Parsing::Expr *parsingExpr,
-                                   std::vector<std::shared_ptr<Instruction>> &instructions)
-{
-    switch (parsingExpr->kind) {
-        case Parsing::Expr::Kind::Constant:
-            return returnInst(parsingExpr);
-        case Parsing::Expr::Kind::Unary:
-            return unaryInst(parsingExpr, instructions);
-        case Parsing::Expr::Kind::Binary:
-            return binaryInst(parsingExpr, instructions);
-        default:
-            throw std::invalid_argument("Unexpected expression type");
-    }
-}
-
 Identifier makeTemporaryName()
 {
     static i32 id = 0;
@@ -161,7 +163,7 @@ BinaryInst::Operation convertBinaryOperation(const Parsing::BinaryExpr::Operator
         case Parse::Or:             return Ir::Or;
         case Parse::Equal:          return Ir::Equal;
         case Parse::NotEqual:       return Ir::NotEqual;
-        case Parse::Greater:        return Ir::GreaterThan;
+        case Parse::GreaterThan:    return Ir::GreaterThan;
         case Parse::GreaterOrEqual: return Ir::GreaterOrEqual;
         case Parse::LessThan:       return Ir::LessThan;
         case Parse::LessOrEqual:    return Ir::LessOrEqual;

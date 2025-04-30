@@ -131,7 +131,7 @@ TEST(LexerTests, Less)
 
 TEST(LexerTests, LessEqual)
 {
-    TestSingleTokenLexing("<=", TokenType::LessEqual);
+    TestSingleTokenLexing("<=", TokenType::LessOrEqual);
 }
 
 TEST(LexerTests, Greater)
@@ -141,7 +141,7 @@ TEST(LexerTests, Greater)
 
 TEST(LexerTests, GreaterEqual)
 {
-    TestSingleTokenLexing(">=", TokenType::GreaterEqual);
+    TestSingleTokenLexing(">=", TokenType::GreaterOrEqual);
 }
 
 TEST(LexerTests, ExclamationMark)

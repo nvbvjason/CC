@@ -47,9 +47,9 @@ struct Token {
         LogicalNotEqual,                 // !=
         LogicalEqual,                    // ==
         Less,                            // <
-        LessEqual,                       // <=
+        LessOrEqual,                       // <=
         Greater,                         // >
-        GreaterEqual,                    // >=
+        GreaterOrEqual,                    // >=
 
         // Keywords
         Return,                          // 'return'
