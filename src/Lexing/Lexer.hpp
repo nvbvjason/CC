@@ -39,7 +39,6 @@ private:
     void identifier();
     void scanToken();
     void addToken(Token::Type type);
-    void addToken(Token::Type type, i32 value);
 };
 
 

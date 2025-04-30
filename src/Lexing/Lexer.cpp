@@ -115,11 +115,8 @@ void Lexer::scanToken()
                 while (peek() != '\n' && !isAtEnd())
                     advance();
             else if (match('*')) {
-                while (c_source.substr(m_current, 2) != "*/" && !isAtEnd()) {
-                    if (peek() == '\n')
-                        ++m_line;
+                while (c_source.substr(m_current, 2) != "*/" && !isAtEnd())
                     advance();
-                }
                 advance();
                 advance();
             }
@@ -129,11 +126,7 @@ void Lexer::scanToken()
         case ' ':
         case '\t':
         case '\r':
-            ++m_column;
-            break;
         case '\n':
-            m_column = 1;
-            ++m_line;
             break;
         default:
             if (isdigit(ch))
@@ -152,7 +145,7 @@ bool Lexer::match(const char expected)
         return false;
     if (c_source[m_current] != expected)
         return false;
-    ++m_current;
+    advance();
     return true;
 }
 
@@ -172,24 +165,31 @@ char Lexer::peekNext() const
 
 char Lexer::advance()
 {
+    ++m_column;
+    if (c_source[m_current] == '\n') {
+        ++m_line;
+        m_column = 1;
+    }
     return c_source[m_current++];
 }
 
 void Lexer::integer()
 {
-    while (isalnum(peek()))
+    while (isdigit(peek()))
         advance();
-    if (const std::string str = c_source.substr(m_start, m_current - m_start); !std::ranges::all_of(str,isdigit))
+    const char next = peek();
+    if (!isalpha(next) || next == '_')
+        addToken(Token::Type::Integer);
+    else
         addToken(Token::Type::Invalid);
-    const i32 value = std::stoi(c_source.substr(m_start, m_current - m_start));
-    addToken(Token::Type::Integer, value);
 }
 
 void Lexer::identifier()
 {
-    while (isalpha(peek()))
+    while (isalnum(peek()))
         advance();
-    const std::string text = c_source.substr(m_start, m_current - m_start);
+    const i32 ahead = m_current - m_start;
+    const std::string text = c_source.substr(m_start, ahead);
     const auto iden = keywords.find(text);
     if (iden == keywords.end()) {
         addToken(Token::Type::Identifier);
@@ -198,18 +198,11 @@ void Lexer::identifier()
     addToken(iden->second);
 }
 
-void Lexer::addToken(Token::Type type, i32 value)
-{
-    std::string text = c_source.substr(m_start, m_current - m_start);
-    m_tokens.emplace_back(m_line, m_column, type, text, value);
-    m_column += m_current - m_start;
-}
-
 void Lexer::addToken(const Token::Type type)
 {
-    std::string text = c_source.substr(m_start, m_current - m_start);
-    m_tokens.emplace_back(m_line, m_column, type, text);
-    m_column += m_current - m_start;
+    i32 ahead = m_current - m_start;
+    std::string text = c_source.substr(m_start, ahead);
+    m_tokens.emplace_back(m_line, m_column - ahead, type, text);
 }
 
 }
