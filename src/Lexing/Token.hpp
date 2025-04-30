@@ -47,9 +47,9 @@ struct Token {
         LogicalNotEqual,                 // !=
         LogicalEqual,                    // ==
         Less,                            // <
-        LessOrEqual,                       // <=
+        LessOrEqual,                     // <=
         Greater,                         // >
-        GreaterOrEqual,                    // >=
+        GreaterOrEqual,                  // >=
 
         // Keywords
         Return,                          // 'return'
@@ -59,6 +59,9 @@ struct Token {
         // Identifiers & Literals
         Identifier,                      // User-defined names
         Integer,                         // Numeric literals
+
+        // Assignment
+        Equal,                           // =
 
         // Special Tokens
         EndOfFile,                       // EOF marker

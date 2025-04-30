@@ -62,7 +62,7 @@ void Lexer::scanToken()
                 addToken(Token::Type::LogicalEqual);
                 break;
             }
-            addToken(Token::Type::Invalid);
+            addToken(Token::Type::Equal);
             break;
         case '+':
             addToken(Token::Type::Plus);
@@ -186,7 +186,7 @@ void Lexer::integer()
 
 void Lexer::identifier()
 {
-    while (isalnum(peek()))
+    while (isalnum(peek()) || peek() == '_')
         advance();
     const i32 ahead = m_current - m_start;
     const std::string text = c_source.substr(m_start, ahead);

@@ -192,6 +192,22 @@ TEST(Chapter4, parsingInvalid)
     }
 }
 
+TEST(Chapter5, lexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_5/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+    const fs::path validPathExtra = testsFolderPath / "chapter_5/valid/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(validPathExtra)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+}
+
 void cleanUp()
 {
     for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))
