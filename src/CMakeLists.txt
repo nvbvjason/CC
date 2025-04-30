@@ -30,7 +30,9 @@ set(IR_FILES
         IR/AbstractTree.cpp
         IR/AbstractTree.hpp
         IR/ConcreteTree.cpp
-        IR/ConcreteTree.hpp)
+        IR/ConcreteTree.hpp
+        IR/Printer.cpp
+        IR/Printer.hpp)
 
 add_library(CC_lib STATIC
         main.cpp

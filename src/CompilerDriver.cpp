@@ -12,10 +12,12 @@
 #include <filesystem>
 
 #include "CodeGen/Assembly.hpp"
+#include "IR/Printer.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static Ir::Program ir(const Parsing::Program& parsingProgram);
+static void printIr(const Ir::Program& irProgram);
 static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
@@ -58,6 +60,10 @@ int CompilerDriver::run() const
     Ir::Program irProgram = ir(program);
     if (argument == "--tacky")
         return 0;
+    if (argument == "--printTacky") {
+        printIr(irProgram);
+        return 0;
+    }
     CodeGen::Program codegenProgram = codegen(irProgram);
     if (argument == "--codegen")
         return 0;
@@ -94,6 +100,12 @@ Ir::Program ir(const Parsing::Program& parsingProgram)
     return irProgram;
 }
 
+void printIr(const Ir::Program& irProgram)
+{
+    Ir::Printer printer(std::cout);
+    printer.print(irProgram);
+}
+
 CodeGen::Program codegen(const Ir::Program& irProgram)
 {
     CodeGen::Program codegenProgram;
@@ -112,7 +124,7 @@ static bool fileExists(const std::string &name)
 static bool isCommandLineArgumentValid(const std::string &argument)
 {
     const std::vector<std::string> validArguments = {"",  "--printAst","--help", "-h", "--version",
-        "--lex", "--parse", "--tacky", "--codegen"};
+        "--lex", "--parse", "--tacky", "--codegen", "--printTacky"};
     return std::any_of(validArguments.begin(), validArguments.end(), [&](const std::string &arg) {
         return arg == argument;
     });
