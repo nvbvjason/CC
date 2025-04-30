@@ -4,6 +4,7 @@
 #define CC_PARSING_ABSTRACT_TREE_PRINTER_HPP
 
 #include "AbstractTree.hpp"
+
 #include <iostream>
 #include <string>
 
@@ -14,11 +15,10 @@ public:
     static void print(const Program& program)
     {
         std::cout << "Program:\n";
-        if (program.function) {
+        if (program.function)
             print(*program.function, 1);
-        } else {
+        else
             std::cout << "  (empty)\n";
-        }
     }
 
 private:
@@ -26,11 +26,10 @@ private:
     {
         std::string indentStr(indent * 2, ' ');
         std::cout << indentStr << "Function: " << function.name << "\n";
-        if (function.body) {
+        if (function.body)
             print(*function.body, indent + 1);
-        } else {
+        else
             std::cout << indentStr << "  (empty body)\n";
-        }
     }
 
     static void print(const Statement& statement, int indent)

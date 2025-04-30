@@ -1,7 +1,6 @@
 #include "CompilerDriver.hpp"
 #include "Lexing/Lexer.hpp"
 #include "Parsing/ConcreteTree.hpp"
-#include "Parsing/AstVisualizer.hpp"
 #include "IR/AbstractTree.hpp"
 #include "IR/ConcreteTree.hpp"
 #include "CodeGen/AbstractTree.hpp"

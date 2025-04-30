@@ -48,6 +48,7 @@ std::unique_ptr<Function> function(const Ir::Function *function)
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto irJump = static_cast<Ir::JumpInst*>(inst.get());
                 generateJumpInst(functionCodeGen->instructions, irJump);
+                break;
             }
             case Ir::Instruction::Type::JumpIfZero: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)

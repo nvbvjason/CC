@@ -74,7 +74,7 @@ std::shared_ptr<Value> binaryInst(const Parsing::Expr *parsingExpr,
 std::shared_ptr<Value> binaryAndInst(const Parsing::BinaryExpr* const binaryExpr,
                                      std::vector<std::shared_ptr<Instruction>>& instructions)
 {
-    auto result = std::make_shared<ValueConst>(-1);
+    auto result = std::make_shared<ValueVar>(makeTemporaryName());
     auto lhs = inst(binaryExpr->lhs.get(), instructions);
     Identifier falseLabelIden = makeTemporaryName();
     instructions.push_back(std::make_shared<JumpIfZeroInst>(lhs, falseLabelIden));
