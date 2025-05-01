@@ -13,9 +13,12 @@
 #include <fstream>
 #include <filesystem>
 
+#include "Parsing/VariableResolution.hpp"
+
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static Ir::Program ir(const Parsing::Program* parsingProgram);
+static bool validateParsing(Parsing::Program& programNode);
 static void printIr(const Ir::Program& irProgram);
 static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::string &name);
@@ -54,6 +57,10 @@ int CompilerDriver::run() const
         return 0;
     if (argument == "--printAst")
         return printParsingAst(&program);
+    if (!validateParsing(program))
+        return 1;
+    if (argument == "--validate")
+        return 0;
     Ir::Program irProgram = ir(&program);
     if (argument == "--tacky")
         return 0;
@@ -129,7 +136,7 @@ static bool fileExists(const std::string &name)
 static bool isCommandLineArgumentValid(const std::string &argument)
 {
     const std::vector<std::string> validArguments = {"",  "--printAst","--help", "-h", "--version",
-        "--lex", "--parse", "--tacky", "--codegen", "--printTacky"};
+        "--lex", "--parse", "--tacky", "--codegen", "--printTacky", "--validate"};
     return std::any_of(validArguments.begin(), validArguments.end(), [&](const std::string &arg) {
         return arg == argument;
     });
@@ -140,6 +147,12 @@ std::string getSourceCode(const std::string &inputFile)
     std::ifstream file(inputFile);
     std::string source((std::istreambuf_iterator(file)), std::istreambuf_iterator<char>());
     return source;
+}
+
+bool validateParsing(Parsing::Program& programNode)
+{
+    Parsing::VariableResolution variableResolution(programNode);
+    return variableResolution.resolve();
 }
 
 static std::string preProcess(const std::string &file)
