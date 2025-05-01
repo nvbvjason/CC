@@ -6,10 +6,10 @@ namespace Parsing {
 
 bool Parse::programParse(Program& program)
 {
-    Function function;
-    if (!functionParse(function))
+    std::unique_ptr<Function> function = functionParse();
+    if (function == nullptr)
         return false;
-    program.function = std::make_unique<Function>(std::move(function));
+    program.function = std::move(function);
     if (program.function->name != "main")
         return false;
     if (peek().m_type != TokenType::EndOfFile)
@@ -17,45 +17,88 @@ bool Parse::programParse(Program& program)
     return true;
 }
 
-bool Parse::functionParse(Function& function)
+std::unique_ptr<Function> Parse::functionParse()
 {
     if (!expect(TokenType::IntKeyword))
-        return false;
+        return nullptr;
     const Lexing::Token lexeme = advance();
     if (lexeme.m_type != TokenType::Identifier)
-        return false;
-    function.name = lexeme.m_lexeme;
+        return nullptr;
+    std::string iden = lexeme.m_lexeme;
     if (!expect(TokenType::OpenParen))
-        return false;
+        return nullptr;
     if (!expect(TokenType::Void))
-        return false;
+        return nullptr;
     if (!expect(TokenType::CloseParen))
-        return false;
+        return nullptr;
     if (!expect(TokenType::OpenBrace))
-        return false;
-    Statement statement;
-    if (!stmtParse(statement))
-        return false;
-    function.body = std::make_shared<Statement>(statement);
-    if (!expect(TokenType::CloseBrace))
-        return false;
-    return true;
+        return nullptr;
+    const auto function = std::make_unique<Function>(iden);
+    while (!expect(TokenType::CloseBrace)) {
+        std::unique_ptr<BlockItem> blockItem = blockItemParse();
+        if (blockItem == nullptr)
+            return nullptr;
+        function->body.push_back(std::move(blockItem));
+    }
+    return std::make_unique<Function>(iden);
 }
 
-bool Parse::stmtParse(Statement& statement)
+std::unique_ptr<BlockItem> Parse::blockItemParse()
 {
-    if (!expect(TokenType::Return))
-        return false;
-    const std::shared_ptr<Expr> expr = exprParse(0);
-    if (expr == nullptr)
-        return false;
-    statement.expression = expr;
-    if (!expect(TokenType::Semicolon))
-        return false;
-    return true;
+    if (peek().m_type == TokenType::IntKeyword) {
+        std::unique_ptr<Declaration> declaration = declarationParse();
+        if (declaration == nullptr)
+            return nullptr;
+        return std::make_unique<DeclarationBlockItem>(std::move(declaration));
+    }
+    std::unique_ptr<Statement> statement = stmtParse();
+    if (statement == nullptr)
+        return nullptr;
+    return std::make_unique<StatementBlockItem>(std::move(statement));
 }
 
-std::shared_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
+std::unique_ptr<Declaration> Parse::declarationParse()
+{
+    if (!expect(TokenType::IntKeyword))
+        return nullptr;
+    const Lexing::Token lexeme = advance();
+    if (lexeme.m_type != TokenType::Identifier)
+        return nullptr;
+    auto declaration = std::make_unique<Declaration>(lexeme.m_lexeme);
+    if (expect(TokenType::Equal)) {
+        std::unique_ptr<Expr> expr = exprParse(0);
+        if (expr == nullptr)
+            return nullptr;
+        declaration->init = std::move(expr);
+    }
+    if (!expect(TokenType::Semicolon))
+        return nullptr;
+    return declaration;
+}
+
+std::unique_ptr<Statement> Parse::stmtParse()
+{
+    if (expect(TokenType::Semicolon))
+        return std::make_unique<NullStmt>();
+    if (expect(TokenType::Return)) {
+        std::unique_ptr<Expr> expr = exprParse(0);
+        if (expr == nullptr)
+            return nullptr;
+        auto statement = std::make_unique<ReturnStmt>(std::move(expr));
+        if (!expect(TokenType::Semicolon))
+            return nullptr;
+        return statement;
+    }
+    std::unique_ptr<Expr> expr = exprParse(0);
+    if (expr == nullptr)
+        return nullptr;
+    auto statement = std::make_unique<ExprStmt>(std::move(expr));
+    if (!expect(TokenType::Semicolon))
+        return nullptr;
+    return statement;
+}
+
+std::unique_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
 {
     auto left = factorParse();
     if (left == nullptr)
@@ -64,24 +107,36 @@ std::shared_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
     while (isBinaryOperator(nextToken.m_type) && minPrecedence <= precedence(binaryOperator(nextToken.m_type))) {
         BinaryExpr::Operator op = binaryOperator(nextToken.m_type);
         advance();
-        auto right = exprParse(precedence(binaryOperator(nextToken.m_type)) + 1);
-        if (right == nullptr)
-            return nullptr;
-        left = std::make_shared<BinaryExpr>(op, left, right);
-        nextToken = peek();
+        if (op == BinaryExpr::Operator::Assign) {
+            auto right = exprParse(precedence(op));
+            if (right == nullptr)
+                return nullptr;
+            left = std::make_unique<BinaryExpr>(op, std::move(left), std::move(right));
+            nextToken = peek();
+        }
+        else {
+            auto right = exprParse(precedence(op) + 1);
+            if (right == nullptr)
+                return nullptr;
+            left = std::make_unique<BinaryExpr>(op, std::move(left), std::move(right));
+            nextToken = peek();
+        }
     }
     return left;
 }
 
-std::shared_ptr<Expr> Parse::factorParse()
+std::unique_ptr<Expr> Parse::factorParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case TokenType::Integer: {
-            auto constantExpr = std::make_shared<ConstantExpr>(std::stoi(lexeme.m_lexeme));
+            auto constantExpr = std::make_unique<ConstantExpr>(std::stoi(lexeme.m_lexeme));
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;
         }
+        case TokenType::Identifier:
+            advance();
+            return std::make_unique<VarExpr>(lexeme.m_lexeme);
         case TokenType::Minus:
         case TokenType::Tilde:
         case TokenType::ExclamationMark:
@@ -99,13 +154,13 @@ std::shared_ptr<Expr> Parse::factorParse()
     }
 }
 
-std::shared_ptr<Expr> Parse::unaryExprParse()
+std::unique_ptr<Expr> Parse::unaryExprParse()
 {
     if (!isUnaryOperator(peek().m_type))
         return nullptr;
     UnaryExpr::Operator oper = unaryOperator(peek().m_type);
     advance();
-    std::shared_ptr<Expr> expr = exprParse(precedence(oper));
+    std::unique_ptr<Expr> expr = exprParse(precedence(oper));
     if (expr == nullptr)
         return nullptr;
     return std::make_unique<UnaryExpr>(oper, std::move(expr));
@@ -121,7 +176,7 @@ UnaryExpr::Operator Parse::unaryOperator(const TokenType type)
         case TokenType::ExclamationMark:
             return UnaryExpr::Operator::Not;
         default:
-            throw std::runtime_error("Invalid unary operator");
+            throw std::runtime_error("Invalid unary operator unaryOperator");
     }
 }
 
@@ -166,8 +221,11 @@ BinaryExpr::Operator Parse::binaryOperator(const TokenType type)
             return BinaryExpr::Operator::LessOrEqual;
         case TokenType::GreaterOrEqual:
             return BinaryExpr::Operator::GreaterOrEqual;
+
+        case TokenType::Equal:
+            return BinaryExpr::Operator::Assign;
         default:
-            throw std::runtime_error("Invalid binary operator");
+            throw std::runtime_error("Invalid binary operator binaryOperator");
     }
 }
 
@@ -234,8 +292,10 @@ i32 Parse::getPrecedenceLevel(const BinaryExpr::Operator oper)
             return 11;
         case Operator::Or:
             return 12;
+        case Operator::Assign:
+            return 14;
         default:
-            return 0;
+            throw std::runtime_error("Invalid binary operator getPrecedenceLevel");
     }
 }
 
@@ -268,6 +328,8 @@ bool Parse::isBinaryOperator(const TokenType type)
         case TokenType::Less:
         case TokenType::LessOrEqual:
         case TokenType::GreaterOrEqual:
+
+        case TokenType::Equal:
             return true;
         default:
             return false;

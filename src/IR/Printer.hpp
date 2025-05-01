@@ -2,7 +2,6 @@
 
 #include "AbstractTree.hpp"
 
-#include <ostream>
 #include <sstream>
 #include <string>
 

@@ -15,14 +15,14 @@
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
-static Ir::Program ir(const Parsing::Program& parsingProgram);
+static Ir::Program ir(const Parsing::Program* parsingProgram);
 static void printIr(const Ir::Program& irProgram);
 static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static std::string preProcess(const std::string &file);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
-static i32 printParsingAst(Parsing::Program program);
+static i32 printParsingAst(const Parsing::Program* program);
 
 int CompilerDriver::run() const
 {
@@ -53,8 +53,8 @@ int CompilerDriver::run() const
     if (argument == "--parse")
         return 0;
     if (argument == "--printAst")
-        return printParsingAst(program);
-    Ir::Program irProgram = ir(program);
+        return printParsingAst(&program);
+    Ir::Program irProgram = ir(&program);
     if (argument == "--tacky")
         return 0;
     if (argument == "--printTacky") {
@@ -74,10 +74,10 @@ int CompilerDriver::run() const
     return 0;
 }
 
-i32 printParsingAst(Parsing::Program program)
+i32 printParsingAst(const Parsing::Program* program)
 {
     Parsing::ASTPrinter printer;
-    std::cout << printer.print(&program);
+    std::cout << printer.print(program);
     return 0;
 }
 
@@ -98,10 +98,10 @@ bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNo
     return true;
 }
 
-Ir::Program ir(const Parsing::Program& parsingProgram)
+Ir::Program ir(const Parsing::Program* parsingProgram)
 {
     Ir::Program irProgram;
-    Ir::program(&parsingProgram, irProgram);
+    Ir::program(parsingProgram, irProgram);
     return irProgram;
 }
 

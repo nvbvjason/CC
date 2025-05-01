@@ -149,6 +149,11 @@ TEST(LexerTests, ExclamationMark)
     TestSingleTokenLexing("!", TokenType::ExclamationMark);
 }
 
+TEST(LexerTests, Equal)
+{
+    TestSingleTokenLexing("=", TokenType::Equal);
+}
+
 TEST(LexerTests, MultiLineComment)
 {
     const auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);

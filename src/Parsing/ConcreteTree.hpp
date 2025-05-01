@@ -4,16 +4,18 @@
 #define CC_PARSING_CONCRETE_TREE_HPP
 
 /*
-    <program>    ::= <function>
-    <function>   ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
-    <statement>  ::= "return" <exp> ";"
-    <exp>        ::= <factor> | <exp> <binop> <exp>
-    <factor>     ::= <int> | <unop> <exp> | "(" <exp> ")"
-    <unop>       ::= "-" | "~" | "!"
-    <binop>      ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|" |
-                     "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">="
-    <identifier> ::= ? An identifier token ?
-    <int>        ::= ? A constant token ?
+    <program>       ::= <function>
+    <function>      ::= "int" <identifier> "(" "void" ")" "{" { block_item* } "}"
+    <block_item>    ::= <statement> | <declaration>
+    <declaration>   ::= "int" <identifier> [ "=" <exp> ] ";"
+    <statement>     ::= "return" <exp> ";" | <exp> ";" | ";"
+    <exp>           ::= <factor> | <exp> <binop> <exp>
+    <factor>        ::= <int> | <identifier> | <unop> <exp> | "(" <exp> ")"
+    <unop>          ::= "-" | "~" | "!"
+    <binop>         ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|" |
+                         "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
+    <identifier>    ::= ? An identifier token ?
+    <int>           ::= ? A constant token ?
 */
 
 #include "AbstractTree.hpp"
@@ -32,11 +34,13 @@ public:
     explicit Parse(const std::vector<Lexing::Token> &c_tokens)
         : c_tokens(c_tokens) {}
     [[nodiscard]] bool programParse(Program& program);
-    [[nodiscard]] bool functionParse(Function& function);
-    [[nodiscard]] bool stmtParse(Statement& statement);
-    [[nodiscard]] std::shared_ptr<Expr> exprParse(i32 minPrecedence);
-    [[nodiscard]] std::shared_ptr<Expr> factorParse();
-    [[nodiscard]] std::shared_ptr<Expr> unaryExprParse();
+    [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
+    [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
+    [[nodiscard]] std::unique_ptr<Function> functionParse();
+    [[nodiscard]] std::unique_ptr<Statement> stmtParse();
+    [[nodiscard]] std::unique_ptr<Expr> exprParse(i32 minPrecedence);
+    [[nodiscard]] std::unique_ptr<Expr> factorParse();
+    [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
     [[nodiscard]] static UnaryExpr::Operator unaryOperator(TokenType type);
     [[nodiscard]] static BinaryExpr::Operator binaryOperator(TokenType type);
 private:

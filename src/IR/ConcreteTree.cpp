@@ -9,7 +9,7 @@ static Identifier makeTemporaryName();
 static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation);
 
-void program(const Parsing::Program *parsingProgram, Program& tackyProgram)
+void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 {
     tackyProgram.function = function(parsingProgram->function.get());
 }
@@ -17,10 +17,10 @@ void program(const Parsing::Program *parsingProgram, Program& tackyProgram)
 std::shared_ptr<Function> function(const Parsing::Function* parsingFunction)
 {
     auto functionTacky = std::make_shared<Function>();
-    functionTacky->identifier = parsingFunction->name;
-    const Parsing::Expr* parsingExpressionNode = parsingFunction->body->expression.get();
-    auto lastValue = inst(parsingExpressionNode, functionTacky->instructions);
-    functionTacky->instructions.push_back(std::make_shared<ReturnInst>(lastValue));
+    // functionTacky->identifier = parsingFunction->name;
+    // const Parsing::Expr* parsingExpressionNode = parsingFunction->body->expression.get();
+    // auto lastValue = inst(parsingExpressionNode, functionTacky->instructions);
+    // functionTacky->instructions.push_back(std::make_shared<ReturnInst>(lastValue));
     return functionTacky;
 }
 

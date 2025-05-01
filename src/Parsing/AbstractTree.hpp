@@ -27,7 +27,8 @@
                       And | Or |
                       Equal | NotEqual |
                       Less | LessThan | LessOrEqual
-                      Greater | GreaterThan | GreaterOrEqual
+                      Greater | GreaterThan | GreaterOrEqual |
+                      Assign
 */
 
 namespace Parsing {
@@ -45,7 +46,7 @@ struct Program {
 
 struct Function {
     std::string name;
-    std::vector<std::unique_ptr<Statement>> body;
+    std::vector<std::unique_ptr<BlockItem>> body;
 };
 
 struct BlockItem {
@@ -63,7 +64,7 @@ protected:
 
 struct StatementBlockItem final : BlockItem {
     std::unique_ptr<Statement> statement;
-    explicit StatementBlockItem(std::unique_ptr<Statement>& stmt)
+    explicit StatementBlockItem(std::unique_ptr<Statement> stmt)
         : BlockItem(Kind::Statement), statement(std::move(stmt)) {}
 
     StatementBlockItem() = delete;
@@ -71,7 +72,7 @@ struct StatementBlockItem final : BlockItem {
 
 struct DeclarationBlockItem final : BlockItem {
     std::unique_ptr<Declaration> declaration;
-    explicit DeclarationBlockItem(std::unique_ptr<Declaration>& decl)
+    explicit DeclarationBlockItem(std::unique_ptr<Declaration> decl)
         : BlockItem(Kind::Declaration), declaration(std::move(decl)) {}
 
     DeclarationBlockItem() = delete;
@@ -82,7 +83,7 @@ struct Declaration {
     std::unique_ptr<Expr> init = nullptr;
     explicit Declaration(std::string name)
         : name(std::move(name)) {}
-    Declaration(std::string name, std::unique_ptr<Expr>& init)
+    Declaration(std::string name, std::unique_ptr<Expr> init)
         : name(std::move(name)), init(std::move(init)) {}
 
     Declaration() = delete;
@@ -102,25 +103,25 @@ protected:
         : kind(kind) {}
 };
 
-struct ReturnStatement final : Statement {
+struct ReturnStmt final : Statement {
     std::unique_ptr<Expr> expression;
-    explicit ReturnStatement(std::unique_ptr<Expr>& expr)
+    explicit ReturnStmt(std::unique_ptr<Expr> expr)
         : Statement(Kind::Return), expression(std::move(expr)) {}
 
-    ReturnStatement() = delete;
+    ReturnStmt() = delete;
 };
 
-struct ExpressionStatement final : Statement {
+struct ExprStmt final : Statement {
     std::unique_ptr<Expr> expression;
-    explicit ExpressionStatement(std::unique_ptr<Expr>& expr)
+    explicit ExprStmt(std::unique_ptr<Expr> expr)
         : Statement(Kind::Expression), expression(std::move(expr)) {}
 
-    ExpressionStatement() = delete;
+    ExprStmt() = delete;
 };
 
 
-struct NullStatement final : Statement {
-    NullStatement()
+struct NullStmt final : Statement {
+    NullStmt()
         : Statement(Kind::Null) {}
 };
 
@@ -159,9 +160,9 @@ struct UnaryExpr final : Expr {
         Complement, Negate, Not
     };
     Operator op;
-    std::shared_ptr<Expr> operand;
+    std::unique_ptr<Expr> operand;
 
-    UnaryExpr(const Operator op, std::shared_ptr<Expr> expr)
+    UnaryExpr(const Operator op, std::unique_ptr<Expr> expr)
         : Expr(Kind::Unary), op(op), operand(std::move(expr)) {}
 
     UnaryExpr() = delete;
@@ -175,13 +176,14 @@ struct BinaryExpr final : Expr {
         And, Or,
         Equal, NotEqual,
         LessThan, LessOrEqual,
-        GreaterThan, GreaterOrEqual
+        GreaterThan, GreaterOrEqual,
+        Assign
     };
     Operator op;
-    std::shared_ptr<Expr> lhs;
-    std::shared_ptr<Expr> rhs;
-    BinaryExpr(const Operator op, const std::shared_ptr<Expr>& lhs, const std::shared_ptr<Expr>& rhs)
-        : Expr(Kind::Binary), op(op), lhs(lhs), rhs(rhs) {}
+    std::unique_ptr<Expr> lhs;
+    std::unique_ptr<Expr> rhs;
+    BinaryExpr(const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
+        : Expr(Kind::Binary), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
     BinaryExpr() = delete;
 };
@@ -189,7 +191,7 @@ struct BinaryExpr final : Expr {
 struct AssignmentExpr final : Expr {
     std::unique_ptr<Expr> lhs;
     std::unique_ptr<Expr> rhs;
-    AssignmentExpr(std::unique_ptr<Expr>& lhs, std::unique_ptr<Expr>& rhs)
+    AssignmentExpr(std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : Expr(Kind::Assignment), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
     AssignmentExpr() = delete;

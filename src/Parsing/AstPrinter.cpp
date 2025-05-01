@@ -35,6 +35,7 @@ std::string binaryOpToString(const BinaryExpr::Operator op)
         case BinaryExpr::Operator::LessOrEqual:     return "<=";
         case BinaryExpr::Operator::GreaterThan  :   return ">";
         case BinaryExpr::Operator::GreaterOrEqual:  return ">=";
+        case BinaryExpr::Operator::Assign:          return "=";
         default:                                    return "?";
     }
 }
@@ -42,52 +43,99 @@ std::string binaryOpToString(const BinaryExpr::Operator op)
 
 std::string ASTPrinter::print(const Program* program)
 {
+    oss.clear();
     oss << "Program:\n";
     if (program->function)
-        print(*program->function, 1);
+        print(program->function.get(), 1);
     else
         oss << "  (empty)\n";
     return oss.str();
 }
 
-void ASTPrinter::print(const Function& function, const int indent)
+void ASTPrinter::print(const Function* function, const int indent)
 {
     std::string indentStr(indent * 2, ' ');
-    oss << indentStr << "Function: " << function.name << "\n";
-    if (function.body)
-        print(*function.body, indent + 1);
-    else
+    oss << indentStr << "Function: " << function->name << "\n";
+    if (function->body.empty())
         oss << indentStr << "  (empty body)\n";
+    for (const auto& blockItem : function->body)
+        print(blockItem.get(), indent + 1);
 }
 
-void ASTPrinter::print(const Statement& statement, const int indent)
+void ASTPrinter::print(const BlockItem* blockItem, const int indent)
+{;
+    switch (blockItem->kind) {
+        case BlockItem::Kind::Declaration:
+            print(dynamic_cast<const Declaration*>(blockItem), indent);
+            break;
+        case BlockItem::Kind::Statement:
+            print(dynamic_cast<const Statement*>(blockItem), indent);
+            break;
+        default:
+            break;
+    }
+}
+
+void ASTPrinter::print(const Declaration* declaration, const int indent)
 {
     std::string indentStr(indent * 2, ' ');
-    oss << indentStr << "Statement:\n";
-    if (statement.expression)
-        print(*statement.expression, indent + 1);
-    else
-        oss << indentStr << "  (empty expression)\n";
+    oss << indentStr << "Declaration: " << declaration->name << "\n";
+    if (declaration->init)
+        print(declaration->init.get(), indent + 1);
 }
 
-void ASTPrinter::print(Expr& expr, const int indent)
+void ASTPrinter::print(const Statement* statement, const int indent)
+{
+    std::string indentStr(indent * 2, ' ');
+    switch (statement->kind) {
+        case Statement::Kind::Null:
+            oss << indentStr << "Null Statement\n";
+            break;
+        case Statement::Kind::Return:
+            oss << indentStr << "Return Statement\n";
+            print(statement->expression.get(), indent + 1);
+            break;
+        case Statement::Kind::Expression:
+            oss << indentStr << "Expression Statement\n";
+            print(statement->expression.get(), indent + 1);
+            break;
+    }
+}
+
+void ASTPrinter::print(const Expr* expr, const int indent)
 {
     const std::string indentStr(indent * 2, ' ');
-
-    if (expr.kind == Expr::Kind::Constant) {
-        const auto constant = dynamic_cast<ConstantExpr*>(&expr);
-        oss << indentStr << "Constant: " << constant->value << "\n";
-    }
-    else if (expr.kind == Expr::Kind::Unary) {
-        const auto unary = dynamic_cast<UnaryExpr*>(&expr);
-        oss << indentStr << "auto binary = static_cast<BinaryExpr*>(&expr);: " << unaryOpToString(unary->op) << "\n";
-        print(*unary->operand, indent + 1);
-    }
-    else if (expr.kind == Expr::Kind::Binary) {
-        const auto binary = dynamic_cast<BinaryExpr*>(&expr);
-        oss << indentStr << "Binary: " << binaryOpToString(binary->op) << "\n";
-        print(*binary->lhs, indent + 1);
-        print(*binary->rhs, indent + 1);
+    oss << indentStr << "Expression: " << "\n";
+    switch (expr->kind) {
+        case Expr::Kind::Constant: {
+            const auto constantExpr = dynamic_cast<const ConstantExpr*>(expr);
+            oss << indentStr << "Constant: " << constantExpr->value << "\n";
+            break;
+        }
+        case Expr::Kind::Var: {
+            const auto identifierExpr = dynamic_cast<const VarExpr*>(expr);
+            oss << indentStr << "Var: " << identifierExpr->name << "\n";
+            break;
+        }
+        case Expr::Kind::Unary: {
+            const auto unaryExpr = dynamic_cast<const UnaryExpr*>(expr);
+            oss << indentStr << "Unary: " << unaryOpToString(unaryExpr->op) << "\n";
+            break;
+        }
+        case Expr::Kind::Binary: {
+            const auto binaryExpr = dynamic_cast<const BinaryExpr*>(expr);
+            oss << indentStr << "Binary: " << binaryOpToString(binaryExpr->op) << "\n";
+            print(binaryExpr->lhs.get(), indent + 1);
+            print(binaryExpr->rhs.get(), indent + 1);
+            break;
+        }
+        case Expr::Kind::Assignment: {
+            const auto assignmentExpr = dynamic_cast<const AssignmentExpr*>(expr);
+            oss << indentStr << "Assignment: " << "\n";
+            print(assignmentExpr->lhs.get(), indent + 1);
+            print(assignmentExpr->rhs.get(), indent + 1);
+            break;
+        }
     }
 }
-} // nnamespace Parsing
+} // namespace Parsing

@@ -26,7 +26,6 @@ namespace Ir {
 
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram);
 std::shared_ptr<Function> function(const Parsing::Function* parsingFunction);
-
 std::shared_ptr<Value> inst(const Parsing::Expr* parsingExpr,
                             std::vector<std::shared_ptr<Instruction>>& instructions);
 std::shared_ptr<ValueVar> unaryInst(const Parsing::Expr *parsingExpr,
