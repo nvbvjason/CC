@@ -33,14 +33,14 @@ std::unique_ptr<Function> Parse::functionParse()
         return nullptr;
     if (!expect(TokenType::OpenBrace))
         return nullptr;
-    const auto function = std::make_unique<Function>(iden);
+    auto function = std::make_unique<Function>(iden);
     while (!expect(TokenType::CloseBrace)) {
         std::unique_ptr<BlockItem> blockItem = blockItemParse();
         if (blockItem == nullptr)
             return nullptr;
         function->body.push_back(std::move(blockItem));
     }
-    return std::make_unique<Function>(iden);
+    return function;
 }
 
 std::unique_ptr<BlockItem> Parse::blockItemParse()
@@ -51,10 +51,10 @@ std::unique_ptr<BlockItem> Parse::blockItemParse()
             return nullptr;
         return std::make_unique<DeclarationBlockItem>(std::move(declaration));
     }
-    std::unique_ptr<Statement> statement = stmtParse();
+    std::unique_ptr<Stmt> statement = stmtParse();
     if (statement == nullptr)
         return nullptr;
-    return std::make_unique<StatementBlockItem>(std::move(statement));
+    return std::make_unique<StmtBlockItem>(std::move(statement));
 }
 
 std::unique_ptr<Declaration> Parse::declarationParse()
@@ -76,7 +76,7 @@ std::unique_ptr<Declaration> Parse::declarationParse()
     return declaration;
 }
 
-std::unique_ptr<Statement> Parse::stmtParse()
+std::unique_ptr<Stmt> Parse::stmtParse()
 {
     if (expect(TokenType::Semicolon))
         return std::make_unique<NullStmt>();
@@ -111,7 +111,7 @@ std::unique_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
             auto right = exprParse(precedence(op));
             if (right == nullptr)
                 return nullptr;
-            left = std::make_unique<BinaryExpr>(op, std::move(left), std::move(right));
+            left = std::make_unique<AssignmentExpr>(std::move(left), std::move(right));
             nextToken = peek();
         }
         else {
@@ -129,7 +129,7 @@ std::unique_ptr<Expr> Parse::factorParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case TokenType::Integer: {
-            auto constantExpr = std::make_unique<ConstantExpr>(std::stoi(lexeme.m_lexeme));
+            auto constantExpr = std::make_unique<ConstExpr>(std::stoi(lexeme.m_lexeme));
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;

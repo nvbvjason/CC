@@ -11,7 +11,7 @@ static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operato
 
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 {
-    tackyProgram.function = function(parsingProgram->function.get());
+    //tackyProgram.function = function(parsingProgram->function.get());
 }
 
 std::shared_ptr<Function> function(const Parsing::Function* parsingFunction)
@@ -113,7 +113,7 @@ std::shared_ptr<Value> binaryOrInst(const Parsing::BinaryExpr* binaryExpr,
 
 std::shared_ptr<ValueConst> returnInst(const Parsing::Expr *parsingExpr)
 {
-    const auto constant = dynamic_cast<const Parsing::ConstantExpr*>(parsingExpr);
+    const auto constant = dynamic_cast<const Parsing::ConstExpr*>(parsingExpr);
     auto result = std::make_shared<ValueConst>(constant->value);
     return result;
 }

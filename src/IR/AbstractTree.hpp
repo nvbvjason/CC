@@ -4,10 +4,8 @@
 #define CC_IR_ABSTRACT_TREE_HPP
 
 #include "ShortTypes.hpp"
-#include "AbstractTree.hpp"
 
 #include <memory>
-#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -46,7 +44,7 @@ struct Identifier {
 };
 
 struct Program {
-    std::shared_ptr<Function> function = nullptr;
+    std::unique_ptr<Function> function = nullptr;
 };
 
 struct Function {

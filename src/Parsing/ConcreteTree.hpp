@@ -37,7 +37,7 @@ public:
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<Function> functionParse();
-    [[nodiscard]] std::unique_ptr<Statement> stmtParse();
+    [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
     [[nodiscard]] std::unique_ptr<Expr> exprParse(i32 minPrecedence);
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
@@ -56,7 +56,6 @@ private:
         }
         return false;
     }
-
     [[nodiscard]] static i32 getPrecedenceLevel(BinaryExpr::Operator oper);
     [[nodiscard]] static i32 precedence(BinaryExpr::Operator oper);
     [[nodiscard]] static i32 getPrecedenceLevel(UnaryExpr::Operator oper);

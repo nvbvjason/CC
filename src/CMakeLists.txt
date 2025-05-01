@@ -11,7 +11,9 @@ set(PARSING_FILES
         Parsing/AbstractTree.cpp
         Parsing/AbstractTree.hpp
         Parsing/AstPrinter.cpp
-        Parsing/AstPrinter.hpp)
+        Parsing/AstPrinter.hpp
+        Parsing/VariableResolution.cpp
+        Parsing/VariableResolution.hpp)
 
 set(CODEGEN_FILES
         CodeGen/Assembly.cpp

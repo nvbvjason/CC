@@ -17,7 +17,7 @@ private:
     void print(const Function* function, int indent);
     void print(const BlockItem* blockItem, int indent);
     void print(const Declaration* declaration, int indent);
-    void print(const Statement* statement, int indent);
+    void print(const Stmt* statement, int indent);
     void print(const Expr* expr, int indent);
 };
 } // namespace Parsing

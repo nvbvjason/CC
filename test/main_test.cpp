@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include "Parsing/VariableResolution.hpp"
+
 namespace fs = std::filesystem;
 
 const fs::path testsFolderPath = fs::path(PROJECT_ROOT_DIR) / "test/external/writing-a-c-compiler-tests/tests";
@@ -40,6 +42,19 @@ bool ParseFileAndGiveResult(const std::filesystem::directory_entry& filePath)
     Parsing::Parse parser(lexemes);
     Parsing::Program program;
     return parser.programParse(program);
+}
+
+bool CheckSemantics(const std::filesystem::directory_entry& filePath)
+{
+    const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
+    std::vector<Lexing::Token> lexemes;
+    Lexing::Lexer lexer(sourceCode);
+    lexer.getLexemes(lexemes);
+    Parsing::Parse parser(lexemes);
+    Parsing::Program program;
+    parser.programParse(program);
+    Parsing::VariableResolution variableResolution(program);
+    return variableResolution.resolve();
 }
 
 TEST(Chapter1, lexingValid)
@@ -235,6 +250,16 @@ TEST(Chapter5, parsingInvalid)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter5, semanticsInvalid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_5/invalid_semantics";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
     }
 }
 

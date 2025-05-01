@@ -69,7 +69,7 @@ void ASTPrinter::print(const BlockItem* blockItem, const int indent)
             print(dynamic_cast<const Declaration*>(blockItem), indent);
             break;
         case BlockItem::Kind::Statement:
-            print(dynamic_cast<const Statement*>(blockItem), indent);
+            print(dynamic_cast<const Stmt*>(blockItem), indent);
             break;
         default:
             break;
@@ -84,21 +84,25 @@ void ASTPrinter::print(const Declaration* declaration, const int indent)
         print(declaration->init.get(), indent + 1);
 }
 
-void ASTPrinter::print(const Statement* statement, const int indent)
+void ASTPrinter::print(const Stmt* statement, const int indent)
 {
     std::string indentStr(indent * 2, ' ');
     switch (statement->kind) {
-        case Statement::Kind::Null:
+        case Stmt::Kind::Null:
             oss << indentStr << "Null Statement\n";
             break;
-        case Statement::Kind::Return:
+        case Stmt::Kind::Return: {
+            const auto returnStmt = dynamic_cast<const ReturnStmt*>(statement);
             oss << indentStr << "Return Statement\n";
-            print(statement->expression.get(), indent + 1);
+            print(returnStmt->expression.get(), indent + 1);
             break;
-        case Statement::Kind::Expression:
+        }
+        case Stmt::Kind::Expression: {
+            const auto expressionStmt = dynamic_cast<const ExprStmt*>(statement);
             oss << indentStr << "Expression Statement\n";
-            print(statement->expression.get(), indent + 1);
+            print(expressionStmt->expression.get(), indent + 1);
             break;
+        }
     }
 }
 
@@ -108,7 +112,7 @@ void ASTPrinter::print(const Expr* expr, const int indent)
     oss << indentStr << "Expression: " << "\n";
     switch (expr->kind) {
         case Expr::Kind::Constant: {
-            const auto constantExpr = dynamic_cast<const ConstantExpr*>(expr);
+            const auto constantExpr = dynamic_cast<const ConstExpr*>(expr);
             oss << indentStr << "Constant: " << constantExpr->value << "\n";
             break;
         }

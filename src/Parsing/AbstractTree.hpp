@@ -27,8 +27,7 @@
                       And | Or |
                       Equal | NotEqual |
                       Less | LessThan | LessOrEqual
-                      Greater | GreaterThan | GreaterOrEqual |
-                      Assign
+                      Greater | GreaterThan | GreaterOrEqual
 */
 
 namespace Parsing {
@@ -37,7 +36,7 @@ struct Program;
 struct Function;
 struct BlockItem;
 struct Declaration;
-struct Statement;
+struct Stmt;
 struct Expr;
 
 struct Program {
@@ -62,12 +61,12 @@ protected:
         : kind(kind) {}
 };
 
-struct StatementBlockItem final : BlockItem {
-    std::unique_ptr<Statement> statement;
-    explicit StatementBlockItem(std::unique_ptr<Statement> stmt)
+struct StmtBlockItem final : BlockItem {
+    std::unique_ptr<Stmt> statement;
+    explicit StmtBlockItem(std::unique_ptr<Stmt> stmt)
         : BlockItem(Kind::Statement), statement(std::move(stmt)) {}
 
-    StatementBlockItem() = delete;
+    StmtBlockItem() = delete;
 };
 
 struct DeclarationBlockItem final : BlockItem {
@@ -89,40 +88,39 @@ struct Declaration {
     Declaration() = delete;
 };
 
-struct Statement {
+struct Stmt {
     enum class Kind {
         Return, Expression, Null
     };
     Kind kind;
-    std::unique_ptr<Expr> expression;
 
-    Statement() = delete;
-    virtual ~Statement() = default;
+    Stmt() = delete;
+    virtual ~Stmt() = default;
 protected:
-    explicit Statement(const Kind kind)
+    explicit Stmt(const Kind kind)
         : kind(kind) {}
 };
 
-struct ReturnStmt final : Statement {
+struct ReturnStmt final : Stmt {
     std::unique_ptr<Expr> expression;
     explicit ReturnStmt(std::unique_ptr<Expr> expr)
-        : Statement(Kind::Return), expression(std::move(expr)) {}
+        : Stmt(Kind::Return), expression(std::move(expr)) {}
 
     ReturnStmt() = delete;
 };
 
-struct ExprStmt final : Statement {
+struct ExprStmt final : Stmt {
     std::unique_ptr<Expr> expression;
     explicit ExprStmt(std::unique_ptr<Expr> expr)
-        : Statement(Kind::Expression), expression(std::move(expr)) {}
+        : Stmt(Kind::Expression), expression(std::move(expr)) {}
 
     ExprStmt() = delete;
 };
 
 
-struct NullStmt final : Statement {
+struct NullStmt final : Stmt {
     NullStmt()
-        : Statement(Kind::Null) {}
+        : Stmt(Kind::Null) {}
 };
 
 struct Expr {
@@ -139,12 +137,12 @@ protected:
         : kind(kind) {}
 };
 
-struct ConstantExpr final : Expr {
+struct ConstExpr final : Expr {
     i32 value;
-    explicit ConstantExpr(const i32 value) noexcept
+    explicit ConstExpr(const i32 value) noexcept
         : Expr(Kind::Constant), value(value) {}
 
-    ConstantExpr() = delete;
+    ConstExpr() = delete;
 };
 
 struct VarExpr final : Expr {
