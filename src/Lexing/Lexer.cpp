@@ -41,15 +41,42 @@ void Lexer::scanToken()
         case '~':
             addToken(Token::Type::Tilde);
             break;
-        case '%':
+        case '+': {
+            if (match('+')) {
+                addToken(Token::Type::Increment);
+                break;
+            }
+            if (match('=')) {
+                addToken(Token::Type::PlusAssign);
+                break;
+            }
+            addToken(Token::Type::Plus);
+            break;
+        }
+        case '%': {
+            if (match('=')) {
+                addToken(Token::Type::ModuloAssign);
+                break;
+            }
             addToken(Token::Type::Percent);
             break;
-        case '*':
+        }
+        case '*': {
+            if (match('=')) {
+                addToken(Token::Type::MultiplyAssign);
+                break;
+            }
             addToken(Token::Type::Asterisk);
             break;
-        case '^':
+        }
+        case '^': {
+            if (match('=')) {
+                addToken(Token::Type::BitwiseXorAssign);
+                break;
+            }
             addToken(Token::Type::Circumflex);
             break;
+        }
         case '!':
             if (match('=')) {
                 addToken(Token::Type::LogicalNotEqual);
@@ -64,12 +91,13 @@ void Lexer::scanToken()
             }
             addToken(Token::Type::Equal);
             break;
-        case '+':
-            addToken(Token::Type::Plus);
-            break;
         case '&':
             if (match('&')) {
                 addToken(Token::Type::LogicalAnd);
+                break;
+            }
+            if (match('=')) {
+                addToken(Token::Type::BitwiseAndAssign);
                 break;
             }
             addToken(Token::Type::Ampersand);
@@ -79,9 +107,17 @@ void Lexer::scanToken()
                 addToken(Token::Type::LogicalOr);
                 break;
             }
+            if (match('=')) {
+                addToken(Token::Type::BitwiseOrAssign);
+                break;
+            }
             addToken(Token::Type::Pipe);
             break;
         case '>':
+            if (match(">=")) {
+                addToken(Token::Type::RightShiftAssign);
+                break;
+            }
             if (match('>')) {
                 addToken(Token::Type::RightShift);
                 break;
@@ -93,6 +129,10 @@ void Lexer::scanToken()
             addToken(Token::Type::Greater);
             break;
         case '<':
+            if (match("<=")) {
+                addToken(Token::Type::LeftShiftAssign);
+                break;
+            }
             if (match('<')) {
                 addToken(Token::Type::LeftShift);
                 break;
@@ -104,6 +144,10 @@ void Lexer::scanToken()
             addToken(Token::Type::Less);
             break;
         case '-':
+            if (match('=')) {
+                addToken(Token::Type::MinusAssign);
+                break;
+            }
             if (match('-')) {
                 addToken(Token::Type::Decrement);
                 break;
@@ -111,6 +155,10 @@ void Lexer::scanToken()
             addToken(Token::Type::Minus);
             break;
         case '/':
+            if (match('=')) {
+                addToken(Token::Type::DivideAssign);
+                break;
+            }
             if (match('/'))
                 while (peek() != '\n' && !isAtEnd())
                     advance();
@@ -146,6 +194,18 @@ bool Lexer::match(const char expected)
     if (c_source[m_current] != expected)
         return false;
     advance();
+    return true;
+}
+
+bool Lexer::match(const std::string& expected)
+{
+    if (c_source.size() <= m_current + expected.size() - 1)
+        return false;
+    for (i32 i = 0; i < expected.size(); ++i)
+        if (c_source[m_current + i] != expected[i])
+            return false;
+    for (i32 i = 0; i < expected.size(); ++i)
+        advance();
     return true;
 }
 

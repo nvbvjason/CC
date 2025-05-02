@@ -16,8 +16,8 @@ namespace Lexing {
 struct Token {
     enum class Type : u16 {
         // Bracketing Symbols
-        OpenParen,       CloseParen,      // (  )
-        OpenBrace,       CloseBrace,      // {  }
+        OpenParen,       CloseParen,     // (  )
+        OpenBrace,       CloseBrace,     // {  }
 
         // Punctuation & Symbols
         Semicolon,                       // ;
@@ -40,6 +40,7 @@ struct Token {
 
         // Special Operators
         Decrement,                       // --
+        Increment,                       // ++
 
         // Logical Operators
         LogicalAnd,                      // &&
@@ -62,6 +63,16 @@ struct Token {
 
         // Assignment
         Equal,                           // =
+        PlusAssign,                      // +=
+        MinusAssign,                     // -=
+        MultiplyAssign,                  // *=
+        DivideAssign,                    // /=
+        ModuloAssign,                    // %=
+        BitwiseAndAssign,                // &=
+        BitwiseOrAssign,                 // |=
+        BitwiseXorAssign,                // ^=
+        LeftShiftAssign,                 // <<=
+        RightShiftAssign,                // >>=
 
         // Special Tokens
         EndOfFile,                       // EOF marker

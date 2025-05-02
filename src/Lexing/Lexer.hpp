@@ -34,6 +34,7 @@ private:
     [[nodiscard]] char peekNext() const;
 
     bool match(char expected);
+    bool match(const std::string& expected);
     char advance();
     void integer();
     void identifier();

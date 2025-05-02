@@ -104,6 +104,16 @@ TEST(LexerTests, Circumflex)
     TestSingleTokenLexing("^", TokenType::Circumflex);
 }
 
+TEST(LexerTests, Decrement)
+{
+    TestSingleTokenLexing("--", TokenType::Decrement);
+}
+
+TEST(LexerTests, Increment)
+{
+    TestSingleTokenLexing("++", TokenType::Increment);
+}
+
 TEST(LexerTests, LogicalAnd)
 {
     TestSingleTokenLexing("&&", TokenType::LogicalAnd);
@@ -158,6 +168,56 @@ TEST(LexerTests, MultiLineComment)
 {
     const auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);
     EXPECT_TRUE(tokens.size() == 1) << " " << tokens.size();
+}
+
+TEST(LexerTests, PlusAssign)
+{
+    TestSingleTokenLexing("+=", TokenType::PlusAssign);
+}
+
+TEST(LexerTests, MinusAssign)
+{
+    TestSingleTokenLexing("-=", TokenType::MinusAssign);
+}
+
+TEST(LexerTests, MultiplyAssign)
+{
+    TestSingleTokenLexing("*=", TokenType::MultiplyAssign);
+}
+
+TEST(LexerTests, DivideAssign)
+{
+    TestSingleTokenLexing("/=", TokenType::DivideAssign);
+}
+
+TEST(LexerTests, ModuloAssign)
+{
+    TestSingleTokenLexing("%=", TokenType::ModuloAssign);
+}
+
+TEST(LexerTests, BitwiseAndAssign)
+{
+    TestSingleTokenLexing("&=", TokenType::BitwiseAndAssign);
+}
+
+TEST(LexerTests, BitwiseOrAssign)
+{
+    TestSingleTokenLexing("|=", TokenType::BitwiseOrAssign);
+}
+
+TEST(LexerTests, BitwiseXorAssign)
+{
+    TestSingleTokenLexing("^=", TokenType::BitwiseXorAssign);
+}
+
+TEST(LexerTests, LeftShiftAssign)
+{
+    TestSingleTokenLexing("<<=", TokenType::LeftShiftAssign);
+}
+
+TEST(LexerTests, RightShiftAssign)
+{
+    TestSingleTokenLexing(">>=", TokenType::RightShiftAssign);
 }
 
 TEST(LexerTests, InvalidInput) {
