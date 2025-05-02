@@ -1,7 +1,7 @@
-#include "ConcreteTree.hpp"
-#include "IR/ConcreteTree.hpp"
+#include "GenerateAsmTree.hpp"
+#include "IR/GenerateIr.hpp"
 #include "PseudoRegisterReplacer.hpp"
-#include "AbstractTree.hpp"
+#include "AsmAST.hpp"
 
 #include <stdexcept>
 
@@ -17,8 +17,8 @@ void program(const Ir::Program &program, Program &programCodegen)
 std::unique_ptr<Function> function(const Ir::Function *function)
 {
     auto functionCodeGen = std::make_unique<Function>();
-    functionCodeGen->name = function->identifier;
-    for (const std::shared_ptr<Ir::Instruction>& inst : function->instructions) {
+    functionCodeGen->name = function->name;
+    for (const std::unique_ptr<Ir::Instruction>& inst : function->insts) {
         switch (inst->type) {
             case Ir::Instruction::Type::Unary: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)

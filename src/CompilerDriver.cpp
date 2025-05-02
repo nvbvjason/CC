@@ -1,13 +1,13 @@
 #include "CompilerDriver.hpp"
 #include "Lexing/Lexer.hpp"
-#include "Parsing/ConcreteTree.hpp"
-#include "IR/AbstractTree.hpp"
-#include "IR/ConcreteTree.hpp"
-#include "CodeGen/AbstractTree.hpp"
-#include "CodeGen/ConcreteTree.hpp"
+#include "Parsing/Parser.hpp"
+#include "IR/IrAST.hpp"
+#include "IR/GenerateIr.hpp"
+#include "CodeGen/AsmAST.hpp"
+#include "CodeGen/GenerateAsmTree.hpp"
 #include "CodeGen/Assembly.hpp"
 #include "IR/Printer.hpp"
-#include "Parsing/AstPrinter.hpp"
+#include "Parsing/ASTPrinter.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -84,7 +84,7 @@ int CompilerDriver::run() const
 i32 printParsingAst(const Parsing::Program* program)
 {
     Parsing::ASTPrinter printer;
-    std::cout << printer.print(program);
+    std::cout << printer.print(*program);
     return 0;
 }
 

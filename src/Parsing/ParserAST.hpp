@@ -62,17 +62,17 @@ protected:
 };
 
 struct StmtBlockItem final : BlockItem {
-    std::unique_ptr<Stmt> statement;
+    std::unique_ptr<Stmt> stmt;
     explicit StmtBlockItem(std::unique_ptr<Stmt> stmt)
-        : BlockItem(Kind::Statement), statement(std::move(stmt)) {}
+        : BlockItem(Kind::Statement), stmt(std::move(stmt)) {}
 
     StmtBlockItem() = delete;
 };
 
 struct DeclarationBlockItem final : BlockItem {
-    std::unique_ptr<Declaration> declaration;
+    std::unique_ptr<Declaration> decl;
     explicit DeclarationBlockItem(std::unique_ptr<Declaration> decl)
-        : BlockItem(Kind::Declaration), declaration(std::move(decl)) {}
+        : BlockItem(Kind::Declaration), decl(std::move(decl)) {}
 
     DeclarationBlockItem() = delete;
 };

@@ -23,12 +23,12 @@ void VariableResolution::resolveBlockItem(BlockItem& blockItem)
     switch (blockItem.kind) {
         case BlockItem::Kind::Declaration: {
             auto declaration = static_cast<DeclarationBlockItem*>(&blockItem);
-            resolveDeclaration(*declaration->declaration);
+            resolveDeclaration(*declaration->decl);
             break;
         }
         case BlockItem::Kind::Statement: {
             auto declaration = static_cast<StmtBlockItem*>(&blockItem);
-            resolveStmt(*declaration->statement);
+            resolveStmt(*declaration->stmt);
             break;
         }
     }

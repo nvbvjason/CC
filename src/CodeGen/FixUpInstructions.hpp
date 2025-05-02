@@ -3,7 +3,7 @@
 #ifndef CC_CODEGEN_FIX_UP_INSTRUCTIONS_HPP
 #define CC_CODEGEN_FIX_UP_INSTRUCTIONS_HPP
 
-#include "AbstractTree.hpp"
+#include "AsmAST.hpp"
 
 #include <vector>
 

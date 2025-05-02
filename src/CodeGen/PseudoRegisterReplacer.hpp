@@ -3,7 +3,7 @@
 #ifndef CC_CODEGEN_PSEUDO_REGISTER_REPLACER_HPP
 #define CC_CODEGEN_PSEUDO_REGISTER_REPLACER_HPP
 
-#include "AbstractTree.hpp"
+#include "AsmAST.hpp"
 
 #include <unordered_map>
 

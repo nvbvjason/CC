@@ -48,8 +48,11 @@ struct Program {
 };
 
 struct Function {
-    std::string identifier;
-    std::vector<std::shared_ptr<Instruction>> instructions;
+    std::string name;
+    std::vector<std::unique_ptr<Instruction>> insts;
+    explicit Function(std::string identifier)
+        : name(std::move(identifier)) {}
+    Function() = delete;
 };
 
 struct Instruction {

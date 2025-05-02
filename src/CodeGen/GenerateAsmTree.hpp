@@ -3,8 +3,8 @@
 #ifndef CC_CONCRETE_TREE_HPP
 #define CC_CONCRETE_TREE_HPP
 
-#include "AbstractTree.hpp"
-#include "IR/AbstractTree.hpp"
+#include "AsmAST.hpp"
+#include "IR/IrAST.hpp"
 
 /*
 === Top-Level ===

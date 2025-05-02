@@ -20,9 +20,9 @@ std::string Printer::print(const Program& program)
 void Printer::print(const Function& function)
 {
     printIndent();
-    m_oss << "Function " << function.identifier << ":\n";
+    m_oss << "Function " << function.name << ":\n";
     indentLevel++;
-    for (const auto& inst : function.instructions)
+    for (const auto& inst : function.insts)
         print(*inst);
     indentLevel--;
 }

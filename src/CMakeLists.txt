@@ -6,35 +6,35 @@ set(LEXING_FILES
         Lexing/Lexer.hpp)
 
 set(PARSING_FILES
-        Parsing/ConcreteTree.cpp
-        Parsing/ConcreteTree.hpp
-        Parsing/AbstractTree.cpp
-        Parsing/AbstractTree.hpp
-        Parsing/AstPrinter.cpp
-        Parsing/AstPrinter.hpp
+        Parsing/Parser.cpp
+        Parsing/Parser.hpp
+        Parsing/ParserAST.cpp
+        Parsing/ParserAST.hpp
+        Parsing/ASTPrinter.cpp
+        Parsing/ASTPrinter.hpp
         Parsing/VariableResolution.cpp
         Parsing/VariableResolution.hpp)
+
+set(IR_FILES
+        IR/IrAST.cpp
+        IR/IrAST.hpp
+        IR/GenerateIr.cpp
+        IR/GenerateIr.hpp
+        IR/Printer.cpp
+        IR/Printer.hpp)
 
 set(CODEGEN_FILES
         CodeGen/Assembly.cpp
         CodeGen/Assembly.hpp
-        CodeGen/AbstractTree.cpp
-        CodeGen/AbstractTree.hpp
-        CodeGen/ConcreteTree.cpp
-        CodeGen/ConcreteTree.hpp
+        CodeGen/AsmAST.cpp
+        CodeGen/AsmAST.hpp
+        CodeGen/GenerateAsmTree.cpp
+        CodeGen/GenerateAsmTree.hpp
         CodeGen/PseudoRegisterReplacer.cpp
         CodeGen/PseudoRegisterReplacer.hpp
         CodeGen/FixUpInstructions.cpp
         CodeGen/FixUpInstructions.hpp
 )
-
-set(IR_FILES
-        IR/AbstractTree.cpp
-        IR/AbstractTree.hpp
-        IR/ConcreteTree.cpp
-        IR/ConcreteTree.hpp
-        IR/Printer.cpp
-        IR/Printer.hpp)
 
 add_library(CC_lib STATIC
         main.cpp

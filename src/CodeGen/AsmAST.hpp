@@ -9,8 +9,6 @@
 #include <utility>
 #include <vector>
 
-#include "IR/AbstractTree.hpp"
-
 /*
 
 program = Program(function_definition)

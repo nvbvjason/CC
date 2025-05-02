@@ -3,7 +3,7 @@
 #ifndef CC_CODEGEN_AST_TO_ASSEMBLY_HPP
 #define CC_CODEGEN_AST_TO_ASSEMBLY_HPP
 
-#include "AbstractTree.hpp"
+#include "AsmAST.hpp"
 
 namespace CodeGen {
 
