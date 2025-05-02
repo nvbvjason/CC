@@ -13,7 +13,9 @@ set(PARSING_FILES
         Parsing/ASTPrinter.cpp
         Parsing/ASTPrinter.hpp
         Parsing/VariableResolution.cpp
-        Parsing/VariableResolution.hpp)
+        Parsing/VariableResolution.hpp
+        Parsing/ValidateReturn.cpp
+        Parsing/ValidateReturn.hpp)
 
 set(IR_FILES
         IR/IrAST.cpp

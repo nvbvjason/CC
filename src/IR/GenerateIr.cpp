@@ -19,50 +19,61 @@ std::unique_ptr<Function> function(const Parsing::Function& parsingFunction)
     auto functionTacky = std::make_unique<Function>(parsingFunction.name);
     for (const std::unique_ptr<Parsing::BlockItem>& item : parsingFunction.body)
         blockItem(*item, functionTacky->insts);
-    // grrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-    auto zeroVal = std::make_shared<ValueConst>(0);
-    functionTacky->insts.push_back(std::make_unique<ReturnInst>(zeroVal));
-    return std::move(functionTacky);
+    return functionTacky;
 }
 
-std::shared_ptr<Value> blockItem(const Parsing::BlockItem& blockItem,
+void blockItem(const Parsing::BlockItem& blockItem,
                                  std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     using Kind = Parsing::BlockItem::Kind;
     switch (blockItem.kind) {
         case Kind::Declaration: {
             const auto decl = dynamic_cast<const Parsing::DeclarationBlockItem*>(&blockItem);
-            return declaration(*decl->decl, instructions);
+            declaration(*decl->decl, instructions);
+            break;
         }
         case Kind::Statement: {
             const auto stmt = dynamic_cast<const Parsing::StmtBlockItem*>(&blockItem);
-            return statement(*stmt->stmt, instructions);
+            statement(*stmt->stmt, instructions);
+            break;
         }
+        default:
+            throw std::invalid_argument("Unexpected block item type ir generateBlockItem");
     }
 }
 
-std::shared_ptr<Value> declaration(const Parsing::Declaration& decl,
-                                   std::vector<std::unique_ptr<Instruction>>& instructions)
+void declaration(const Parsing::Declaration& decl,
+                 std::vector<std::unique_ptr<Instruction>>& insts)
 {
     if (decl.init == nullptr)
-        return nullptr;
-    return inst(*decl.init, instructions);
+        return;
+    auto value = inst(*decl.init, insts);
+    auto temporary = std::make_shared<ValueVar>(makeTemporaryName());
+    insts.push_back(std::make_unique<CopyInst>(value, temporary));
+    const Identifier iden(decl.name);
+    auto var = std::make_shared<ValueVar>(iden);
+    insts.push_back(std::make_unique<CopyInst>(temporary, var));
 }
 
-std::shared_ptr<Value> statement(const Parsing::Stmt& stmt,
-                                 std::vector<std::unique_ptr<Instruction>>& instructions)
+void statement(const Parsing::Stmt& stmt,
+                                 std::vector<std::unique_ptr<Instruction>>& insts)
 {
     using Kind = Parsing::Stmt::Kind;
     switch (stmt.kind) {
         case Kind::Null:
-            return nullptr;
+            break;
         case Kind::Expression: {
             const auto stmtExpr = dynamic_cast<const Parsing::ExprStmt*>(&stmt);
-            return inst(*stmtExpr->expression, instructions);
+            inst(*stmtExpr->expression, insts);
+            break;
         }
         case Kind::Return: {
-            const auto returnExpr = dynamic_cast<const Parsing::ReturnStmt*>(&stmt);
-            return inst(*returnExpr->expression, instructions);;
+            const auto returnStmt = dynamic_cast<const Parsing::ReturnStmt*>(&stmt);
+            auto value = inst(*returnStmt->expression, insts);
+            if (value == nullptr)
+                break;
+            insts.push_back(std::make_unique<ReturnInst>(value));
+            break;
         }
         default:
             throw std::invalid_argument("Unexpected statement type Ir generate");
@@ -73,8 +84,10 @@ std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
                             std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     switch (parsingExpr.kind) {
+        case Parsing::Expr::Kind::Var:
+            return varInst(parsingExpr);
         case Parsing::Expr::Kind::Constant:
-            return returnInst(parsingExpr);
+            return constInst(parsingExpr);
         case Parsing::Expr::Kind::Unary:
             return unaryInst(parsingExpr, instructions);
         case Parsing::Expr::Kind::Binary:
@@ -82,17 +95,24 @@ std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
         case Parsing::Expr::Kind::Assignment:
             return assignInst(parsingExpr, instructions);
         default:
-            throw std::invalid_argument("Unexpected expression type");
+            throw std::invalid_argument("Unexpected expression type ir generateInst");
     }
 }
 
-std::shared_ptr<ValueVar> unaryInst(const Parsing::Expr& parsingExpr,
+std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr)
+{
+    const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(&parsingExpr);
+    const Identifier iden(varExpr->name);
+    auto var = std::make_shared<ValueVar>(iden);
+    return var;
+}
+
+std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
                                     std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto unaryParsingPtr = static_cast<const Parsing::UnaryExpr*>(&parsingExpr);
     UnaryInst::Operation operation = convertUnaryOperation(unaryParsingPtr->op);
-    const Parsing::Expr inner = *unaryParsingPtr->operand;
-    auto source = inst(inner, instructions);
+    auto source = inst(*unaryParsingPtr->operand, instructions);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
     instructions.push_back(std::make_unique<UnaryInst>(operation, source, destination));
     return destination;
@@ -107,10 +127,8 @@ std::shared_ptr<Value> binaryInst(const Parsing::Expr& parsingExpr,
         return binaryAndInst(*binaryParsing, instructions);
     if (operation == BinaryInst::Operation::Or)
         return binaryOrInst(*binaryParsing, instructions);
-    const Parsing::Expr lhs = *binaryParsing->lhs;
-    const Parsing::Expr rhs = *binaryParsing->rhs;
-    auto source1 = inst(lhs, instructions);
-    auto source2 = inst(rhs, instructions);
+    auto source1 = inst(*binaryParsing->lhs, instructions);
+    auto source2 = inst(*binaryParsing->rhs, instructions);
 
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
 
@@ -119,12 +137,13 @@ std::shared_ptr<Value> binaryInst(const Parsing::Expr& parsingExpr,
 }
 
 std::shared_ptr<Value> assignInst(const Parsing::Expr& binaryExpr,
-                                        std::vector<std::unique_ptr<Instruction>>& instructions)
+                                  std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto assignExpr = dynamic_cast<const Parsing::AssignmentExpr*>(&binaryExpr);
-    auto destination = std::make_shared<ValueVar>(makeTemporaryName());
-    const Parsing::Expr rhs = *assignExpr->rhs;
-    auto result = inst(rhs, instructions);
+    const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr->lhs.get());
+    const Identifier iden(varExpr->name);
+    auto destination = std::make_shared<ValueVar>(iden);
+    auto result = inst(*assignExpr->rhs, instructions);
     instructions.push_back(std::make_unique<CopyInst>(result, destination));
     return destination;
 }
@@ -169,7 +188,7 @@ std::shared_ptr<Value> binaryOrInst(const Parsing::BinaryExpr& binaryExpr,
     return result;
 }
 
-std::shared_ptr<ValueConst> returnInst(const Parsing::Expr& parsingExpr)
+std::shared_ptr<Value> constInst(const Parsing::Expr& parsingExpr)
 {
     const auto constant = dynamic_cast<const Parsing::ConstExpr*>(&parsingExpr);
     auto result = std::make_unique<ValueConst>(constant->value);
@@ -179,9 +198,9 @@ std::shared_ptr<ValueConst> returnInst(const Parsing::Expr& parsingExpr)
 Identifier makeTemporaryName()
 {
     static i32 id = 0;
-    std::string result = "tmp.";
-    result += std::to_string(id++);
-    return {result};
+    std::string prefix = "tmp.";
+    prefix += std::to_string(id++);
+    return {prefix};
 }
 
 UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)

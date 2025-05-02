@@ -107,6 +107,7 @@ void VariableResolution::resolveExpr(Expr& declaration)
                 m_valid = false;
                 return;
             }
+            varExpr->name = variableMap.at(varExpr->name);
             resolveExpr(*assignmentExpr->rhs);
             break;
         }

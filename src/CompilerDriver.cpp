@@ -13,6 +13,7 @@
 #include <fstream>
 #include <filesystem>
 
+#include "Parsing/ValidateReturn.hpp"
 #include "Parsing/VariableResolution.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
@@ -55,12 +56,12 @@ int CompilerDriver::run() const
         return 1;
     if (argument == "--parse")
         return 0;
-    if (argument == "--printAst")
-        return printParsingAst(&program);
     if (!validateParsing(program))
         return 1;
     if (argument == "--validate")
         return 0;
+    if (argument == "--printAst")
+        return printParsingAst(&program);
     Ir::Program irProgram = ir(&program);
     if (argument == "--tacky")
         return 0;
@@ -152,7 +153,10 @@ std::string getSourceCode(const std::string &inputFile)
 bool validateParsing(Parsing::Program& programNode)
 {
     Parsing::VariableResolution variableResolution(programNode);
-    return variableResolution.resolve();
+    if (!variableResolution.resolve())
+        return false;
+    Parsing::ValidateReturn validateReturn;
+    return validateReturn.programValidate(programNode);
 }
 
 static std::string preProcess(const std::string &file)
