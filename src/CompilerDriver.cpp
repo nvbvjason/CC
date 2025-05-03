@@ -42,6 +42,8 @@ int CompilerDriver::run() const
     auto [irProgram, err] = frontend.run();
     if (err != 0)
         return err;
+    if (irProgram == nullptr)
+        return 0;
     if (argument == "--tacky")
         return 0;
     if (argument == "--printTacky") {

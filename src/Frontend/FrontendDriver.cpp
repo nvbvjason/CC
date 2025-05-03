@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "ASTPrinter.hpp"
+#include "Traverser/ASTPrinter.hpp"
 #include "GenerateIr.hpp"
 #include "Lexer.hpp"
 #include "LvalueVerification.hpp"
@@ -15,7 +15,7 @@
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
-static i32 printParsingAst(const Parsing::Program* program);
+static void printParsingAst(const Parsing::Program* program);
 static bool validateSemantics(Parsing::Program& programNode);
 static Ir::Program ir(const Parsing::Program* parsingProgram);
 static std::string preProcess(const std::string &file);
@@ -36,8 +36,10 @@ std::tuple<std::unique_ptr<Ir::Program>, i32> FrontendDriver::run() const
         return {nullptr, 1};
     if (m_arg == "--validate")
         return {nullptr, 0};
-    if (m_arg == "--printAst")
-        return {nullptr, printParsingAst(&program)};
+    if (m_arg == "--printAst") {
+        printParsingAst(&program);
+        return {nullptr, 0};
+    }
     std::unique_ptr<Ir::Program> irProgram = std::make_unique<Ir::Program>(ir(&program));
     return {std::move(irProgram), 0};
 }
@@ -61,11 +63,11 @@ bool validateSemantics(Parsing::Program& programNode)
     return lvalueVerification.resolve();
 }
 
-i32 printParsingAst(const Parsing::Program* program)
+void printParsingAst(const Parsing::Program* program)
 {
     Parsing::ASTPrinter printer;
-    std::cout << printer.print(*program);
-    return 0;
+    program->accept(printer);
+    std::cout << printer.getString();
 }
 
 i32 lex(std::vector<Lexing::Token> &lexemes, const std::string& inputFile)

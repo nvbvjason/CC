@@ -26,7 +26,7 @@ std::unique_ptr<Function> function(const Parsing::Function& parsingFunction)
 }
 
 void blockItem(const Parsing::BlockItem& blockItem,
-                                 std::vector<std::unique_ptr<Instruction>>& instructions)
+               std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     using Kind = Parsing::BlockItem::Kind;
     switch (blockItem.kind) {
@@ -102,25 +102,19 @@ std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
     }
 }
 
-std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr)
-{
-    const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(&parsingExpr);
-    const Identifier iden(varExpr->name);
-    auto var = std::make_shared<ValueVar>(iden);
-    return var;
-}
-
 std::shared_ptr<Value> unaryPostfixInst(const Parsing::UnaryExpr& unaryExpr,
                                         std::vector<std::unique_ptr<Instruction>>& instructions)
 {
-    Identifier tempIden(makeTemporaryName());
-    auto temp = std::make_shared<ValueVar>(tempIden);
+    auto originalForReturn = std::make_shared<ValueVar>(makeTemporaryName());
+    auto tempNew = std::make_shared<ValueVar>(makeTemporaryName());
     auto original = inst(*unaryExpr.operand, instructions);
-    instructions.push_back(std::make_unique<CopyInst>(original, temp));
+    instructions.push_back(std::make_unique<CopyInst>(original, originalForReturn));
     auto operation = std::make_shared<ValueConst>(1);
-    instructions.push_back(std::make_unique<BinaryInst>(getPostPrefixOperation(unaryExpr.op), original, operation, temp));
-    instructions.push_back(std::make_unique<CopyInst>(temp, original));
-    return temp;
+    instructions.push_back(std::make_unique<BinaryInst>(
+        getPostPrefixOperation(unaryExpr.op), originalForReturn, operation, tempNew
+    ));
+    instructions.push_back(std::make_unique<CopyInst>(tempNew, original));
+    return originalForReturn;
 }
 
 std::shared_ptr<Value> unaryPrefixInst(const Parsing::UnaryExpr& unaryExpr,
@@ -139,15 +133,23 @@ std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
                                  std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto unaryParsingPtr = static_cast<const Parsing::UnaryExpr*>(&parsingExpr);
-    UnaryInst::Operation operation = convertUnaryOperation(unaryParsingPtr->op);
     if (isPostfixOp(unaryParsingPtr->op))
         return unaryPostfixInst(*unaryParsingPtr, instructions);
     if (isPrefixOp(unaryParsingPtr->op))
         return unaryPrefixInst(*unaryParsingPtr, instructions);
+    UnaryInst::Operation operation = convertUnaryOperation(unaryParsingPtr->op);
     auto source = inst(*unaryParsingPtr->operand, instructions);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
     instructions.push_back(std::make_unique<UnaryInst>(operation, source, destination));
     return destination;
+}
+
+std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr)
+{
+    const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(&parsingExpr);
+    const Identifier iden(varExpr->name);
+    auto var = std::make_shared<ValueVar>(iden);
+    return var;
 }
 
 std::shared_ptr<Value> binaryInst(const Parsing::Expr& parsingExpr,

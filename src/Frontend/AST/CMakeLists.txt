@@ -1,7 +1,7 @@
 add_library(AST
         ASTFwd.cpp
         ASTParser.cpp
-        ASTPrinter.cpp
+        ../Traverser/ASTPrinter.cpp
         ASTVisitor.cpp
 )
 

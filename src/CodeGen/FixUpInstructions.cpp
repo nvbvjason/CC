@@ -5,8 +5,8 @@ namespace CodeGen {
 
 void FixUpInstructions::fixUp() {
     m_copy.reserve(m_insts.size() * 3 + 1);
-    if (0 < stackAlloc)
-        m_copy.push_back(std::make_unique<AllocStackInst>(stackAlloc));
+    if (0 < -stackAlloc)
+        m_copy.push_back(std::make_unique<AllocStackInst>(-stackAlloc));
     while (!m_insts.empty()) {
         auto inst = std::move(m_insts.front());
         m_insts.erase(m_insts.begin());

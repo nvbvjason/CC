@@ -49,6 +49,7 @@ void VariableResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
         m_valid = false;
         return;
     }
+    varExpr->name = variableMap.at(varExpr->name);
     assignmentExpr.rhs->accept(*this);
 }
 
