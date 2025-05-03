@@ -3,38 +3,39 @@
 namespace Semantics {
 bool VariableResolution::resolve()
 {
-    resolveFunction(*program.function);
+    m_valid = true;
+    m_counter = 0;
+    variableMap.clear();
+    program.accept(*this);
     return m_valid;
 }
 
-void VariableResolution::resolveFunction(Parsing::Function& func)
-{
-    for (std::unique_ptr<Parsing::BlockItem>& blockItem: func.body) {
-        if (!m_valid)
-            return;
-        resolveBlockItem(*blockItem);
-    }
-}
-
-void VariableResolution::resolveBlockItem(Parsing::BlockItem& blockItem)
+void VariableResolution::visit(Parsing::Function& function)
 {
     if (!m_valid)
         return;
-    switch (blockItem.kind) {
-        case Parsing::BlockItem::Kind::Declaration: {
-            auto declaration = static_cast<Parsing::DeclBlockItem*>(&blockItem);
-            resolveDeclaration(*declaration->decl);
+    for (std::unique_ptr<Parsing::BlockItem>& blockItem: function.body) {
+        if (!m_valid)
             break;
-        }
-        case Parsing::BlockItem::Kind::Statement: {
-            auto declaration = static_cast<Parsing::StmtBlockItem*>(&blockItem);
-            resolveStmt(*declaration->stmt);
-            break;
-        }
+        blockItem->accept(*this);
     }
 }
 
-void VariableResolution::resolveDeclaration(Parsing::Declaration& declaration)
+void VariableResolution::visit(Parsing::DeclBlockItem& declBlockItem)
+{
+    if (!m_valid)
+        return;
+    declBlockItem.decl->accept(*this);
+}
+
+void VariableResolution::visit(Parsing::StmtBlockItem& stmtBlockItem)
+{
+    if (!m_valid)
+        return;
+    stmtBlockItem.stmt->accept(*this);
+}
+
+void VariableResolution::visit(Parsing::Declaration& declaration)
 {
     if (!m_valid)
         return;
@@ -46,74 +47,63 @@ void VariableResolution::resolveDeclaration(Parsing::Declaration& declaration)
     variableMap[declaration.name] = uniqueName;
     declaration.name = uniqueName;
     if (declaration.init != nullptr)
-        resolveExpr(*declaration.init);
+        declaration.init->accept(*this);
 }
 
-void VariableResolution::resolveStmt(Parsing::Stmt& stmt)
+void VariableResolution::visit(Parsing::ExprStmt& exprStmt)
 {
-    using Kind = Parsing::Stmt::Kind;
     if (!m_valid)
         return;
-    switch (stmt.kind) {
-        case Kind::Expression: {
-            auto exprStmt = static_cast<Parsing::ExprStmt*>(&stmt);
-            resolveExpr(*exprStmt->expr);
-            break;
-        }
-        case Kind::Return: {
-            auto returnStmt = static_cast<Parsing::ReturnStmt*>(&stmt);
-            resolveExpr(*returnStmt->expr);
-            break;
-        }
-        case Kind::Null:
-            break;
-    }
+    exprStmt.expr->accept(*this);
 }
 
-void VariableResolution::resolveExpr(Parsing::Expr& declaration)
+void VariableResolution::visit(Parsing::ReturnStmt& returnStmt)
 {
-    using Kind = Parsing::Expr::Kind;
     if (!m_valid)
         return;
-    switch (declaration.kind) {
-        case Kind::Constant:
-            break;
-        case Kind::Var: {
-            auto varExpr = static_cast<Parsing::VarExpr*>(&declaration);
-            if (!variableMap.contains(varExpr->name)) {
-                m_valid = false;
-                return;
-            }
-            varExpr->name = variableMap.at(varExpr->name);
-            break;
-        }
-        case Kind::Unary: {
-            auto unaryExpr = static_cast<Parsing::UnaryExpr*>(&declaration);
-            resolveExpr(*unaryExpr->operand);
-            break;
-        }
-        case Kind::Binary: {
-            auto binaryExpr = static_cast<Parsing::BinaryExpr*>(&declaration);
-            resolveExpr(*binaryExpr->lhs);
-            resolveExpr(*binaryExpr->rhs);
-            break;
-        }
-        case Kind::Assignment: {
-            auto assignmentExpr = static_cast<Parsing::AssignmentExpr*>(&declaration);
-            if (assignmentExpr->lhs->kind != Kind::Var) {
-                m_valid = false;
-                return;
-            }
-            auto varExpr = static_cast<Parsing::VarExpr*>(assignmentExpr->lhs.get());
-            if (!variableMap.contains(varExpr->name)) {
-                m_valid = false;
-                return;
-            }
-            varExpr->name = variableMap.at(varExpr->name);
-            resolveExpr(*assignmentExpr->rhs);
-            break;
-        }
+    returnStmt.expr->accept(*this);
+}
+
+void VariableResolution::visit(Parsing::VarExpr& varExpr)
+{
+    if (!m_valid)
+        return;
+    if (!variableMap.contains(varExpr.name)) {
+        m_valid = false;
+        return;
     }
+    varExpr.name = variableMap.at(varExpr.name);
+}
+
+void VariableResolution::visit(Parsing::UnaryExpr& unaryExpr)
+{
+    if (!m_valid)
+        return;
+    unaryExpr.operand->accept(*this);
+}
+
+void VariableResolution::visit(Parsing::BinaryExpr& binaryExpr)
+{
+    if (!m_valid)
+        return;
+    binaryExpr.lhs->accept(*this);
+    binaryExpr.rhs->accept(*this);
+}
+
+void VariableResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
+{
+    if (!m_valid)
+        return;
+    if (assignmentExpr.lhs->kind != Parsing::Expr::Kind::Var) {
+        m_valid = false;
+        return;
+    }
+    auto varExpr = static_cast<Parsing::VarExpr*>(assignmentExpr.lhs.get());
+    if (!variableMap.contains(varExpr->name)) {
+        m_valid = false;
+        return;
+    }
+    assignmentExpr.rhs->accept(*this);
 }
 
 std::string VariableResolution::makeTemporary(const std::string& name)

@@ -15,6 +15,7 @@ target_link_libraries(Frontend PUBLIC
         AST
         Parsing
         Semantics
+        ParsingTraversers
         FrontendIR  # Avoid name clash with src/IR
 )
 

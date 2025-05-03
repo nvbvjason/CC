@@ -3,7 +3,7 @@
 #ifndef CC_PARSING_AST_TRAVERSER_HPP
 #define CC_PARSING_AST_TRAVERSER_HPP
 
-#include "../AST/ASTVisitor.hpp"
+#include "ASTVisitor.hpp"
 
 namespace Parsing {
 
@@ -28,8 +28,6 @@ public:
     void visit(BinaryExpr& binaryExpr) override;
     void visit(AssignmentExpr& assignmentExpr) override;
 };
-
-
 
 } // Parsing
 

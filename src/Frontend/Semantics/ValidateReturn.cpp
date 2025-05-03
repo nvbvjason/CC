@@ -3,35 +3,42 @@
 namespace Semantics {
 bool ValidateReturn::programValidate(Parsing::Program& program)
 {
-    return functionValidate(*program.function);
-}
-
-void ValidateReturn::addReturnZero(Parsing::Function& function)
-{
-    auto zeroConstExpr = std::make_unique<Parsing::ConstExpr>(0);
-    auto returnStmt = std::make_unique<Parsing::ReturnStmt>(std::move(zeroConstExpr));
-    auto returnBlockStmt = std::make_unique<Parsing::StmtBlockItem>(std::move(returnStmt));
-    function.body.push_back(std::move(returnBlockStmt));
+    m_hasValidReturns = true;
+    program.accept(*this);
+    return m_hasValidReturns;
 }
 
 bool ValidateReturn::functionValidate(Parsing::Function& function)
 {
-    if (function.body.empty()) {
-        addReturnZero(function);
-        return true;
-    }
-    auto& lastBlockItemUnique = function.body.back();
-    auto* lastBlockItem = lastBlockItemUnique.get();
-    if (lastBlockItem->kind != Parsing::BlockItem::Kind::Statement) {
-        addReturnZero(function);
-        return true;
-    }
-    auto* stmtBlockItem = dynamic_cast<Parsing::StmtBlockItem*>(lastBlockItem);
-    if (stmtBlockItem->stmt->kind != Parsing::Stmt::Kind::Return) {
-        addReturnZero(function);
-        return true;
-    }
-    return true;
+    function.accept(*this);
+    return m_hasValidReturns;
 }
 
+void ValidateReturn::visit(Parsing::Function& function)
+{
+    if (function.body.empty()) {
+            addReturnZero(function);
+        return;
+    }
+
+    for (std::unique_ptr<Parsing::BlockItem>& blockItem : function.body)
+        blockItem->accept(*this);
+
+    auto& lastBlockItem = function.body.back();
+    if (lastBlockItem->kind != Parsing::BlockItem::Kind::Statement) {
+        addReturnZero(function);
+        return;
+    }
+
+    auto* stmtBlockItem = dynamic_cast<Parsing::StmtBlockItem*>(lastBlockItem.get());
+    if (stmtBlockItem->stmt->kind != Parsing::Stmt::Kind::Return)
+        addReturnZero(function);
+}
+
+void ValidateReturn::visit(Parsing::StmtBlockItem& stmtBlockItem)
+{
+    if (stmtBlockItem.stmt->kind == Parsing::Stmt::Kind::Return)
+        m_hasValidReturns = true;
+    stmtBlockItem.stmt->accept(*this);
+}
 } // Semantics
