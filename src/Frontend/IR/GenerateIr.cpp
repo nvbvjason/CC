@@ -1,11 +1,13 @@
 #include "GenerateIr.hpp"
-#include "../AST/ASTParser.hpp"
 
 #include <stdexcept>
 
 namespace Ir {
 
 static Identifier makeTemporaryName();
+static bool isPostfixOp(Parsing::UnaryExpr::Operator oper);
+static bool isPrefixOp(Parsing::UnaryExpr::Operator oper);
+static BinaryInst::Operation getPostPrefixOperation(Parsing::UnaryExpr::Operator oper);
 static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation);
 static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Operator binaryOperation);
@@ -57,7 +59,7 @@ void declaration(const Parsing::Declaration& decl,
 }
 
 void statement(const Parsing::Stmt& stmt,
-                                 std::vector<std::unique_ptr<Instruction>>& insts)
+               std::vector<std::unique_ptr<Instruction>>& insts)
 {
     using Kind = Parsing::Stmt::Kind;
     switch (stmt.kind) {
@@ -108,11 +110,40 @@ std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr)
     return var;
 }
 
+std::shared_ptr<Value> unaryPostfixInst(const Parsing::UnaryExpr& unaryExpr,
+                                        std::vector<std::unique_ptr<Instruction>>& instructions)
+{
+    Identifier tempIden(makeTemporaryName());
+    auto temp = std::make_shared<ValueVar>(tempIden);
+    auto original = inst(*unaryExpr.operand, instructions);
+    instructions.push_back(std::make_unique<CopyInst>(original, temp));
+    auto operation = std::make_shared<ValueConst>(1);
+    instructions.push_back(std::make_unique<BinaryInst>(getPostPrefixOperation(unaryExpr.op), original, operation, temp));
+    instructions.push_back(std::make_unique<CopyInst>(temp, original));
+    return temp;
+}
+
+std::shared_ptr<Value> unaryPrefixInst(const Parsing::UnaryExpr& unaryExpr,
+                                        std::vector<std::unique_ptr<Instruction>>& instructions)
+{
+    auto original = inst(*unaryExpr.operand, instructions);
+    auto temp = std::make_shared<ValueVar>(Identifier(makeTemporaryName()));
+    instructions.push_back(std::make_unique<BinaryInst>(
+        getPostPrefixOperation(unaryExpr.op), original, std::make_shared<ValueConst>(1), temp)
+    );
+    instructions.push_back(std::make_unique<CopyInst>(temp, original));
+    return temp;
+}
+
 std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
-                                    std::vector<std::unique_ptr<Instruction>>& instructions)
+                                 std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto unaryParsingPtr = static_cast<const Parsing::UnaryExpr*>(&parsingExpr);
     UnaryInst::Operation operation = convertUnaryOperation(unaryParsingPtr->op);
+    if (isPostfixOp(unaryParsingPtr->op))
+        return unaryPostfixInst(*unaryParsingPtr, instructions);
+    if (isPrefixOp(unaryParsingPtr->op))
+        return unaryPrefixInst(*unaryParsingPtr, instructions);
     auto source = inst(*unaryParsingPtr->operand, instructions);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
     instructions.push_back(std::make_unique<UnaryInst>(operation, source, destination));
@@ -162,13 +193,13 @@ std::shared_ptr<Value> compoundAssignInst(const Parsing::AssignmentExpr& assignE
 {
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr.lhs.get());
     const Identifier iden(varExpr->name);
-    auto destination = std::make_shared<ValueVar>(iden);
-    auto source = inst(*assignExpr.rhs, instructions);
+    auto lhs = std::make_shared<ValueVar>(iden);
     BinaryInst::Operation operation = convertAssiOperation(assignExpr.op);
+    auto destination = std::make_shared<ValueVar>(makeTemporaryName());
     auto rhs = inst(*assignExpr.rhs, instructions);
-    instructions.push_back(std::make_unique<BinaryInst>(operation, source, rhs, destination));
-    instructions.push_back(std::make_unique<CopyInst>(destination, source));
-    return destination;
+    instructions.push_back(std::make_unique<BinaryInst>(operation, lhs, rhs, destination));
+    instructions.push_back(std::make_unique<CopyInst>(destination, lhs));
+    return lhs;
 }
 
 std::shared_ptr<Value> binaryAndInst(const Parsing::BinaryExpr& parsingExpr,
@@ -294,4 +325,28 @@ BinaryInst::Operation convertAssiOperation(const Parsing::AssignmentExpr::Operat
     }
 }
 
+bool isPostfixOp(const Parsing::UnaryExpr::Operator oper)
+{
+    return oper == Parsing::UnaryExpr::Operator::PostFixDecrement
+        || oper == Parsing::UnaryExpr::Operator::PostFixIncrement;
+}
+
+bool isPrefixOp(const Parsing::UnaryExpr::Operator oper)
+{
+    return oper == Parsing::UnaryExpr::Operator::PrefixDecrement
+        || oper == Parsing::UnaryExpr::Operator::PrefixIncrement;
+}
+
+BinaryInst::Operation getPostPrefixOperation(Parsing::UnaryExpr::Operator oper)
+{
+    using Operator = Parsing::UnaryExpr::Operator;
+    switch (oper) {
+        case Operator::PostFixDecrement: return BinaryInst::Operation::Subtract;
+        case Operator::PrefixDecrement:  return BinaryInst::Operation::Subtract;
+        case Operator::PostFixIncrement: return BinaryInst::Operation::Add;
+        case Operator::PrefixIncrement:  return BinaryInst::Operation::Add;
+        default:
+            throw std::invalid_argument("Invalid postfix operation");
+    }
+}
 } // IR
