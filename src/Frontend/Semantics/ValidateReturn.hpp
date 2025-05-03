@@ -11,7 +11,6 @@ class ValidateReturn : public Parsing::ASTTraverser {
     bool m_hasValidReturns = true;
 public:
     bool programValidate(Parsing::Program& program);
-    bool functionValidate(Parsing::Function& function);
 private:
     static void addReturnZero(Parsing::Function& function);
     void visit(Parsing::Function& function) override;

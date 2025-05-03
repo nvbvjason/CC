@@ -8,6 +8,7 @@ namespace Ir {
 static Identifier makeTemporaryName();
 static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation);
+static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Operator binaryOperation);
 
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 {
@@ -140,11 +141,33 @@ std::shared_ptr<Value> assignInst(const Parsing::Expr& binaryExpr,
                                   std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto assignExpr = dynamic_cast<const Parsing::AssignmentExpr*>(&binaryExpr);
-    const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr->lhs.get());
+    if (assignExpr->op != Parsing::AssignmentExpr::Operator::Assign)
+        return compoundAssignInst(*assignExpr, instructions);
+    return simpleAssignInst(*assignExpr, instructions);
+}
+
+std::shared_ptr<Value> simpleAssignInst(const Parsing::AssignmentExpr& assignExpr,
+                                        std::vector<std::unique_ptr<Instruction>>& instructions)
+{
+    const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr.lhs.get());
     const Identifier iden(varExpr->name);
     auto destination = std::make_shared<ValueVar>(iden);
-    auto result = inst(*assignExpr->rhs, instructions);
+    auto result = inst(*assignExpr.rhs, instructions);
     instructions.push_back(std::make_unique<CopyInst>(result, destination));
+    return destination;
+}
+
+std::shared_ptr<Value> compoundAssignInst(const Parsing::AssignmentExpr& assignExpr,
+                                          std::vector<std::unique_ptr<Instruction>>& instructions)
+{
+    const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr.lhs.get());
+    const Identifier iden(varExpr->name);
+    auto destination = std::make_shared<ValueVar>(iden);
+    auto source = inst(*assignExpr.rhs, instructions);
+    BinaryInst::Operation operation = convertAssiOperation(assignExpr.op);
+    auto rhs = inst(*assignExpr.rhs, instructions);
+    instructions.push_back(std::make_unique<BinaryInst>(operation, source, rhs, destination));
+    instructions.push_back(std::make_unique<CopyInst>(destination, source));
     return destination;
 }
 
@@ -246,7 +269,28 @@ BinaryInst::Operation convertBinaryOperation(const Parsing::BinaryExpr::Operator
         case Parse::LessOrEqual:    return Ir::LessOrEqual;
 
         default:
-            throw std::invalid_argument("Invalid binary operation");
+            throw std::invalid_argument("Invalid binary operation convertBinaryOperation generateIr");
+    }
+}
+
+BinaryInst::Operation convertAssiOperation(const Parsing::AssignmentExpr::Operator binaryOperation)
+{
+    using AssignOper = Parsing::AssignmentExpr::Operator;
+    using Ir = BinaryInst::Operation;
+    switch (binaryOperation) {
+        case AssignOper::BitwiseAndAssign: return Ir::BitwiseAnd;
+        case AssignOper::BitwiseOrAssign:  return Ir::BitwiseOr;
+        case AssignOper::BitwiseXorAssign: return Ir::BitwiseXor;
+        case AssignOper::LeftShiftAssign:  return Ir::LeftShift;
+        case AssignOper::RightShiftAssign: return Ir::RightShift;
+        case AssignOper::MinusAssign:      return Ir::Subtract;
+        case AssignOper::MultiplyAssign:   return Ir::Multiply;
+        case AssignOper::DivideAssign:     return Ir::Divide;
+        case AssignOper::ModuloAssign:     return Ir::Remainder;
+        case AssignOper::PlusAssign:       return Ir::Add;
+
+        default:
+            throw std::invalid_argument("Invalid binary operation convertAssiOperation generateIr");
     }
 }
 

@@ -8,12 +8,6 @@ bool ValidateReturn::programValidate(Parsing::Program& program)
     return m_hasValidReturns;
 }
 
-bool ValidateReturn::functionValidate(Parsing::Function& function)
-{
-    function.accept(*this);
-    return m_hasValidReturns;
-}
-
 void ValidateReturn::visit(Parsing::Function& function)
 {
     if (function.body.empty()) {

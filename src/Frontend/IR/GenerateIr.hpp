@@ -28,6 +28,10 @@ std::shared_ptr<Value> binaryOrInst(const Parsing::BinaryExpr& binaryExpr,
                                     std::vector<std::unique_ptr<Instruction>>& instructions);
 std::shared_ptr<Value> assignInst(const Parsing::Expr& binaryExpr,
                                   std::vector<std::unique_ptr<Instruction>>& instructions);
+std::shared_ptr<Value> simpleAssignInst(const Parsing::AssignmentExpr& assignExpr,
+                                        std::vector<std::unique_ptr<Instruction>>& instructions);
+std::shared_ptr<Value> compoundAssignInst(const Parsing::AssignmentExpr& assignExpr,
+                                          std::vector<std::unique_ptr<Instruction>>& instructions);
 std::shared_ptr<Value> constInst(const Parsing::Expr& parsingExpr);
 std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr);
 
