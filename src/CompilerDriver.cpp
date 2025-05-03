@@ -1,20 +1,23 @@
 #include "CompilerDriver.hpp"
-#include "Lexing/Lexer.hpp"
-#include "Parsing/Parser.hpp"
+
+#include "Frontend/Lexing/Lexer.hpp"
+#include "Frontend/Parsing/Parser.hpp"
+#include "Frontend/Parsing/ASTPrinter.hpp"
+#include "Frontend/Semantics/ValidateReturn.hpp"
+#include "Frontend/Semantics/VariableResolution.hpp"
+
 #include "IR/IrAST.hpp"
 #include "IR/GenerateIr.hpp"
+#include "IR/Printer.hpp"
+
 #include "CodeGen/AsmAST.hpp"
 #include "CodeGen/GenerateAsmTree.hpp"
 #include "CodeGen/Assembly.hpp"
-#include "IR/Printer.hpp"
-#include "Parsing/ASTPrinter.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 
-#include "Semantics/ValidateReturn.hpp"
-#include "Semantics/VariableResolution.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);

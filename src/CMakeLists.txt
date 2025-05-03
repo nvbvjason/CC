@@ -1,33 +1,33 @@
 set(LEXING_FILES
-        Lexing/Token.cpp
-        Lexing/Token.hpp
+        Frontend/Lexing/Token.cpp
+        Frontend/Lexing/Token.hpp
 
-        Lexing/Lexer.cpp
-        Lexing/Lexer.hpp)
+        Frontend/Lexing/Lexer.cpp
+        Frontend/Lexing/Lexer.hpp)
 
 set(PARSING_FILES
-        Parsing/Parser.cpp
-        Parsing/Parser.hpp
-        Parsing/ASTParser.cpp
-        Parsing/ASTParser.hpp
-        Parsing/ASTPrinter.cpp
-        Parsing/ASTPrinter.hpp
-        Parsing/ASTVisitor.cpp
-        Parsing/ASTVisitor.hpp
-        Parsing/AstTraverser.cpp
-        Parsing/AstTraverser.hpp
-        Parsing/ASTFwd.cpp
-        Parsing/ASTFwd.hpp
-        Parsing/ConstAstTraverser.cpp
-        Parsing/ConstAstTraverser.hpp)
+        Frontend/Parsing/Parser.cpp
+        Frontend/Parsing/Parser.hpp
+        Frontend/Parsing/ASTParser.cpp
+        Frontend/Parsing/ASTParser.hpp
+        Frontend/Parsing/ASTPrinter.cpp
+        Frontend/Parsing/ASTPrinter.hpp
+        Frontend/Parsing/ASTVisitor.cpp
+        Frontend/Parsing/ASTVisitor.hpp
+        Frontend/Parsing/AstTraverser.cpp
+        Frontend/Parsing/AstTraverser.hpp
+        Frontend/Parsing/ASTFwd.cpp
+        Frontend/Parsing/ASTFwd.hpp
+        Frontend/Parsing/ConstAstTraverser.cpp
+        Frontend/Parsing/ConstAstTraverser.hpp)
 
 set(SEMANTICS_FILES
-        Semantics/VariableResolution.cpp
-        Semantics/VariableResolution.hpp
-        Semantics/ValidateReturn.cpp
-        Semantics/ValidateReturn.hpp
-        Semantics/LvalueVerification.cpp
-        Semantics/LvalueVerification.hpp
+        Frontend/Semantics/VariableResolution.cpp
+        Frontend/Semantics/VariableResolution.hpp
+        Frontend/Semantics/ValidateReturn.cpp
+        Frontend/Semantics/ValidateReturn.hpp
+        Frontend/Semantics/LvalueVerification.cpp
+        Frontend/Semantics/LvalueVerification.hpp
 )
 
 set(IR_FILES

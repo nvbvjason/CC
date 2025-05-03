@@ -1,12 +1,11 @@
 #include "gtest/gtest.h"
 #include "CompilerDriver.hpp"
-#include "Lexing/Lexer.hpp"
-#include "Parsing/Parser.hpp"
+#include "Frontend/Lexing/Lexer.hpp"
+#include "Frontend/Parsing/Parser.hpp"
+#include "../src/Frontend/Semantics/VariableResolution.hpp"
 
 #include <filesystem>
 #include <fstream>
-
-#include "../src/Semantics/VariableResolution.hpp"
 
 namespace fs = std::filesystem;
 

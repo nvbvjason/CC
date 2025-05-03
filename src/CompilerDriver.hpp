@@ -3,7 +3,7 @@
 #ifndef CC_PROGRAM_HPP
 #define CC_PROGRAM_HPP
 
-#include "Parsing/Parser.hpp"
+#include "Frontend/Parsing/Parser.hpp"
 
 #include <filesystem>
 #include <string>

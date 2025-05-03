@@ -22,7 +22,7 @@
 */
 
 #include "ASTParser.hpp"
-#include "Lexing/Token.hpp"
+#include "Frontend/Lexing/Token.hpp"
 
 #include <vector>
 
