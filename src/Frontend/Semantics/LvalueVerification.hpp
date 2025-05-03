@@ -17,7 +17,7 @@ public:
 
     bool resolve();
 
-
+    void visit(const Parsing::UnaryExpr& unaryExpr) override;
 };
 
 } // Semantics

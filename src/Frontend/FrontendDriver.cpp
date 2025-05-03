@@ -9,13 +9,14 @@
 #include "ASTPrinter.hpp"
 #include "GenerateIr.hpp"
 #include "Lexer.hpp"
+#include "LvalueVerification.hpp"
 #include "Parser.hpp"
 #include "ValidateReturn.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static i32 printParsingAst(const Parsing::Program* program);
-static bool validateParsing(Parsing::Program& programNode);
+static bool validateSemantics(Parsing::Program& programNode);
 static Ir::Program ir(const Parsing::Program* parsingProgram);
 static std::string preProcess(const std::string &file);
 
@@ -31,7 +32,7 @@ std::tuple<std::unique_ptr<Ir::Program>, i32> FrontendDriver::run() const
         return {nullptr, 1};
     if (m_arg == "--parse")
         return {nullptr, 0};
-    if (!validateParsing(program))
+    if (!validateSemantics(program))
         return {nullptr, 1};
     if (m_arg == "--validate")
         return {nullptr, 0};
@@ -48,13 +49,16 @@ std::string getSourceCode(const std::string &inputFile)
     return source;
 }
 
-bool validateParsing(Parsing::Program& programNode)
+bool validateSemantics(Parsing::Program& programNode)
 {
     Semantics::VariableResolution variableResolution(programNode);
     if (!variableResolution.resolve())
         return false;
     Semantics::ValidateReturn validateReturn;
-    return validateReturn.programValidate(programNode);
+    if (!validateReturn.programValidate(programNode))
+        return false;
+    Semantics::LvalueVerification lvalueVerification(programNode);
+    return lvalueVerification.resolve();
 }
 
 i32 printParsingAst(const Parsing::Program* program)

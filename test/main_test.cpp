@@ -7,6 +7,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include "LvalueVerification.hpp"
+
 namespace fs = std::filesystem;
 
 const fs::path testsFolderPath = fs::path(PROJECT_ROOT_DIR) / "test/external/writing-a-c-compiler-tests/tests";
@@ -53,7 +55,10 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     Parsing::Program program;
     parser.programParse(program);
     Semantics::VariableResolution variableResolution(program);
-    return variableResolution.resolve();
+    if (!variableResolution.resolve())
+        return false;
+    Semantics::LvalueVerification lvalueVerification(program);
+    return lvalueVerification.resolve();
 }
 
 TEST(Chapter1, lexingValid)
@@ -295,6 +300,16 @@ TEST(Chapter5, semanticsInvalidExtraCredit)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter5, semanticsvalidExtraCredit)
+{
+    const fs::path validPath = testsFolderPath / "chapter_5/valid/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
     }
 }
 
