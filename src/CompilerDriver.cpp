@@ -1,13 +1,8 @@
 #include "CompilerDriver.hpp"
 
-#include "Frontend/Lexing/Lexer.hpp"
-#include "Frontend/Parsing/Parser.hpp"
-#include "Frontend/AST/ASTPrinter.hpp"
-#include "Frontend/Semantics/ValidateReturn.hpp"
-#include "Frontend/Semantics/VariableResolution.hpp"
+#include "Frontend/FrontendDriver.hpp"
 
 #include "IR/ASTIr.hpp"
-#include "Frontend/IR/GenerateIr.hpp"
 #include "IR/Printer.hpp"
 
 #include "CodeGen/AsmAST.hpp"
@@ -18,18 +13,11 @@
 #include <fstream>
 #include <filesystem>
 
-
-static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
-static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
-static Ir::Program ir(const Parsing::Program* parsingProgram);
-static bool validateParsing(Parsing::Program& programNode);
 static void printIr(const Ir::Program& irProgram);
 static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
-static std::string preProcess(const std::string &file);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
-static i32 printParsingAst(const Parsing::Program* program);
 
 int CompilerDriver::run() const
 {
@@ -50,29 +38,17 @@ int CompilerDriver::run() const
     }
     const std::string inputFile = args.back();
     std::vector<Lexing::Token> tokens;
-    if (const i32 err = lex(tokens, inputFile) != 0)
+    FrontendDriver frontend(argument, inputFile);
+    auto [irProgram, err] = frontend.run();
+    if (err != 0)
         return err;
-    if (argument == "--lex")
-        return 0;
-    Parsing::Program program;
-    if (!parse(tokens, program))
-        return 1;
-    if (argument == "--parse")
-        return 0;
-    if (!validateParsing(program))
-        return 1;
-    if (argument == "--validate")
-        return 0;
-    if (argument == "--printAst")
-        return printParsingAst(&program);
-    Ir::Program irProgram = ir(&program);
     if (argument == "--tacky")
         return 0;
     if (argument == "--printTacky") {
-        printIr(irProgram);
+        printIr(*irProgram);
         return 0;
     }
-    CodeGen::Program codegenProgram = codegen(irProgram);
+    CodeGen::Program codegenProgram = codegen(*irProgram);
     if (argument == "--codegen")
         return 0;
     std::string output = CodeGen::asmProgram(codegenProgram);
@@ -83,37 +59,6 @@ int CompilerDriver::run() const
     ofs.close();
     assemble(outputFileName, inputFile.substr(0, inputFile.length() - 2));
     return 0;
-}
-
-i32 printParsingAst(const Parsing::Program* program)
-{
-    Parsing::ASTPrinter printer;
-    std::cout << printer.print(*program);
-    return 0;
-}
-
-i32 lex(std::vector<Lexing::Token> &lexemes, const std::string& inputFile)
-{
-    const std::string source = preProcess(inputFile);
-    Lexing::Lexer lexer(source);
-    if (const i32 err = lexer.getLexemes(lexemes); err != 0)
-        return err;
-    return 0;
-}
-
-bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode)
-{
-    Parsing::Parse parser(tokens);
-    if (!parser.programParse(programNode))
-        return false;
-    return true;
-}
-
-Ir::Program ir(const Parsing::Program* parsingProgram)
-{
-    Ir::Program irProgram;
-    Ir::program(parsingProgram, irProgram);
-    return irProgram;
 }
 
 void printIr(const Ir::Program& irProgram)
@@ -144,35 +89,6 @@ static bool isCommandLineArgumentValid(const std::string &argument)
     return std::any_of(validArguments.begin(), validArguments.end(), [&](const std::string &arg) {
         return arg == argument;
     });
-}
-
-std::string getSourceCode(const std::string &inputFile)
-{
-    std::ifstream file(inputFile);
-    std::string source((std::istreambuf_iterator(file)), std::istreambuf_iterator<char>());
-    return source;
-}
-
-bool validateParsing(Parsing::Program& programNode)
-{
-    Semantics::VariableResolution variableResolution(programNode);
-    if (!variableResolution.resolve())
-        return false;
-    Semantics::ValidateReturn validateReturn;
-    return validateReturn.programValidate(programNode);
-}
-
-static std::string preProcess(const std::string &file)
-{
-    const std::filesystem::path inputFile(file);
-    const std::filesystem::path generatedFilesDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";
-    const std::filesystem::path generatedFile = generatedFilesDir / (inputFile.stem().string() + ".i");
-    std::string command = "gcc -E -P ";
-    command += inputFile.string();
-    command += " -o ";
-    command += generatedFile.string();
-    system(command.c_str());
-    return getSourceCode(generatedFile.string());
 }
 
 void assemble(const std::string& asmFile, const std::string& outputFile)
