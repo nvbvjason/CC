@@ -53,7 +53,7 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     Parsing::Parse parser(lexemes);
     Parsing::Program program;
     parser.programParse(program);
-    Parsing::VariableResolution variableResolution(program);
+    Semantics::VariableResolution variableResolution(program);
     return variableResolution.resolve();
 }
 

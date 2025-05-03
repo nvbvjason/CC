@@ -4,6 +4,7 @@
 #define CC_PARSING_ABSTRACT_TREE_HPP
 
 #include "ShortTypes.hpp"
+#include "ASTVisitor.hpp"
 
 #include <memory>
 #include <string>
@@ -38,20 +39,19 @@
 
 namespace Parsing {
 
-struct Program;
-struct Function;
-struct BlockItem;
-struct Declaration;
-struct Stmt;
-struct Expr;
-
 struct Program {
     std::unique_ptr<Function> function = nullptr;
+
+    void accept(ASTVisitor& visitor) { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
 struct Function {
     std::string name;
     std::vector<std::unique_ptr<BlockItem>> body;
+
+    void accept(ASTVisitor& visitor) { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
 struct BlockItem {
@@ -62,6 +62,9 @@ struct BlockItem {
 
     BlockItem() = delete;
     virtual ~BlockItem() = default;
+
+    virtual void accept(ASTVisitor& visitor) = 0;
+    virtual void accept(ConstASTVisitor& visitor) const = 0;
 protected:
     explicit BlockItem(const Kind kind)
         : kind(kind) {}
@@ -73,14 +76,20 @@ struct StmtBlockItem final : BlockItem {
         : BlockItem(Kind::Statement), stmt(std::move(stmt)) {}
 
     StmtBlockItem() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
-struct DeclarationBlockItem final : BlockItem {
+struct DeclBlockItem final : BlockItem {
     std::unique_ptr<Declaration> decl;
-    explicit DeclarationBlockItem(std::unique_ptr<Declaration> decl)
+    explicit DeclBlockItem(std::unique_ptr<Declaration> decl)
         : BlockItem(Kind::Declaration), decl(std::move(decl)) {}
 
-    DeclarationBlockItem() = delete;
+    DeclBlockItem() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
 struct Declaration {
@@ -92,6 +101,9 @@ struct Declaration {
         : name(std::move(name)), init(std::move(init)) {}
 
     Declaration() = delete;
+
+    void accept(ASTVisitor& visitor) { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
 struct Stmt {
@@ -102,31 +114,42 @@ struct Stmt {
 
     Stmt() = delete;
     virtual ~Stmt() = default;
+
+    virtual void accept(ASTVisitor& visitor) = 0;
+    virtual void accept(ConstASTVisitor& visitor) const = 0;
 protected:
     explicit Stmt(const Kind kind)
         : kind(kind) {}
 };
 
 struct ReturnStmt final : Stmt {
-    std::unique_ptr<Expr> expression;
+    std::unique_ptr<Expr> expr;
     explicit ReturnStmt(std::unique_ptr<Expr> expr)
-        : Stmt(Kind::Return), expression(std::move(expr)) {}
+        : Stmt(Kind::Return), expr(std::move(expr)) {}
 
     ReturnStmt() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
 struct ExprStmt final : Stmt {
-    std::unique_ptr<Expr> expression;
+    std::unique_ptr<Expr> expr;
     explicit ExprStmt(std::unique_ptr<Expr> expr)
-        : Stmt(Kind::Expression), expression(std::move(expr)) {}
+        : Stmt(Kind::Expression), expr(std::move(expr)) {}
 
     ExprStmt() = delete;
-};
 
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
 
 struct NullStmt final : Stmt {
     NullStmt()
         : Stmt(Kind::Null) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
 struct Expr {
@@ -138,6 +161,8 @@ struct Expr {
     Expr() = delete;
     virtual ~Expr() = default;
 
+    virtual void accept(ASTVisitor& visitor) = 0;
+    virtual void accept(ConstASTVisitor& visitor) const = 0;
 protected:
     explicit Expr(const Kind kind)
         : kind(kind) {}
@@ -149,6 +174,9 @@ struct ConstExpr final : Expr {
         : Expr(Kind::Constant), value(value) {}
 
     ConstExpr() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
 struct VarExpr final : Expr {
@@ -157,6 +185,10 @@ struct VarExpr final : Expr {
         : Expr(Kind::Var), name(std::move(name)) {}
 
     VarExpr() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
 };
 
 struct UnaryExpr final : Expr {
@@ -172,6 +204,9 @@ struct UnaryExpr final : Expr {
         : Expr(Kind::Unary), op(op), operand(std::move(expr)) {}
 
     UnaryExpr() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
 struct BinaryExpr final : Expr {
@@ -191,6 +226,9 @@ struct BinaryExpr final : Expr {
         : Expr(Kind::Binary), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
     BinaryExpr() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
 struct AssignmentExpr final : Expr {
@@ -207,6 +245,9 @@ struct AssignmentExpr final : Expr {
         : Expr(Kind::Assignment), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
     AssignmentExpr() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
 } // Parsing

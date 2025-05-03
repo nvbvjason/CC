@@ -4,7 +4,7 @@
 #define CC_IR_CONCRETE_TREE_HPP
 
 #include "IrAST.hpp"
-#include "Parsing/ParserAST.hpp"
+#include "Parsing/ASTParser.hpp"
 
 namespace Ir {
 

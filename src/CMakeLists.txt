@@ -8,16 +8,27 @@ set(LEXING_FILES
 set(PARSING_FILES
         Parsing/Parser.cpp
         Parsing/Parser.hpp
-        Parsing/ParserAST.cpp
-        Parsing/ParserAST.hpp
+        Parsing/ASTParser.cpp
+        Parsing/ASTParser.hpp
         Parsing/ASTPrinter.cpp
-        Parsing/ASTPrinter.hpp)
+        Parsing/ASTPrinter.hpp
+        Parsing/ASTVisitor.cpp
+        Parsing/ASTVisitor.hpp
+        Parsing/AstTraverser.cpp
+        Parsing/AstTraverser.hpp
+        Parsing/ASTFwd.cpp
+        Parsing/ASTFwd.hpp
+        Parsing/ConstAstTraverser.cpp
+        Parsing/ConstAstTraverser.hpp)
 
 set(SEMANTICS_FILES
         Semantics/VariableResolution.cpp
         Semantics/VariableResolution.hpp
         Semantics/ValidateReturn.cpp
-        Semantics/ValidateReturn.hpp)
+        Semantics/ValidateReturn.hpp
+        Semantics/LvalueVerification.cpp
+        Semantics/LvalueVerification.hpp
+)
 
 set(IR_FILES
         IR/IrAST.cpp

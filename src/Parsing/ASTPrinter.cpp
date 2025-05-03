@@ -90,7 +90,7 @@ void ASTPrinter::print(const BlockItem& blockItem, const int indent)
 {;
     switch (blockItem.kind) {
         case BlockItem::Kind::Declaration: {
-            const auto decl = dynamic_cast<const DeclarationBlockItem*>(&blockItem);
+            const auto decl = dynamic_cast<const DeclBlockItem*>(&blockItem);
             print(*decl->decl ,indent);
             break;
         }
@@ -122,13 +122,13 @@ void ASTPrinter::print(const Stmt& statement, const int indent)
         case Stmt::Kind::Return: {
             const auto returnStmt = dynamic_cast<const ReturnStmt*>(&statement);
             oss << indentStr << "Return Statement\n";
-            print(*returnStmt->expression, indent + 1);
+            print(*returnStmt->expr, indent + 1);
             break;
         }
         case Stmt::Kind::Expression: {
             const auto expressionStmt = dynamic_cast<const ExprStmt*>(&statement);
             oss << indentStr << "Expression Statement\n";
-            print(*expressionStmt->expression, indent + 1);
+            print(*expressionStmt->expr, indent + 1);
             break;
         }
     }

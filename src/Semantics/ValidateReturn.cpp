@@ -1,36 +1,37 @@
 #include "ValidateReturn.hpp"
 
-namespace Parsing {
-bool ValidateReturn::programValidate(Program& program)
+namespace Semantics {
+bool ValidateReturn::programValidate(Parsing::Program& program)
 {
     return functionValidate(*program.function);
 }
 
-void ValidateReturn::addReturnZero(Function& function)
+void ValidateReturn::addReturnZero(Parsing::Function& function)
 {
-    auto zeroConstExpr = std::make_unique<ConstExpr>(0);
-    auto returnStmt = std::make_unique<ReturnStmt>(std::move(zeroConstExpr));
-    auto returnBlockStmt = std::make_unique<StmtBlockItem>(std::move(returnStmt));
+    auto zeroConstExpr = std::make_unique<Parsing::ConstExpr>(0);
+    auto returnStmt = std::make_unique<Parsing::ReturnStmt>(std::move(zeroConstExpr));
+    auto returnBlockStmt = std::make_unique<Parsing::StmtBlockItem>(std::move(returnStmt));
     function.body.push_back(std::move(returnBlockStmt));
 }
 
-bool ValidateReturn::functionValidate(Function& function)
+bool ValidateReturn::functionValidate(Parsing::Function& function)
 {
     if (function.body.empty()) {
         addReturnZero(function);
         return true;
     }
-    auto lastBlockItem = *function.body.back();
-    if (lastBlockItem.kind != BlockItem::Kind::Statement) {
+    auto& lastBlockItemUnique = function.body.back();
+    auto* lastBlockItem = lastBlockItemUnique.get();
+    if (lastBlockItem->kind != Parsing::BlockItem::Kind::Statement) {
         addReturnZero(function);
         return true;
     }
-    const auto stmtBlockItem = static_cast<StmtBlockItem*>(&lastBlockItem);
-    if (stmtBlockItem->stmt->kind != Stmt::Kind::Return) {
+    auto* stmtBlockItem = dynamic_cast<Parsing::StmtBlockItem*>(lastBlockItem);
+    if (stmtBlockItem->stmt->kind != Parsing::Stmt::Kind::Return) {
         addReturnZero(function);
         return true;
     }
     return true;
 }
 
-} // Parsing
+} // Semantics

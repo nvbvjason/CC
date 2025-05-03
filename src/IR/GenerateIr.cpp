@@ -1,5 +1,5 @@
 #include "GenerateIr.hpp"
-#include "Parsing/ParserAST.hpp"
+#include "Parsing/ASTParser.hpp"
 
 #include <stdexcept>
 
@@ -28,7 +28,7 @@ void blockItem(const Parsing::BlockItem& blockItem,
     using Kind = Parsing::BlockItem::Kind;
     switch (blockItem.kind) {
         case Kind::Declaration: {
-            const auto decl = dynamic_cast<const Parsing::DeclarationBlockItem*>(&blockItem);
+            const auto decl = dynamic_cast<const Parsing::DeclBlockItem*>(&blockItem);
             declaration(*decl->decl, instructions);
             break;
         }
@@ -64,12 +64,12 @@ void statement(const Parsing::Stmt& stmt,
             break;
         case Kind::Expression: {
             const auto stmtExpr = dynamic_cast<const Parsing::ExprStmt*>(&stmt);
-            inst(*stmtExpr->expression, insts);
+            inst(*stmtExpr->expr, insts);
             break;
         }
         case Kind::Return: {
             const auto returnStmt = dynamic_cast<const Parsing::ReturnStmt*>(&stmt);
-            auto value = inst(*returnStmt->expression, insts);
+            auto value = inst(*returnStmt->expr, insts);
             if (value == nullptr)
                 break;
             insts.push_back(std::make_unique<ReturnInst>(value));

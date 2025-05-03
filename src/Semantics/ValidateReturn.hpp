@@ -3,16 +3,16 @@
 #ifndef CC_PARSING_VALIDATE_RETURN_HPP
 #define CC_PARSING_VALIDATE_RETURN_HPP
 
-#include "../Parsing/ParserAST.hpp"
+#include "../Parsing/ASTParser.hpp"
 
-namespace Parsing {
+namespace Semantics {
 class ValidateReturn {
 public:
-    bool programValidate(Program& program);
-    bool functionValidate(Function& function);
-    void addReturnZero(Function& function);
+    bool programValidate(Parsing::Program& program);
+    bool functionValidate(Parsing::Function& function);
+    void addReturnZero(Parsing::Function& function);
 };
 
-} // Parsing
+} // Semantics
 
 #endif // CC_PARSING_VALIDATE_RETURN_HPP

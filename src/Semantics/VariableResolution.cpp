@@ -1,40 +1,40 @@
 #include "VariableResolution.hpp"
 
-namespace Parsing {
+namespace Semantics {
 bool VariableResolution::resolve()
 {
     resolveFunction(*program.function);
     return m_valid;
 }
 
-void VariableResolution::resolveFunction(Function& func)
+void VariableResolution::resolveFunction(Parsing::Function& func)
 {
-    for (std::unique_ptr<BlockItem>& blockItem: func.body) {
+    for (std::unique_ptr<Parsing::BlockItem>& blockItem: func.body) {
         if (!m_valid)
             return;
         resolveBlockItem(*blockItem);
     }
 }
 
-void VariableResolution::resolveBlockItem(BlockItem& blockItem)
+void VariableResolution::resolveBlockItem(Parsing::BlockItem& blockItem)
 {
     if (!m_valid)
         return;
     switch (blockItem.kind) {
-        case BlockItem::Kind::Declaration: {
-            auto declaration = static_cast<DeclarationBlockItem*>(&blockItem);
+        case Parsing::BlockItem::Kind::Declaration: {
+            auto declaration = static_cast<Parsing::DeclBlockItem*>(&blockItem);
             resolveDeclaration(*declaration->decl);
             break;
         }
-        case BlockItem::Kind::Statement: {
-            auto declaration = static_cast<StmtBlockItem*>(&blockItem);
+        case Parsing::BlockItem::Kind::Statement: {
+            auto declaration = static_cast<Parsing::StmtBlockItem*>(&blockItem);
             resolveStmt(*declaration->stmt);
             break;
         }
     }
 }
 
-void VariableResolution::resolveDeclaration(Declaration& declaration)
+void VariableResolution::resolveDeclaration(Parsing::Declaration& declaration)
 {
     if (!m_valid)
         return;
@@ -49,35 +49,37 @@ void VariableResolution::resolveDeclaration(Declaration& declaration)
         resolveExpr(*declaration.init);
 }
 
-void VariableResolution::resolveStmt(Stmt& stmt)
+void VariableResolution::resolveStmt(Parsing::Stmt& stmt)
 {
+    using Kind = Parsing::Stmt::Kind;
     if (!m_valid)
         return;
     switch (stmt.kind) {
-        case Stmt::Kind::Expression: {
-            auto exprStmt = static_cast<ExprStmt*>(&stmt);
-            resolveExpr(*exprStmt->expression);
+        case Kind::Expression: {
+            auto exprStmt = static_cast<Parsing::ExprStmt*>(&stmt);
+            resolveExpr(*exprStmt->expr);
             break;
         }
-        case Stmt::Kind::Return: {
-            auto returnStmt = static_cast<ReturnStmt*>(&stmt);
-            resolveExpr(*returnStmt->expression);
+        case Kind::Return: {
+            auto returnStmt = static_cast<Parsing::ReturnStmt*>(&stmt);
+            resolveExpr(*returnStmt->expr);
             break;
         }
-        case Stmt::Kind::Null:
+        case Kind::Null:
             break;
     }
 }
 
-void VariableResolution::resolveExpr(Expr& declaration)
+void VariableResolution::resolveExpr(Parsing::Expr& declaration)
 {
+    using Kind = Parsing::Expr::Kind;
     if (!m_valid)
         return;
     switch (declaration.kind) {
-        case Expr::Kind::Constant:
+        case Kind::Constant:
             break;
-        case Expr::Kind::Var: {
-            auto varExpr = static_cast<VarExpr*>(&declaration);
+        case Kind::Var: {
+            auto varExpr = static_cast<Parsing::VarExpr*>(&declaration);
             if (!variableMap.contains(varExpr->name)) {
                 m_valid = false;
                 return;
@@ -85,24 +87,24 @@ void VariableResolution::resolveExpr(Expr& declaration)
             varExpr->name = variableMap.at(varExpr->name);
             break;
         }
-        case Expr::Kind::Unary: {
-            auto unaryExpr = static_cast<UnaryExpr*>(&declaration);
+        case Kind::Unary: {
+            auto unaryExpr = static_cast<Parsing::UnaryExpr*>(&declaration);
             resolveExpr(*unaryExpr->operand);
             break;
         }
-        case Expr::Kind::Binary: {
-            auto binaryExpr = static_cast<BinaryExpr*>(&declaration);
+        case Kind::Binary: {
+            auto binaryExpr = static_cast<Parsing::BinaryExpr*>(&declaration);
             resolveExpr(*binaryExpr->lhs);
             resolveExpr(*binaryExpr->rhs);
             break;
         }
-        case Expr::Kind::Assignment: {
-            auto assignmentExpr = static_cast<AssignmentExpr*>(&declaration);
-            if (assignmentExpr->lhs->kind != Expr::Kind::Var) {
+        case Kind::Assignment: {
+            auto assignmentExpr = static_cast<Parsing::AssignmentExpr*>(&declaration);
+            if (assignmentExpr->lhs->kind != Kind::Var) {
                 m_valid = false;
                 return;
             }
-            auto varExpr = static_cast<VarExpr*>(assignmentExpr->lhs.get());
+            auto varExpr = static_cast<Parsing::VarExpr*>(assignmentExpr->lhs.get());
             if (!variableMap.contains(varExpr->name)) {
                 m_valid = false;
                 return;
@@ -118,4 +120,4 @@ std::string VariableResolution::makeTemporary(const std::string& name)
 {
     return name + '.' + std::to_string(m_counter++);
 }
-} // Parsing
+} // Semantics

@@ -3,7 +3,7 @@
 #ifndef CC_PARSING_ABSTRACT_TREE_PRINTER_HPP
 #define CC_PARSING_ABSTRACT_TREE_PRINTER_HPP
 
-#include "ParserAST.hpp"
+#include "ASTParser.hpp"
 
 #include <sstream>
 #include <string>

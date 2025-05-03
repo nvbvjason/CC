@@ -152,10 +152,10 @@ std::string getSourceCode(const std::string &inputFile)
 
 bool validateParsing(Parsing::Program& programNode)
 {
-    Parsing::VariableResolution variableResolution(programNode);
+    Semantics::VariableResolution variableResolution(programNode);
     if (!variableResolution.resolve())
         return false;
-    Parsing::ValidateReturn validateReturn;
+    Semantics::ValidateReturn validateReturn;
     return validateReturn.programValidate(programNode);
 }
 

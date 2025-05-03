@@ -49,7 +49,7 @@ std::unique_ptr<BlockItem> Parse::blockItemParse()
         std::unique_ptr<Declaration> declaration = declarationParse();
         if (declaration == nullptr)
             return nullptr;
-        return std::make_unique<DeclarationBlockItem>(std::move(declaration));
+        return std::make_unique<DeclBlockItem>(std::move(declaration));
     }
     std::unique_ptr<Stmt> statement = stmtParse();
     if (statement == nullptr)
