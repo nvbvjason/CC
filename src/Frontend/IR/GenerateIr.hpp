@@ -3,8 +3,8 @@
 #ifndef CC_IR_CONCRETE_TREE_HPP
 #define CC_IR_CONCRETE_TREE_HPP
 
-#include "IrAST.hpp"
-#include "Frontend/Parsing/ASTParser.hpp"
+#include "../../IR/ASTIr.hpp"
+#include "../AST/ASTParser.hpp"
 
 namespace Ir {
 

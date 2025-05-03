@@ -1,0 +1,13 @@
+add_library(FrontendIR
+        GenerateIr.cpp
+)
+
+target_include_directories(FrontendIR PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/src
+)
+
+target_link_libraries(FrontendIR PUBLIC
+        AST
+        IR
+)

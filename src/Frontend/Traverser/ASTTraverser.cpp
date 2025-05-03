@@ -1,5 +1,5 @@
-#include "AstTraverser.hpp"
-#include "ASTParser.hpp"
+#include "ASTTraverser.hpp"
+#include "../AST/ASTParser.hpp"
 
 namespace Parsing {
 

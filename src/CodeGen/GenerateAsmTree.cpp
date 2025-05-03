@@ -1,11 +1,9 @@
 #include "GenerateAsmTree.hpp"
-#include "IR/GenerateIr.hpp"
 #include "PseudoRegisterReplacer.hpp"
 #include "AsmAST.hpp"
+#include "FixUpInstructions.hpp"
 
 #include <stdexcept>
-
-#include "FixUpInstructions.hpp"
 
 namespace CodeGen {
 

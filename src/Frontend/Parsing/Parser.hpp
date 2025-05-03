@@ -21,7 +21,7 @@
     <int>           ::= ? A constant token ?
 */
 
-#include "ASTParser.hpp"
+#include "../AST/ASTParser.hpp"
 #include "Frontend/Lexing/Token.hpp"
 
 #include <vector>

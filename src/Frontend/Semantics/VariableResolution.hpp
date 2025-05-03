@@ -3,7 +3,7 @@
 #ifndef CC_PARSING_VARIABLE_SOLUTION_HPP
 #define CC_PARSING_VARIABLE_SOLUTION_HPP
 
-#include "../Parsing/ASTParser.hpp"
+#include "../AST/ASTParser.hpp"
 
 #include <string>
 #include <unordered_map>

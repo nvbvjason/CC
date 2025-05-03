@@ -1,5 +1,5 @@
 #include "Parser.hpp"
-#include "IR/IrAST.hpp"
+#include "IR/ASTIr.hpp"
 #include "Frontend/Lexing/Token.hpp"
 
 namespace Parsing {

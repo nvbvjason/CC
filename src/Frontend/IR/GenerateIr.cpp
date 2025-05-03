@@ -1,5 +1,5 @@
 #include "GenerateIr.hpp"
-#include "Frontend/Parsing/ASTParser.hpp"
+#include "../AST/ASTParser.hpp"
 
 #include <stdexcept>
 

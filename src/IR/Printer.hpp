@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IrAST.hpp"
+#include "ASTIr.hpp"
 
 #include <sstream>
 #include <string>

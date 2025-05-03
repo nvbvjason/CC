@@ -4,7 +4,7 @@
 #define CC_CONCRETE_TREE_HPP
 
 #include "AsmAST.hpp"
-#include "IR/IrAST.hpp"
+#include "IR/ASTIr.hpp"
 
 /*
 === Top-Level ===

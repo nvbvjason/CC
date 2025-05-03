@@ -3,7 +3,7 @@
 #ifndef CC_PARSING_CONST_AST_TRAVERSER_HPP
 #define CC_PARSING_CONST_AST_TRAVERSER_HPP
 
-#include "ASTVisitor.hpp"
+#include "../AST/ASTVisitor.hpp"
 
 namespace Parsing {
 

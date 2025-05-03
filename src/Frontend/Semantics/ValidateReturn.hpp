@@ -3,7 +3,7 @@
 #ifndef CC_PARSING_VALIDATE_RETURN_HPP
 #define CC_PARSING_VALIDATE_RETURN_HPP
 
-#include "../Parsing/ASTParser.hpp"
+#include "../AST/ASTParser.hpp"
 
 namespace Semantics {
 class ValidateReturn {

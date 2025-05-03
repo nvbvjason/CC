@@ -1,77 +1,48 @@
-set(LEXING_FILES
-        Frontend/Lexing/Token.cpp
-        Frontend/Lexing/Token.hpp
+add_subdirectory(Frontend)
+add_subdirectory(IR)
+add_subdirectory(CodeGen)
 
-        Frontend/Lexing/Lexer.cpp
-        Frontend/Lexing/Lexer.hpp)
-
-set(PARSING_FILES
-        Frontend/Parsing/Parser.cpp
-        Frontend/Parsing/Parser.hpp
-        Frontend/Parsing/ASTParser.cpp
-        Frontend/Parsing/ASTParser.hpp
-        Frontend/Parsing/ASTPrinter.cpp
-        Frontend/Parsing/ASTPrinter.hpp
-        Frontend/Parsing/ASTVisitor.cpp
-        Frontend/Parsing/ASTVisitor.hpp
-        Frontend/Parsing/AstTraverser.cpp
-        Frontend/Parsing/AstTraverser.hpp
-        Frontend/Parsing/ASTFwd.cpp
-        Frontend/Parsing/ASTFwd.hpp
-        Frontend/Parsing/ConstAstTraverser.cpp
-        Frontend/Parsing/ConstAstTraverser.hpp)
-
-set(SEMANTICS_FILES
-        Frontend/Semantics/VariableResolution.cpp
-        Frontend/Semantics/VariableResolution.hpp
-        Frontend/Semantics/ValidateReturn.cpp
-        Frontend/Semantics/ValidateReturn.hpp
-        Frontend/Semantics/LvalueVerification.cpp
-        Frontend/Semantics/LvalueVerification.hpp
-)
-
-set(IR_FILES
-        IR/IrAST.cpp
-        IR/IrAST.hpp
-        IR/GenerateIr.cpp
-        IR/GenerateIr.hpp
-        IR/Printer.cpp
-        IR/Printer.hpp)
-
-set(CODEGEN_FILES
-        CodeGen/Assembly.cpp
-        CodeGen/Assembly.hpp
-        CodeGen/AsmAST.cpp
-        CodeGen/AsmAST.hpp
-        CodeGen/GenerateAsmTree.cpp
-        CodeGen/GenerateAsmTree.hpp
-        CodeGen/PseudoRegisterReplacer.cpp
-        CodeGen/PseudoRegisterReplacer.hpp
-        CodeGen/FixUpInstructions.cpp
-        CodeGen/FixUpInstructions.hpp
-)
-
-add_library(CC_lib STATIC
-        main.cpp
+# Add CompilerDriver library
+add_library(CompilerDriver
         CompilerDriver.cpp
         CompilerDriver.hpp
         ShortTypes.hpp
-        ${LEXING_FILES}
-        ${PARSING_FILES}
-        ${SEMANTICS_FILES}
-        ${CODEGEN_FILES}
-        ${IR_FILES}
 )
 
+# Specify include directories for CompilerDriver
+target_include_directories(CompilerDriver PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/src/IR
+        ${CMAKE_SOURCE_DIR}/src/CodeGen
+        ${CMAKE_SOURCE_DIR}/src/Frontend
+)
 
-target_include_directories(CC_lib PUBLIC
+# Link CompilerDriver against required libraries
+target_link_libraries(CompilerDriver PUBLIC
+        CodeGen
+        IR
+        Frontend
+)
+
+# Add executable for the compiler
+add_executable(CC
+        main.cpp
+)
+
+# Specify include directories for the CC executable
+target_include_directories(CC PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_executable(CC main.cpp)
-
-target_compile_options(CC PRIVATE -Wswitch -Werror=switch)
-
-target_link_libraries(CC PRIVATE CC_lib)
-
-set_target_properties(CC_lib PROPERTIES PUBLIC_HEADER "${LEXING_FILES};${PARSING_FILES};${CODEGEN_FILES};${IR_FILES}")
+# Link CC against all required libraries
+target_link_libraries(CC PRIVATE
+        CompilerDriver
+        Frontend
+        Parsing
+        Lexing
+        Semantics
+        FrontendIR
+        AST
+        IR
+        CodeGen
+)

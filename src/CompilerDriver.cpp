@@ -2,12 +2,12 @@
 
 #include "Frontend/Lexing/Lexer.hpp"
 #include "Frontend/Parsing/Parser.hpp"
-#include "Frontend/Parsing/ASTPrinter.hpp"
+#include "Frontend/AST/ASTPrinter.hpp"
 #include "Frontend/Semantics/ValidateReturn.hpp"
 #include "Frontend/Semantics/VariableResolution.hpp"
 
-#include "IR/IrAST.hpp"
-#include "IR/GenerateIr.hpp"
+#include "IR/ASTIr.hpp"
+#include "Frontend/IR/GenerateIr.hpp"
 #include "IR/Printer.hpp"
 
 #include "CodeGen/AsmAST.hpp"
