@@ -10,31 +10,6 @@ bool VariableResolution::resolve()
     return m_valid;
 }
 
-void VariableResolution::visit(Parsing::Function& function)
-{
-    if (!m_valid)
-        return;
-    for (std::unique_ptr<Parsing::BlockItem>& blockItem: function.body) {
-        if (!m_valid)
-            break;
-        blockItem->accept(*this);
-    }
-}
-
-void VariableResolution::visit(Parsing::DeclBlockItem& declBlockItem)
-{
-    if (!m_valid)
-        return;
-    declBlockItem.decl->accept(*this);
-}
-
-void VariableResolution::visit(Parsing::StmtBlockItem& stmtBlockItem)
-{
-    if (!m_valid)
-        return;
-    stmtBlockItem.stmt->accept(*this);
-}
-
 void VariableResolution::visit(Parsing::Declaration& declaration)
 {
     if (!m_valid)
@@ -50,20 +25,6 @@ void VariableResolution::visit(Parsing::Declaration& declaration)
         declaration.init->accept(*this);
 }
 
-void VariableResolution::visit(Parsing::ExprStmt& exprStmt)
-{
-    if (!m_valid)
-        return;
-    exprStmt.expr->accept(*this);
-}
-
-void VariableResolution::visit(Parsing::ReturnStmt& returnStmt)
-{
-    if (!m_valid)
-        return;
-    returnStmt.expr->accept(*this);
-}
-
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
     if (!m_valid)
@@ -73,21 +34,6 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         return;
     }
     varExpr.name = variableMap.at(varExpr.name);
-}
-
-void VariableResolution::visit(Parsing::UnaryExpr& unaryExpr)
-{
-    if (!m_valid)
-        return;
-    unaryExpr.operand->accept(*this);
-}
-
-void VariableResolution::visit(Parsing::BinaryExpr& binaryExpr)
-{
-    if (!m_valid)
-        return;
-    binaryExpr.lhs->accept(*this);
-    binaryExpr.rhs->accept(*this);
 }
 
 void VariableResolution::visit(Parsing::AssignmentExpr& assignmentExpr)

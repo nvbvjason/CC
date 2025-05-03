@@ -21,21 +21,8 @@ public:
         : program(program) {}
 
     bool resolve();
-
-    void visit(Parsing::Function& function) override;
-
-    void visit(Parsing::DeclBlockItem& declBlockItem) override;
-    void visit(Parsing::StmtBlockItem& stmtBlockItem) override;
-
     void visit(Parsing::Declaration& declaration) override;
-
-    void visit(Parsing::ExprStmt& exprStmt) override;
-    void visit(Parsing::ReturnStmt& returnStmt) override;
-
-    void visit(Parsing::ConstExpr& constExpr) override {}
     void visit(Parsing::VarExpr& varExpr) override;
-    void visit(Parsing::UnaryExpr& unaryExpr) override;
-    void visit(Parsing::BinaryExpr& binaryExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
 private:
     std::string makeTemporary(const std::string& name);
