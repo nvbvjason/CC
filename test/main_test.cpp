@@ -335,6 +335,36 @@ TEST(Chapter6, lexingValid)
     }
 }
 
+TEST(Chapter6, parsingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_6/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter6, parsingValidForInvalidSemantics)
+{
+    const fs::path validPath = testsFolderPath / "chapter_6/invalid_semantics";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter6, parsingInvalid)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_6/invalid_parse";
+    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
 void cleanUp()
 {
     for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))

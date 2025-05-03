@@ -30,6 +30,7 @@ public:
     void visit(UnaryExpr& unaryExpr) override;
     void visit(BinaryExpr& binaryExpr) override;
     void visit(AssignmentExpr& assignmentExpr) override;
+    void visit(ConditionalExpr& conditionalExpr) override;
 };
 
 } // Parsing

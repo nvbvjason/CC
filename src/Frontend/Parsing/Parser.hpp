@@ -12,7 +12,9 @@
                       | <exp> ";"
                       | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
                       | ";"
-    <exp>           ::= <unary_exp> | <exp> <binop> <exp>
+    <exp>           ::= <unary_exp>
+                      | <exp> <binop> <exp>
+                      | <exp> "?" <exp> ":" <exp>
     <unary_exp>     ::= <postfix_exp> | <unop> <unary_exp>
     <postfix_exp>   ::= <factor> | <postfix_exp> "--"
     <factor>        ::= <int> | <identifier> | "(" <exp> ")"
@@ -79,6 +81,8 @@ private:
     {
         constexpr i32 precedenceMult = 1024;
         constexpr i32 precedenceLevels = 16;
+        if (type == TokenType::QuestionMark || type == TokenType::Colon)
+            return (precedenceLevels - 13) * precedenceMult;
         if (isBinaryOperator(type)) {
             BinaryExpr::Operator oper = binaryOperator(type);
             return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;

@@ -64,4 +64,11 @@ void ConstASTTraverser::visit(const AssignmentExpr& assignmentExpr)
     assignmentExpr.lhs->accept(*this);
     assignmentExpr.rhs->accept(*this);
 }
+
+void ConstASTTraverser::visit(const ConditionalExpr& conditionalExpr)
+{
+    conditionalExpr.condition->accept(*this);
+    conditionalExpr.first->accept(*this);
+    conditionalExpr.second->accept(*this);
+}
 } // Parsing

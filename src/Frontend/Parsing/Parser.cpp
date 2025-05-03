@@ -121,7 +121,7 @@ std::unique_ptr<Stmt> Parse::ifStmtParse()
     std::unique_ptr<Stmt> thenStmt = stmtParse();
     if (thenStmt == nullptr)
         return nullptr;
-    if (!expect(TokenType::Else)) {
+    if (expect(TokenType::Else)) {
         std::unique_ptr<Stmt> elseStmt = stmtParse();
         if (elseStmt == nullptr)
             return nullptr;
@@ -136,16 +136,31 @@ std::unique_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
     if (left == nullptr)
         return nullptr;
     Lexing::Token nextToken = peek();
-    while ((isBinaryOperator(nextToken.m_type) || isAssignmentOperator(nextToken.m_type))
+    while ((isBinaryOperator(nextToken.m_type)
+            || isAssignmentOperator(nextToken.m_type)
+            || nextToken.m_type == TokenType::QuestionMark)
         && minPrecedence <= precedence(nextToken.m_type)) {
         advance();
+        if (nextToken.m_type == TokenType::QuestionMark) {
+            auto first = exprParse(0);
+            if (first == nullptr)
+                return nullptr;
+            if (!expect(TokenType::Colon))
+                return nullptr;
+            nextToken = peek();
+            auto second = exprParse(precedence(nextToken.m_type));
+            if (second == nullptr)
+                return nullptr;
+            left = std::make_unique<ConditionalExpr>(
+                std::move(left), std::move(first), std::move(second)
+            );
+        }
         if (isAssignmentOperator(nextToken.m_type)) {
             AssignmentExpr::Operator op = assignOperator(nextToken.m_type);
             auto right = exprParse(precedence(nextToken.m_type));
             if (right == nullptr)
                 return nullptr;
             left = std::make_unique<AssignmentExpr>(op, std::move(left), std::move(right));
-            nextToken = peek();
         }
         if (isBinaryOperator(nextToken.m_type)) {
             BinaryExpr::Operator op = binaryOperator(nextToken.m_type);
@@ -153,8 +168,8 @@ std::unique_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
             if (right == nullptr)
                 return nullptr;
             left = std::make_unique<BinaryExpr>(op, std::move(left), std::move(right));
-            nextToken = peek();
         }
+        nextToken = peek();
     }
     return left;
 }

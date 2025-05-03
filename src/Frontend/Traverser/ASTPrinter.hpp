@@ -39,6 +39,7 @@ public:
     void visit(const AssignmentExpr& assignmentExpr) override;
     void visit(const ConstExpr& constExpr) override;
     void visit(const VarExpr& varExpr) override;
+    void visit(const ConditionalExpr& conditionalExpr) override;
 };
 } // namespace Parsing
 

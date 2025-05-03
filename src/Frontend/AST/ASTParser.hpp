@@ -24,6 +24,7 @@
         | Unary(unary_operator, exp)
         | Binary(binary_operator, exp, exp)
         | Assignment(assign_operator, exp, exp)
+        | Conditional(exp condition, exp, exp)
     unary_operator = Complement | Negate | Not
                    | PrefixIncrement | PostFixIncrement
                    | PrefixDecrement | PostFixDecrement
@@ -173,7 +174,7 @@ struct NullStmt final : Stmt {
 
 struct Expr {
     enum class Kind {
-        Constant, Var, Unary, Binary, Assignment
+        Constant, Var, Unary, Binary, Assignment, Conditional,
     };
     Kind kind;
 
@@ -264,6 +265,22 @@ struct AssignmentExpr final : Expr {
         : Expr(Kind::Assignment), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
     AssignmentExpr() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
+
+struct ConditionalExpr final : Expr {
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Expr> first;
+    std::unique_ptr<Expr> second;
+    ConditionalExpr(std::unique_ptr<Expr> condition,
+                    std::unique_ptr<Expr> first,
+                    std::unique_ptr<Expr> second)
+        : Expr(Kind::Conditional), condition(std::move(condition)),
+                                   first(std::move(first)),
+                                   second(std::move(second)) {}
+    ConditionalExpr() = delete;
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

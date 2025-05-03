@@ -33,6 +33,7 @@ struct VarExpr;
 struct UnaryExpr;
 struct BinaryExpr;
 struct AssignmentExpr;
+struct ConditionalExpr;
 
 } // Parsing
 

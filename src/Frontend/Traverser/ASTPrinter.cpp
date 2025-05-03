@@ -168,6 +168,16 @@ void ASTPrinter::visit(const VarExpr& varExpr)
     oss << varExpr.name;
 }
 
+void ASTPrinter::visit(const ConditionalExpr& conditionalExpr)
+{
+    conditionalExpr.condition->accept(*this);
+    oss << "?";
+    conditionalExpr.first->accept(*this);
+    oss << ":";
+    conditionalExpr.second->accept(*this);
+    oss << ";";
+}
+
 void ASTPrinter::visit(const NullStmt& nullStmt)
 {
     oss << "      NullStmt (;)\n";
