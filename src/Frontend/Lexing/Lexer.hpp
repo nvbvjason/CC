@@ -23,6 +23,8 @@ class Lexer {
         { "return", Token::Type::Return },
         { "int", Token::Type::IntKeyword },
         { "void", Token::Type::Void },
+        { "if", Token::Type::If },
+        { "else", Token::Type::Else },
     };
 public:
     explicit Lexer(const std::string& input)

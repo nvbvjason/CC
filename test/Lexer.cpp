@@ -59,6 +59,31 @@ TEST(LexerTests, GetTokens) {
     }
 }
 
+TEST(LexerTests, Return)
+{
+    TestSingleTokenLexing("return", TokenType::Return);
+}
+
+TEST(LexerTests, IntKeyword)
+{
+    TestSingleTokenLexing("int", TokenType::IntKeyword);
+}
+
+TEST(LexerTests, Void)
+{
+    TestSingleTokenLexing("void", TokenType::Void);
+}
+
+TEST(LexerTests, If)
+{
+    TestSingleTokenLexing("if", TokenType::If);
+}
+
+TEST(LexerTests, Else)
+{
+    TestSingleTokenLexing("else", TokenType::Else);
+}
+
 TEST(LexerTests, Percent)
 {
     TestSingleTokenLexing("%", TokenType::Percent);
@@ -218,6 +243,16 @@ TEST(LexerTests, LeftShiftAssign)
 TEST(LexerTests, RightShiftAssign)
 {
     TestSingleTokenLexing(">>=", TokenType::RightShiftAssign);
+}
+
+TEST(LexerTests, QuestionMark)
+{
+    TestSingleTokenLexing("?", TokenType::QuestionMark);
+}
+
+TEST(LexerTests, Colon)
+{
+    TestSingleTokenLexing(":", TokenType::Colon);
 }
 
 TEST(LexerTests, InvalidInput) {

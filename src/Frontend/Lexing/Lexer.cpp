@@ -41,6 +41,12 @@ void Lexer::scanToken()
         case '~':
             addToken(Token::Type::Tilde);
             break;
+        case '?':
+            addToken(Token::Type::QuestionMark);
+            break;
+        case ':':
+            addToken(Token::Type::Colon);
+            break;
         case '+': {
             if (match('+')) {
                 addToken(Token::Type::Increment);

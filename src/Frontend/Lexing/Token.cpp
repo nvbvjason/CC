@@ -44,11 +44,6 @@ std::string Token::getTypeName() const
         case Type::Greater:             return "Greater";
         case Type::GreaterOrEqual:      return "Greater Or Equal";
 
-        // Keywords
-        case Type::Return:              return "Return";
-        case Type::Void:                return "Void";
-        case Type::IntKeyword:          return "Int";
-
         // Identifiers & Literals
         case Type::Identifier:          return "Identifier";
         case Type::Integer:             return "Integer";
@@ -65,6 +60,17 @@ std::string Token::getTypeName() const
         case Type::BitwiseXorAssign:    return "Bitwise Xor Assign";
         case Type::LeftShiftAssign:     return "Left Shift Assign";
         case Type::RightShiftAssign:    return "Right Shift Assign";
+
+        // Ternary
+        case Type::QuestionMark:        return "Question Mark";
+        case Type::Colon:               return "Colon";
+
+        // Keywords
+        case Type::Return:              return "Return";
+        case Type::Void:                return "Void";
+        case Type::IntKeyword:          return "Int";
+        case Type::If:                  return "If";
+        case Type::Else:                return "Else";
 
         // Special Tokens
         case Type::EndOfFile:           return "End Of File";

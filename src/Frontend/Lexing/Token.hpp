@@ -52,11 +52,6 @@ struct Token {
         Greater,                         // >
         GreaterOrEqual,                  // >=
 
-        // Keywords
-        Return,                          // 'return'
-        Void,                            // 'void'
-        IntKeyword,                      // 'int'
-
         // Identifiers & Literals
         Identifier,                      // User-defined names
         Integer,                         // Numeric literals
@@ -73,6 +68,17 @@ struct Token {
         BitwiseXorAssign,                // ^=
         LeftShiftAssign,                 // <<=
         RightShiftAssign,                // >>=
+
+        // Ternary
+        QuestionMark,                    // ?
+        Colon,                           // :
+
+        // Keywords
+        Return,                          // 'return'
+        Void,                            // 'void'
+        IntKeyword,                      // 'int'
+        If,                              // if
+        Else,                            // else
 
         // Special Tokens
         EndOfFile,                       // EOF marker

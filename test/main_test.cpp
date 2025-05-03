@@ -225,7 +225,7 @@ TEST(Chapter5, lexingValid)
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
-    const fs::path invalidSemantics = testsFolderPath / "chapter_5/valid/invalid_semantics";
+    const fs::path invalidSemantics = testsFolderPath / "chapter_5/invalid_semantics";
     for (const auto& path : std::filesystem::directory_iterator(validPathExtra)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
@@ -310,6 +310,28 @@ TEST(Chapter5, semanticsvalidExtraCredit)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter6, lexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_6/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+    const fs::path invalidSemantics = testsFolderPath / "chapter_6/invalid_semantics";
+    for (const auto& path : std::filesystem::directory_iterator(invalidSemantics)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+    const fs::path invalidParse = testsFolderPath / "chapter_6/invalid_parse";
+    for (const auto& path : std::filesystem::directory_iterator(invalidParse)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
 }
 
