@@ -6,39 +6,63 @@ namespace {
 
 std::string unaryOpToString(const UnaryExpr::Operator op)
 {
+    using Operator = UnaryExpr::Operator;
     switch (op) {
-        case UnaryExpr::Operator::Complement: return "~";
-        case UnaryExpr::Operator::Negate: return "-";
-        case UnaryExpr::Operator::Not: return "!";
+        case Operator::Complement:           return "~";
+        case Operator::Negate:               return "-";
+        case Operator::Not:                  return "!";
+        case Operator::PostFixDecrement:     return "post --";
+        case Operator::PrefixDecrement:      return "pre  --";
+        case Operator::PostFixIncrement:     return "post ++";
+        case Operator::PrefixIncrement:      return "pre  ++";
         default: return "?";
     }
 }
 
 std::string binaryOpToString(const BinaryExpr::Operator op)
 {
+    using Operator = BinaryExpr::Operator;
     switch (op) {
-        case BinaryExpr::Operator::Add:             return "+";
-        case BinaryExpr::Operator::Subtract:        return "-";
-        case BinaryExpr::Operator::Multiply:        return "*";
-        case BinaryExpr::Operator::Divide:          return "/";
-        case BinaryExpr::Operator::Remainder:       return "%";
-        case BinaryExpr::Operator::BitwiseAnd:      return "&";
-        case BinaryExpr::Operator::BitwiseOr:       return "|";
-        case BinaryExpr::Operator::BitwiseXor:      return "^";
-        case BinaryExpr::Operator::LeftShift:       return "<<";
-        case BinaryExpr::Operator::RightShift:      return ">>";
-        case BinaryExpr::Operator::And:             return "&&";
-        case BinaryExpr::Operator::Or:              return "||";
-        case BinaryExpr::Operator::Equal:           return "==";
-        case BinaryExpr::Operator::NotEqual:        return "!=";
-        case BinaryExpr::Operator::LessThan:        return "<";
-        case BinaryExpr::Operator::LessOrEqual:     return "<=";
-        case BinaryExpr::Operator::GreaterThan  :   return ">";
-        case BinaryExpr::Operator::GreaterOrEqual:  return ">=";
-        case BinaryExpr::Operator::Assign:          return "=";
-        default:                                    return "?";
+        case Operator::Add:             return "+";
+        case Operator::Subtract:        return "-";
+        case Operator::Multiply:        return "*";
+        case Operator::Divide:          return "/";
+        case Operator::Remainder:       return "%";
+        case Operator::BitwiseAnd:      return "&";
+        case Operator::BitwiseOr:       return "|";
+        case Operator::BitwiseXor:      return "^";
+        case Operator::LeftShift:       return "<<";
+        case Operator::RightShift:      return ">>";
+        case Operator::And:             return "&&";
+        case Operator::Or:              return "||";
+        case Operator::Equal:           return "==";
+        case Operator::NotEqual:        return "!=";
+        case Operator::LessThan:        return "<";
+        case Operator::LessOrEqual:     return "<=";
+        case Operator::GreaterThan  :   return ">";
+        case Operator::GreaterOrEqual:  return ">=";
+        default:                        return "?";
     }
 }
+std::string assignmentOpToString(const AssignmentExpr::Operator op)
+{
+    using Operator = AssignmentExpr::Operator;
+    switch (op) {
+        case Operator::Assign:              return "=";
+        case Operator::PlusAssign:          return "+=";
+        case Operator::MinusAssign:         return "-=";
+        case Operator::DivideAssign:        return "/=";
+        case Operator::MultiplyAssign:      return "*=";
+        case Operator::ModuloAssign:        return "%=";
+        case Operator::BitwiseAndAssign:    return "&=";
+        case Operator::BitwiseOrAssign:     return "|=";
+        case Operator::BitwiseXorAssign:    return "^=";
+        case Operator::LeftShiftAssign:     return "<<=";
+        case Operator::RightShiftAssign:    return ">>=";
+        default: return "?";
+    }
+}
+
 }
 
 std::string ASTPrinter::print(const Program& program)
@@ -140,7 +164,7 @@ void ASTPrinter::print(const Expr& expr, const int indent)
         }
         case Expr::Kind::Assignment: {
             const auto assignmentExpr = dynamic_cast<const AssignmentExpr*>(&expr);
-            oss << indentStr << "Assignment: " << "\n";
+            oss << indentStr << "Assignment: " << assignmentOpToString(assignmentExpr->op) << "\n";
             print(*assignmentExpr->lhs, indent + 1);
             print(*assignmentExpr->rhs, indent + 1);
             break;

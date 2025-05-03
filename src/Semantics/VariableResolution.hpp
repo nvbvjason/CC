@@ -3,7 +3,7 @@
 #ifndef CC_PARSING_VARIABLE_SOLUTION_HPP
 #define CC_PARSING_VARIABLE_SOLUTION_HPP
 
-#include "ParserAST.hpp"
+#include "../Parsing/ParserAST.hpp"
 
 #include <string>
 #include <unordered_map>

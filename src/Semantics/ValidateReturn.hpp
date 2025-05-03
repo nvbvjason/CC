@@ -3,7 +3,7 @@
 #ifndef CC_PARSING_VALIDATE_RETURN_HPP
 #define CC_PARSING_VALIDATE_RETURN_HPP
 
-#include "ParserAST.hpp"
+#include "../Parsing/ParserAST.hpp"
 
 namespace Parsing {
 class ValidateReturn {

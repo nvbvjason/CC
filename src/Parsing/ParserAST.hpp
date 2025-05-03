@@ -19,15 +19,21 @@
         | Var(identifier)
         | Unary(unary_operator, exp)
         | Binary(binary_operator, exp, exp)
-        | Assignment(exp, exp)
+        | Assignment(assign_operator, exp, exp)
     unary_operator = Complement | Negate | Not
-    binary_operator = Add | Subtract | Multiply | Divide | Remainder |
-                      BitwiseAnd | BitwiseOr | BitwiseXor |
-                      LeftShift | RightShift |
-                      And | Or |
-                      Equal | NotEqual |
-                      Less | LessThan | LessOrEqual
-                      Greater | GreaterThan | GreaterOrEqual
+                   | PrefixIncrement | PostFixIncrement
+                   | PrefixDecrement | PostFixDecrement
+    binary_operator = Add | Subtract | Multiply | Divide | Remainder
+                    | BitwiseAnd | BitwiseOr | BitwiseXor
+                    | LeftShift | RightShift
+                    | And | Or
+                    | Equal | NotEqual
+                    | Less | LessThan | LessOrEqual
+                    | Greater | GreaterThan | GreaterOrEqual
+    assign_operator = Assign | PlusAssign | MinusAssign
+                    | MultiplyAssign | DivideAssign | ModuloAssign
+                    | BitwiseAndAssign | BitwiseOrAssign | BitwiseXorAssign
+                    | LeftShiftAssign | RightShiftAssign
 */
 
 namespace Parsing {
@@ -155,7 +161,9 @@ struct VarExpr final : Expr {
 
 struct UnaryExpr final : Expr {
     enum class Operator {
-        Complement, Negate, Not
+        Complement, Negate, Not,
+        PrefixIncrement, PostFixIncrement,
+        PrefixDecrement, PostFixDecrement
     };
     Operator op;
     std::unique_ptr<Expr> operand;
@@ -174,8 +182,7 @@ struct BinaryExpr final : Expr {
         And, Or,
         Equal, NotEqual,
         LessThan, LessOrEqual,
-        GreaterThan, GreaterOrEqual,
-        Assign
+        GreaterThan, GreaterOrEqual
     };
     Operator op;
     std::unique_ptr<Expr> lhs;
@@ -187,10 +194,17 @@ struct BinaryExpr final : Expr {
 };
 
 struct AssignmentExpr final : Expr {
+    enum class Operator {
+        Assign, PlusAssign, MinusAssign,
+        MultiplyAssign, DivideAssign, ModuloAssign,
+        BitwiseAndAssign, BitwiseOrAssign, BitwiseXorAssign,
+        LeftShiftAssign, RightShiftAssign
+    };
+    Operator op;
     std::unique_ptr<Expr> lhs;
     std::unique_ptr<Expr> rhs;
-    AssignmentExpr(std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
-        : Expr(Kind::Assignment), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+    AssignmentExpr(const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
+        : Expr(Kind::Assignment), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
     AssignmentExpr() = delete;
 };

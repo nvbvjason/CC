@@ -13,8 +13,8 @@
 #include <fstream>
 #include <filesystem>
 
-#include "Parsing/ValidateReturn.hpp"
-#include "Parsing/VariableResolution.hpp"
+#include "Semantics/ValidateReturn.hpp"
+#include "Semantics/VariableResolution.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);

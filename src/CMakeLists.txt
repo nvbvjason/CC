@@ -11,11 +11,13 @@ set(PARSING_FILES
         Parsing/ParserAST.cpp
         Parsing/ParserAST.hpp
         Parsing/ASTPrinter.cpp
-        Parsing/ASTPrinter.hpp
-        Parsing/VariableResolution.cpp
-        Parsing/VariableResolution.hpp
-        Parsing/ValidateReturn.cpp
-        Parsing/ValidateReturn.hpp)
+        Parsing/ASTPrinter.hpp)
+
+set(SEMANTICS_FILES
+        Semantics/VariableResolution.cpp
+        Semantics/VariableResolution.hpp
+        Semantics/ValidateReturn.cpp
+        Semantics/ValidateReturn.hpp)
 
 set(IR_FILES
         IR/IrAST.cpp
@@ -45,6 +47,7 @@ add_library(CC_lib STATIC
         ShortTypes.hpp
         ${LEXING_FILES}
         ${PARSING_FILES}
+        ${SEMANTICS_FILES}
         ${CODEGEN_FILES}
         ${IR_FILES}
 )

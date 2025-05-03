@@ -9,11 +9,14 @@
     <block_item>    ::= <statement> | <declaration>
     <declaration>   ::= "int" <identifier> [ "=" <exp> ] ";"
     <statement>     ::= "return" <exp> ";" | <exp> ";" | ";"
-    <exp>           ::= <factor> | <exp> <binop> <exp>
-    <factor>        ::= <int> | <identifier> | <unop> <exp> | "(" <exp> ")"
-    <unop>          ::= "-" | "~" | "!"
+    <exp>           ::= <factor> [ <postfixop>* ] | <exp> <binop> <exp>
+    <factor>        ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
+    <unop>          ::= "-" | "~" | "!" | "--" | "++"
+    <postfixop>     ::= "--" | "++"
     <binop>         ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|" |
-                         "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
+                        "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "=" |
+                        "+=" | "-=" | "*=" | "/=" | "%=" |
+                        "&=" | "|=" | "^=" | "<<=" | ">>="
     <identifier>    ::= ? An identifier token ?
     <int>           ::= ? A constant token ?
 */
@@ -37,12 +40,11 @@ public:
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<Function> functionParse();
+    [[nodiscard]] std::unique_ptr<Expr> exprPostfix(std::unique_ptr<Expr> expr);
     [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
     [[nodiscard]] std::unique_ptr<Expr> exprParse(i32 minPrecedence);
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
-    [[nodiscard]] static UnaryExpr::Operator unaryOperator(TokenType type);
-    [[nodiscard]] static BinaryExpr::Operator binaryOperator(TokenType type);
 private:
     bool match(const TokenType& type);
     Lexing::Token advance() { return c_tokens[m_current++]; }
@@ -56,12 +58,33 @@ private:
         }
         return false;
     }
+    [[nodiscard]] static UnaryExpr::Operator unaryOperator(TokenType type);
+    [[nodiscard]] static BinaryExpr::Operator binaryOperator(TokenType type);
+    [[nodiscard]] static AssignmentExpr::Operator assignOperator(TokenType type);
     [[nodiscard]] static i32 getPrecedenceLevel(BinaryExpr::Operator oper);
-    [[nodiscard]] static i32 precedence(BinaryExpr::Operator oper);
     [[nodiscard]] static i32 getPrecedenceLevel(UnaryExpr::Operator oper);
-    [[nodiscard]] static i32 precedence(UnaryExpr::Operator oper);
+    [[nodiscard]] static i32 getPrecedenceLevel(AssignmentExpr::Operator oper);
     [[nodiscard]] static bool isBinaryOperator(TokenType type);
     [[nodiscard]] static bool isUnaryOperator(TokenType type);
+    [[nodiscard]] static bool isAssignmentOperator(TokenType type);
+    static i32 precedence(const TokenType type)
+    {
+        constexpr i32 precedenceMult = 1024;
+        constexpr i32 precedenceLevels = 16;
+        if (isBinaryOperator(type)) {
+            BinaryExpr::Operator oper = binaryOperator(type);
+            return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
+        }
+        if (isUnaryOperator(type)) {
+            UnaryExpr::Operator oper = unaryOperator(type);
+            return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
+        }
+        if (isAssignmentOperator(type)) {
+            AssignmentExpr::Operator oper = assignOperator(type);
+            return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
+        }
+        return 0;
+    }
 };
 } // namespace Parsing
 
