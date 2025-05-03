@@ -30,6 +30,14 @@ void ASTTraverser::visit(Declaration& declaration)
         declaration.init->accept(*this);
 }
 
+void ASTTraverser::visit(IfStmt& ifStmt)
+{
+    ifStmt.condition->accept(*this);
+    ifStmt.thenStmt->accept(*this);
+    if (ifStmt.elseStmt)
+        ifStmt.elseStmt->accept(*this);
+}
+
 void ASTTraverser::visit(ReturnStmt& returnStmt)
 {
     returnStmt.expr->accept(*this);

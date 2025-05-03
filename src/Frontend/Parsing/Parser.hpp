@@ -8,7 +8,10 @@
     <function>      ::= "int" <identifier> "(" "void" ")" "{" { block_item* } "}"
     <block_item>    ::= <statement> | <declaration>
     <declaration>   ::= "int" <identifier> [ "=" <exp> ] ";"
-    <statement>     ::= "return" <exp> ";" | <exp> ";" | ";"
+    <statement>     ::= "return" <exp> ";"
+                      | <exp> ";"
+                      | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
+                      | ";"
     <exp>           ::= <unary_exp> | <exp> <binop> <exp>
     <unary_exp>     ::= <postfix_exp> | <unop> <unary_exp>
     <postfix_exp>   ::= <factor> | <postfix_exp> "--"
@@ -38,12 +41,15 @@ public:
     Parse() = delete;
     explicit Parse(const std::vector<Lexing::Token> &c_tokens)
         : c_tokens(c_tokens) {}
-    [[nodiscard]] bool programParse(Program& program);
+    bool programParse(Program& program);
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
+    [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
+    [[nodiscard]] std::unique_ptr<Stmt> returnStmtParse();
+    [[nodiscard]] std::unique_ptr<Stmt> exprStmtParse();
+    [[nodiscard]] std::unique_ptr<Stmt> ifStmtParse();
     [[nodiscard]] std::unique_ptr<Function> functionParse();
     [[nodiscard]] std::unique_ptr<Expr> exprPostfix();
-    [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
     [[nodiscard]] std::unique_ptr<Expr> exprParse(i32 minPrecedence);
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();

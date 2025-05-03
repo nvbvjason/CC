@@ -18,10 +18,13 @@ public:
 
     void visit(Declaration& declaration) override;
 
+    // Statement
+    void visit(IfStmt& ifStmt) override;
     void visit(ReturnStmt& returnStmt) override;
     void visit(ExprStmt& exprStmt) override;
     void visit(NullStmt& nullStmt) override {}
 
+    // Expression
     void visit(ConstExpr& constExpr) override {}
     void visit(VarExpr& varExpr) override {}
     void visit(UnaryExpr& unaryExpr) override;

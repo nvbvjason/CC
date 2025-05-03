@@ -21,6 +21,7 @@ struct Declaration;
 
 // Statements
 struct Stmt;
+struct IfStmt;
 struct ReturnStmt;
 struct ExprStmt;
 struct NullStmt;

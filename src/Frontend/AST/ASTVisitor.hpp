@@ -20,6 +20,7 @@ public:
     virtual void visit(Declaration&) = 0;
 
     // Statements
+    virtual void visit(IfStmt&) = 0;
     virtual void visit(ReturnStmt&) = 0;
     virtual void visit(ExprStmt&) = 0;
     virtual void visit(NullStmt&) = 0;
@@ -45,6 +46,7 @@ public:
     virtual void visit(const Declaration&) = 0;
 
     // Statements
+    virtual void visit(const IfStmt&) = 0;
     virtual void visit(const ReturnStmt&) = 0;
     virtual void visit(const ExprStmt&) = 0;
     virtual void visit(const NullStmt&) = 0;

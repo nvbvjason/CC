@@ -15,7 +15,10 @@
     function_definition = Function(identifier names, block_item* body)
     block_item = S(statement) | D(declaration)
     declaration = Declaration(identifier name, exp? init)
-    statement = Return(exp) | Expression(exp) | Null
+    statement = Return(exp)
+              | If(exp condition, statement then, statement? else)
+              | Expression(exp)
+              | Null
     exp = Constant(int)
         | Var(identifier)
         | Unary(unary_operator, exp)
@@ -108,7 +111,7 @@ struct Declaration {
 
 struct Stmt {
     enum class Kind {
-        Return, Expression, Null
+        If, Return, Expression, Null
     };
     Kind kind;
 
@@ -120,6 +123,22 @@ struct Stmt {
 protected:
     explicit Stmt(const Kind kind)
         : kind(kind) {}
+};
+
+struct IfStmt final : Stmt {
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Stmt> thenStmt;
+    std::unique_ptr<Stmt> elseStmt = nullptr;
+    IfStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenStmt)
+        : Stmt(Kind::If), condition(std::move(condition)), thenStmt(std::move(thenStmt)) {}
+    IfStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenStmt, std::unique_ptr<Stmt> elseStmt)
+        : Stmt(Kind::If), condition(std::move(condition)), thenStmt(std::move(thenStmt)),
+                          elseStmt(std::move(elseStmt)) {}
+
+    IfStmt() = delete;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
 struct ReturnStmt final : Stmt {

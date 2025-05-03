@@ -107,6 +107,18 @@ void ASTPrinter::visit(const Declaration& declaration)
     oss << "\n";
 }
 
+void ASTPrinter::visit(const IfStmt& ifStmt)
+{
+    oss << "      IfStmt: ";
+    ifStmt.condition->accept(*this);
+    oss << "\n";
+    ifStmt.thenStmt->accept(*this);
+    if (ifStmt.elseStmt) {
+        oss << "      ElseStmt: ";
+        ifStmt.elseStmt->accept(*this);
+    }
+}
+
 void ASTPrinter::visit(const ReturnStmt& returnStmt)
 {
     oss << "      Return: ";

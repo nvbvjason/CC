@@ -80,15 +80,26 @@ std::unique_ptr<Stmt> Parse::stmtParse()
 {
     if (expect(TokenType::Semicolon))
         return std::make_unique<NullStmt>();
-    if (expect(TokenType::Return)) {
-        std::unique_ptr<Expr> expr = exprParse(0);
-        if (expr == nullptr)
-            return nullptr;
-        auto statement = std::make_unique<ReturnStmt>(std::move(expr));
-        if (!expect(TokenType::Semicolon))
-            return nullptr;
-        return statement;
-    }
+    if (expect(TokenType::Return))
+        return returnStmtParse();
+    if (expect(TokenType::If))
+        return ifStmtParse();
+    return exprStmtParse();
+}
+
+std::unique_ptr<Stmt> Parse::returnStmtParse()
+{
+    std::unique_ptr<Expr> expr = exprParse(0);
+    if (expr == nullptr)
+        return nullptr;
+    auto statement = std::make_unique<ReturnStmt>(std::move(expr));
+    if (!expect(TokenType::Semicolon))
+        return nullptr;
+    return statement;
+}
+
+std::unique_ptr<Stmt> Parse::exprStmtParse()
+{
     std::unique_ptr<Expr> expr = exprParse(0);
     if (expr == nullptr)
         return nullptr;
@@ -96,6 +107,27 @@ std::unique_ptr<Stmt> Parse::stmtParse()
     if (!expect(TokenType::Semicolon))
         return nullptr;
     return statement;
+}
+
+std::unique_ptr<Stmt> Parse::ifStmtParse()
+{
+    if (!expect(TokenType::OpenParen))
+        return nullptr;
+    std::unique_ptr<Expr> expr = exprParse(0);
+    if (expr == nullptr)
+        return nullptr;
+    if (!expect(TokenType::CloseParen))
+        return nullptr;
+    std::unique_ptr<Stmt> thenStmt = stmtParse();
+    if (thenStmt == nullptr)
+        return nullptr;
+    if (!expect(TokenType::Else)) {
+        std::unique_ptr<Stmt> elseStmt = stmtParse();
+        if (elseStmt == nullptr)
+            return nullptr;
+        return std::make_unique<IfStmt>(std::move(expr), std::move(thenStmt), std::move(elseStmt));
+    }
+    return std::make_unique<IfStmt>(std::move(expr), std::move(thenStmt));
 }
 
 std::unique_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
