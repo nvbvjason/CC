@@ -9,14 +9,16 @@
     <block_item>    ::= <statement> | <declaration>
     <declaration>   ::= "int" <identifier> [ "=" <exp> ] ";"
     <statement>     ::= "return" <exp> ";" | <exp> ";" | ";"
-    <exp>           ::= <factor> [ <postfixop>* ] | <exp> <binop> <exp>
-    <factor>        ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
+    <exp>           ::= <unary_exp> | <exp> <binop> <exp>
+    <unary_exp>     ::= <postfix_exp> | <unop> <unary_exp>
+    <postfix_exp>   ::= <factor> | <postfix_exp> "--"
+    <factor>        ::= <int> | <identifier> | "(" <exp> ")"
     <unop>          ::= "-" | "~" | "!" | "--" | "++"
     <postfixop>     ::= "--" | "++"
-    <binop>         ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|" |
-                        "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "=" |
-                        "+=" | "-=" | "*=" | "/=" | "%=" |
-                        "&=" | "|=" | "^=" | "<<=" | ">>="
+    <binop>         ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
+                      | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
+                      | "+=" | "-=" | "*=" | "/=" | "%="
+                      | "&=" | "|=" | "^=" | "<<=" | ">>="
     <identifier>    ::= ? An identifier token ?
     <int>           ::= ? A constant token ?
 */
@@ -40,7 +42,7 @@ public:
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<Function> functionParse();
-    [[nodiscard]] std::unique_ptr<Expr> exprPostfix(std::unique_ptr<Expr> expr);
+    [[nodiscard]] std::unique_ptr<Expr> exprPostfix();
     [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
     [[nodiscard]] std::unique_ptr<Expr> exprParse(i32 minPrecedence);
     [[nodiscard]] std::unique_ptr<Expr> factorParse();

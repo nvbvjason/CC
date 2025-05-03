@@ -100,7 +100,7 @@ std::unique_ptr<Stmt> Parse::stmtParse()
 
 std::unique_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
 {
-    auto left = factorParse();
+    auto left = unaryExprParse();
     if (left == nullptr)
         return nullptr;
     Lexing::Token nextToken = peek();
@@ -124,12 +124,24 @@ std::unique_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
             nextToken = peek();
         }
     }
-    left = exprPostfix(std::move(left));
     return left;
 }
 
-std::unique_ptr<Expr> Parse::exprPostfix(std::unique_ptr<Expr> expr)
+std::unique_ptr<Expr> Parse::unaryExprParse()
 {
+    if (!isUnaryOperator(peek().m_type))
+        return exprPostfix();
+    UnaryExpr::Operator oper = unaryOperator(peek().m_type);
+    advance();
+    std::unique_ptr<Expr> expr = unaryExprParse();
+    if (expr == nullptr)
+        return nullptr;
+    return std::make_unique<UnaryExpr>(oper, std::move(expr));
+}
+
+std::unique_ptr<Expr> Parse::exprPostfix()
+{
+    auto expr = factorParse();
     while (true) {
         if (expect(TokenType::Increment))
             expr = std::make_unique<UnaryExpr>(UnaryExpr::Operator::PostFixIncrement, std::move(expr));
@@ -154,12 +166,6 @@ std::unique_ptr<Expr> Parse::factorParse()
             advance();
             return std::make_unique<VarExpr>(lexeme.m_lexeme);
         }
-        case TokenType::Minus:
-        case TokenType::Tilde:
-        case TokenType::ExclamationMark:
-        case TokenType::Increment:
-        case TokenType::Decrement:
-            return unaryExprParse();
         case TokenType::OpenParen: {
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
@@ -171,18 +177,6 @@ std::unique_ptr<Expr> Parse::factorParse()
         default:
             return nullptr;
     }
-}
-
-std::unique_ptr<Expr> Parse::unaryExprParse()
-{
-    if (!isUnaryOperator(peek().m_type))
-        return nullptr;
-    UnaryExpr::Operator oper = unaryOperator(peek().m_type);
-    advance();
-    std::unique_ptr<Expr> expr = factorParse();
-    if (expr == nullptr)
-        return nullptr;
-    return std::make_unique<UnaryExpr>(oper, std::move(expr));
 }
 
 UnaryExpr::Operator Parse::unaryOperator(const TokenType type)
