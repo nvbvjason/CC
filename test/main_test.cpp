@@ -377,7 +377,7 @@ TEST(Chapter6, semanticsInvalid)
 
 TEST(Chapter6, semanticsvalid)
 {
-    const fs::path validPath = testsFolderPath / "chapter_5/valid";
+    const fs::path validPath = testsFolderPath / "chapter_6/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
@@ -412,6 +412,16 @@ TEST(Chapter7, semanticsInvalid)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter7, semanticsvalid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_7/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
     }
 }
 

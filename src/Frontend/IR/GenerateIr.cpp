@@ -86,6 +86,12 @@ void statement(const Parsing::Stmt& stmt,
             insts.push_back(std::make_unique<ReturnInst>(value));
             break;
         }
+        case Kind::Compound: {
+            const auto compoundStmt = dynamic_cast<const Parsing::CompoundStmt*>(&stmt);
+            for (const std::unique_ptr<Parsing::BlockItem>& item : compoundStmt->block->body)
+                blockItem(*item, insts);
+            break;
+        }
         default:
             throw std::invalid_argument("Unexpected statement type Ir generate");
     }
