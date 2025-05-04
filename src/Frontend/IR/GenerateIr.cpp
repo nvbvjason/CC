@@ -20,7 +20,7 @@ void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 std::unique_ptr<Function> function(const Parsing::Function& parsingFunction)
 {
     auto functionTacky = std::make_unique<Function>(parsingFunction.name);
-    for (const std::unique_ptr<Parsing::BlockItem>& item : parsingFunction.body)
+    for (const std::unique_ptr<Parsing::BlockItem>& item : parsingFunction.body->body)
         blockItem(*item, functionTacky->insts);
     return functionTacky;
 }

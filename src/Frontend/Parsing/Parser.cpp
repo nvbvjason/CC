@@ -31,8 +31,6 @@ std::unique_ptr<Function> Parse::functionParse()
         return nullptr;
     if (!expect(TokenType::CloseParen))
         return nullptr;
-    if (!expect(TokenType::OpenBrace))
-        return nullptr;
     auto function = std::make_unique<Function>(iden);
     auto block = blockParse();
     if (block == nullptr)
@@ -46,11 +44,15 @@ std::unique_ptr<Block> Parse::blockParse()
     auto block = std::make_unique<Block>();
     if (!expect(TokenType::OpenBrace))
         return nullptr;
-    while (expect(TokenType::CloseBrace)) {
+    if (expect(TokenType::CloseBrace))
+        return block;
+    while (true) {
         std::unique_ptr<BlockItem> blockItem = blockItemParse();
         if (blockItem == nullptr)
             return nullptr;
         block->body.push_back(std::move(blockItem));
+        if (expect(TokenType::CloseBrace))
+            break;
     }
     return block;
 }
