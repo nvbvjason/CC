@@ -20,6 +20,7 @@ public:
     void visit(const Program& program) override;
 
     void visit(const Function& function) override;
+    void visit(const Block& block) override;
 
     // BlockItem
     void visit(const StmtBlockItem& stmtBlockItem) override;
@@ -31,6 +32,7 @@ public:
     void visit(const IfStmt& ifStmt) override;
     void visit(const ReturnStmt& returnStmt) override;
     void visit(const ExprStmt& exprStmt) override;
+    void visit(const CompoundStmt& function) override;
     void visit(const NullStmt& nullStmt) override;
 
     // Expression

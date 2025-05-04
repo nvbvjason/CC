@@ -13,6 +13,7 @@ public:
 
     virtual void visit(Program&) = 0;
     virtual void visit(Function&) = 0;
+    virtual void visit(Block&) = 0;
 
     virtual void visit(StmtBlockItem&) = 0;
     virtual void visit(DeclBlockItem&) = 0;
@@ -20,9 +21,10 @@ public:
     virtual void visit(Declaration&) = 0;
 
     // Statements
-    virtual void visit(IfStmt&) = 0;
     virtual void visit(ReturnStmt&) = 0;
+    virtual void visit(IfStmt&) = 0;
     virtual void visit(ExprStmt&) = 0;
+    virtual void visit(CompoundStmt&) = 0;
     virtual void visit(NullStmt&) = 0;
 
     // Expressions
@@ -40,6 +42,7 @@ public:
 
     virtual void visit(const Program&) = 0;
     virtual void visit(const Function&) = 0;
+    virtual void visit(const Block&) = 0;
 
     virtual void visit(const StmtBlockItem&) = 0;
     virtual void visit(const DeclBlockItem&) = 0;
@@ -50,6 +53,7 @@ public:
     virtual void visit(const IfStmt&) = 0;
     virtual void visit(const ReturnStmt&) = 0;
     virtual void visit(const ExprStmt&) = 0;
+    virtual void visit(const CompoundStmt&) = 0;
     virtual void visit(const NullStmt&) = 0;
 
     // Expressions

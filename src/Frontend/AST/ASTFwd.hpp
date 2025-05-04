@@ -10,6 +10,7 @@ namespace Parsing {
 // Program structure
 struct Program;
 struct Function;
+struct Block;
 
 // Block items
 struct BlockItem;
@@ -21,9 +22,10 @@ struct Declaration;
 
 // Statements
 struct Stmt;
-struct IfStmt;
 struct ReturnStmt;
 struct ExprStmt;
+struct IfStmt;
+struct CompoundStmt;
 struct NullStmt;
 
 // Expressions

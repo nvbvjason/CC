@@ -13,6 +13,8 @@ public:
 
     void visit(Function& function) override;
 
+    void visit(Block& block) override;
+
     void visit(StmtBlockItem& stmtBlockItem) override;
     void visit(DeclBlockItem& declBlockItem) override;
 
@@ -22,6 +24,7 @@ public:
     void visit(IfStmt& ifStmt) override;
     void visit(ReturnStmt& returnStmt) override;
     void visit(ExprStmt& exprStmt) override;
+    void visit(CompoundStmt& compoundStmt) override;
     void visit(NullStmt& nullStmt) override {}
 
     // Expression

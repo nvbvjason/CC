@@ -10,15 +10,15 @@ bool ValidateReturn::programValidate(Parsing::Program& program)
 
 void ValidateReturn::visit(Parsing::Function& function)
 {
-    if (function.body.empty()) {
+    if (function.body->body.empty()) {
             addReturnZero(function);
         return;
     }
 
-    for (std::unique_ptr<Parsing::BlockItem>& blockItem : function.body)
+    for (std::unique_ptr<Parsing::BlockItem>& blockItem : function.body->body)
         blockItem->accept(*this);
 
-    auto& lastBlockItem = function.body.back();
+    auto& lastBlockItem = function.body->body.back();
     if (lastBlockItem->kind != Parsing::BlockItem::Kind::Statement) {
         addReturnZero(function);
         return;

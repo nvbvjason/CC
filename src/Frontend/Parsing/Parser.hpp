@@ -5,18 +5,20 @@
 
 /*
     <program>       ::= <function>
-    <function>      ::= "int" <identifier> "(" "void" ")" "{" { block_item* } "}"
+    <function>      ::= "int" <identifier> "(" "void" ")" <block>
+    <block>         ::= "{" { <block-item> } "}"
     <block_item>    ::= <statement> | <declaration>
     <declaration>   ::= "int" <identifier> [ "=" <exp> ] ";"
     <statement>     ::= "return" <exp> ";"
                       | <exp> ";"
                       | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
+                      | <block>
                       | ";"
     <exp>           ::= <unary_exp>
                       | <exp> <binop> <exp>
                       | <exp> "?" <exp> ":" <exp>
     <unary_exp>     ::= <postfix_exp> | <unop> <unary_exp>
-    <postfix_exp>   ::= <factor> | <postfix_exp> "--"
+    <postfix_exp>   ::= <factor> | <postfix_exp>
     <factor>        ::= <int> | <identifier> | "(" <exp> ")"
     <unop>          ::= "-" | "~" | "!" | "--" | "++"
     <postfixop>     ::= "--" | "++"
@@ -44,6 +46,7 @@ public:
     explicit Parse(const std::vector<Lexing::Token> &c_tokens)
         : c_tokens(c_tokens) {}
     bool programParse(Program& program);
+    [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<Stmt> stmtParse();

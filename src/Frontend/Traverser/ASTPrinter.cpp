@@ -79,10 +79,14 @@ void ASTPrinter::visit(const Program& program)
 void ASTPrinter::visit(const Function& function)
 {
     oss << "  Function: " << function.name << "\n";
+    function.body->accept(*this);
+}
+
+void ASTPrinter::visit(const Block& block)
+{
     oss << "  Body:\n";
-    for (auto& blockItem : function.body) {
+    for (const auto& blockItem : block.body)
         blockItem->accept(*this);
-    }
 }
 
 void ASTPrinter::visit(const StmtBlockItem& stmtBlockItem)
@@ -131,6 +135,12 @@ void ASTPrinter::visit(const ExprStmt& exprStmt)
     oss << "      ExprStmt: ";
     exprStmt.expr->accept(*this);
     oss << "\n";
+}
+
+void ASTPrinter::visit(const CompoundStmt& function)
+{
+    oss << "      CompoundStmt:\n";
+    function.block->accept(*this);
 }
 
 void ASTPrinter::visit(const UnaryExpr& unaryExpr)

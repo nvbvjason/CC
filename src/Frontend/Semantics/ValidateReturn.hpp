@@ -22,7 +22,7 @@ inline void ValidateReturn::addReturnZero(Parsing::Function& function)
     auto zeroConstExpr = std::make_unique<Parsing::ConstExpr>(0);
     auto returnStmt = std::make_unique<Parsing::ReturnStmt>(std::move(zeroConstExpr));
     auto returnBlockStmt = std::make_unique<Parsing::StmtBlockItem>(std::move(returnStmt));
-    function.body.push_back(std::move(returnBlockStmt));
+    function.body->body.push_back(std::move(returnBlockStmt));
 }
 } // Semantics
 

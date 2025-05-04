@@ -10,7 +10,12 @@ void ASTTraverser::visit(Program& program)
 
 void ASTTraverser::visit(Function& function)
 {
-    for (std::unique_ptr<BlockItem>& blockItem : function.body)
+    function.body->accept(*this);
+}
+
+void ASTTraverser::visit(Block& block)
+{
+    for (auto& blockItem : block.body)
         blockItem->accept(*this);
 }
 
@@ -46,6 +51,11 @@ void ASTTraverser::visit(ReturnStmt& returnStmt)
 void ASTTraverser::visit(ExprStmt& exprStmt)
 {
     exprStmt.expr->accept(*this);
+}
+
+void ASTTraverser::visit(CompoundStmt& compoundStmt)
+{
+
 }
 
 void ASTTraverser::visit(UnaryExpr& unaryExpr)

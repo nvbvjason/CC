@@ -12,12 +12,14 @@
 
 /*
     program = Program(function_definition)
-    function_definition = Function(identifier names, block_item* body)
+    function_definition = Function(identifier names, block body)
+    block = Block(block_item)
     block_item = S(statement) | D(declaration)
     declaration = Declaration(identifier name, exp? init)
     statement = Return(exp)
-              | If(exp condition, statement then, statement? else)
               | Expression(exp)
+              | If(exp condition, statement then, statement? else)
+              | Compound(block)
               | Null
     exp = Constant(int)
         | Var(identifier)
@@ -52,6 +54,13 @@ struct Program {
 
 struct Function {
     std::string name;
+    std::unique_ptr<Block> body;
+
+    void accept(ASTVisitor& visitor) { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
+};
+
+struct Block {
     std::vector<std::unique_ptr<BlockItem>> body;
 
     void accept(ASTVisitor& visitor) { visitor.visit(*this); }
@@ -112,7 +121,7 @@ struct Declaration {
 
 struct Stmt {
     enum class Kind {
-        If, Return, Expression, Null
+        If, Return, Expression, Compound, Null
     };
     Kind kind;
 
@@ -162,6 +171,17 @@ struct ExprStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
+
+struct CompoundStmt final : Stmt {
+    std::unique_ptr<Block> block;
+    explicit CompoundStmt(std::unique_ptr<Block> block)
+        : Stmt(Kind::Compound), block(std::move(block)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    CompoundStmt() = delete;
 };
 
 struct NullStmt final : Stmt {

@@ -34,13 +34,25 @@ std::unique_ptr<Function> Parse::functionParse()
     if (!expect(TokenType::OpenBrace))
         return nullptr;
     auto function = std::make_unique<Function>(iden);
-    while (!expect(TokenType::CloseBrace)) {
+    auto block = blockParse();
+    if (block == nullptr)
+        return nullptr;
+    function->body = std::move(block);
+    return function;
+}
+
+std::unique_ptr<Block> Parse::blockParse()
+{
+    auto block = std::make_unique<Block>();
+    if (!expect(TokenType::OpenBrace))
+        return nullptr;
+    while (expect(TokenType::CloseBrace)) {
         std::unique_ptr<BlockItem> blockItem = blockItemParse();
         if (blockItem == nullptr)
             return nullptr;
-        function->body.push_back(std::move(blockItem));
+        block->body.push_back(std::move(blockItem));
     }
-    return function;
+    return block;
 }
 
 std::unique_ptr<BlockItem> Parse::blockItemParse()
@@ -84,6 +96,8 @@ std::unique_ptr<Stmt> Parse::stmtParse()
         return returnStmtParse();
     if (expect(TokenType::If))
         return ifStmtParse();
+    if (peek().m_type == TokenType::OpenBrace)
+        return std::make_unique<CompoundStmt>(blockParse());
     return exprStmtParse();
 }
 
