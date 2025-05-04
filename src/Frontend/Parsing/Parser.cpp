@@ -147,8 +147,7 @@ std::unique_ptr<Expr> Parse::exprParse(const i32 minPrecedence)
                 return nullptr;
             if (!expect(TokenType::Colon))
                 return nullptr;
-            nextToken = peek();
-            auto second = exprParse(precedence(nextToken.m_type));
+            auto second = exprParse(precedence(TokenType::Colon));
             if (second == nullptr)
                 return nullptr;
             left = std::make_unique<ConditionalExpr>(
@@ -415,7 +414,6 @@ bool Parse::isUnaryOperator(const TokenType type)
 bool Parse::isAssignmentOperator(TokenType type)
 {
     switch (type) {
-
         case TokenType::Equal:
         case TokenType::PlusAssign:
         case TokenType::MinusAssign:

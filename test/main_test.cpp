@@ -365,6 +365,16 @@ TEST(Chapter6, parsingInvalid)
     }
 }
 
+TEST(Chapter6, semanticsInvalid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_6/invalid_semantics";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
 void cleanUp()
 {
     for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))
