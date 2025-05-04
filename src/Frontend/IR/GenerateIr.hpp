@@ -16,6 +16,10 @@ void declaration(const Parsing::Declaration& decl,
                  std::vector<std::unique_ptr<Instruction>>& insts);
 void statement(const Parsing::Stmt& stmt,
                std::vector<std::unique_ptr<Instruction>>& insts);
+void ifStmt(const Parsing::IfStmt& stmt,
+            std::vector<std::unique_ptr<Instruction>>& insts);
+void ifElseStmt(const Parsing::IfStmt& stmt,
+                std::vector<std::unique_ptr<Instruction>>& insts);
 std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
                             std::vector<std::unique_ptr<Instruction>>& instructions);
 std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
@@ -32,6 +36,8 @@ std::shared_ptr<Value> simpleAssignInst(const Parsing::AssignmentExpr& assignExp
                                         std::vector<std::unique_ptr<Instruction>>& instructions);
 std::shared_ptr<Value> compoundAssignInst(const Parsing::AssignmentExpr& assignExpr,
                                           std::vector<std::unique_ptr<Instruction>>& instructions);
+std::shared_ptr<Value> conditionalExpr(const Parsing::Expr& stmt,
+                                       std::vector<std::unique_ptr<Instruction>>& insts);
 std::shared_ptr<Value> constInst(const Parsing::Expr& parsingExpr);
 std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr);
 

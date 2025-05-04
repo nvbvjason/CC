@@ -36,8 +36,8 @@ void blockItem(const Parsing::BlockItem& blockItem,
             break;
         }
         case Kind::Statement: {
-            const auto stmt = dynamic_cast<const Parsing::StmtBlockItem*>(&blockItem);
-            statement(*stmt->stmt, instructions);
+            const auto stmtBlockItem = dynamic_cast<const Parsing::StmtBlockItem*>(&blockItem);
+            statement(*stmtBlockItem->stmt, instructions);
             break;
         }
         default:
@@ -70,6 +70,14 @@ void statement(const Parsing::Stmt& stmt,
             inst(*stmtExpr->expr, insts);
             break;
         }
+        case Kind::If: {
+            const auto parseIffStmt = dynamic_cast<const Parsing::IfStmt*>(&stmt);
+            if (parseIffStmt->elseStmt == nullptr)
+                ifStmt(*parseIffStmt, insts);
+            else
+                ifElseStmt(*parseIffStmt, insts);
+            break;
+        }
         case Kind::Return: {
             const auto returnStmt = dynamic_cast<const Parsing::ReturnStmt*>(&stmt);
             auto value = inst(*returnStmt->expr, insts);
@@ -81,6 +89,30 @@ void statement(const Parsing::Stmt& stmt,
         default:
             throw std::invalid_argument("Unexpected statement type Ir generate");
     }
+}
+
+void ifStmt(const Parsing::IfStmt& parseIfStmt,
+            std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    auto condition = inst(*parseIfStmt.condition, insts);
+    Identifier endLabelIden = makeTemporaryName();
+;   insts.push_back(std::make_unique<JumpIfZeroInst>(condition, endLabelIden));
+    statement(*parseIfStmt.thenStmt, insts);
+    insts.push_back(std::make_unique<LabelInst>(endLabelIden));
+}
+
+void ifElseStmt(const Parsing::IfStmt& parseIfStmt,
+                std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    auto condition = inst(*parseIfStmt.condition, insts);
+    Identifier elseStmtLabel = makeTemporaryName();
+    insts.push_back(std::make_unique<JumpIfZeroInst>(condition, elseStmtLabel));
+    statement(*parseIfStmt.thenStmt, insts);
+    Identifier endLabelIden = makeTemporaryName();
+    insts.push_back(std::make_unique<JumpInst>(endLabelIden));
+    insts.push_back(std::make_unique<LabelInst>(elseStmtLabel));
+    statement(*parseIfStmt.elseStmt, insts);
+    insts.push_back(std::make_unique<LabelInst>(endLabelIden));
 }
 
 std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
@@ -97,6 +129,8 @@ std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
             return binaryInst(parsingExpr, instructions);
         case Parsing::Expr::Kind::Assignment:
             return assignInst(parsingExpr, instructions);
+        case Parsing::Expr::Kind::Conditional:
+            return conditionalExpr(parsingExpr, instructions);
         default:
             throw std::invalid_argument("Unexpected expression type ir generateInst");
     }
@@ -251,6 +285,31 @@ std::shared_ptr<Value> constInst(const Parsing::Expr& parsingExpr)
     return result;
 }
 
+std::shared_ptr<Value> conditionalExpr(const Parsing::Expr& stmt,
+                                       std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    auto result = std::make_shared<ValueVar>(makeTemporaryName());
+
+    Identifier endLabelIden = makeTemporaryName();
+    Identifier falseLabelName = makeTemporaryName();
+
+    const auto conditionalExpr = dynamic_cast<const Parsing::ConditionalExpr*>(&stmt);
+    auto condition = inst(*conditionalExpr->condition, insts);
+
+    insts.push_back(std::make_unique<JumpIfZeroInst>(condition, falseLabelName));
+
+    auto trueValue = inst(*conditionalExpr->first, insts);
+    insts.push_back(std::make_unique<CopyInst>(trueValue, result));
+    insts.push_back(std::make_unique<JumpInst>(endLabelIden));
+
+    insts.push_back(std::make_unique<LabelInst>(falseLabelName));
+    auto right = inst(*conditionalExpr->second, insts);
+    insts.push_back(std::make_unique<CopyInst>(right, result));
+
+    insts.push_back(std::make_unique<LabelInst>(endLabelIden));
+    return result;
+}
+
 Identifier makeTemporaryName()
 {
     static i32 id = 0;
@@ -343,10 +402,12 @@ BinaryInst::Operation getPostPrefixOperation(Parsing::UnaryExpr::Operator oper)
 {
     using Operator = Parsing::UnaryExpr::Operator;
     switch (oper) {
-        case Operator::PostFixDecrement: return BinaryInst::Operation::Subtract;
-        case Operator::PrefixDecrement:  return BinaryInst::Operation::Subtract;
-        case Operator::PostFixIncrement: return BinaryInst::Operation::Add;
-        case Operator::PrefixIncrement:  return BinaryInst::Operation::Add;
+        case Operator::PostFixDecrement:
+        case Operator::PrefixDecrement:
+            return BinaryInst::Operation::Subtract;
+        case Operator::PostFixIncrement:
+        case Operator::PrefixIncrement:
+            return BinaryInst::Operation::Add;
         default:
             throw std::invalid_argument("Invalid postfix operation");
     }
