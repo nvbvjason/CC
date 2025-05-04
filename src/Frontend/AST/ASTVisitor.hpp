@@ -20,11 +20,20 @@ public:
 
     virtual void visit(Declaration&) = 0;
 
+    // ForInit
+    virtual void visit(DeclForInit&) = 0;
+    virtual void visit(ExprForInit&) = 0;
+
     // Statements
     virtual void visit(ReturnStmt&) = 0;
     virtual void visit(IfStmt&) = 0;
     virtual void visit(ExprStmt&) = 0;
     virtual void visit(CompoundStmt&) = 0;
+    virtual void visit(BreakStmt&) = 0;
+    virtual void visit(ContinueStmt&) = 0;
+    virtual void visit(WhileStmt&) = 0;
+    virtual void visit(DoWhileStmt&) = 0;
+    virtual void visit(ForStmt&) = 0;
     virtual void visit(NullStmt&) = 0;
 
     // Expressions
@@ -49,11 +58,20 @@ public:
 
     virtual void visit(const Declaration&) = 0;
 
+    // ForInit
+    virtual void visit(const DeclForInit&) = 0;
+    virtual void visit(const ExprForInit&) = 0;
+
     // Statements
     virtual void visit(const IfStmt&) = 0;
     virtual void visit(const ReturnStmt&) = 0;
     virtual void visit(const ExprStmt&) = 0;
     virtual void visit(const CompoundStmt&) = 0;
+    virtual void visit(const BreakStmt&) = 0;
+    virtual void visit(const ContinueStmt&) = 0;
+    virtual void visit(const WhileStmt&) = 0;
+    virtual void visit(const DoWhileStmt&) = 0;
+    virtual void visit(const ForStmt&) = 0;
     virtual void visit(const NullStmt&) = 0;
 
     // Expressions

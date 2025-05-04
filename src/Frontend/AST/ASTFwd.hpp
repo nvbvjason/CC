@@ -20,12 +20,22 @@ struct DeclBlockItem;
 // Declaration
 struct Declaration;
 
+// For loop initialization
+struct ForInit;
+struct DeclForInit;
+struct ExprForInit;
+
 // Statements
 struct Stmt;
 struct ReturnStmt;
 struct ExprStmt;
 struct IfStmt;
 struct CompoundStmt;
+struct BreakStmt;
+struct ContinueStmt;
+struct WhileStmt;
+struct DoWhileStmt;
+struct ForStmt;
 struct NullStmt;
 
 // Expressions

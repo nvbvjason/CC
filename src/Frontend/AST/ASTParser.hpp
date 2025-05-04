@@ -16,10 +16,16 @@
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
     declaration = Declaration(identifier name, exp? init)
+    for_init = InitDecl(declaration) | Init(Expr)
     statement = Return(exp)
               | Expression(exp)
               | If(exp condition, statement then, statement? else)
               | Compound(block)
+              | Break
+              | Continue
+              | While(exp condition, statement body)
+              | DoWhile(statement body, exp condition)
+              | For(for_init init, exp? condition, exp? post, statement body)
               | Null
     exp = Constant(int)
         | Var(identifier)
@@ -119,9 +125,49 @@ struct Declaration {
     void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
+struct ForInit {
+    enum class Kind {
+        Declaration, Expression
+    };
+    Kind kind;
+
+    ForInit() = delete;
+    virtual ~ForInit() = default;
+
+    virtual void accept(ASTVisitor& visitor) = 0;
+    virtual void accept(ConstASTVisitor& visitor) const = 0;
+protected:
+    explicit ForInit(const Kind kind)
+        : kind(kind) {}
+};
+
+struct DeclForInit final : ForInit {
+    std::unique_ptr<Declaration> decl;
+    explicit DeclForInit(std::unique_ptr<Declaration> decl)
+        : ForInit(Kind::Declaration), decl(std::move(decl)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    DeclForInit() = delete;
+};
+
+struct ExprForInit final : ForInit {
+    std::unique_ptr<Expr> expression = nullptr;
+    explicit ExprForInit(std::unique_ptr<Expr> expr)
+        : ForInit(Kind::Expression), expression(std::move(expr)) {}
+    ExprForInit()
+        : ForInit(Kind::Expression) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
+
 struct Stmt {
     enum class Kind {
-        If, Return, Expression, Compound, Null
+        If, Return, Expression, Compound,
+        Break, Continue, While, DoWhile, For,
+        Null
     };
     Kind kind;
 
@@ -145,10 +191,10 @@ struct IfStmt final : Stmt {
         : Stmt(Kind::If), condition(std::move(condition)), thenStmt(std::move(thenStmt)),
                           elseStmt(std::move(elseStmt)) {}
 
-    IfStmt() = delete;
-
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    IfStmt() = delete;
 };
 
 struct ReturnStmt final : Stmt {
@@ -182,6 +228,69 @@ struct CompoundStmt final : Stmt {
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
     CompoundStmt() = delete;
+};
+
+struct BreakStmt final : Stmt {
+    BreakStmt()
+        : Stmt(Kind::Break) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
+
+struct ContinueStmt final : Stmt {
+    ContinueStmt()
+        : Stmt(Kind::Continue) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
+
+struct WhileStmt final : Stmt {
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Stmt> body;
+    WhileStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
+        : Stmt(Kind::While), condition(std::move(condition)), body(std::move(body)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    WhileStmt() = delete;
+};
+
+struct DoWhileStmt final : Stmt {
+    std::unique_ptr<Stmt> body;
+    std::unique_ptr<Expr> condition;
+    DoWhileStmt(std::unique_ptr<Stmt> body, std::unique_ptr<Expr> condition)
+        : Stmt(Kind::DoWhile), body(std::move(body)), condition(std::move(condition)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    DoWhileStmt() = delete;
+};
+
+struct ForStmt final : Stmt {
+    std::unique_ptr<ForInit> init;
+    std::unique_ptr<Expr> condition = nullptr;
+    std::unique_ptr<Expr> post = nullptr;
+    std::unique_ptr<Stmt> body;
+    ForStmt(std::unique_ptr<ForInit> init,
+            std::unique_ptr<Expr> condition,
+            std::unique_ptr<Expr> post,
+            std::unique_ptr<Stmt> body)
+        : Stmt(Kind::For), init(std::move(init)),
+                           condition(std::move(condition)),
+                           post(std::move(post)),
+                           body(std::move(body)) {}
+    ForStmt(std::unique_ptr<ForInit> init,
+            std::unique_ptr<Stmt> body)
+        : Stmt(Kind::For), init(std::move(init)), body(std::move(body)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    ForStmt() = delete;
 };
 
 struct NullStmt final : Stmt {

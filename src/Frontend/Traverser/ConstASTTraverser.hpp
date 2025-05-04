@@ -19,11 +19,20 @@ public:
 
     void visit(const Declaration& declaration) override;
 
+    // ForInit
+    void visit(const DeclForInit& declForInit) override;
+    void visit(const ExprForInit& exprForInit) override;
+
     // Statements
     void visit(const IfStmt& ifStmt) override;
     void visit(const ReturnStmt& returnStmt) override;
     void visit(const ExprStmt& exprStmt) override;
     void visit(const CompoundStmt& compoundStmt) override;
+    void visit(const BreakStmt& breakStmt) override {}
+    void visit(const ContinueStmt& continueStmt) override {}
+    void visit(const WhileStmt& whileStmt) override;
+    void visit(const DoWhileStmt& doWhileStmt) override;
+    void visit(const ForStmt& forStmt) override;
     void visit(const NullStmt& nullStmt) override {}
 
     // Expression

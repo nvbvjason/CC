@@ -20,11 +20,20 @@ public:
 
     void visit(Declaration& declaration) override;
 
+    // ForInit
+    void visit(DeclForInit& declForInit) override;
+    void visit(ExprForInit& exprForInit) override;
+
     // Statement
     void visit(IfStmt& ifStmt) override;
     void visit(ReturnStmt& returnStmt) override;
     void visit(ExprStmt& exprStmt) override;
     void visit(CompoundStmt& compoundStmt) override;
+    void visit(BreakStmt& breakStmt) override {}
+    void visit(ContinueStmt& continueStmt) override {}
+    void visit(WhileStmt& whileStmt) override;
+    void visit(DoWhileStmt& doWhileStmt) override;
+    void visit(ForStmt& forStmt) override;
     void visit(NullStmt& nullStmt) override {}
 
     // Expression

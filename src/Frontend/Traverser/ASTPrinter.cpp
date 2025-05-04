@@ -111,6 +111,20 @@ void ASTPrinter::visit(const Declaration& declaration)
     oss << "\n";
 }
 
+void ASTPrinter::visit(const DeclForInit& declForInit)
+{
+    oss << "      DeclForInit: ";
+    declForInit.decl->accept(*this);
+    oss << "\n";
+}
+
+void ASTPrinter::visit(const ExprForInit& exprForInit)
+{
+    oss << "      ExprForInit: ";
+    exprForInit.expression->accept(*this);
+    oss << "\n";
+}
+
 void ASTPrinter::visit(const IfStmt& ifStmt)
 {
     oss << "      IfStmt: ";
@@ -141,6 +155,46 @@ void ASTPrinter::visit(const CompoundStmt& function)
 {
     oss << "      CompoundStmt:\n";
     function.block->accept(*this);
+}
+
+void ASTPrinter::visit(const BreakStmt& breakStmt)
+{
+    oss << "      BreakStmt\n";
+}
+
+void ASTPrinter::visit(const ContinueStmt& continueStmt)
+{
+    oss << "      ContinueStmt\n";
+}
+
+void ASTPrinter::visit(const WhileStmt& whileStmt)
+{
+    oss << "      WhileStmt: ";
+    whileStmt.condition->accept(*this);
+    oss << "\n";
+    whileStmt.body->accept(*this);
+}
+
+void ASTPrinter::visit(const DoWhileStmt& doWhileStmt)
+{
+    oss << "      DoWhileStmt: ";
+    doWhileStmt.body->accept(*this);
+    oss << "\n";
+    doWhileStmt.condition->accept(*this);
+}
+
+void ASTPrinter::visit(const ForStmt& forStmt)
+{
+    oss << "      ForStmt: ";
+    forStmt.init->accept(*this);
+    if (forStmt.condition) {
+        oss << " ";
+        forStmt.condition->accept(*this);
+    }
+    if (forStmt.post) {
+        oss << " ";
+        forStmt.post->accept(*this);
+    }
 }
 
 void ASTPrinter::visit(const UnaryExpr& unaryExpr)

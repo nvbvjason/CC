@@ -35,6 +35,17 @@ void ASTTraverser::visit(Declaration& declaration)
         declaration.init->accept(*this);
 }
 
+void ASTTraverser::visit(DeclForInit& declForInit)
+{
+    declForInit.decl->accept(*this);
+}
+
+void ASTTraverser::visit(ExprForInit& exprForInit)
+{
+    if (exprForInit.expression)
+        exprForInit.expression->accept(*this);
+}
+
 void ASTTraverser::visit(IfStmt& ifStmt)
 {
     ifStmt.condition->accept(*this);
@@ -56,6 +67,28 @@ void ASTTraverser::visit(ExprStmt& exprStmt)
 void ASTTraverser::visit(CompoundStmt& compoundStmt)
 {
     compoundStmt.block->accept(*this);
+}
+
+void ASTTraverser::visit(WhileStmt& whileStmt)
+{
+    whileStmt.condition->accept(*this);
+    whileStmt.body->accept(*this);
+}
+
+void ASTTraverser::visit(DoWhileStmt& doWhileStmt)
+{
+    doWhileStmt.body->accept(*this);
+    doWhileStmt.condition->accept(*this);
+}
+
+void ASTTraverser::visit(ForStmt& forStmt)
+{
+    forStmt.init->accept(*this);
+    if (forStmt.condition)
+        forStmt.condition->accept(*this);
+    if (forStmt.post)
+        forStmt.post->accept(*this);
+    forStmt.body->accept(*this);
 }
 
 void ASTTraverser::visit(UnaryExpr& unaryExpr)
