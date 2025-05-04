@@ -55,7 +55,7 @@ void ASTTraverser::visit(ExprStmt& exprStmt)
 
 void ASTTraverser::visit(CompoundStmt& compoundStmt)
 {
-
+    compoundStmt.block->accept(*this);
 }
 
 void ASTTraverser::visit(UnaryExpr& unaryExpr)

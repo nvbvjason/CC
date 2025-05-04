@@ -5,21 +5,30 @@ bool VariableResolution::resolve()
 {
     m_valid = true;
     m_counter = 0;
-    variableMap.clear();
+    m_variableMap.clear();
     program.accept(*this);
     return m_valid;
+}
+
+void VariableResolution::visit(Parsing::Block& block)
+{
+    std::unordered_map<std::string, std::string> blockMap;
+    blockMap.swap(m_variableMap);
+    for (auto& blockItem : block.body)
+        blockItem->accept(*this);
+    blockMap.swap(m_variableMap);
 }
 
 void VariableResolution::visit(Parsing::Declaration& declaration)
 {
     if (!m_valid)
         return;
-    if (variableMap.contains(declaration.name)) {
+    if (m_variableMap.contains(declaration.name)) {
         m_valid = false;
         return;
     }
     std::string uniqueName = makeTemporary(declaration.name);
-    variableMap[declaration.name] = uniqueName;
+    m_variableMap[declaration.name] = uniqueName;
     declaration.name = uniqueName;
     if (declaration.init != nullptr)
         declaration.init->accept(*this);
@@ -29,11 +38,11 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
     if (!m_valid)
         return;
-    if (!variableMap.contains(varExpr.name)) {
+    if (!m_variableMap.contains(varExpr.name)) {
         m_valid = false;
         return;
     }
-    varExpr.name = variableMap.at(varExpr.name);
+    varExpr.name = m_variableMap.at(varExpr.name);
 }
 
 void VariableResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
@@ -45,11 +54,11 @@ void VariableResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
         return;
     }
     auto varExpr = static_cast<Parsing::VarExpr*>(assignmentExpr.lhs.get());
-    if (!variableMap.contains(varExpr->name)) {
+    if (!m_variableMap.contains(varExpr->name)) {
         m_valid = false;
         return;
     }
-    varExpr->name = variableMap.at(varExpr->name);
+    varExpr->name = m_variableMap.at(varExpr->name);
     assignmentExpr.rhs->accept(*this);
 }
 

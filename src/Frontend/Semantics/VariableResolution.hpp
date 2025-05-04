@@ -12,7 +12,7 @@
 namespace Semantics {
 
 class VariableResolution : public Parsing::ASTTraverser {
-    std::unordered_map<std::string, std::string> variableMap;
+    std::unordered_map<std::string, std::string> m_variableMap;
     i32 m_counter = 0;
     Parsing::Program& program;
     bool m_valid = true;
@@ -21,6 +21,7 @@ public:
         : program(program) {}
 
     bool resolve();
+    void visit(Parsing::Block& function) override;
     void visit(Parsing::Declaration& declaration) override;
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
