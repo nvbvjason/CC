@@ -25,6 +25,11 @@ class Lexer {
         { "void", Token::Type::Void },
         { "if", Token::Type::If },
         { "else", Token::Type::Else },
+        { "do", Token::Type::Do },
+        { "while", Token::Type::While },
+        { "for", Token::Type::For },
+        { "break", Token::Type::Break },
+        { "continue", Token::Type::Continue },
     };
 public:
     explicit Lexer(const std::string& input)

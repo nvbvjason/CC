@@ -84,6 +84,31 @@ TEST(LexerTests, Else)
     TestSingleTokenLexing("else", TokenType::Else);
 }
 
+TEST(LexerTests, Do)
+{
+    TestSingleTokenLexing("do", TokenType::Do);
+}
+
+TEST(LexerTests, While)
+{
+    TestSingleTokenLexing("while", TokenType::While);
+}
+
+TEST(LexerTests, For)
+{
+    TestSingleTokenLexing("for", TokenType::For);
+}
+
+TEST(LexerTests, Break)
+{
+    TestSingleTokenLexing("break", TokenType::Break);
+}
+
+TEST(LexerTests, Continue)
+{
+    TestSingleTokenLexing("continue", TokenType::Continue);
+}
+
 TEST(LexerTests, Percent)
 {
     TestSingleTokenLexing("%", TokenType::Percent);

@@ -79,6 +79,11 @@ struct Token {
         IntKeyword,                      // 'int'
         If,                              // if
         Else,                            // else
+        Do,                              // do
+        While,                           // while
+        For,                             // for
+        Break,                           // break
+        Continue,                        // continue
 
         // Special Tokens
         EndOfFile,                       // EOF marker
