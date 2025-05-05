@@ -21,9 +21,11 @@
     statement = Return(exp)
               | Expression(exp)
               | If(exp condition, statement then, statement? else)
+              | Goto(identifier label)
               | Compound(block)
               | Break(identifier label)
               | Continue(identifier label)
+              | Label(identifier label)
               | While(exp condition, statement body, identifier label)
               | DoWhile(statement body, exp condition, identifier label)
               | For(for_init init, exp? condition, exp? post, statement body, identifier label)
@@ -166,8 +168,8 @@ struct ExprForInit final : ForInit {
 
 struct Stmt {
     enum class Kind {
-        If, Return, Expression, Compound,
-        Break, Continue, While, DoWhile, For,
+        Return, Expression, If, Goto, Compound,
+        Break, Continue, Label, While, DoWhile, For,
         Null
     };
     Kind kind;
@@ -180,22 +182,6 @@ struct Stmt {
 protected:
     explicit Stmt(const Kind kind)
         : kind(kind) {}
-};
-
-struct IfStmt final : Stmt {
-    std::unique_ptr<Expr> condition;
-    std::unique_ptr<Stmt> thenStmt;
-    std::unique_ptr<Stmt> elseStmt = nullptr;
-    IfStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenStmt)
-        : Stmt(Kind::If), condition(std::move(condition)), thenStmt(std::move(thenStmt)) {}
-    IfStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenStmt, std::unique_ptr<Stmt> elseStmt)
-        : Stmt(Kind::If), condition(std::move(condition)), thenStmt(std::move(thenStmt)),
-                          elseStmt(std::move(elseStmt)) {}
-
-    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
-    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
-
-    IfStmt() = delete;
 };
 
 struct ReturnStmt final : Stmt {
@@ -218,6 +204,33 @@ struct ExprStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
+
+struct IfStmt final : Stmt {
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Stmt> thenStmt;
+    std::unique_ptr<Stmt> elseStmt = nullptr;
+    IfStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenStmt)
+        : Stmt(Kind::If), condition(std::move(condition)), thenStmt(std::move(thenStmt)) {}
+    IfStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenStmt, std::unique_ptr<Stmt> elseStmt)
+        : Stmt(Kind::If), condition(std::move(condition)), thenStmt(std::move(thenStmt)),
+                          elseStmt(std::move(elseStmt)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    IfStmt() = delete;
+};
+
+struct GotoStmt final : Stmt {
+    std::string identifier;
+    explicit GotoStmt(std::string iden)
+        : Stmt(Kind::Goto), identifier(std::move(iden)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    GotoStmt() = delete;
 };
 
 struct CompoundStmt final : Stmt {
@@ -249,6 +262,17 @@ struct ContinueStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
+
+struct LabelStmt final : Stmt {
+    std::string identifier;
+    explicit LabelStmt(std::string iden)
+        : Stmt(Kind::Label), identifier(std::move(iden)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    LabelStmt() = delete;
 };
 
 struct WhileStmt final : Stmt {

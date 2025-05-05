@@ -125,6 +125,8 @@ std::unique_ptr<Stmt> Parse::stmtParse()
             return nullStmtParse();
         case TokenType::If:
             return ifStmtParse();
+        case TokenType::Goto:
+            return gotoStmtParse();
         case TokenType::OpenBrace:
             return std::make_unique<CompoundStmt>(blockParse());
         case TokenType::Break:
@@ -138,6 +140,8 @@ std::unique_ptr<Stmt> Parse::stmtParse()
         case TokenType::For:
             return forStmtParse();
         default:
+            if (peekNextTokenType() == TokenType::Colon)
+                return labelStmtParse();
             return exprStmtParse();
     }
     assert("unreachable stmtParse()");
@@ -190,6 +194,18 @@ std::unique_ptr<Stmt> Parse::ifStmtParse()
     return std::make_unique<IfStmt>(std::move(expr), std::move(thenStmt));
 }
 
+std::unique_ptr<Stmt> Parse::gotoStmtParse()
+{
+    if (!expect(TokenType::Goto))
+        return nullptr;
+    Lexing::Token lexeme = peek();
+    if (!expect(TokenType::Identifier))
+        return nullptr;
+    if (!expect(TokenType::Semicolon))
+        return nullptr;
+    return std::make_unique<GotoStmt>(lexeme.m_lexeme);
+}
+
 std::unique_ptr<Stmt> Parse::breakStmtParse()
 {
     if (!expect(TokenType::Break))
@@ -206,6 +222,16 @@ std::unique_ptr<Stmt> Parse::continueStmtParse()
     if (!expect(TokenType::Semicolon))
         return nullptr;
     return std::make_unique<ContinueStmt>(m_label);
+}
+
+std::unique_ptr<Stmt> Parse::labelStmtParse()
+{
+    Lexing::Token lexeme = peek();
+    if (!expect(TokenType::Identifier))
+        return nullptr;
+    if (!expect(TokenType::Colon))
+        return nullptr;
+    return std::make_unique<LabelStmt>(lexeme.m_lexeme);
 }
 
 std::unique_ptr<Stmt> Parse::whileStmtParse()
@@ -406,6 +432,14 @@ bool Parse::expect(const TokenType type)
     }
     return false;
 }
+
+Lexing::Token::Type Parse::peekNextTokenType() const
+{
+    if (c_tokens.size() <= m_current + 1)
+        return TokenType::EndOfFile;
+    return c_tokens[m_current + 1].m_type;
+}
+
 
 UnaryExpr::Operator Parse::unaryOperator(const TokenType type)
 {

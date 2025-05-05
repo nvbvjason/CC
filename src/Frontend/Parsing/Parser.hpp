@@ -13,9 +13,11 @@
     <statement>     ::= "return" <exp> ";"
                       | <exp> ";"
                       | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
+                      | "goto" <identifier> ";"
                       | <block>
                       | "break"
                       | "continue"
+                      | <identifier> ":"
                       | "while" "(" <exp> ")" <statement>
                       | "do" <statement> "while" "(" <exp> ")" ";"
                       | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>
@@ -63,8 +65,10 @@ public:
     [[nodiscard]] std::unique_ptr<Stmt> returnStmtParse();
     [[nodiscard]] std::unique_ptr<Stmt> exprStmtParse();
     [[nodiscard]] std::unique_ptr<Stmt> ifStmtParse();
+    [[nodiscard]] std::unique_ptr<Stmt> gotoStmtParse();
     [[nodiscard]] std::unique_ptr<Stmt> breakStmtParse();
     [[nodiscard]] std::unique_ptr<Stmt> continueStmtParse();
+    [[nodiscard]] std::unique_ptr<Stmt> labelStmtParse();
     [[nodiscard]] std::unique_ptr<Stmt> whileStmtParse();
     [[nodiscard]] std::unique_ptr<Stmt> doWhileStmtParse();
     [[nodiscard]] std::unique_ptr<Stmt> forStmtParse();
@@ -78,6 +82,7 @@ private:
     bool match(const TokenType& type);
     Lexing::Token advance() { return c_tokens[m_current++]; }
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
+    [[nodiscard]] TokenType peekNextTokenType() const;
     [[nodiscard]] bool expect(TokenType type);
     [[nodiscard]] static UnaryExpr::Operator unaryOperator(TokenType type);
     [[nodiscard]] static BinaryExpr::Operator binaryOperator(TokenType type);

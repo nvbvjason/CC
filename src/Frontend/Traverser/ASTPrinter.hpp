@@ -33,12 +33,14 @@ public:
     void visit(const ExprForInit& exprForInit) override;
 
     // Statement
-    void visit(const IfStmt& ifStmt) override;
     void visit(const ReturnStmt& returnStmt) override;
     void visit(const ExprStmt& exprStmt) override;
+    void visit(const IfStmt& ifStmt) override;
+    void visit(const GotoStmt& gotoStmt) override;
     void visit(const CompoundStmt& function) override;
     void visit(const BreakStmt& breakStmt) override;
     void visit(const ContinueStmt& continueStmt) override;
+    void visit(const LabelStmt& labelStmt) override;
     void visit(const WhileStmt& whileStmt) override;
     void visit(const DoWhileStmt& doWhileStmt) override;
     void visit(const ForStmt& forStmt) override;

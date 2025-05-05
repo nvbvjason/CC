@@ -137,6 +137,10 @@ void ASTPrinter::visit(const IfStmt& ifStmt)
     }
 }
 
+void ASTPrinter::visit(const GotoStmt& gotoStmt)
+{
+}
+
 void ASTPrinter::visit(const ReturnStmt& returnStmt)
 {
     oss << "      Return: ";
@@ -159,13 +163,19 @@ void ASTPrinter::visit(const CompoundStmt& function)
 
 void ASTPrinter::visit(const BreakStmt& breakStmt)
 {
-    oss << "      BreakStmt\n";
+    oss << "      BreakStmt "  << breakStmt.identifier << '\n';
 }
 
 void ASTPrinter::visit(const ContinueStmt& continueStmt)
 {
-    oss << "      ContinueStmt\n";
+    oss << "      ContinueStmt "  << continueStmt.identifier << '\n';
 }
+
+void ASTPrinter::visit(const LabelStmt& labelStmt)
+{
+    oss << "      GotoStmt "  << labelStmt.identifier << '\n';
+}
+
 
 void ASTPrinter::visit(const WhileStmt& whileStmt)
 {

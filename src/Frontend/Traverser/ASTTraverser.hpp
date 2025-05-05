@@ -25,12 +25,14 @@ public:
     void visit(ExprForInit& exprForInit) override;
 
     // Statement
-    void visit(IfStmt& ifStmt) override;
     void visit(ReturnStmt& returnStmt) override;
     void visit(ExprStmt& exprStmt) override;
+    void visit(IfStmt& ifStmt) override;
+    void visit(GotoStmt& gotoStmt) override {}
     void visit(CompoundStmt& compoundStmt) override;
     void visit(BreakStmt& breakStmt) override {}
     void visit(ContinueStmt& continueStmt) override {}
+    void visit(LabelStmt& labelStmt) override {}
     void visit(WhileStmt& whileStmt) override;
     void visit(DoWhileStmt& doWhileStmt) override;
     void visit(ForStmt& forStmt) override;
