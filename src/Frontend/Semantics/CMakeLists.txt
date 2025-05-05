@@ -2,6 +2,8 @@ add_library(Semantics
         ValidateReturn.cpp
         VariableResolution.cpp
         LvalueVerification.cpp
+        LabelsUnique.cpp
+        LabelsUnique.hpp
 )
 
 target_include_directories(Semantics PUBLIC

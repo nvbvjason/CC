@@ -8,6 +8,7 @@
 
 #include "Traverser/ASTPrinter.hpp"
 #include "GenerateIr.hpp"
+#include "LabelsUnique.hpp"
 #include "Lexer.hpp"
 #include "LvalueVerification.hpp"
 #include "Parser.hpp"
@@ -60,7 +61,10 @@ bool validateSemantics(Parsing::Program& programNode)
     if (!validateReturn.programValidate(programNode))
         return false;
     Semantics::LvalueVerification lvalueVerification(programNode);
-    return lvalueVerification.resolve();
+    if (!lvalueVerification.resolve())
+        return false;
+    Semantics::LabelsUnique labelsUnique;
+    return labelsUnique.programValidate(programNode);
 }
 
 void printParsingAst(const Parsing::Program* program)

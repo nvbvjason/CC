@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 
+#include "LabelsUnique.hpp"
 #include "LvalueVerification.hpp"
 
 namespace fs = std::filesystem;
@@ -58,7 +59,10 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     if (!variableResolution.resolve())
         return false;
     Semantics::LvalueVerification lvalueVerification(program);
-    return lvalueVerification.resolve();
+    if (!lvalueVerification.resolve())
+        return false;
+    Semantics::LabelsUnique labelsUnique;
+    return labelsUnique.programValidate(program);
 }
 
 TEST(Chapter1, lexingValid)
@@ -402,6 +406,26 @@ TEST(Chapter6, parsingValidExtraCredit)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter6, semanticsInvalidExtraCredit)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_6/invalid_semantics/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter6, semanticsValidExtraCredit)
+{
+    const fs::path validPath = testsFolderPath / "chapter_6/valid/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
     }
 }
 
