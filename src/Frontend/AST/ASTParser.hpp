@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 /*
@@ -21,11 +22,11 @@
               | Expression(exp)
               | If(exp condition, statement then, statement? else)
               | Compound(block)
-              | Break
-              | Continue
-              | While(exp condition, statement body)
-              | DoWhile(statement body, exp condition)
-              | For(for_init init, exp? condition, exp? post, statement body)
+              | Break(identifier label)
+              | Continue(identifier label)
+              | While(exp condition, statement body, identifier label)
+              | DoWhile(statement body, exp condition, identifier label)
+              | For(for_init init, exp? condition, exp? post, statement body, identifier label)
               | Null
     exp = Constant(int)
         | Var(identifier)
@@ -231,16 +232,20 @@ struct CompoundStmt final : Stmt {
 };
 
 struct BreakStmt final : Stmt {
-    BreakStmt()
-        : Stmt(Kind::Break) {}
+    std::string identifier;
+
+    explicit BreakStmt(std::string iden)
+        : Stmt(Kind::Break), identifier(std::move(iden)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
 struct ContinueStmt final : Stmt {
-    ContinueStmt()
-        : Stmt(Kind::Continue) {}
+    std::string identifier;
+
+    explicit ContinueStmt(std::string iden)
+        : Stmt(Kind::Continue), identifier(std::move(iden)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -249,8 +254,9 @@ struct ContinueStmt final : Stmt {
 struct WhileStmt final : Stmt {
     std::unique_ptr<Expr> condition;
     std::unique_ptr<Stmt> body;
-    WhileStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
-        : Stmt(Kind::While), condition(std::move(condition)), body(std::move(body)) {}
+    std::string identifier;
+    WhileStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body, std::string iden)
+        : Stmt(Kind::While), condition(std::move(condition)), body(std::move(body)), identifier(std::move(iden)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -261,8 +267,9 @@ struct WhileStmt final : Stmt {
 struct DoWhileStmt final : Stmt {
     std::unique_ptr<Stmt> body;
     std::unique_ptr<Expr> condition;
-    DoWhileStmt(std::unique_ptr<Stmt> body, std::unique_ptr<Expr> condition)
-        : Stmt(Kind::DoWhile), body(std::move(body)), condition(std::move(condition)) {}
+    std::string identifier;
+    DoWhileStmt(std::unique_ptr<Stmt> body, std::unique_ptr<Expr> condition, std::string iden)
+        : Stmt(Kind::DoWhile), body(std::move(body)), condition(std::move(condition)), identifier(std::move(iden)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -271,21 +278,13 @@ struct DoWhileStmt final : Stmt {
 };
 
 struct ForStmt final : Stmt {
-    std::unique_ptr<ForInit> init;
+    std::unique_ptr<ForInit> init = nullptr;
     std::unique_ptr<Expr> condition = nullptr;
     std::unique_ptr<Expr> post = nullptr;
     std::unique_ptr<Stmt> body;
-    ForStmt(std::unique_ptr<ForInit> init,
-            std::unique_ptr<Expr> condition,
-            std::unique_ptr<Expr> post,
-            std::unique_ptr<Stmt> body)
-        : Stmt(Kind::For), init(std::move(init)),
-                           condition(std::move(condition)),
-                           post(std::move(post)),
-                           body(std::move(body)) {}
-    ForStmt(std::unique_ptr<ForInit> init,
-            std::unique_ptr<Stmt> body)
-        : Stmt(Kind::For), init(std::move(init)), body(std::move(body)) {}
+    std::string identifier;
+    ForStmt(std::unique_ptr<Stmt> body,std::string iden)
+        : Stmt(Kind::For), body(std::move(body)), identifier(std::move(iden)){}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

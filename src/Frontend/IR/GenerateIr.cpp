@@ -102,7 +102,7 @@ void ifStmt(const Parsing::IfStmt& parseIfStmt,
 {
     auto condition = inst(*parseIfStmt.condition, insts);
     Identifier endLabelIden = makeTemporaryName();
-;   insts.push_back(std::make_unique<JumpIfZeroInst>(condition, endLabelIden));
+    insts.push_back(std::make_unique<JumpIfZeroInst>(condition, endLabelIden));
     statement(*parseIfStmt.thenStmt, insts);
     insts.push_back(std::make_unique<LabelInst>(endLabelIden));
 }
