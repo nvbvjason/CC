@@ -33,9 +33,12 @@ public:
     virtual void visit(BreakStmt&) = 0;
     virtual void visit(ContinueStmt&) = 0;
     virtual void visit(LabelStmt&) = 0;
+    virtual void visit(CaseStmt&) = 0;
+    virtual void visit(DefaultStmt&) = 0;
     virtual void visit(WhileStmt&) = 0;
     virtual void visit(DoWhileStmt&) = 0;
     virtual void visit(ForStmt&) = 0;
+    virtual void visit(SwitchStmt&) = 0;
     virtual void visit(NullStmt&) = 0;
 
     // Expressions
@@ -73,9 +76,12 @@ public:
     virtual void visit(const BreakStmt&) = 0;
     virtual void visit(const ContinueStmt&) = 0;
     virtual void visit(const LabelStmt&) = 0;
+    virtual void visit(const CaseStmt&) = 0;
+    virtual void visit(const DefaultStmt&) = 0;
     virtual void visit(const WhileStmt&) = 0;
     virtual void visit(const DoWhileStmt&) = 0;
     virtual void visit(const ForStmt&) = 0;
+    virtual void visit(const SwitchStmt&) = 0;
     virtual void visit(const NullStmt&) = 0;
 
     // Expressions

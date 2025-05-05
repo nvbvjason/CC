@@ -74,6 +74,16 @@ void ConstASTTraverser::visit(const LabelStmt& labelStmt)
     labelStmt.stmt->accept(*this);
 }
 
+void ConstASTTraverser::visit(const CaseStmt& caseStmt)
+{
+    caseStmt.body->accept(*this);
+}
+
+void ConstASTTraverser::visit(const DefaultStmt& defaultStmt)
+{
+    defaultStmt.body->accept(*this);
+}
+
 void ConstASTTraverser::visit(const WhileStmt& whileStmt)
 {
     whileStmt.condition->accept(*this);
@@ -96,6 +106,13 @@ void ConstASTTraverser::visit(const ForStmt& forStmt)
         forStmt.post->accept(*this);
     forStmt.body->accept(*this);
 }
+
+void ConstASTTraverser::visit(const SwitchStmt& switchStmt)
+{
+    switchStmt.condition->accept(*this);
+    switchStmt.body->accept(*this);
+}
+
 void ConstASTTraverser::visit(const UnaryExpr& unaryExpr)
 {
     unaryExpr.operand->accept(*this);

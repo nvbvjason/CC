@@ -176,6 +176,20 @@ void ASTPrinter::visit(const LabelStmt& labelStmt)
     oss << "      GotoStmt "  << labelStmt.identifier << '\n';
 }
 
+void ASTPrinter::visit(const CaseStmt& caseStmt)
+{
+    oss << "      CaseStmt: ";
+    caseStmt.condition->accept(*this);
+    caseStmt.body->accept(*this);
+    oss << "\n";
+}
+
+void ASTPrinter::visit(const DefaultStmt& defaultStmt)
+{
+    oss << "      DefaultStmt: ";
+    defaultStmt.body->accept(*this);
+    oss << "\n";
+}
 
 void ASTPrinter::visit(const WhileStmt& whileStmt)
 {
@@ -208,6 +222,14 @@ void ASTPrinter::visit(const ForStmt& forStmt)
         oss << " ";
         forStmt.post->accept(*this);
     }
+}
+
+void ASTPrinter::visit(const SwitchStmt& switchStmt)
+{
+    oss << "      SwitchStmt: ";
+    switchStmt.condition->accept(*this);
+    oss << "\n";
+    switchStmt.body->accept(*this);
 }
 
 void ASTPrinter::visit(const UnaryExpr& unaryExpr)

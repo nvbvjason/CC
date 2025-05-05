@@ -41,9 +41,12 @@ public:
     void visit(const BreakStmt& breakStmt) override;
     void visit(const ContinueStmt& continueStmt) override;
     void visit(const LabelStmt& labelStmt) override;
+    void visit(const CaseStmt& caseStmt) override;
+    void visit(const DefaultStmt& defaultStmt) override;
     void visit(const WhileStmt& whileStmt) override;
     void visit(const DoWhileStmt& doWhileStmt) override;
     void visit(const ForStmt& forStmt) override;
+    void visit(const SwitchStmt& switchStmt) override;
     void visit(const NullStmt& nullStmt) override;
 
     // Expression

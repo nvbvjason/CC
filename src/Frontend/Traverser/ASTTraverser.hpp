@@ -33,9 +33,12 @@ public:
     void visit(BreakStmt& breakStmt) override {}
     void visit(ContinueStmt& continueStmt) override {}
     void visit(LabelStmt& labelStmt) override;
+    void visit(CaseStmt& caseStmt) override;
+    void visit(DefaultStmt& defaultStmt) override;
     void visit(WhileStmt& whileStmt) override;
     void visit(DoWhileStmt& doWhileStmt) override;
     void visit(ForStmt& forStmt) override;
+    void visit(SwitchStmt& switchStmt) override;
     void visit(NullStmt& nullStmt) override {}
 
     // Expression

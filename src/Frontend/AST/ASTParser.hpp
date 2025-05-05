@@ -11,47 +11,6 @@
 #include <utility>
 #include <vector>
 
-/*
-    program = Program(function_definition)
-    function_definition = Function(identifier names, block body)
-    block = Block(block_item)
-    block_item = S(statement) | D(declaration)
-    declaration = Declaration(identifier name, exp? init)
-    for_init = InitDecl(declaration) | Init(Expr)
-    statement = Return(exp)
-              | Expression(exp)
-              | If(exp condition, statement then, statement? else)
-              | Goto(identifier label)
-              | Compound(block)
-              | Break(identifier label)
-              | Continue(identifier label)
-              | Label(identifier label)
-              | While(exp condition, statement body, identifier label)
-              | DoWhile(statement body, exp condition, identifier label)
-              | For(for_init init, exp? condition, exp? post, statement body, identifier label)
-              | Null
-    exp = Constant(int)
-        | Var(identifier)
-        | Unary(unary_operator, exp)
-        | Binary(binary_operator, exp, exp)
-        | Assignment(assign_operator, exp, exp)
-        | Conditional(exp condition, exp, exp)
-    unary_operator = Complement | Negate | Not
-                   | PrefixIncrement | PostFixIncrement
-                   | PrefixDecrement | PostFixDecrement
-    binary_operator = Add | Subtract | Multiply | Divide | Remainder
-                    | BitwiseAnd | BitwiseOr | BitwiseXor
-                    | LeftShift | RightShift
-                    | And | Or
-                    | Equal | NotEqual
-                    | Less | LessThan | LessOrEqual
-                    | Greater | GreaterThan | GreaterOrEqual
-    assign_operator = Assign | PlusAssign | MinusAssign
-                    | MultiplyAssign | DivideAssign | ModuloAssign
-                    | BitwiseAndAssign | BitwiseOrAssign | BitwiseXorAssign
-                    | LeftShiftAssign | RightShiftAssign
-*/
-
 namespace Parsing {
 
 struct Program {
@@ -169,7 +128,7 @@ struct ExprForInit final : ForInit {
 struct Stmt {
     enum class Kind {
         Return, Expression, If, Goto, Compound,
-        Break, Continue, Label, While, DoWhile, For,
+        Break, Continue, Label, Case, Default, While, DoWhile, For, Switch,
         Null
     };
     Kind kind;
@@ -276,6 +235,31 @@ struct LabelStmt final : Stmt {
     LabelStmt() = delete;
 };
 
+struct CaseStmt final : Stmt {
+    std::string identifier;
+    std::unique_ptr<ConstExpr> condition;
+    std::unique_ptr<Stmt> body;
+    CaseStmt(std::string iden, std::unique_ptr<ConstExpr> condition, std::unique_ptr<Stmt> body)
+        : Stmt(Kind::Case), identifier(std::move(iden)), condition(std::move(condition)), body(std::move(body)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    CaseStmt() = delete;
+};
+
+struct DefaultStmt final : Stmt {
+    std::string identifier;
+    std::unique_ptr<Stmt> body;
+    DefaultStmt(std::string iden, std::unique_ptr<Stmt> body)
+        : Stmt(Kind::Default), identifier(std::move(iden)), body(std::move(body)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    DefaultStmt() = delete;
+};
+
 struct WhileStmt final : Stmt {
     std::unique_ptr<Expr> condition;
     std::unique_ptr<Stmt> body;
@@ -315,6 +299,19 @@ struct ForStmt final : Stmt {
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
     ForStmt() = delete;
+};
+
+struct SwitchStmt final : Stmt {
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Stmt> body;
+
+    SwitchStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
+        : Stmt(Kind::Switch), condition(std::move(condition)), body(std::move(body)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    SwitchStmt() = delete;
 };
 
 struct NullStmt final : Stmt {
