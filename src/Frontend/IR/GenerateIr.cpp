@@ -194,11 +194,11 @@ void doWhileStatement(const Parsing::DoWhileStmt& doWhileStmt,
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(doWhileStmt.identifier + "start"))
     );
-    auto condition = inst(*doWhileStmt.condition, insts);
+    statement(*doWhileStmt.body, insts);
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(doWhileStmt.identifier + "continue"))
     );
-    statement(*doWhileStmt.body, insts);
+    auto condition = inst(*doWhileStmt.condition, insts);
     insts.push_back(
         std::make_unique<JumpIfNotZeroInst>(condition, Identifier(doWhileStmt.identifier + "start"))
     );
@@ -250,7 +250,7 @@ void forStatement(const Parsing::ForStmt& forStmt,
         std::make_unique<JumpInst>(Identifier(forStmt.identifier + "start"))
     );
     insts.push_back(
-        std::make_unique<JumpInst>(Identifier(forStmt.identifier + "break"))
+        std::make_unique<LabelInst>(Identifier(forStmt.identifier + "break"))
     );
 }
 
