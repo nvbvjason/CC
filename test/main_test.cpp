@@ -439,6 +439,28 @@ TEST(Chapter6, semanticsValidExtraCredit)
     }
 }
 
+TEST(Chapter7, lexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_7/valid";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+    const fs::path invalidSemantics = testsFolderPath / "chapter_7/invalid_semantics";
+    for (const auto& path : std::filesystem::directory_iterator(invalidSemantics)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+    const fs::path invalidParse = testsFolderPath / "chapter_7/invalid_parse";
+    for (const auto& path : std::filesystem::directory_iterator(invalidParse)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+}
+
 TEST(Chapter7, parsingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_7/valid";
@@ -479,28 +501,27 @@ TEST(Chapter7, semanticsvalid)
     }
 }
 
-TEST(Chapter7, lexingValid)
+TEST(Chapter8, lexingValid)
 {
-    const fs::path validPath = testsFolderPath / "chapter_7/valid";
+    const fs::path validPath = testsFolderPath / "chapter_8/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
-    const fs::path invalidSemantics = testsFolderPath / "chapter_7/invalid_semantics";
+    const fs::path invalidSemantics = testsFolderPath / "chapter_8/invalid_semantics";
     for (const auto& path : std::filesystem::directory_iterator(invalidSemantics)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
-    const fs::path invalidParse = testsFolderPath / "chapter_7/invalid_parse";
+    const fs::path invalidParse = testsFolderPath / "chapter_8/invalid_parse";
     for (const auto& path : std::filesystem::directory_iterator(invalidParse)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
 }
-
 
 TEST(Chapter8, parsingValid)
 {
@@ -529,6 +550,28 @@ TEST(Chapter8, semanticsInvalid)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter8, lexingValidExtraCredit)
+{
+    const fs::path validPath = testsFolderPath / "chapter_8/valid/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+    const fs::path invalidSemantics = testsFolderPath / "chapter_8/invalid_semantics/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(invalidSemantics)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+    const fs::path invalidParse = testsFolderPath / "chapter_8/invalid_parse/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(invalidParse)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
 }
 

@@ -84,7 +84,10 @@ struct Token {
         For,                             // for
         Break,                           // break
         Continue,                        // continue
-        Goto,                        // goto
+        Goto,                            // goto
+        Switch,                          // switch
+        Case,                            // case
+        Default,                         // default
 
         // Special Tokens
         EndOfFile,                       // EOF marker

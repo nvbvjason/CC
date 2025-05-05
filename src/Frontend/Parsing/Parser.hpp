@@ -17,7 +17,7 @@
                       | <block>
                       | "break"
                       | "continue"
-                      | <identifier> ":"
+                      | <identifier> ":" <statement>
                       | "while" "(" <exp> ")" <statement>
                       | "do" <statement> "while" "(" <exp> ")" ";"
                       | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>
