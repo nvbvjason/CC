@@ -76,6 +76,7 @@ std::string Token::getTypeName() const
         case Type::For:                 return "For";
         case Type::Break:               return "Break";
         case Type::Continue:            return "Continue";
+        case Type::Goto:                return "Goto";
 
         // Special Tokens
         case Type::EndOfFile:           return "End Of File";

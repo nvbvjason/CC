@@ -30,6 +30,7 @@ class Lexer {
         { "for", Token::Type::For },
         { "break", Token::Type::Break },
         { "continue", Token::Type::Continue },
+        { "goto", Token::Type::Goto },
     };
 public:
     explicit Lexer(const std::string& input)

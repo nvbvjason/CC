@@ -385,6 +385,16 @@ TEST(Chapter6, semanticsvalid)
     }
 }
 
+TEST(Chapter6, lexingValidExtraCredit)
+{
+    const fs::path validPath = testsFolderPath / "chapter_6/valid/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+}
+
 TEST(Chapter7, parsingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_7/valid";

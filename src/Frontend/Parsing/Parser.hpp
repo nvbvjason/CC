@@ -24,7 +24,7 @@
                       | <exp> <binop> <exp>
                       | <exp> "?" <exp> ":" <exp>
     <unary_exp>     ::= <postfix_exp> | <unop> <unary_exp>
-    <postfix_exp>   ::= <factor> | <postfix_exp>
+    <postfix_exp>   ::= <factor> | <postfix_exp> <postfixop>
     <factor>        ::= <int> | <identifier> | "(" <exp> ")"
     <unop>          ::= "-" | "~" | "!" | "--" | "++"
     <postfixop>     ::= "--" | "++"

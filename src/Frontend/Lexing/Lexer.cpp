@@ -185,7 +185,7 @@ void Lexer::scanToken()
         default:
             if (isdigit(ch))
                 integer();
-            else if (isalpha(ch))
+            else if (isalpha(ch) || ch == '_')
                 identifier();
             else
                 addToken(Token::Type::Invalid);
