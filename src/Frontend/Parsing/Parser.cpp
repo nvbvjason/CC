@@ -210,6 +210,7 @@ std::unique_ptr<Stmt> Parse::continueStmtParse()
 
 std::unique_ptr<Stmt> Parse::whileStmtParse()
 {
+    const std::string labelTemp = m_label;
     m_label = makeTemporary("while");
     if (!expect(TokenType::While))
         return nullptr;
@@ -224,13 +225,14 @@ std::unique_ptr<Stmt> Parse::whileStmtParse()
     if (body == nullptr)
         return nullptr;
     auto result = std::make_unique<WhileStmt>(std::move(condition), std::move(body), m_label);
-    m_label = "";
+    m_label = labelTemp;
     return result;
 }
 
 std::unique_ptr<Stmt> Parse::doWhileStmtParse()
 {
-    m_label = makeTemporary("doWhile");
+    const std::string labelTemp = m_label;
+    m_label = makeTemporary("do.While");
     if (!expect(TokenType::Do))
         return nullptr;
     std::unique_ptr<Stmt> body = stmtParse();
@@ -248,12 +250,13 @@ std::unique_ptr<Stmt> Parse::doWhileStmtParse()
     if (!expect(TokenType::Semicolon))
         return nullptr;
     auto result = std::make_unique<DoWhileStmt>(std::move(body), std::move(condition), m_label);
-    m_label = "";
+    m_label = labelTemp;
     return result;
 }
 
 std::unique_ptr<Stmt> Parse::forStmtParse()
 {
+    const std::string labelTemp = m_label;
     m_label = makeTemporary("for");
     if (!expect(TokenType::For))
         return nullptr;
@@ -278,7 +281,7 @@ std::unique_ptr<Stmt> Parse::forStmtParse()
         result->condition = std::move(condition);
     if (post != nullptr)
         result->post = std::move(post);
-    m_label = "";
+    m_label = labelTemp;
     return result;
 }
 

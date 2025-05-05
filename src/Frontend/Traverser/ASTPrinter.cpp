@@ -186,7 +186,10 @@ void ASTPrinter::visit(const DoWhileStmt& doWhileStmt)
 void ASTPrinter::visit(const ForStmt& forStmt)
 {
     oss << "      ForStmt: ";
-    forStmt.init->accept(*this);
+    if (forStmt.init) {
+        oss << " ";
+        forStmt.init->accept(*this);
+    }
     if (forStmt.condition) {
         oss << " ";
         forStmt.condition->accept(*this);

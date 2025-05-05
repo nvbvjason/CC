@@ -10,16 +10,31 @@ namespace Ir {
 
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram);
 std::unique_ptr<Function> function(const Parsing::Function& parsingFunction);
+void blockIr(const Parsing::Block& block, std::vector<std::unique_ptr<Instruction>>& instructions);
 void blockItem(const Parsing::BlockItem& blockItem,
                std::vector<std::unique_ptr<Instruction>>& instructions);
 void declaration(const Parsing::Declaration& decl,
                  std::vector<std::unique_ptr<Instruction>>& insts);
+void forInitialization(const Parsing::ForInit& forInit,
+                       std::vector<std::unique_ptr<Instruction>>& insts);
 void statement(const Parsing::Stmt& stmt,
                std::vector<std::unique_ptr<Instruction>>& insts);
-void ifStmt(const Parsing::IfStmt& stmt,
-            std::vector<std::unique_ptr<Instruction>>& insts);
-void ifElseStmt(const Parsing::IfStmt& stmt,
-                std::vector<std::unique_ptr<Instruction>>& insts);
+void ifStatement(const Parsing::IfStmt& stmt,
+                 std::vector<std::unique_ptr<Instruction>>& insts);
+void ifElseStatement(const Parsing::IfStmt& stmt,
+                     std::vector<std::unique_ptr<Instruction>>& insts);
+void compoundStatement(const Parsing::CompoundStmt& stmt,
+                       std::vector<std::unique_ptr<Instruction>>& insts);
+void breakStatement(const Parsing::BreakStmt& stmt,
+                    std::vector<std::unique_ptr<Instruction>>& insts);
+void continueStatement(const Parsing::ContinueStmt& stmt,
+                       std::vector<std::unique_ptr<Instruction>>& insts);
+void doWhileStatement(const Parsing::DoWhileStmt& stmt,
+                      std::vector<std::unique_ptr<Instruction>>& insts);
+void whileStatement(const Parsing::WhileStmt& stmt,
+                    std::vector<std::unique_ptr<Instruction>>& insts);
+void forStatement(const Parsing::ForStmt& stmt,
+                  std::vector<std::unique_ptr<Instruction>>& insts);
 std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
                             std::vector<std::unique_ptr<Instruction>>& instructions);
 std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,

@@ -83,7 +83,8 @@ void ASTTraverser::visit(DoWhileStmt& doWhileStmt)
 
 void ASTTraverser::visit(ForStmt& forStmt)
 {
-    forStmt.init->accept(*this);
+    if (forStmt.init)
+        forStmt.init->accept(*this);
     if (forStmt.condition)
         forStmt.condition->accept(*this);
     if (forStmt.post)

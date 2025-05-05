@@ -20,9 +20,14 @@ void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 std::unique_ptr<Function> function(const Parsing::Function& parsingFunction)
 {
     auto functionTacky = std::make_unique<Function>(parsingFunction.name);
-    for (const std::unique_ptr<Parsing::BlockItem>& item : parsingFunction.body->body)
-        blockItem(*item, functionTacky->insts);
+    blockIr(*parsingFunction.body, functionTacky->insts);
     return functionTacky;
+}
+
+void blockIr(const Parsing::Block& block, std::vector<std::unique_ptr<Instruction>>& instructions)
+{
+    for (const std::unique_ptr<Parsing::BlockItem>& item : block.body)
+        blockItem(*item, instructions);
 }
 
 void blockItem(const Parsing::BlockItem& blockItem,
@@ -45,6 +50,22 @@ void blockItem(const Parsing::BlockItem& blockItem,
     }
 }
 
+void forInitialization(const Parsing::ForInit& forInit,
+                       std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    if (forInit.kind == Parsing::ForInit::Kind::Declaration) {
+        auto decl = dynamic_cast<const Parsing::DeclForInit*>(&forInit);
+        declaration(*decl->decl, insts);
+        return;
+    }
+    if (forInit.kind == Parsing::ForInit::Kind::Expression) {
+        auto expr = dynamic_cast<const Parsing::ExprForInit*>(&forInit);
+        if (expr->expression)
+            inst(*expr->expression, insts);
+        return;
+    }
+}
+
 void declaration(const Parsing::Declaration& decl,
                  std::vector<std::unique_ptr<Instruction>>& insts)
 {
@@ -63,19 +84,12 @@ void statement(const Parsing::Stmt& stmt,
 {
     using Kind = Parsing::Stmt::Kind;
     switch (stmt.kind) {
-        case Kind::Null:
-            break;
-        case Kind::Expression: {
-            const auto stmtExpr = dynamic_cast<const Parsing::ExprStmt*>(&stmt);
-            inst(*stmtExpr->expr, insts);
-            break;
-        }
         case Kind::If: {
             const auto parseIffStmt = dynamic_cast<const Parsing::IfStmt*>(&stmt);
             if (parseIffStmt->elseStmt == nullptr)
-                ifStmt(*parseIffStmt, insts);
+                ifStatement(*parseIffStmt, insts);
             else
-                ifElseStmt(*parseIffStmt, insts);
+                ifElseStatement(*parseIffStmt, insts);
             break;
         }
         case Kind::Return: {
@@ -86,18 +100,49 @@ void statement(const Parsing::Stmt& stmt,
             insts.push_back(std::make_unique<ReturnInst>(value));
             break;
         }
-        case Kind::Compound: {
-            const auto compoundStmt = dynamic_cast<const Parsing::CompoundStmt*>(&stmt);
-            for (const std::unique_ptr<Parsing::BlockItem>& item : compoundStmt->block->body)
-                blockItem(*item, insts);
+        case Kind::Expression: {
+            const auto stmtExpr = dynamic_cast<const Parsing::ExprStmt*>(&stmt);
+            inst(*stmtExpr->expr, insts);
             break;
         }
+        case Kind::Compound: {
+            const auto compoundStmtPtr = dynamic_cast<const Parsing::CompoundStmt*>(&stmt);
+            compoundStatement(*compoundStmtPtr, insts);
+            break;
+        }
+        case Kind::Break: {
+            const auto breakStmtPtr = dynamic_cast<const Parsing::BreakStmt*>(&stmt);
+            breakStatement(*breakStmtPtr, insts);
+            break;
+        }
+        case Kind::Continue: {
+            const auto continueStmtPtr = dynamic_cast<const Parsing::ContinueStmt*>(&stmt);
+            continueStatement(*continueStmtPtr, insts);
+            break;
+        }
+        case Kind::DoWhile: {
+            const auto doWhileStmtPtr = dynamic_cast<const Parsing::DoWhileStmt*>(&stmt);
+            doWhileStatement(*doWhileStmtPtr, insts);
+            break;
+        }
+        case Kind::While: {
+            const auto whileStmtPtr = dynamic_cast<const Parsing::WhileStmt*>(&stmt);
+            whileStatement(*whileStmtPtr, insts);
+            break;
+        }
+        case Kind::For: {
+            const auto forStmtPtr = dynamic_cast<const Parsing::ForStmt*>(&stmt);
+            forStatement(*forStmtPtr, insts);
+            break;
+        }
+        case Kind::Null:
+            break;
         default:
             throw std::invalid_argument("Unexpected statement type Ir generate");
     }
 }
 
-void ifStmt(const Parsing::IfStmt& parseIfStmt,
+void ifStatement(const Parsing::IfStmt& parseIfStmt,
             std::vector<std::unique_ptr<Instruction>>& insts)
 {
     auto condition = inst(*parseIfStmt.condition, insts);
@@ -107,7 +152,7 @@ void ifStmt(const Parsing::IfStmt& parseIfStmt,
     insts.push_back(std::make_unique<LabelInst>(endLabelIden));
 }
 
-void ifElseStmt(const Parsing::IfStmt& parseIfStmt,
+void ifElseStatement(const Parsing::IfStmt& parseIfStmt,
                 std::vector<std::unique_ptr<Instruction>>& insts)
 {
     auto condition = inst(*parseIfStmt.condition, insts);
@@ -119,6 +164,94 @@ void ifElseStmt(const Parsing::IfStmt& parseIfStmt,
     insts.push_back(std::make_unique<LabelInst>(elseStmtLabel));
     statement(*parseIfStmt.elseStmt, insts);
     insts.push_back(std::make_unique<LabelInst>(endLabelIden));
+}
+
+void compoundStatement(const Parsing::CompoundStmt& stmt,
+                       std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    blockIr(*stmt.block, insts);
+}
+
+void breakStatement(const Parsing::BreakStmt& stmt,
+               std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    insts.push_back(
+        std::make_unique<JumpInst>(Identifier(stmt.identifier + "break"))
+        );
+}
+
+void continueStatement(const Parsing::ContinueStmt& stmt,
+                  std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    insts.push_back(
+        std::make_unique<JumpInst>(Identifier(stmt.identifier + "continue"))
+        );
+}
+
+void doWhileStatement(const Parsing::DoWhileStmt& doWhileStmt,
+                 std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(doWhileStmt.identifier + "start"))
+    );
+    auto condition = inst(*doWhileStmt.condition, insts);
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(doWhileStmt.identifier + "continue"))
+    );
+    statement(*doWhileStmt.body, insts);
+    insts.push_back(
+        std::make_unique<JumpIfNotZeroInst>(condition, Identifier(doWhileStmt.identifier + "start"))
+    );
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(doWhileStmt.identifier + "break"))
+    );
+}
+
+void whileStatement(const Parsing::WhileStmt& whileStmt,
+               std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(whileStmt.identifier + "continue"))
+    );
+    auto condition = inst(*whileStmt.condition, insts);
+    insts.push_back(
+        std::make_unique<JumpIfZeroInst>(condition, Identifier(whileStmt.identifier + "break"))
+    );
+    statement(*whileStmt.body, insts);
+    insts.push_back(
+        std::make_unique<JumpInst>(Identifier(whileStmt.identifier + "continue"))
+    );
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(whileStmt.identifier + "break"))
+    );
+}
+
+void forStatement(const Parsing::ForStmt& forStmt,
+                  std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    if (forStmt.init)
+        forInitialization(*forStmt.init, insts);
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(forStmt.identifier + "start"))
+    );
+    if (forStmt.condition) {
+        auto condition = inst(*forStmt.condition, insts);
+        insts.push_back(
+            std::make_unique<JumpIfZeroInst>(condition, Identifier(forStmt.identifier + "break"))
+        );
+    }
+    statement(*forStmt.body, insts);
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(forStmt.identifier + "continue"))
+    );
+    if (forStmt.post)
+        inst(*forStmt.post, insts);
+    insts.push_back(
+        std::make_unique<JumpInst>(Identifier(forStmt.identifier + "start"))
+    );
+    insts.push_back(
+        std::make_unique<JumpInst>(Identifier(forStmt.identifier + "break"))
+    );
 }
 
 std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,

@@ -83,7 +83,8 @@ void ConstASTTraverser::visit(const DoWhileStmt& doWhileStmt)
 
 void ConstASTTraverser::visit(const ForStmt& forStmt)
 {
-    forStmt.init->accept(*this);
+    if (forStmt.init)
+        forStmt.init->accept(*this);
     if (forStmt.condition)
         forStmt.condition->accept(*this);
     if (forStmt.post)
