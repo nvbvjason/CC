@@ -1,9 +1,8 @@
 #include "Parser.hpp"
-
-#include <cassert>
-
 #include "IR/ASTIr.hpp"
 #include "Frontend/Lexing/Token.hpp"
+
+#include <cassert>
 
 namespace Parsing {
 
@@ -419,7 +418,7 @@ UnaryExpr::Operator Parse::unaryOperator(const TokenType type)
         case TokenType::Decrement:
             return UnaryExpr::Operator::PrefixDecrement;
         default:
-            throw std::runtime_error("Invalid unary operator unaryOperator");
+            assert("Invalid unary operator unaryOperator");
     }
 }
 
@@ -452,7 +451,7 @@ BinaryExpr::Operator Parse::binaryOperator(const TokenType type)
         case TokenType::GreaterOrEqual:     return Operator::GreaterOrEqual;
 
         default:
-            throw std::runtime_error("Invalid binary operator: binaryOperator(Token::Type)");
+            assert("Invalid binary operator: binaryOperator(Token::Type)");
     }
 }
 
@@ -473,7 +472,7 @@ AssignmentExpr::Operator Parse::assignOperator(TokenType type)
         case TokenType::RightShiftAssign:   return Operator::RightShiftAssign;
 
         default:
-            throw std::runtime_error("Invalid binary operator: assignOperator(Token::Type)");
+            assert("Invalid binary operator: assignOperator(Token::Type)");
     }
 }
 // https://en.cppreference.com/w/c/language/operator_precedence
@@ -529,7 +528,7 @@ i32 Parse::getPrecedenceLevel(const BinaryExpr::Operator oper)
         case Operator::Or:
             return 12;
         default:
-            throw std::runtime_error("Invalid binary operator getPrecedenceLevel");
+            assert("Invalid binary operator getPrecedenceLevel");
     }
 }
 

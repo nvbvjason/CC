@@ -36,6 +36,11 @@ public:
 
     bool resolve();
     void visit(Parsing::Block& function) override;
+
+    void visit(Parsing::ContinueStmt& continueStmt) override;
+    void visit(Parsing::BreakStmt& breakStmt) override;
+    void visit(Parsing::ForStmt& function) override;
+
     void visit(Parsing::Declaration& declaration) override;
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;

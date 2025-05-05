@@ -2,18 +2,19 @@
 
 #include <algorithm>
 #include <cassert>
+#include <functional>
 #include <ranges>
 
 namespace Semantics {
 void VariableStack::pop()
 {
-    assert(m_stack.empty() + "VariableStack underflow pop()");
+    assert(!m_stack.empty() && "VariableStack underflow pop()");
     m_stack.pop_back();
 }
 
 void VariableStack::addDecl(const std::string& name, const std::string& value)
 {
-    assert(m_stack.empty() + "VariableStack underflow addDecl()");
+    assert(!m_stack.empty() && "VariableStack underflow addDecl()");
     m_stack.back().emplace(name, value);
 }
 
@@ -24,7 +25,7 @@ void VariableStack::push()
 
 bool VariableStack::isDeclared(const std::string& name) const
 {
-    assert(m_stack.empty() + "VariableStack underflow isDeclared()");
+    assert(!m_stack.empty() && "VariableStack underflow isDeclared()");
     return m_stack.back().contains(name);
 }
 
@@ -69,6 +70,35 @@ void VariableResolution::visit(Parsing::Block& block)
     m_variableStack.push();
     for (auto& blockItem : block.body)
         blockItem->accept(*this);
+    m_variableStack.pop();
+}
+
+void VariableResolution::visit(Parsing::ContinueStmt& continueStmt)
+{
+    if (!m_valid)
+        return;
+    if (continueStmt.identifier.empty())
+        m_valid = false;
+}
+
+void VariableResolution::visit(Parsing::BreakStmt& breakStmt)
+{
+    if (!m_valid)
+        return;
+    if (breakStmt.identifier.empty())
+        m_valid = false;
+}
+
+void VariableResolution::visit(Parsing::ForStmt& function)
+{
+    m_variableStack.push();
+    if (function.init != nullptr)
+        function.init->accept(*this);
+    if (function.condition != nullptr)
+        function.condition->accept(*this);
+    if (function.post != nullptr)
+        function.post->accept(*this);
+    function.body->accept(*this);
     m_variableStack.pop();
 }
 
