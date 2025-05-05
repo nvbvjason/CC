@@ -23,12 +23,16 @@ void ifStatement(const Parsing::IfStmt& stmt,
                  std::vector<std::unique_ptr<Instruction>>& insts);
 void ifElseStatement(const Parsing::IfStmt& stmt,
                      std::vector<std::unique_ptr<Instruction>>& insts);
+void gotoStatement(const Parsing::GotoStmt& stmt,
+                   std::vector<std::unique_ptr<Instruction>>& insts);
 void compoundStatement(const Parsing::CompoundStmt& stmt,
                        std::vector<std::unique_ptr<Instruction>>& insts);
 void breakStatement(const Parsing::BreakStmt& stmt,
                     std::vector<std::unique_ptr<Instruction>>& insts);
 void continueStatement(const Parsing::ContinueStmt& stmt,
                        std::vector<std::unique_ptr<Instruction>>& insts);
+void labelStatement(const Parsing::LabelStmt& stmt,
+                    std::vector<std::unique_ptr<Instruction>>& insts);
 void doWhileStatement(const Parsing::DoWhileStmt& stmt,
                       std::vector<std::unique_ptr<Instruction>>& insts);
 void whileStatement(const Parsing::WhileStmt& stmt,

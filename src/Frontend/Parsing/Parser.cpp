@@ -231,7 +231,10 @@ std::unique_ptr<Stmt> Parse::labelStmtParse()
         return nullptr;
     if (!expect(TokenType::Colon))
         return nullptr;
-    return std::make_unique<LabelStmt>(lexeme.m_lexeme);
+    auto stmt = stmtParse();
+    if (stmt == nullptr)
+        return nullptr;
+    return std::make_unique<LabelStmt>(lexeme.m_lexeme, std::move(stmt));
 }
 
 std::unique_ptr<Stmt> Parse::whileStmtParse()

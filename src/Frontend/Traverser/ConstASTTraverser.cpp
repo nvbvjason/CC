@@ -69,6 +69,11 @@ void ConstASTTraverser::visit(const CompoundStmt& compoundStmt)
     compoundStmt.block->accept(*this);
 }
 
+void ConstASTTraverser::visit(const LabelStmt& labelStmt)
+{
+    labelStmt.stmt->accept(*this);
+}
+
 void ConstASTTraverser::visit(const WhileStmt& whileStmt)
 {
     whileStmt.condition->accept(*this);

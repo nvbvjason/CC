@@ -409,6 +409,16 @@ TEST(Chapter6, parsingValidExtraCredit)
     }
 }
 
+TEST(Chapter6, parsingInValidExtraCredit)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_6/invalid_parse/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
 TEST(Chapter6, semanticsInvalidExtraCredit)
 {
     const fs::path invalidPath = testsFolderPath / "chapter_6/invalid_semantics/extra_credit";

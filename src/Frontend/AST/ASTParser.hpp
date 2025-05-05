@@ -266,8 +266,9 @@ struct ContinueStmt final : Stmt {
 
 struct LabelStmt final : Stmt {
     std::string identifier;
-    explicit LabelStmt(std::string iden)
-        : Stmt(Kind::Label), identifier(std::move(iden)) {}
+    std::unique_ptr<Stmt> stmt;
+    LabelStmt(std::string iden, std::unique_ptr<Stmt> stmt)
+        : Stmt(Kind::Label), identifier(std::move(iden)), stmt(std::move(stmt)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

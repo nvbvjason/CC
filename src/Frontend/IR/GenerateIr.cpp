@@ -105,6 +105,11 @@ void statement(const Parsing::Stmt& stmt,
             inst(*stmtExpr->expr, insts);
             break;
         }
+        case Kind::Goto: {
+            const auto gotoStmt = dynamic_cast<const Parsing::GotoStmt*>(&stmt);
+            gotoStatement(*gotoStmt, insts);
+            break;
+        }
         case Kind::Compound: {
             const auto compoundStmtPtr = dynamic_cast<const Parsing::CompoundStmt*>(&stmt);
             compoundStatement(*compoundStmtPtr, insts);
@@ -118,6 +123,11 @@ void statement(const Parsing::Stmt& stmt,
         case Kind::Continue: {
             const auto continueStmtPtr = dynamic_cast<const Parsing::ContinueStmt*>(&stmt);
             continueStatement(*continueStmtPtr, insts);
+            break;
+        }
+        case Kind::Label: {
+            const auto labelStmtPtr = dynamic_cast<const Parsing::LabelStmt*>(&stmt);
+            labelStatement(*labelStmtPtr, insts);
             break;
         }
         case Kind::DoWhile: {
@@ -166,6 +176,14 @@ void ifElseStatement(const Parsing::IfStmt& parseIfStmt,
     insts.push_back(std::make_unique<LabelInst>(endLabelIden));
 }
 
+void gotoStatement(const Parsing::GotoStmt& stmt,
+                   std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    insts.push_back(
+        std::make_unique<JumpInst>(Identifier(stmt.identifier + ".label"))
+        );
+}
+
 void compoundStatement(const Parsing::CompoundStmt& stmt,
                        std::vector<std::unique_ptr<Instruction>>& insts)
 {
@@ -173,7 +191,7 @@ void compoundStatement(const Parsing::CompoundStmt& stmt,
 }
 
 void breakStatement(const Parsing::BreakStmt& stmt,
-               std::vector<std::unique_ptr<Instruction>>& insts)
+                    std::vector<std::unique_ptr<Instruction>>& insts)
 {
     insts.push_back(
         std::make_unique<JumpInst>(Identifier(stmt.identifier + "break"))
@@ -181,11 +199,20 @@ void breakStatement(const Parsing::BreakStmt& stmt,
 }
 
 void continueStatement(const Parsing::ContinueStmt& stmt,
-                  std::vector<std::unique_ptr<Instruction>>& insts)
+                       std::vector<std::unique_ptr<Instruction>>& insts)
 {
     insts.push_back(
         std::make_unique<JumpInst>(Identifier(stmt.identifier + "continue"))
         );
+}
+
+void labelStatement(const Parsing::LabelStmt& labelStmt,
+                       std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(labelStmt.identifier + ".label"))
+        );
+    statement(*labelStmt.stmt, insts);
 }
 
 void doWhileStatement(const Parsing::DoWhileStmt& doWhileStmt,

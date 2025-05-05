@@ -30,5 +30,6 @@ void LabelsUnique::visit(const Parsing::GotoStmt& gotoStmt)
 void LabelsUnique::visit(const Parsing::LabelStmt& labelStmt)
 {
     ++m_labels[labelStmt.identifier];
+    labelStmt.stmt->accept(*this);
 }
 } // Semantics
