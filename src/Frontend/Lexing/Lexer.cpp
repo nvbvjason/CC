@@ -47,6 +47,9 @@ void Lexer::scanToken()
         case ':':
             addToken(Token::Type::Colon);
             break;
+        case ',':
+            addToken(Token::Type::Comma);
+            break;
         case '+': {
             if (match('+')) {
                 addToken(Token::Type::Increment);

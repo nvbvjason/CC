@@ -27,7 +27,7 @@ namespace Parsing {
               | While(exp condition, statement body, identifier label)
               | DoWhile(statement body, exp condition, identifier label)
               | For(for_init init, exp? condition, exp? post, statement body, identifier label)
-              | Switch(exp condition, statement body)
+              | Switch(identifier, exp condition, statement body, expr cases*, bool hasDefault)
               | Null
     exp = Constant(int)
         | Var(identifier)

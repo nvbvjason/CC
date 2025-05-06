@@ -21,6 +21,7 @@ struct Token {
 
         // Punctuation & Symbols
         Semicolon,                       // ;
+        Comma,                           // ,
         Tilde,                           // ~
         ExclamationMark,                 // !
 

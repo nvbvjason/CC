@@ -295,6 +295,11 @@ TEST(LexerTests, QuestionMark)
     TestSingleTokenLexing("?", TokenType::QuestionMark);
 }
 
+TEST(LexerTests, Comma)
+{
+    TestSingleTokenLexing(",", TokenType::Comma);
+}
+
 TEST(LexerTests, Colon)
 {
     TestSingleTokenLexing(":", TokenType::Colon);

@@ -16,8 +16,8 @@
                       | "switch" ( <exp> ")" <statement>
                       | "goto" <identifier> ";"
                       | <block>
-                      | "break"
-                      | "continue"
+                      | "break" ";"
+                      | "continue" ";"
                       | <identifier> ":" <statement>
                       | "case" <exp> ":" <statement>
                       | default ":" <statement>
@@ -46,7 +46,6 @@
 #include "Operators.hpp"
 
 #include <vector>
-
 
 namespace Parsing {
 

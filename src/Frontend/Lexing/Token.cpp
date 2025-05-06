@@ -13,6 +13,7 @@ std::string Token::getTypeName() const
 
         // Punctuation & Symbols
         case Type::Semicolon:           return "Semicolon";
+        case Type::Comma:               return "Comma";
         case Type::Tilde:               return "Tilde";
         case Type::ExclamationMark:     return "Exclamation Mark";
 
