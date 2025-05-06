@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef CC_PARSING_VARIABLE_SOLUTION_HPP
-#define CC_PARSING_VARIABLE_SOLUTION_HPP
+#ifndef CC_SEMANTICS_VARIABLE_SOLUTION_HPP
+#define CC_SEMANTICS_VARIABLE_SOLUTION_HPP
 
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
@@ -50,4 +50,4 @@ private:
 
 } // Semantics
 
-#endif // CC_PARSING_VARIABLE_SOLUTION_HPP
+#endif // CC_SEMANTICS_VARIABLE_SOLUTION_HPP

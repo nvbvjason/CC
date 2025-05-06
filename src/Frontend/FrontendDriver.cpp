@@ -12,6 +12,7 @@
 #include "Lexer.hpp"
 #include "LvalueVerification.hpp"
 #include "Parser.hpp"
+#include "Switch.hpp"
 #include "ValidateReturn.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
@@ -64,7 +65,12 @@ bool validateSemantics(Parsing::Program& programNode)
     if (!lvalueVerification.resolve())
         return false;
     Semantics::LabelsUnique labelsUnique;
-    return labelsUnique.programValidate(programNode);
+    if (!labelsUnique.programValidate(programNode))
+        return false;
+    Semantics::Switch switchValidation;
+    if (!switchValidation.programValidate(programNode))
+        return false;
+    return true;
 }
 
 void printParsingAst(const Parsing::Program* program)

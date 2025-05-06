@@ -4,6 +4,8 @@ add_library(Semantics
         LvalueVerification.cpp
         LabelsUnique.cpp
         LabelsUnique.hpp
+        Switch.cpp
+        Switch.hpp
 )
 
 target_include_directories(Semantics PUBLIC

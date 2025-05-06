@@ -5,7 +5,8 @@ namespace Parsing {
 
 void ConstASTTraverser::visit(const Program& program)
 {
-    program.function->accept(*this);
+    if (program.function)
+        program.function->accept(*this);
 }
 
 void ConstASTTraverser::visit(const Function& function)
