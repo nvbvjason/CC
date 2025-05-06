@@ -18,6 +18,7 @@ static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
+static void makeLib(const std::string& asmFile, const std::string& outputFile);
 
 int CompilerDriver::run() const
 {
@@ -59,7 +60,10 @@ int CompilerDriver::run() const
     std::ofstream ofs(outputFileName);
     ofs << output;
     ofs.close();
-    assemble(outputFileName, inputFile.substr(0, inputFile.length() - 2));
+    if (argument == "-c")
+        makeLib(outputFileName, inputFile.substr(0, inputFile.length() - 2));
+    else
+        assemble(outputFileName, inputFile.substr(0, inputFile.length() - 2));
     return 0;
 }
 
@@ -95,6 +99,12 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 
 void assemble(const std::string& asmFile, const std::string& outputFile)
 {
-    const std::string command = "gcc " + asmFile + " -o " + outputFile;
+    const std::string command = "gcc " + asmFile + "-o" + outputFile;
+    system(command.c_str());
+}
+
+void makeLib(const std::string& asmFile, const std::string& outputFile)
+{
+    const std::string command = "gcc -c" + asmFile + "-o" + outputFile;
     system(command.c_str());
 }

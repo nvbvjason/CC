@@ -8,12 +8,13 @@ namespace Parsing {
 // for Levelisation
 
 /*
-    program = Program(function_definition)
-    function_definition = Function(identifier names, block body)
+    program = Program(function_declaration*)
+    declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
+    variable_declaration = (identifier name, exp? init)
+    function_definition = (identifier name, identifier* params, block? body)
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
-    declaration = Declaration(identifier name, exp? init)
-    for_init = InitDecl(declaration) | Init(Expr)
+    for_init = InitDecl(variable_declaration) | InitExp(exp?)
     statement = Return(exp)
               | Expression(exp)
               | If(exp condition, statement then, statement? else)
@@ -35,6 +36,7 @@ namespace Parsing {
         | Binary(binary_operator, exp, exp)
         | Assignment(assign_operator, exp, exp)
         | Conditional(exp condition, exp, exp)
+        | FunctionCall(identifier, exp* args)
     unary_operator = Complement | Negate | Not
                    | PrefixIncrement | PostFixIncrement
                    | PrefixDecrement | PostFixDecrement
@@ -53,16 +55,18 @@ namespace Parsing {
 
 // Program structure
 struct Program;
-struct Function;
+
+// Declaration
+struct Declaration;
+struct FunDecl;
+struct VarDecl;
+
 struct Block;
 
 // Block items
 struct BlockItem;
 struct StmtBlockItem;
 struct DeclBlockItem;
-
-// Declaration
-struct Declaration;
 
 // For loop initialization
 struct ForInit;
@@ -95,6 +99,7 @@ struct UnaryExpr;
 struct BinaryExpr;
 struct AssignmentExpr;
 struct ConditionalExpr;
+struct FunctionCallExpr;
 
 } // Parsing
 

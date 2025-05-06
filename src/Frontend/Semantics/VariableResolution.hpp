@@ -41,7 +41,7 @@ public:
     void visit(Parsing::BreakStmt& breakStmt) override;
     void visit(Parsing::ForStmt& function) override;
 
-    void visit(Parsing::Declaration& declaration) override;
+    void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
 private:

@@ -19,14 +19,16 @@ public:
 
     void visit(const Program& program) override;
 
-    void visit(const Function& function) override;
+    // Declartion
+    void visit(const VarDecl& varDecl) override;
+    void visit(const FunDecl& funDecl) override;
+
     void visit(const Block& block) override;
 
     // BlockItem
     void visit(const StmtBlockItem& stmtBlockItem) override;
     void visit(const DeclBlockItem& declBlockItem) override;
 
-    void visit(const Declaration& declaration) override;
 
     // ForInit
     void visit(const DeclForInit& declForInit) override;
@@ -56,6 +58,8 @@ public:
     void visit(const ConstExpr& constExpr) override;
     void visit(const VarExpr& varExpr) override;
     void visit(const ConditionalExpr& conditionalExpr) override;
+
+    void visit(const FunctionCallExpr& functionCallExpr) override;
 };
 } // namespace Parsing
 

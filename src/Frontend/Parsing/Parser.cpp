@@ -8,18 +8,18 @@ namespace Parsing {
 
 bool Parser::programParse(Program& program)
 {
-    std::unique_ptr<Function> function = functionParse();
+    std::unique_ptr<FunDecl> function = functionParse();
     if (function == nullptr)
         return false;
-    program.function = std::move(function);
-    if (program.function->name != "main")
-        return false;
-    if (peek().m_type != TokenType::EndOfFile)
+    // program.function = std::move(function);
+    // if (program.function->name != "main")
+    //     return false;
+    // if (peek().m_type != TokenType::EndOfFile)
         return false;
     return true;
 }
 
-std::unique_ptr<Function> Parser::functionParse()
+std::unique_ptr<FunDecl> Parser::functionParse()
 {
     if (!expect(TokenType::IntKeyword))
         return nullptr;
@@ -33,7 +33,7 @@ std::unique_ptr<Function> Parser::functionParse()
         return nullptr;
     if (!expect(TokenType::CloseParen))
         return nullptr;
-    auto function = std::make_unique<Function>(iden);
+    auto function = std::make_unique<FunDecl>(iden);
     auto block = blockParse();
     if (block == nullptr)
         return nullptr;
@@ -73,14 +73,14 @@ std::unique_ptr<BlockItem> Parser::blockItemParse()
     return std::make_unique<StmtBlockItem>(std::move(statement));
 }
 
-std::unique_ptr<Declaration> Parser::declarationParse()
+std::unique_ptr<VarDecl> Parser::declarationParse()
 {
     if (!expect(TokenType::IntKeyword))
         return nullptr;
     const Lexing::Token lexeme = advance();
     if (lexeme.m_type != TokenType::Identifier)
         return nullptr;
-    auto declaration = std::make_unique<Declaration>(lexeme.m_lexeme);
+    auto declaration = std::make_unique<VarDecl>(lexeme.m_lexeme);
     if (expect(TokenType::Equal)) {
         std::unique_ptr<Expr> expr = exprParse(0);
         if (expr == nullptr)
@@ -100,7 +100,7 @@ std::unique_ptr<ForInit> Parser::forInitParse()
         const Lexing::Token lexeme = advance();
         if (lexeme.m_type != TokenType::Identifier)
             return nullptr;
-        auto decl = std::make_unique<Declaration>(lexeme.m_lexeme);
+        auto decl = std::make_unique<VarDecl>(lexeme.m_lexeme);
         if (peek().m_type != TokenType::Equal)
             return std::make_unique<DeclForInit>(std::move(decl));
         advance();

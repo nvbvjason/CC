@@ -8,11 +8,11 @@ bool LabelsUnique::programValidate(Parsing::Program& program)
     return m_valid;
 }
 
-void LabelsUnique::visit(const Parsing::Function& function)
+void LabelsUnique::visit(const Parsing::FunDecl& funDecl)
 {
     m_labels.clear();
     m_goto.clear();
-    for (auto& blockItem : function.body->body)
+    for (auto& blockItem : funDecl.body->body)
         blockItem->accept(*this);
     for (auto& label : m_labels)
         if (1 < label.second)

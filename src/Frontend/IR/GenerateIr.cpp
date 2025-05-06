@@ -14,10 +14,10 @@ static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Opera
 
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 {
-    tackyProgram.function = function(*parsingProgram->function);
+    // tackyProgram.function = function(*parsingProgram->functions);
 }
 
-std::unique_ptr<Function> function(const Parsing::Function& parsingFunction)
+std::unique_ptr<Function> function(const Parsing::FunDecl& parsingFunction)
 {
     auto functionTacky = std::make_unique<Function>(parsingFunction.name);
     blockIr(*parsingFunction.body, functionTacky->insts);
@@ -66,17 +66,20 @@ void forInitialization(const Parsing::ForInit& forInit,
     }
 }
 
-void declaration(const Parsing::Declaration& decl,
+void declaration(const Parsing::Declaration& declaration,
                  std::vector<std::unique_ptr<Instruction>>& insts)
 {
-    if (decl.init == nullptr)
-        return;
-    auto value = inst(*decl.init, insts);
-    auto temporary = std::make_shared<ValueVar>(makeTemporaryName());
-    insts.push_back(std::make_unique<CopyInst>(value, temporary));
-    const Identifier iden(decl.name);
-    auto var = std::make_shared<ValueVar>(iden);
-    insts.push_back(std::make_unique<CopyInst>(temporary, var));
+    if (declaration.kind == Parsing::Declaration::Kind::VariableDeclaration) {
+        const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&declaration);
+        if (varDecl->init == nullptr)
+            return;
+        auto value = inst(*varDecl->init, insts);
+        auto temporary = std::make_shared<ValueVar>(makeTemporaryName());
+        insts.push_back(std::make_unique<CopyInst>(value, temporary));
+        const Identifier iden(varDecl->name);
+        auto var = std::make_shared<ValueVar>(iden);
+        insts.push_back(std::make_unique<CopyInst>(temporary, var));
+    }
 }
 
 void statement(const Parsing::Stmt& stmt,

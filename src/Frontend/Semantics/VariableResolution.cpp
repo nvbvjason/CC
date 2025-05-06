@@ -102,19 +102,19 @@ void VariableResolution::visit(Parsing::ForStmt& function)
     m_variableStack.pop();
 }
 
-void VariableResolution::visit(Parsing::Declaration& declaration)
+void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (!m_valid)
         return;
-    if (m_variableStack.isDeclared(declaration.name)) {
+    if (m_variableStack.isDeclared(varDecl.name)) {
         m_valid = false;
         return;
     }
-    const std::string uniqueName = makeTemporary(declaration.name);
-    m_variableStack.addDecl(declaration.name, uniqueName);
-    declaration.name = uniqueName;
-    if (declaration.init != nullptr)
-        declaration.init->accept(*this);
+    const std::string uniqueName = makeTemporary(varDecl.name);
+    m_variableStack.addDecl(varDecl.name, uniqueName);
+    varDecl.name = uniqueName;
+    if (varDecl.init != nullptr)
+        varDecl.init->accept(*this);
 }
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)

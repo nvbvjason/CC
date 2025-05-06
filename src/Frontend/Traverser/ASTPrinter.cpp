@@ -73,13 +73,22 @@ std::string ASTPrinter::getString() const
 void ASTPrinter::visit(const Program& program)
 {
     oss << "Program:\n";
-    program.function->accept(*this);
+    for (const auto& funDecl : program.functions)
+        funDecl->accept(*this);
 }
 
-void ASTPrinter::visit(const Function& function)
+void ASTPrinter::visit(const VarDecl& varDecl)
 {
-    oss << "  Function: " << function.name << "\n";
-    function.body->accept(*this);
+    oss << "    VarDecl\n";
+    if (varDecl.init)
+        varDecl.init->accept(*this);
+}
+
+void ASTPrinter::visit(const FunDecl& funDecl)
+{
+    oss << "    FunDecl\n";
+    if (funDecl.body)
+        funDecl.body->accept(*this);
 }
 
 void ASTPrinter::visit(const Block& block)
@@ -99,16 +108,6 @@ void ASTPrinter::visit(const DeclBlockItem& declBlockItem)
 {
     oss << "    DeclBlockItem:\n";
     declBlockItem.decl->accept(*this);
-}
-
-void ASTPrinter::visit(const Declaration& declaration)
-{
-    oss << "      Declaration: " << declaration.name;
-    if (declaration.init) {
-        oss << " = ";
-        declaration.init->accept(*this);
-    }
-    oss << "\n";
 }
 
 void ASTPrinter::visit(const DeclForInit& declForInit)
@@ -281,5 +280,12 @@ void ASTPrinter::visit(const ConditionalExpr& conditionalExpr)
 void ASTPrinter::visit(const NullStmt& nullStmt)
 {
     oss << "      NullStmt (;)\n";
+}
+
+void ASTPrinter::visit(const FunctionCallExpr& functionCallExpr)
+{
+    oss << "        Function Call\n";
+    for (const auto& expr : functionCallExpr.args)
+        expr->accept(*this);
 }
 } // namespace Parsing

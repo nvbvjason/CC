@@ -5,19 +5,26 @@ namespace Parsing {
 
 void ConstASTTraverser::visit(const Program& program)
 {
-    if (program.function)
-        program.function->accept(*this);
-}
-
-void ConstASTTraverser::visit(const Function& function)
-{
-    function.body->accept(*this);
+    for (const std::unique_ptr<FunDecl>& funDecl : program.functions)
+        funDecl->accept(*this);
 }
 
 void ConstASTTraverser::visit(const Block& block)
 {
     for (const std::unique_ptr<BlockItem>& blockItem : block.body)
         blockItem->accept(*this);
+}
+
+void ConstASTTraverser::visit(const VarDecl& varDecl)
+{
+    if (varDecl.init)
+        varDecl.init->accept(*this);
+}
+
+void ConstASTTraverser::visit(const FunDecl& funDecl)
+{
+    if (funDecl.body)
+        funDecl.body->accept(*this);
 }
 
 void ConstASTTraverser::visit(const StmtBlockItem& stmtBlockItem)
@@ -28,12 +35,6 @@ void ConstASTTraverser::visit(const StmtBlockItem& stmtBlockItem)
 void ConstASTTraverser::visit(const DeclBlockItem& declBlockItem)
 {
     declBlockItem.decl->accept(*this);
-}
-
-void ConstASTTraverser::visit(const Declaration& declaration)
-{
-    if (declaration.init)
-        declaration.init->accept(*this);
 }
 
 void ConstASTTraverser::visit(const DeclForInit& declForInit)
@@ -136,5 +137,11 @@ void ConstASTTraverser::visit(const ConditionalExpr& conditionalExpr)
     conditionalExpr.condition->accept(*this);
     conditionalExpr.first->accept(*this);
     conditionalExpr.second->accept(*this);
+}
+
+void ConstASTTraverser::visit(const FunctionCallExpr& functionCallExpr)
+{
+    for (const std::unique_ptr<Expr>& expr : functionCallExpr.args)
+        expr->accept(*this);
 }
 } // Parsing

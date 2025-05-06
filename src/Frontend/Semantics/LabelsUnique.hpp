@@ -19,9 +19,9 @@ class LabelsUnique : public Parsing::ConstASTTraverser {
 public:
     bool programValidate(Parsing::Program& program);
 
-    void visit(const Parsing::Function&) override;
-    void visit(const Parsing::GotoStmt&) override;
-    void visit(const Parsing::LabelStmt&) override;
+    void visit(const Parsing::FunDecl& funDecl) override;
+    void visit(const Parsing::GotoStmt& gotoStmt) override;
+    void visit(const Parsing::LabelStmt& labelStmt) override;
 };
 
 } // Semantics

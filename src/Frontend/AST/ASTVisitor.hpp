@@ -12,13 +12,15 @@ public:
     virtual ~ASTVisitor() = default;
 
     virtual void visit(Program&) = 0;
-    virtual void visit(Function&) = 0;
+
+    // Declaration
+    virtual void visit(VarDecl&) = 0;
+    virtual void visit(FunDecl&) = 0;
+
     virtual void visit(Block&) = 0;
 
     virtual void visit(StmtBlockItem&) = 0;
     virtual void visit(DeclBlockItem&) = 0;
-
-    virtual void visit(Declaration&) = 0;
 
     // ForInit
     virtual void visit(DeclForInit&) = 0;
@@ -48,6 +50,7 @@ public:
     virtual void visit(BinaryExpr&) = 0;
     virtual void visit(AssignmentExpr&) = 0;
     virtual void visit(ConditionalExpr&) = 0;
+    virtual void visit(FunctionCallExpr&) = 0;
 };
 
 class ConstASTVisitor {
@@ -55,13 +58,15 @@ public:
     virtual ~ConstASTVisitor() = default;
 
     virtual void visit(const Program&) = 0;
-    virtual void visit(const Function&) = 0;
+
+    // Declaration
+    virtual void visit(const VarDecl&) = 0;
+    virtual void visit(const FunDecl&) = 0;
+
     virtual void visit(const Block&) = 0;
 
     virtual void visit(const StmtBlockItem&) = 0;
     virtual void visit(const DeclBlockItem&) = 0;
-
-    virtual void visit(const Declaration&) = 0;
 
     // ForInit
     virtual void visit(const DeclForInit&) = 0;
@@ -91,6 +96,7 @@ public:
     virtual void visit(const BinaryExpr&) = 0;
     virtual void visit(const AssignmentExpr&) = 0;
     virtual void visit(const ConditionalExpr&) = 0;
+    virtual void visit(const FunctionCallExpr&) = 0;
 };
 
 } // Parsing

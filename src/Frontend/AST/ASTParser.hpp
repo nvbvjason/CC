@@ -14,18 +14,51 @@
 namespace Parsing {
 
 struct Program {
-    std::unique_ptr<Function> function = nullptr;
+    std::vector<std::unique_ptr<FunDecl>> functions;
 
     void accept(ASTVisitor& visitor) { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
-struct Function {
-    std::string name;
-    std::unique_ptr<Block> body;
+struct Declaration {
+    enum class Kind {
+        VariableDeclaration, FunctionDecl
+    };
+    Kind kind;
 
-    void accept(ASTVisitor& visitor) { visitor.visit(*this); }
-    void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
+    Declaration() = delete;
+    virtual ~Declaration() = default;
+    virtual void accept(ASTVisitor& visitor) = 0;
+    virtual void accept(ConstASTVisitor& visitor) const = 0;
+protected:
+    explicit Declaration(const Kind kind)
+        : kind(kind) {}
+};
+
+struct VarDecl final : Declaration {
+    std::string name;
+    std::unique_ptr<Expr> init = nullptr;
+    explicit  VarDecl(std::string name)
+        : Declaration(Kind::VariableDeclaration), name(std::move(name)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    VarDecl() = delete;
+};
+
+struct FunDecl final : Declaration {
+    std::string name;
+    std::vector<std::string> params;
+    std::unique_ptr<Block> body = nullptr;
+
+    explicit FunDecl(std::string name)
+        : Declaration(Kind::FunctionDecl), name(std::move(name)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    FunDecl() = delete;
 };
 
 struct Block {
@@ -71,20 +104,6 @@ struct DeclBlockItem final : BlockItem {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
-};
-
-struct Declaration {
-    std::string name;
-    std::unique_ptr<Expr> init = nullptr;
-    explicit Declaration(std::string name)
-        : name(std::move(name)) {}
-    Declaration(std::string name, std::unique_ptr<Expr> init)
-        : name(std::move(name)), init(std::move(init)) {}
-
-    Declaration() = delete;
-
-    void accept(ASTVisitor& visitor) { visitor.visit(*this); }
-    void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
 struct ForInit {
@@ -328,6 +347,7 @@ struct NullStmt final : Stmt {
 struct Expr {
     enum class Kind {
         Constant, Var, Unary, Binary, Assignment, Conditional,
+        FunctionCall,
     };
     Kind kind;
 
@@ -433,10 +453,23 @@ struct ConditionalExpr final : Expr {
         : Expr(Kind::Conditional), condition(std::move(condition)),
                                    first(std::move(first)),
                                    second(std::move(second)) {}
-    ConditionalExpr() = delete;
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    ConditionalExpr() = delete;
+};
+
+struct FunctionCallExpr final : Expr {
+    std::string identifier;
+    std::vector<std::unique_ptr<Expr>> args;
+    FunctionCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args)
+        : Expr(Kind::FunctionCall), identifier(std::move(identifier)), args(std::move(args)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    FunctionCallExpr() = delete;
 };
 
 } // Parsing

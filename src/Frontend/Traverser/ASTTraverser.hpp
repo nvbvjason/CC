@@ -11,14 +11,14 @@ class ASTTraverser : public ASTVisitor {
 public:
     void visit(Program& program) override;
 
-    void visit(Function& function) override;
+    // Declaration
+    void visit(VarDecl& varDecl) override;
+    void visit(FunDecl& funDecl) override;
 
     void visit(Block& block) override;
 
     void visit(StmtBlockItem& stmtBlockItem) override;
     void visit(DeclBlockItem& declBlockItem) override;
-
-    void visit(Declaration& declaration) override;
 
     // ForInit
     void visit(DeclForInit& declForInit) override;
@@ -48,6 +48,7 @@ public:
     void visit(BinaryExpr& binaryExpr) override;
     void visit(AssignmentExpr& assignmentExpr) override;
     void visit(ConditionalExpr& conditionalExpr) override;
+    void visit(FunctionCallExpr& functionCallExpr) override;
 };
 
 } // Parsing

@@ -9,7 +9,7 @@
 namespace Ir {
 
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram);
-std::unique_ptr<Function> function(const Parsing::Function& parsingFunction);
+std::unique_ptr<Function> function(const Parsing::FunDecl& parsingFunction);
 void blockIr(const Parsing::Block& block, std::vector<std::unique_ptr<Instruction>>& instructions);
 void blockItem(const Parsing::BlockItem& blockItem,
                std::vector<std::unique_ptr<Instruction>>& instructions);

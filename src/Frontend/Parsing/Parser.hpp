@@ -61,10 +61,10 @@ public:
     explicit Parser(const std::vector<Lexing::Token> &c_tokens)
         : c_tokens(c_tokens) {}
     bool programParse(Program& program);
-    [[nodiscard]] std::unique_ptr<Function> functionParse();
+    [[nodiscard]] std::unique_ptr<FunDecl> functionParse();
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
-    [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
+    [[nodiscard]] std::unique_ptr<VarDecl> declarationParse();
     [[nodiscard]] std::unique_ptr<ForInit> forInitParse();
 
     [[nodiscard]] std::unique_ptr<Stmt> stmtParse();

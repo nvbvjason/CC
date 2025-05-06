@@ -5,12 +5,20 @@ namespace Parsing {
 
 void ASTTraverser::visit(Program& program)
 {
-    program.function->accept(*this);
+    for (auto& funDecl : program.functions)
+        funDecl->accept(*this);
 }
 
-void ASTTraverser::visit(Function& function)
+void ASTTraverser::visit(VarDecl& varDecl)
 {
-    function.body->accept(*this);
+    if (varDecl.init)
+        varDecl.init->accept(*this);
+}
+
+void ASTTraverser::visit(FunDecl& funDecl)
+{
+    if (funDecl.body)
+        funDecl.body->accept(*this);
 }
 
 void ASTTraverser::visit(Block& block)
@@ -27,12 +35,6 @@ void ASTTraverser::visit(StmtBlockItem& stmtBlockItem)
 void ASTTraverser::visit(DeclBlockItem& declBlockItem)
 {
     declBlockItem.decl->accept(*this);
-}
-
-void ASTTraverser::visit(Declaration& declaration)
-{
-    if (declaration.init)
-        declaration.init->accept(*this);
 }
 
 void ASTTraverser::visit(DeclForInit& declForInit)
@@ -135,5 +137,11 @@ void ASTTraverser::visit(ConditionalExpr& conditionalExpr)
     conditionalExpr.condition->accept(*this);
     conditionalExpr.first->accept(*this);
     conditionalExpr.second->accept(*this);
+}
+
+void ASTTraverser::visit(FunctionCallExpr& functionCallExpr)
+{
+    for (auto& expr : functionCallExpr.args)
+        expr->accept(*this);
 }
 } // Parsing
