@@ -109,6 +109,26 @@ TEST(LexerTests, Continue)
     TestSingleTokenLexing("continue", TokenType::Continue);
 }
 
+TEST(LexerTests, Goto)
+{
+    TestSingleTokenLexing("goto", TokenType::Goto);
+}
+
+TEST(LexerTests, Switch)
+{
+    TestSingleTokenLexing("switch", TokenType::Switch);
+}
+
+TEST(LexerTests, Case)
+{
+    TestSingleTokenLexing("case", TokenType::Case);
+}
+
+TEST(LexerTests, Default)
+{
+    TestSingleTokenLexing("default", TokenType::Default);
+}
+
 TEST(LexerTests, Percent)
 {
     TestSingleTokenLexing("%", TokenType::Percent);
