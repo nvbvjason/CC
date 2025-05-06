@@ -3,7 +3,7 @@
 #ifndef CC_SEMANTICS_SWITCH_HPP
 #define CC_SEMANTICS_SWITCH_HPP
 
-#include "ConstASTTraverser.hpp"
+#include "ASTTraverser.hpp"
 #include "ShortTypes.hpp"
 
 #include <string>
@@ -13,16 +13,16 @@
 
 namespace Semantics {
 
-class Switch : public Parsing::ConstASTTraverser {
+class Switch : public Parsing::ASTTraverser {
     bool m_valid = true;
     std::unordered_set<std::string> m_default;
     std::unordered_map<std::string, std::vector<i32>> m_case;
 public:
-    bool programValidate(const Parsing::Program& program);
+    bool programValidate(Parsing::Program& program);
 
-    void visit(const Parsing::SwitchStmt&) override;
-    void visit(const Parsing::CaseStmt&) override;
-    void visit(const Parsing::DefaultStmt&) override;
+    void visit(Parsing::SwitchStmt&) override;
+    void visit(Parsing::CaseStmt&) override;
+    void visit(Parsing::DefaultStmt&) override;
 };
 
 } // Semantics

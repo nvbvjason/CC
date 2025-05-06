@@ -305,6 +305,8 @@ struct SwitchStmt final : Stmt {
     std::string identifier;
     std::unique_ptr<Expr> condition;
     std::unique_ptr<Stmt> body;
+    std::vector<std::unique_ptr<ConstExpr>> cases;
+    bool hasDefault = false;
 
     SwitchStmt(std::string iden, std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
         : Stmt(Kind::Switch), identifier(std::move(iden)), condition(std::move(condition)), body(std::move(body)) {}

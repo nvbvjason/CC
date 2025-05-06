@@ -130,6 +130,16 @@ void statement(const Parsing::Stmt& stmt,
             labelStatement(*labelStmtPtr, insts);
             break;
         }
+        case Kind::Case: {
+            const auto caseStmtPtr = dynamic_cast<const Parsing::CaseStmt*>(&stmt);
+            caseStatement(*caseStmtPtr, insts);
+            break;
+        }
+        case Kind::Default: {
+            const auto defaultStmtPtr = dynamic_cast<const Parsing::DefaultStmt*>(&stmt);
+            defaultStatement(*defaultStmtPtr, insts);
+            break;
+        }
         case Kind::DoWhile: {
             const auto doWhileStmtPtr = dynamic_cast<const Parsing::DoWhileStmt*>(&stmt);
             doWhileStatement(*doWhileStmtPtr, insts);
@@ -143,6 +153,11 @@ void statement(const Parsing::Stmt& stmt,
         case Kind::For: {
             const auto forStmtPtr = dynamic_cast<const Parsing::ForStmt*>(&stmt);
             forStatement(*forStmtPtr, insts);
+            break;
+        }
+        case Kind::Switch: {
+            const auto switchStmtPtr = dynamic_cast<const Parsing::SwitchStmt*>(&stmt);
+            switchStatement(*switchStmtPtr, insts);
             break;
         }
         case Kind::Null:
@@ -215,6 +230,25 @@ void labelStatement(const Parsing::LabelStmt& labelStmt,
     statement(*labelStmt.stmt, insts);
 }
 
+void caseStatement(const Parsing::CaseStmt& caseStmt,
+                   std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    const auto constExpr = dynamic_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(caseStmt.identifier + std::to_string(constExpr->value)))
+    );
+    statement(*caseStmt.body, insts);
+}
+
+void defaultStatement(const Parsing::DefaultStmt& defaultStmt,
+                      std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(defaultStmt.identifier + "default"))
+    );
+    statement(*defaultStmt.body, insts);
+}
+
 void doWhileStatement(const Parsing::DoWhileStmt& doWhileStmt,
                  std::vector<std::unique_ptr<Instruction>>& insts)
 {
@@ -278,6 +312,36 @@ void forStatement(const Parsing::ForStmt& forStmt,
     );
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(forStmt.identifier + "break"))
+    );
+}
+
+void switchStatement(const Parsing::SwitchStmt& stmt,
+                     std::vector<std::unique_ptr<Instruction>>& insts)
+{
+    auto realValue = inst(*stmt.condition, insts);
+    for (const auto& caseStmt : stmt.cases) {
+        const auto constExpr = dynamic_cast<const Parsing::ConstExpr*>(caseStmt.get());
+        const auto destination = std::make_shared<ValueVar>(makeTemporaryName());
+        insts.push_back(
+            std::make_unique<BinaryInst>(BinaryInst::Operation::Equal,
+                                         realValue,
+                                         std::make_shared<ValueConst>(constExpr->value),
+                                         destination)
+            );
+        insts.push_back(
+            std::make_unique<JumpIfNotZeroInst>(destination,
+                Identifier(stmt.identifier + std::to_string(constExpr->value)))
+        );
+    }
+    if (stmt.hasDefault)
+        insts.push_back(
+            std::make_unique<JumpInst>(Identifier(stmt.identifier + "default"))
+            );
+    insts.push_back(
+        std::make_unique<JumpInst>(Identifier(stmt.identifier + "break")));
+    statement(*stmt.body, insts);
+    insts.push_back(
+        std::make_unique<LabelInst>(Identifier(stmt.identifier + "break"))
     );
 }
 

@@ -2,20 +2,26 @@
 #include "ASTParser.hpp"
 
 namespace Semantics {
-bool Switch::programValidate(const Parsing::Program& program)
+bool Switch::programValidate(Parsing::Program& program)
 {
     m_valid = true;
     program.accept(*this);
     return m_valid;
 }
 
-void Switch::visit(const Parsing::SwitchStmt& switchStmt)
+void Switch::visit(Parsing::SwitchStmt& switchStmt)
 {
     m_case[switchStmt.identifier] = std::vector<i32>();
-    switchStmt.body->accept(*this);
+    ASTTraverser::visit(switchStmt);
+    for (const i32 value : m_case[switchStmt.identifier])
+        switchStmt.cases.push_back(
+            std::make_unique<Parsing::ConstExpr>(value)
+            );
+    if (m_default.contains(switchStmt.identifier))
+        switchStmt.hasDefault = true;
 }
 
-void Switch::visit(const Parsing::CaseStmt& caseStmt)
+void Switch::visit(Parsing::CaseStmt& caseStmt)
 {
     if (caseStmt.identifier.empty())
         m_valid = false;
@@ -28,16 +34,16 @@ void Switch::visit(const Parsing::CaseStmt& caseStmt)
         m_valid = false;
     else
         vec.push_back(value);
-    ConstASTTraverser::visit(caseStmt);
+    ASTTraverser::visit(caseStmt);
 }
 
-void Switch::visit(const Parsing::DefaultStmt& defaultStmt)
+void Switch::visit(Parsing::DefaultStmt& defaultStmt)
 {
     if (m_default.contains(defaultStmt.identifier))
         m_valid = false;
     m_default.insert(defaultStmt.identifier);
     if (defaultStmt.identifier.empty())
         m_valid = false;
-    ConstASTTraverser::visit(defaultStmt);
+    ASTTraverser::visit(defaultStmt);
 }
 } // Semantics

@@ -33,12 +33,18 @@ void continueStatement(const Parsing::ContinueStmt& stmt,
                        std::vector<std::unique_ptr<Instruction>>& insts);
 void labelStatement(const Parsing::LabelStmt& stmt,
                     std::vector<std::unique_ptr<Instruction>>& insts);
+void caseStatement(const Parsing::CaseStmt& caseStmt,
+                   std::vector<std::unique_ptr<Instruction>>& insts);
+void defaultStatement(const Parsing::DefaultStmt& defaultStmt,
+                      std::vector<std::unique_ptr<Instruction>>& insts);
 void doWhileStatement(const Parsing::DoWhileStmt& stmt,
                       std::vector<std::unique_ptr<Instruction>>& insts);
 void whileStatement(const Parsing::WhileStmt& stmt,
                     std::vector<std::unique_ptr<Instruction>>& insts);
 void forStatement(const Parsing::ForStmt& stmt,
                   std::vector<std::unique_ptr<Instruction>>& insts);
+void switchStatement(const Parsing::SwitchStmt& stmt,
+                     std::vector<std::unique_ptr<Instruction>>& insts);
 std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
                             std::vector<std::unique_ptr<Instruction>>& instructions);
 std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
