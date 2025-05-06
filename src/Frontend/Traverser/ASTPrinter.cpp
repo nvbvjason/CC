@@ -139,6 +139,7 @@ void ASTPrinter::visit(const IfStmt& ifStmt)
 
 void ASTPrinter::visit(const GotoStmt& gotoStmt)
 {
+    oss << "      GotoStmt "  << gotoStmt.identifier << '\n';
 }
 
 void ASTPrinter::visit(const ReturnStmt& returnStmt)

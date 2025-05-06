@@ -1,0 +1,248 @@
+#pragma once
+
+#ifndef CC_PARSING_OPERATORS_HPP
+#define CC_PARSING_OPERATORS_HPP
+
+#include "ASTParser.hpp"
+#include "Token.hpp"
+
+#include <cassert>
+
+namespace Parsing::Operators {
+
+using TokenType = Lexing::Token::Type;
+[[nodiscard]] constexpr UnaryExpr::Operator unaryOperator(TokenType type);
+[[nodiscard]] constexpr BinaryExpr::Operator binaryOperator(TokenType type);
+[[nodiscard]] constexpr AssignmentExpr::Operator assignOperator(TokenType type);
+[[nodiscard]] constexpr bool isBinaryOperator(TokenType type);
+[[nodiscard]] constexpr bool isUnaryOperator(TokenType type);
+[[nodiscard]] constexpr bool isAssignmentOperator(TokenType type);
+
+// https://en.cppreference.com/w/c/language/operator_precedence
+[[nodiscard]] constexpr i32 precedence(TokenType type);
+[[nodiscard]] constexpr i32 getPrecedenceLevel(UnaryExpr::Operator oper);
+[[nodiscard]] constexpr i32 getPrecedenceLevel(BinaryExpr::Operator oper);
+[[nodiscard]] constexpr i32 getPrecedenceLevel(AssignmentExpr::Operator oper);
+
+constexpr UnaryExpr::Operator unaryOperator(const TokenType type)
+{
+    switch (type) {
+        case TokenType::Minus:
+            return UnaryExpr::Operator::Negate;
+        case TokenType::Tilde:
+            return UnaryExpr::Operator::Complement;
+        case TokenType::ExclamationMark:
+            return UnaryExpr::Operator::Not;
+        case TokenType::Increment:
+            return UnaryExpr::Operator::PrefixIncrement;
+        case TokenType::Decrement:
+            return UnaryExpr::Operator::PrefixDecrement;
+        default:
+            assert(false && "Invalid unary operator unaryOperator");
+            std::unreachable();
+    }
+}
+
+constexpr BinaryExpr::Operator binaryOperator(const TokenType type)
+{
+    using Operator = BinaryExpr::Operator;
+    switch (type) {
+        // Arithmetic operators
+        case TokenType::Plus:               return Operator::Add;
+        case TokenType::Minus:              return Operator::Subtract;
+        case TokenType::Asterisk:           return Operator::Multiply;
+        case TokenType::ForwardSlash:       return Operator::Divide;
+        case TokenType::Percent:            return Operator::Remainder;
+
+        // Bitwise operators
+        case TokenType::Ampersand:          return Operator::BitwiseAnd;
+        case TokenType::Pipe:               return Operator::BitwiseOr;
+        case TokenType::Circumflex:         return Operator::BitwiseXor;
+        case TokenType::LeftShift:          return Operator::LeftShift;
+        case TokenType::RightShift:         return Operator::RightShift;
+
+        // Logical/comparison operators
+        case TokenType::LogicalAnd:         return Operator::And;
+        case TokenType::LogicalOr:          return Operator::Or;
+        case TokenType::LogicalEqual:       return Operator::Equal;
+        case TokenType::LogicalNotEqual:    return Operator::NotEqual;
+        case TokenType::Greater:            return Operator::GreaterThan;
+        case TokenType::Less:               return Operator::LessThan;
+        case TokenType::LessOrEqual:        return Operator::LessOrEqual;
+        case TokenType::GreaterOrEqual:     return Operator::GreaterOrEqual;
+
+        default:
+            assert(false && "Invalid binary operator: binaryOperator(Token::Type)");
+            std::unreachable();
+    }
+}
+
+constexpr AssignmentExpr::Operator assignOperator(TokenType type)
+{
+    using Operator = AssignmentExpr::Operator;
+    switch (type) {
+        case TokenType::Equal:              return Operator::Assign;
+        case TokenType::PlusAssign:         return Operator::PlusAssign;
+        case TokenType::MinusAssign:        return Operator::MinusAssign;
+        case TokenType::MultiplyAssign:     return Operator::MultiplyAssign;
+        case TokenType::DivideAssign:       return Operator::DivideAssign;
+        case TokenType::ModuloAssign:       return Operator::ModuloAssign;
+        case TokenType::BitwiseAndAssign:   return Operator::BitwiseAndAssign;
+        case TokenType::BitwiseOrAssign:    return Operator::BitwiseOrAssign;
+        case TokenType::BitwiseXorAssign:   return Operator::BitwiseXorAssign;
+        case TokenType::LeftShiftAssign:    return Operator::LeftShiftAssign;
+        case TokenType::RightShiftAssign:   return Operator::RightShiftAssign;
+
+        default:
+            assert(false && "Invalid binary operator: assignOperator(Token::Type)");
+            std::unreachable();
+    }
+}
+
+constexpr bool isBinaryOperator(const TokenType type)
+{
+    switch (type) {
+        case TokenType::Plus:
+        case TokenType::Minus:
+        case TokenType::ForwardSlash:
+        case TokenType::Percent:
+        case TokenType::Asterisk:
+        case TokenType::LeftShift:
+        case TokenType::RightShift:
+        case TokenType::Ampersand:
+        case TokenType::Pipe:
+        case TokenType::Circumflex:
+
+        case TokenType::LogicalAnd:
+        case TokenType::LogicalOr:
+        case TokenType::LogicalEqual:
+        case TokenType::LogicalNotEqual:
+        case TokenType::Greater:
+        case TokenType::Less:
+        case TokenType::LessOrEqual:
+        case TokenType::GreaterOrEqual:
+            return true;
+        default:
+            return false;
+    }
+}
+
+constexpr bool isUnaryOperator(const TokenType type)
+{
+    switch (type) {
+        case TokenType::Minus:
+        case TokenType::Tilde:
+        case TokenType::ExclamationMark:
+        case TokenType::Increment:
+        case TokenType::Decrement:
+            return true;
+        default:
+            return false;
+    }
+}
+
+constexpr bool isAssignmentOperator(TokenType type)
+{
+    switch (type) {
+        case TokenType::Equal:
+        case TokenType::PlusAssign:
+        case TokenType::MinusAssign:
+        case TokenType::DivideAssign:
+        case TokenType::MultiplyAssign:
+        case TokenType::ModuloAssign:
+        case TokenType::BitwiseAndAssign:
+        case TokenType::BitwiseOrAssign:
+        case TokenType::BitwiseXorAssign:
+        case TokenType::LeftShiftAssign:
+        case TokenType::RightShiftAssign:
+            return true;
+        default:
+            return false;
+    }
+}
+
+constexpr i32 precedence(const TokenType type)
+{
+    constexpr i32 precedenceMult = 1024;
+    constexpr i32 precedenceLevels = 16;
+    if (type == TokenType::QuestionMark || type == TokenType::Colon)
+        return (precedenceLevels - 13) * precedenceMult;
+    if (isBinaryOperator(type)) {
+        BinaryExpr::Operator oper = binaryOperator(type);
+        return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
+    }
+    if (isUnaryOperator(type)) {
+        UnaryExpr::Operator oper = Operators::unaryOperator(type);
+        return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
+    }
+    if (isAssignmentOperator(type)) {
+        AssignmentExpr::Operator oper = Operators::assignOperator(type);
+        return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
+    }
+    return 0;
+}
+
+constexpr i32 getPrecedenceLevel(const UnaryExpr::Operator oper)
+{
+    using Operator = UnaryExpr::Operator;
+    switch (oper) {
+        case Operator::PostFixIncrement:
+        case Operator::PostFixDecrement:
+            return 1;
+        case Operator::PrefixIncrement:
+        case Operator::PrefixDecrement:
+        case Operator::Complement:
+        case Operator::Negate:
+        case Operator::Not:
+            return 2;
+        default:
+            return 0;
+    }
+}
+
+constexpr i32 getPrecedenceLevel(const BinaryExpr::Operator oper)
+{
+    using Operator = BinaryExpr::Operator;
+    switch (oper) {
+        case Operator::Multiply:
+        case Operator::Divide:
+        case Operator::Remainder:
+            return 3;
+        case Operator::Add:
+        case Operator::Subtract:
+            return 4;
+        case Operator::LeftShift:
+        case Operator::RightShift:
+            return 5;
+        case Operator::LessThan:
+        case Operator::LessOrEqual:
+        case Operator::GreaterThan:
+        case Operator::GreaterOrEqual:
+            return 6;
+        case Operator::Equal:
+        case Operator::NotEqual:
+            return 7;
+        case Operator::BitwiseAnd:
+            return 8;
+        case Operator::BitwiseXor:
+            return 9;
+        case Operator::BitwiseOr:
+            return 10;
+        case Operator::And:
+            return 11;
+        case Operator::Or:
+            return 12;
+        default:
+            assert(false && "Invalid binary operator getPrecedenceLevel");
+            std::unreachable();
+    }
+}
+
+constexpr i32 getPrecedenceLevel(const AssignmentExpr::Operator oper)
+{
+    return 14;
+}
+
+} // namespace Parsing::Operators
+
+#endif // CC_PARSING_OPERATORS_HPP

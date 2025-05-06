@@ -41,7 +41,7 @@ bool ParseFileAndGiveResult(const std::filesystem::directory_entry& filePath)
     std::vector<Lexing::Token> lexemes;
     Lexing::Lexer lexer(sourceCode);
     lexer.getLexemes(lexemes);
-    Parsing::Parse parser(lexemes);
+    Parsing::Parser parser(lexemes);
     Parsing::Program program;
     return parser.programParse(program);
 }
@@ -52,7 +52,7 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     std::vector<Lexing::Token> lexemes;
     Lexing::Lexer lexer(sourceCode);
     lexer.getLexemes(lexemes);
-    Parsing::Parse parser(lexemes);
+    Parsing::Parser parser(lexemes);
     Parsing::Program program;
     parser.programParse(program);
     Semantics::VariableResolution variableResolution(program);
@@ -572,6 +572,26 @@ TEST(Chapter8, lexingValidExtraCredit)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter8, parsingValidExtraCredit)
+{
+    const fs::path validPath = testsFolderPath / "chapter_8/valid/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter8, parsingInValidExtraCredit)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_8/invalid_parse/extra_credit";
+    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
     }
 }
 
