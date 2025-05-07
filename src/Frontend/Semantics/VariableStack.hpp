@@ -25,6 +25,7 @@ public:
     [[nodiscard]] std::string* find(const std::string& name) noexcept;
     [[nodiscard]] const std::string* find(const std::string& name) const noexcept;
     [[nodiscard]] bool contains(const std::string& name) const noexcept;
+    [[nodiscard]] bool inArg(const std::string& name) const noexcept;
 };
 
 } // Semantics

@@ -82,11 +82,11 @@ void VariableResolution::visit(Parsing::BreakStmt& breakStmt)
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (!m_valid)
-        return;
-    if (m_funcDecls.contains(varDecl.name)) {
-        m_valid = false;
-        return;
-    }
+         return;
+    // if (m_funcDecls.contains(varDecl.name)) {
+    //     m_valid = false;
+    //     return;
+    // }
     if (m_variableStack.isDeclared(varDecl.name)) {
         m_valid = false;
         return;
@@ -101,6 +101,8 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
     if (!m_valid)
+        return;
+    if (m_variableStack.inArg(varExpr.name))
         return;
     auto varNamePtr = m_variableStack.find(varExpr.name);
     if (varNamePtr == nullptr) {

@@ -38,7 +38,7 @@ public:
     void visit(Parsing::FunCallExpr& funCallExpr) override;
 private:
     std::string makeTemporary(const std::string& name);
-    [[nodiscard]] bool hasDuplicates(const std::vector<std::string>& vec);
+    [[nodiscard]] static bool hasDuplicates(const std::vector<std::string>& vec);
 };
 
 } // Semantics

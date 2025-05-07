@@ -54,6 +54,11 @@ bool VariableStack::contains(const std::string& name) const noexcept
     return find(name) != nullptr;
 }
 
+bool VariableStack::inArg(const std::string& name) const noexcept
+{
+    return m_args.contains(name);
+}
+
 std::string* VariableStack::find(const std::string& name) noexcept
 {
     for (auto& scope : std::ranges::reverse_view(m_stack))
