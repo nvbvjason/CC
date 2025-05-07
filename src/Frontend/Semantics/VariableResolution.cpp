@@ -36,10 +36,19 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
             m_valid = false;
             return;
         }
+    }
+    if (m_inFunctionBody && funDecl.body != nullptr) {
+        m_valid = false;
         return;
     }
     m_funcDecls[funDecl.name] = funDecl.params;
+    if (funDecl.body == nullptr)
+        return;
+    m_inFunctionBody = true;
+    m_variableStack.addArgs(funDecl.params);
     ASTTraverser::visit(funDecl);
+    m_variableStack.clearArgs();
+    m_inFunctionBody = false;
 }
 
 void VariableResolution::visit(Parsing::Block& block)
@@ -63,19 +72,6 @@ void VariableResolution::visit(Parsing::BreakStmt& breakStmt)
         return;
     if (breakStmt.identifier.empty())
         m_valid = false;
-}
-
-void VariableResolution::visit(Parsing::ForStmt& function)
-{
-    m_variableStack.push();
-    if (function.init != nullptr)
-        function.init->accept(*this);
-    if (function.condition != nullptr)
-        function.condition->accept(*this);
-    if (function.post != nullptr)
-        function.post->accept(*this);
-    function.body->accept(*this);
-    m_variableStack.pop();
 }
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)

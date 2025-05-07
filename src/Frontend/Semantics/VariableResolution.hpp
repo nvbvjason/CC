@@ -18,6 +18,7 @@ class VariableResolution : public Parsing::ASTTraverser {
     i32 m_counter = 0;
     Parsing::Program& program;
     bool m_valid = true;
+    bool m_inFunctionBody = false;
 public:
     explicit VariableResolution(Parsing::Program& program)
         : program(program) {}
@@ -29,7 +30,6 @@ public:
 
     void visit(Parsing::ContinueStmt& continueStmt) override;
     void visit(Parsing::BreakStmt& breakStmt) override;
-    void visit(Parsing::ForStmt& function) override;
 
     void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::VarExpr& varExpr) override;

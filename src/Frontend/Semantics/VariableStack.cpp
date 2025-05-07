@@ -25,7 +25,7 @@ void VariableStack::push()
 bool VariableStack::isDeclared(const std::string& name) const
 {
     assert(!m_stack.empty() && "VariableStack underflow isDeclared()");
-    return m_stack.back().contains(name);
+    return m_stack.back().contains(name) || m_args.contains(name);
 }
 
 bool VariableStack::tryRename(const std::string& oldName, const std::string& newName)
@@ -36,6 +36,17 @@ bool VariableStack::tryRename(const std::string& oldName, const std::string& new
             return true;
         }
     return false;
+}
+
+void VariableStack::addArgs(const std::vector<std::string>& args)
+{
+    for (const auto& arg : args)
+        m_args.emplace(arg);
+}
+
+void VariableStack::clearArgs()
+{
+    m_args.clear();
 }
 
 bool VariableStack::contains(const std::string& name) const noexcept
