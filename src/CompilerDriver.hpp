@@ -10,15 +10,22 @@
 #include <utility>
 #include <vector>
 
+#include "ErrorCodes.hpp"
+
 class CompilerDriver {
     std::vector<std::string> args;
     std::filesystem::path m_inputFile;
+    std::string m_outputFileName;
 public:
     CompilerDriver() = delete;
     CompilerDriver(const CompilerDriver& other) = delete;
     explicit CompilerDriver(std::vector<std::string> args)
         : args(std::move(args)) {}
-    [[nodiscard]] i32 run() const;
+
+    bool validateCommandLineArguments(std::string& argument, ErrorCode& value1) const;
+    [[nodiscard]] ErrorCode run();
+private:
+    void writeAssmFile(const std::string& inputFile, const std::string& output);
 };
 
 std::string getSourceCode(const std::string& inputFile);

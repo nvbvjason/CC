@@ -1,15 +1,15 @@
-#include "Switch.hpp"
+#include "LoopLabeling.hpp"
 #include "ASTParser.hpp"
 
 namespace Semantics {
-bool Switch::programValidate(Parsing::Program& program)
+bool LoopLabeling::programValidate(Parsing::Program& program)
 {
     m_valid = true;
     program.accept(*this);
     return m_valid;
 }
 
-void Switch::visit(Parsing::SwitchStmt& switchStmt)
+void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
 {
     m_case[switchStmt.identifier] = std::vector<i32>();
     ASTTraverser::visit(switchStmt);
@@ -21,7 +21,7 @@ void Switch::visit(Parsing::SwitchStmt& switchStmt)
         switchStmt.hasDefault = true;
 }
 
-void Switch::visit(Parsing::CaseStmt& caseStmt)
+void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
 {
     if (caseStmt.identifier.empty())
         m_valid = false;
@@ -37,7 +37,7 @@ void Switch::visit(Parsing::CaseStmt& caseStmt)
     ASTTraverser::visit(caseStmt);
 }
 
-void Switch::visit(Parsing::DefaultStmt& defaultStmt)
+void LoopLabeling::visit(Parsing::DefaultStmt& defaultStmt)
 {
     if (m_default.contains(defaultStmt.identifier))
         m_valid = false;
@@ -45,5 +45,21 @@ void Switch::visit(Parsing::DefaultStmt& defaultStmt)
     if (defaultStmt.identifier.empty())
         m_valid = false;
     ASTTraverser::visit(defaultStmt);
+}
+
+void LoopLabeling::visit(Parsing::ContinueStmt& continueStmt)
+{
+    if (!m_valid)
+        return;
+    if (continueStmt.identifier.empty())
+        m_valid = false;
+}
+
+void LoopLabeling::visit(Parsing::BreakStmt& breakStmt)
+{
+    if (!m_valid)
+        return;
+    if (breakStmt.identifier.empty())
+        m_valid = false;
 }
 } // Semantics

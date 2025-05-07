@@ -9,7 +9,7 @@
 
 #include "LabelsUnique.hpp"
 #include "LvalueVerification.hpp"
-#include "Switch.hpp"
+#include "LoopLabeling.hpp"
 
 namespace fs = std::filesystem;
 
@@ -65,7 +65,7 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     Semantics::LabelsUnique labelsUnique;
     if (!labelsUnique.programValidate(program))
         return false;
-    Semantics::Switch switchVerification;
+    Semantics::LoopLabeling switchVerification;
     if (!switchVerification.programValidate(program))
         return false;
     return true;

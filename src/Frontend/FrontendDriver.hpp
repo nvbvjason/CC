@@ -4,6 +4,7 @@
 #define CC_FRONTEND_DRIVER_HPP
 
 #include "ASTIr.hpp"
+#include "ErrorCodes.hpp"
 
 #include <filesystem>
 #include <string>
@@ -17,7 +18,7 @@ public:
     explicit FrontendDriver(std::string arg, std::filesystem::path inputFile)
         : m_arg(std::move(arg)), m_inputFile(std::move(inputFile)) {}
 
-    [[nodiscard]] std::tuple<std::unique_ptr<Ir::Program>, i32> run() const;
+    [[nodiscard]] std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> run() const;
 };
 
 #endif // CC_FRONTEND_DRIVER_HPP

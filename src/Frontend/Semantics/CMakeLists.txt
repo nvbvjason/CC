@@ -4,8 +4,8 @@ add_library(Semantics
         LvalueVerification.cpp
         LabelsUnique.cpp
         LabelsUnique.hpp
-        Switch.cpp
-        Switch.hpp
+        LoopLabeling.cpp
+        LoopLabeling.hpp
         VariableStack.cpp
         VariableStack.hpp
 )

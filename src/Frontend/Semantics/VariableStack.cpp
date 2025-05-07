@@ -3,6 +3,8 @@
 #include <cassert>
 #include <ranges>
 
+#include "ShortTypes.hpp"
+
 namespace Semantics {
 
 void VariableStack::pop()
@@ -11,10 +13,10 @@ void VariableStack::pop()
     m_stack.pop_back();
 }
 
-void VariableStack::addDecl(const std::string& name, const std::string& value)
+void VariableStack::addDecl(const std::string& name, const std::string& value, const Variable::Type type)
 {
     assert(!m_stack.empty() && "VariableStack underflow addDecl()");
-    m_stack.back().emplace(name, value);
+    m_stack.back().emplace(name, Variable(value, type));
 }
 
 void VariableStack::push()
@@ -22,20 +24,35 @@ void VariableStack::push()
     m_stack.emplace_back();
 }
 
-bool VariableStack::isDeclared(const std::string& name) const
+bool VariableStack::tryDeclare(const std::string& name, const Variable::Type type) const
 {
     assert(!m_stack.empty() && "VariableStack underflow isDeclared()");
-    return m_stack.back().contains(name) || m_args.contains(name);
+    if (m_args.contains(name))
+        return false;
+    for (int i = m_stack.size() - 1; 0 <= i; --i) {
+        const auto it = m_stack[i].find(name);
+        if (it == m_stack[i].end())
+            continue;
+        if (it->second.type != type)
+            return false;
+        return true;
+    }
+    return true;
 }
 
-bool VariableStack::tryRename(const std::string& oldName, const std::string& newName)
+std::string VariableStack::tryCall(const std::string& name, Variable::Type type) const
 {
-    for (auto & it : std::ranges::reverse_view(m_stack))
-        if (it.contains(oldName)) {
-            it[oldName] = newName;
-            return true;
-        }
-    return false;
+    for (i64 i = m_stack.size() - 1; 0 <= i; --i) {
+        const auto it = m_stack[i].find(name);
+        if (it == m_stack[i].end())
+            continue;
+        if (it->second.type != type && i == m_stack.size() - 1)
+            return "";
+        if (it->second.type != type)
+            continue;
+        return it->second.name;
+    }
+    return "";
 }
 
 void VariableStack::addArgs(const std::vector<std::string>& args)
@@ -49,26 +66,13 @@ void VariableStack::clearArgs()
     m_args.clear();
 }
 
-bool VariableStack::contains(const std::string& name) const noexcept
-{
-    return find(name) != nullptr;
-}
-
 bool VariableStack::inArg(const std::string& name) const noexcept
 {
     return m_args.contains(name);
 }
 
-std::string* VariableStack::find(const std::string& name) noexcept
+bool VariableStack::inInnerMost(const std::string& name) const
 {
-    for (auto& scope : std::ranges::reverse_view(m_stack))
-        if (auto it = scope.find(name); it != scope.end())
-            return &it->second;
-    return nullptr;
-}
-
-const std::string* VariableStack::find(const std::string& name) const noexcept
-{
-    return const_cast<VariableStack*>(this)->find(name);
+    return m_stack.back().contains(name);
 }
 } // Semantics

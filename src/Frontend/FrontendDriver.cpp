@@ -2,48 +2,48 @@
 #include "VariableResolution.hpp"
 #include "ASTIr.hpp"
 #include "Token.hpp"
-
-#include <fstream>
-#include <iostream>
-
-#include "Traverser/ASTPrinter.hpp"
+#include "ErrorCodes.hpp"
+#include "ASTPrinter.hpp"
 #include "GenerateIr.hpp"
 #include "LabelsUnique.hpp"
 #include "Lexer.hpp"
 #include "LvalueVerification.hpp"
 #include "Parser.hpp"
-#include "Switch.hpp"
+#include "LoopLabeling.hpp"
 #include "ValidateReturn.hpp"
+
+#include <fstream>
+#include <iostream>
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program* program);
-static bool validateSemantics(Parsing::Program& programNode);
+static ErrorCode validateSemantics(Parsing::Program& programNode);
 static Ir::Program ir(const Parsing::Program* parsingProgram);
 static std::string preProcess(const std::string &file);
 
-std::tuple<std::unique_ptr<Ir::Program>, i32> FrontendDriver::run() const
+std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> FrontendDriver::run() const
 {
     std::vector<Lexing::Token> tokens;
     if (const i32 err = lex(tokens, m_inputFile) != 0)
-        return {nullptr, err};
+        return {nullptr, ErrorCode::Lexer};
     if (m_arg == "--lex")
-        return {nullptr, 0};
+        return {nullptr, ErrorCode::OK};
     Parsing::Program program;
     if (!parse(tokens, program))
-        return {nullptr, 1};
+        return {nullptr, ErrorCode::Parser};
     if (m_arg == "--parse")
-        return {nullptr, 0};
-    if (!validateSemantics(program))
-        return {nullptr, 1};
+        return {nullptr, ErrorCode::OK};
+    if (ErrorCode err = validateSemantics(program); err != ErrorCode::OK)
+        return {nullptr, err};
     if (m_arg == "--validate")
-        return {nullptr, 0};
+        return {nullptr, ErrorCode::OK};
     if (m_arg == "--printAst") {
         printParsingAst(&program);
-        return {nullptr, 0};
+        return {nullptr, ErrorCode::OK};
     }
     std::unique_ptr<Ir::Program> irProgram = std::make_unique<Ir::Program>(ir(&program));
-    return {std::move(irProgram), 0};
+    return {std::move(irProgram), ErrorCode::OK};
 }
 
 std::string getSourceCode(const std::string &inputFile)
@@ -53,24 +53,24 @@ std::string getSourceCode(const std::string &inputFile)
     return source;
 }
 
-bool validateSemantics(Parsing::Program& programNode)
+ErrorCode validateSemantics(Parsing::Program& programNode)
 {
     Semantics::VariableResolution variableResolution(programNode);
     if (!variableResolution.resolve())
-        return false;
+        return ErrorCode::VariableResolution;
     Semantics::ValidateReturn validateReturn;
     if (!validateReturn.programValidate(programNode))
-        return false;
+        return ErrorCode::ValidateReturn;
     Semantics::LvalueVerification lvalueVerification(programNode);
     if (!lvalueVerification.resolve())
-        return false;
+        return ErrorCode::LValueVerification;
     Semantics::LabelsUnique labelsUnique;
     if (!labelsUnique.programValidate(programNode))
-        return false;
-    Semantics::Switch switchValidation;
-    if (!switchValidation.programValidate(programNode))
-        return false;
-    return true;
+        return ErrorCode::LabelsUnique;
+    Semantics::LoopLabeling loopLabeling;
+    if (!loopLabeling.programValidate(programNode))
+        return ErrorCode::LoopLabeling;
+    return ErrorCode::OK;
 }
 
 void printParsingAst(const Parsing::Program* program)

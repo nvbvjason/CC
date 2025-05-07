@@ -19,52 +19,76 @@ static bool fileExists(const std::string &name);
 static bool isCommandLineArgumentValid(const std::string &argument);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
 static void makeLib(const std::string& asmFile, const std::string& outputFile);
+static void cleanUp();
 
-int CompilerDriver::run() const
+ErrorCode CompilerDriver::run()
 {
-    if (args.size() < 2 || 3 < args.size()) {
-        std::cerr << "Usage: <input_file> possible-argument" << '\n';
-        return 1;
-    }
-    if (const std::filesystem::path m_inputFile(args.back()); !fileExists(m_inputFile)) {
-        std::cerr << "File " << m_inputFile.string() << " not found" << '\n';
-        return 2;
-    }
     std::string argument;
-    if (args.size() == 3)
-        argument = args[1];
-    if (!isCommandLineArgumentValid(argument)) {
-        std::cerr << "Invalid argument: " << argument << '\n';
-        return 3;
-    }
+    ErrorCode value1;
+    if (validateCommandLineArguments(argument, value1))
+        return value1;
+    cleanUp();
     const std::string inputFile = args.back();
     std::vector<Lexing::Token> tokens;
     FrontendDriver frontend(argument, inputFile);
     auto [irProgram, err] = frontend.run();
-    if (err != 0)
+    if (err != ErrorCode::OK)
         return err;
     if (irProgram == nullptr)
-        return 0;
+        return ErrorCode::OK;
     if (argument == "--tacky")
-        return 0;
+        return ErrorCode::OK;
     if (argument == "--printTacky") {
         printIr(*irProgram);
-        return 0;
+        return ErrorCode::OK;
     }
     CodeGen::Program codegenProgram = codegen(*irProgram);
     if (argument == "--codegen")
-        return 0;
+        return ErrorCode::OK;
     std::string output = CodeGen::asmProgram(codegenProgram);
+    writeAssmFile(inputFile, output);
+    if (argument == "-c")
+        makeLib(m_outputFileName, inputFile.substr(0, inputFile.length() - 2));
+    else
+        assemble(m_outputFileName, inputFile.substr(0, inputFile.length() - 2));
+    return ErrorCode::OK;
+}
+void CompilerDriver::writeAssmFile(const std::string& inputFile, const std::string& output)
+{
     std::string stem = std::filesystem::path(inputFile).stem();
-    std::string outputFileName = std::format("/home/jason/src/CC/generated_files/{}.s", stem);
-    std::ofstream ofs(outputFileName);
+    m_outputFileName = std::format("/home/jason/src/CC/generated_files/{}.s", stem);
+    std::ofstream ofs(m_outputFileName);
     ofs << output;
     ofs.close();
-    if (argument == "-c")
-        makeLib(outputFileName, inputFile.substr(0, inputFile.length() - 2));
-    else
-        assemble(outputFileName, inputFile.substr(0, inputFile.length() - 2));
-    return 0;
+}
+
+bool CompilerDriver::validateCommandLineArguments(std::string& argument, ErrorCode& value1) const
+{
+    if (args.size() < 2 || 3 < args.size()) {
+        std::cerr << "Usage: <input_file> possible-argument" << '\n';
+        value1 = ErrorCode::NoInputFile;
+        return true;
+    }
+    if (const std::filesystem::path m_inputFile(args.back()); !fileExists(m_inputFile)) {
+        std::cerr << "File " << m_inputFile.string() << " not found" << '\n';
+        value1 = ErrorCode::FileNotFound;
+        return true;
+    }
+    if (args.size() == 3)
+        argument = args[1];
+    if (!isCommandLineArgumentValid(argument)) {
+        std::cerr << "Invalid argument: " << argument << '\n';
+        value1 = ErrorCode::InvalidCommandlineArgs;
+        return true;
+    }
+    return false;
+}
+
+void cleanUp()
+{
+    const std::filesystem::path generatedDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";
+    for (const auto& entry : std::filesystem::directory_iterator(generatedDir))
+        remove_all(entry.path());
 }
 
 void printIr(const Ir::Program& irProgram)

@@ -13,7 +13,7 @@
 
 namespace Semantics {
 
-class Switch : public Parsing::ASTTraverser {
+class LoopLabeling : public Parsing::ASTTraverser {
     bool m_valid = true;
     std::unordered_set<std::string> m_default;
     std::unordered_map<std::string, std::vector<i32>> m_case;
@@ -23,6 +23,8 @@ public:
     void visit(Parsing::SwitchStmt&) override;
     void visit(Parsing::CaseStmt&) override;
     void visit(Parsing::DefaultStmt&) override;
+    void visit(Parsing::ContinueStmt&) override;
+    void visit(Parsing::BreakStmt&) override;
 };
 
 } // Semantics

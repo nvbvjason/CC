@@ -27,10 +27,15 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
         m_valid = false;
         return;
     }
-    if (m_variableStack.isDeclared(funDecl.name)) {
+    const std::string var =  m_variableStack.tryCall(funDecl.name, Variable::Type::Function);
+    if (!var.empty()) {
         m_valid = false;
         return;
     }
+    // if (m_variableStack.isDeclared(funDecl.name)) {
+    //     m_valid = false;
+    //     return;
+    // }
     if (m_funcDecls.contains(funDecl.name)) {
         if (funDecl.params.size() != m_funcDecls[funDecl.name].size()) {
             m_valid = false;
@@ -42,13 +47,9 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
         return;
     }
     m_funcDecls[funDecl.name] = funDecl.params;
+    m_variableStack.addDecl(funDecl.name, makeTemporary(funDecl.name), Variable::Type::Function);
     if (funDecl.body == nullptr)
         return;
-    if (m_definedFunctions.contains(funDecl.name)) {
-        m_valid = false;
-        return;
-    }
-    m_definedFunctions.insert(funDecl.name);
     m_inFunctionBody = true;
     m_variableStack.addArgs(funDecl.params);
     ASTTraverser::visit(funDecl);
@@ -63,36 +64,20 @@ void VariableResolution::visit(Parsing::Block& block)
     m_variableStack.pop();
 }
 
-void VariableResolution::visit(Parsing::ContinueStmt& continueStmt)
-{
-    if (!m_valid)
-        return;
-    if (continueStmt.identifier.empty())
-        m_valid = false;
-}
-
-void VariableResolution::visit(Parsing::BreakStmt& breakStmt)
-{
-    if (!m_valid)
-        return;
-    if (breakStmt.identifier.empty())
-        m_valid = false;
-}
-
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (!m_valid)
          return;
-    // if (m_funcDecls.contains(varDecl.name)) {
-    //     m_valid = false;
-    //     return;
-    // }
-    if (m_variableStack.isDeclared(varDecl.name)) {
+    if (m_variableStack.inInnerMost(varDecl.name)) {
+        m_valid = false;
+        return;
+    }
+    if (!m_variableStack.tryDeclare(varDecl.name, Variable::Type::Int)) {
         m_valid = false;
         return;
     }
     const std::string uniqueName = makeTemporary(varDecl.name);
-    m_variableStack.addDecl(varDecl.name, uniqueName);
+    m_variableStack.addDecl(varDecl.name, uniqueName, Variable::Type::Int);
     varDecl.name = uniqueName;
     if (varDecl.init != nullptr)
         varDecl.init->accept(*this);
@@ -104,12 +89,12 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         return;
     if (m_variableStack.inArg(varExpr.name))
         return;
-    auto varNamePtr = m_variableStack.find(varExpr.name);
-    if (varNamePtr == nullptr) {
+    const std::string varName = m_variableStack.tryCall(varExpr.name, Variable::Type::Int);
+    if (varName.empty()) {
         m_valid = false;
         return;
     }
-    varExpr.name = *varNamePtr;
+    varExpr.name = varName;
 }
 
 void VariableResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
@@ -121,12 +106,12 @@ void VariableResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
         return;
     }
     auto varExpr = static_cast<Parsing::VarExpr*>(assignmentExpr.lhs.get());
-    auto varNamePtr = m_variableStack.find(varExpr->name);
-    if (varNamePtr == nullptr) {
+    const std::string varName = m_variableStack.tryCall(varExpr->name, Variable::Type::Int);
+    if (varName.empty()) {
         m_valid = false;
         return;
     }
-    varExpr->name = *varNamePtr;
+    varExpr->name = varName;
     assignmentExpr.rhs->accept(*this);
 }
 
@@ -134,7 +119,8 @@ void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
 {
     if (!m_valid)
         return;
-    if (!m_funcDecls.contains(funCallExpr.identifier)) {
+    const std::string varName = m_variableStack.tryCall(funCallExpr.identifier, Variable::Type::Function);
+    if (varName.empty()) {
         m_valid = false;
         return;
     }
