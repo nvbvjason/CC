@@ -103,14 +103,12 @@ std::unique_ptr<Block> Parser::blockParse()
         return nullptr;
     if (expect(TokenType::CloseBrace))
         return block;
-    while (true) {
+    do {
         std::unique_ptr<BlockItem> blockItem = blockItemParse();
         if (blockItem == nullptr)
             return nullptr;
         block->body.push_back(std::move(blockItem));
-        if (expect(TokenType::CloseBrace))
-            break;
-    }
+    } while (!expect(TokenType::CloseBrace));
     return block;
 }
 
@@ -529,11 +527,13 @@ std::unique_ptr<Expr> Parser::factorParse()
 std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()
 {
     std::vector<std::unique_ptr<Expr>> arguments;
+    if (peek().m_type == TokenType::CloseParen)
+        return std::make_unique<std::vector<std::unique_ptr<Expr>>>(std::move(arguments));
     auto expr = exprParse(0);
     if (expr == nullptr)
         return nullptr;
     arguments.push_back(std::move(expr));
-    while (!expect(TokenType::Comma)) {
+    while (expect(TokenType::Comma)) {
         expr = exprParse(0);
         if (expr == nullptr)
             return nullptr;

@@ -5,28 +5,16 @@
 
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
+#include "VariableStack.hpp"
 
 #include <string>
 #include <unordered_map>
 
 namespace Semantics {
 
-class VariableStack {
-    std::vector<std::unordered_map<std::string, std::string>> m_stack;
-public:
-    VariableStack() = default;
-    void push();
-    void pop();
-    void addDecl(const std::string& name, const std::string& value);
-    bool tryRename(const std::string& oldName, const std::string& newName);
-    [[nodiscard]] bool isDeclared(const std::string& name) const;
-    [[nodiscard]] std::string* find(const std::string& name) noexcept;
-    [[nodiscard]] const std::string* find(const std::string& name) const noexcept;
-    [[nodiscard]] bool contains(const std::string& name) const noexcept;
-};
-
 class VariableResolution : public Parsing::ASTTraverser {
     VariableStack m_variableStack;
+    std::unordered_map<std::string, std::vector<std::string>> m_funcDecls;
     i32 m_counter = 0;
     Parsing::Program& program;
     bool m_valid = true;
@@ -35,6 +23,8 @@ public:
         : program(program) {}
 
     bool resolve();
+    void visit(Parsing::Program& program) override;
+    void visit(Parsing::FunDecl& funDecl) override;
     void visit(Parsing::Block& function) override;
 
     void visit(Parsing::ContinueStmt& continueStmt) override;
@@ -44,6 +34,7 @@ public:
     void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
+    void visit(Parsing::FunCallExpr& funCallExpr) override;
 private:
     std::string makeTemporary(const std::string& name);
 };

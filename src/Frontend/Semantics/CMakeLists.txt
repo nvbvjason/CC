@@ -6,6 +6,8 @@ add_library(Semantics
         LabelsUnique.hpp
         Switch.cpp
         Switch.hpp
+        VariableStack.cpp
+        VariableStack.hpp
 )
 
 target_include_directories(Semantics PUBLIC
