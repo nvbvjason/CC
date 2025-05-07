@@ -651,15 +651,15 @@ TEST(Chapter9, parsingInvalid)
     }
 }
 
-// TEST(Chapter9, parsingInvalidSemantics)
-// {
-//     const fs::path invalidPath = testsFolderPath / "chapter_9/invalid_declarations";
-//     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
-//         if (!path.is_regular_file() || path.path().extension() != ".c")
-//             continue;
-//         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
-//     }
-// }
+TEST(Chapter9, invalidSemantics)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_9/invalid_declarations";
+    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
 
 void cleanUp()
 {

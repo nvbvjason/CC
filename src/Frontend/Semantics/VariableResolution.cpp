@@ -1,6 +1,6 @@
 #include "VariableResolution.hpp"
 
-#include <functional>
+#include <unordered_set>
 
 namespace Semantics {
 
@@ -16,13 +16,17 @@ void VariableResolution::visit(Parsing::Program& program)
 {
     m_variableStack.push();
     ASTTraverser::visit(program);
-    //m_variableStack.pop();
+    m_variableStack.pop();
 }
 
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
     if (!m_valid)
         return;
+    if (hasDuplicates(funDecl.params)) {
+        m_valid = false;
+        return;
+    }
     if (m_variableStack.isDeclared(funDecl.name)) {
         m_valid = false;
         return;
@@ -141,5 +145,16 @@ void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
 std::string VariableResolution::makeTemporary(const std::string& name)
 {
     return name + '.' + std::to_string(m_counter++);
+}
+
+bool VariableResolution::hasDuplicates(const std::vector<std::string>& vec)
+{
+    std::unordered_set<std::string> seen;
+    for (const auto& str : vec) {
+        if (seen.contains(str))
+            return true;
+        seen.insert(str);
+    }
+    return false;
 }
 } // Semantics

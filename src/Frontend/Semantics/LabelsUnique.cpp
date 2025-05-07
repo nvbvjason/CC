@@ -12,8 +12,7 @@ void LabelsUnique::visit(const Parsing::FunDecl& funDecl)
 {
     m_labels.clear();
     m_goto.clear();
-    for (auto& blockItem : funDecl.body->body)
-        blockItem->accept(*this);
+    ConstASTTraverser::visit(funDecl);
     for (auto& label : m_labels)
         if (1 < label.second)
             m_valid = false;
@@ -30,6 +29,6 @@ void LabelsUnique::visit(const Parsing::GotoStmt& gotoStmt)
 void LabelsUnique::visit(const Parsing::LabelStmt& labelStmt)
 {
     ++m_labels[labelStmt.identifier];
-    labelStmt.stmt->accept(*this);
+    ConstASTTraverser::visit(labelStmt);
 }
 } // Semantics
