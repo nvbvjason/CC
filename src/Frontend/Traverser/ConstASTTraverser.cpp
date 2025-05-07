@@ -139,7 +139,7 @@ void ConstASTTraverser::visit(const ConditionalExpr& conditionalExpr)
     conditionalExpr.second->accept(*this);
 }
 
-void ConstASTTraverser::visit(const FunctionCallExpr& functionCallExpr)
+void ConstASTTraverser::visit(const FunCallExpr& functionCallExpr)
 {
     for (const std::unique_ptr<Expr>& expr : functionCallExpr.args)
         expr->accept(*this);

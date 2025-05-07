@@ -282,7 +282,7 @@ void ASTPrinter::visit(const NullStmt& nullStmt)
     oss << "      NullStmt (;)\n";
 }
 
-void ASTPrinter::visit(const FunctionCallExpr& functionCallExpr)
+void ASTPrinter::visit(const FunCallExpr& functionCallExpr)
 {
     oss << "        Function Call\n";
     for (const auto& expr : functionCallExpr.args)

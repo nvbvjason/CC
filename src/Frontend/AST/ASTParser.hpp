@@ -123,8 +123,8 @@ protected:
 };
 
 struct DeclForInit final : ForInit {
-    std::unique_ptr<Declaration> decl;
-    explicit DeclForInit(std::unique_ptr<Declaration> decl)
+    std::unique_ptr<VarDecl> decl;
+    explicit DeclForInit(std::unique_ptr<VarDecl> decl)
         : ForInit(Kind::Declaration), decl(std::move(decl)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
@@ -460,16 +460,16 @@ struct ConditionalExpr final : Expr {
     ConditionalExpr() = delete;
 };
 
-struct FunctionCallExpr final : Expr {
+struct FunCallExpr final : Expr {
     std::string identifier;
     std::vector<std::unique_ptr<Expr>> args;
-    FunctionCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args)
+    FunCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args)
         : Expr(Kind::FunctionCall), identifier(std::move(identifier)), args(std::move(args)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
-    FunctionCallExpr() = delete;
+    FunCallExpr() = delete;
 };
 
 } // Parsing

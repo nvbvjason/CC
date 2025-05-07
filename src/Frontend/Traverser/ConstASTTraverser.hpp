@@ -48,7 +48,7 @@ public:
     void visit(const BinaryExpr& binaryExpr) override;
     void visit(const AssignmentExpr& assignmentExpr) override;
     void visit(const ConditionalExpr& conditionalExpr) override;
-    void visit(const FunctionCallExpr& functionCallExpr) override;
+    void visit(const FunCallExpr& functionCallExpr) override;
 };
 
 } // Parsing

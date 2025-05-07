@@ -99,7 +99,7 @@ struct UnaryExpr;
 struct BinaryExpr;
 struct AssignmentExpr;
 struct ConditionalExpr;
-struct FunctionCallExpr;
+struct FunCallExpr;
 
 } // Parsing
 

@@ -139,7 +139,7 @@ void ASTTraverser::visit(ConditionalExpr& conditionalExpr)
     conditionalExpr.second->accept(*this);
 }
 
-void ASTTraverser::visit(FunctionCallExpr& functionCallExpr)
+void ASTTraverser::visit(FunCallExpr& functionCallExpr)
 {
     for (auto& expr : functionCallExpr.args)
         expr->accept(*this);

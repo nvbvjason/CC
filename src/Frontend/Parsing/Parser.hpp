@@ -4,41 +4,44 @@
 #define CC_PARSING_CONCRETE_TREE_HPP
 
 /*
-    <program>       ::= <function>
-    <function>      ::= "int" <identifier> "(" "void" ")" <block>
-    <block>         ::= "{" { <block-item> } "}"
-    <block_item>    ::= <statement> | <declaration>
-    <declaration>   ::= "int" <identifier> [ "=" <exp> ] ";"
-    <for-inti>      ::= <declaration> | <exp>
-    <statement>     ::= "return" <exp> ";"
-                      | <exp> ";"
-                      | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
-                      | "switch" ( <exp> ")" <statement>
-                      | "goto" <identifier> ";"
-                      | <block>
-                      | "break" ";"
-                      | "continue" ";"
-                      | <identifier> ":" <statement>
-                      | "case" <exp> ":" <statement>
-                      | default ":" <statement>
-                      | "while" "(" <exp> ")" <statement>
-                      | "do" <statement> "while" "(" <exp> ")" ";"
-                      | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>
-                      | ";"
-    <exp>           ::= <unary_exp>
-                      | <exp> <binop> <exp>
-                      | <exp> "?" <exp> ":" <exp>
-    <unary_exp>     ::= <postfix_exp> | <unop> <unary_exp>
-    <postfix_exp>   ::= <factor> | <postfix_exp> <postfixop>
-    <factor>        ::= <int> | <identifier> | "(" <exp> ")"
-    <unop>          ::= "-" | "~" | "!" | "--" | "++"
-    <postfixop>     ::= "--" | "++"
-    <binop>         ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
-                      | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
-                      | "+=" | "-=" | "*=" | "/=" | "%="
-                      | "&=" | "|=" | "^=" | "<<=" | ">>="
-    <identifier>    ::= ? An identifier token ?
-    <int>           ::= ? A constant token ?
+    <program>               ::= { <function-declaration> }
+    <declaration>           ::= <function_declaration> | <variable_declaration>
+    <variable_declaration>  ::= "int" <identifier> [ <exp> ] ";"
+    <function_declaration>  ::= "init <identifier> "(" <param-list> ")" ( <block> | ";" )
+    <param-list>            ::= "void" | "int" <identifier> { "," <identifier> }
+    <block>                 ::= "{" { <block-item> } "}"
+    <block_item>            ::= <statement> | <declaration>
+    <for-inti>              ::= <variable-declaration> | <exp> ";"
+    <statement>             ::= "return" <exp> ";"
+                              | <exp> ";"
+                              | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
+                              | "switch" ( <exp> ")" <statement>
+                              | "goto" <identifier> ";"
+                              | <block>
+                              | "break" ";"
+                              | "continue" ";"
+                              | <identifier> ":" <statement>
+                              | "case" <exp> ":" <statement>
+                              | default ":" <statement>
+                              | "while" "(" <exp> ")" <statement>
+                              | "do" <statement> "while" "(" <exp> ")" ";"
+                              | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>
+                              | ";"
+    <exp>                   ::= <unary_exp>
+                              | <exp> <binop> <exp>
+                              | <exp> "?" <exp> ":" <exp>
+    <unary_exp>             ::= <postfix_exp> | <unop> <unary_exp>
+    <postfix_exp>           ::= <factor> | <postfix_exp> <postfixop>
+    <factor>                ::= <int> | <identifier> | "(" <exp> ")"
+    <argument-list>         ::= <exp> { "," <exp> }
+    <unop>                  ::= "-" | "~" | "!" | "--" | "++"
+    <postfixop>             ::= "--" | "++"
+    <binop>                 ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
+                              | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
+                              | "+=" | "-=" | "*=" | "/=" | "%="
+                              | "&=" | "|=" | "^=" | "<<=" | ">>="
+    <identifier>            ::= ? An identifier token ?
+    <int>                   ::= ? A constant token ?
 */
 
 #include "ASTParser.hpp"
@@ -61,10 +64,13 @@ public:
     explicit Parser(const std::vector<Lexing::Token> &c_tokens)
         : c_tokens(c_tokens) {}
     bool programParse(Program& program);
-    [[nodiscard]] std::unique_ptr<FunDecl> functionParse();
+    [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
+    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse();
+    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse();
+    [[nodiscard]] std::unique_ptr<std::vector<std::string>> paramsListParse();
+
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
-    [[nodiscard]] std::unique_ptr<VarDecl> declarationParse();
     [[nodiscard]] std::unique_ptr<ForInit> forInitParse();
 
     [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
@@ -87,12 +93,17 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> exprPostfix();
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
+
+    [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
 private:
     bool match(const TokenType& type);
     Lexing::Token advance() { return c_tokens[m_current++]; }
+    [[nodiscard]] bool isAtEnd() const { return peekTokenType() == TokenType::EndOfFile; }
     [[nodiscard]] static bool continuePrecedenceClimbing(i32 minPrecedence, TokenType nextToken);
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
+    [[nodiscard]] TokenType peekTokenType() const;
     [[nodiscard]] TokenType peekNextTokenType() const;
+    [[nodiscard]] TokenType peekNextNextTokenType() const;
     [[nodiscard]] bool expect(TokenType type);
     static std::string makeTemporary(const std::string& name);
 };

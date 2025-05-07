@@ -48,7 +48,7 @@ public:
     void visit(BinaryExpr& binaryExpr) override;
     void visit(AssignmentExpr& assignmentExpr) override;
     void visit(ConditionalExpr& conditionalExpr) override;
-    void visit(FunctionCallExpr& functionCallExpr) override;
+    void visit(FunCallExpr& functionCallExpr) override;
 };
 
 } // Parsing

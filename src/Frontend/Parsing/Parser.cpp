@@ -1,6 +1,5 @@
 #include "Parser.hpp"
-#include "IR/ASTIr.hpp"
-#include "Frontend/Lexing/Token.hpp"
+#include "Token.hpp"
 
 #include <cassert>
 
@@ -8,18 +7,48 @@ namespace Parsing {
 
 bool Parser::programParse(Program& program)
 {
-    std::unique_ptr<FunDecl> function = functionParse();
-    if (function == nullptr)
-        return false;
-    // program.function = std::move(function);
-    // if (program.function->name != "main")
-    //     return false;
-    // if (peek().m_type != TokenType::EndOfFile)
-        return false;
+    while (!isAtEnd()) {
+        std::unique_ptr<FunDecl> function = funDeclParse();
+        if (function == nullptr)
+            return false;
+        program.functions.push_back(std::move(function));
+    }
     return true;
 }
 
-std::unique_ptr<FunDecl> Parser::functionParse()
+std::unique_ptr<Declaration> Parser::declarationParse()
+{
+    switch (peekNextNextTokenType()) {
+        case TokenType::Equal:
+        case TokenType::Semicolon:
+            return varDeclParse();
+        case TokenType::OpenParen:
+            return funDeclParse();
+        default:
+            return nullptr;
+    }
+}
+
+std::unique_ptr<VarDecl> Parser::varDeclParse()
+{
+    if (!expect(TokenType::IntKeyword))
+        return nullptr;
+    const Lexing::Token lexeme = advance();
+    if (lexeme.m_type != TokenType::Identifier)
+        return nullptr;
+    auto declaration = std::make_unique<VarDecl>(lexeme.m_lexeme);
+    if (expect(TokenType::Equal)) {
+        std::unique_ptr<Expr> expr = exprParse(0);
+        if (expr == nullptr)
+            return nullptr;
+        declaration->init = std::move(expr);
+    }
+    if (!expect(TokenType::Semicolon))
+        return nullptr;
+    return declaration;
+}
+
+std::unique_ptr<FunDecl> Parser::funDeclParse()
 {
     if (!expect(TokenType::IntKeyword))
         return nullptr;
@@ -27,18 +56,44 @@ std::unique_ptr<FunDecl> Parser::functionParse()
     if (lexeme.m_type != TokenType::Identifier)
         return nullptr;
     std::string iden = lexeme.m_lexeme;
+    auto result = std::make_unique<FunDecl>(iden);
     if (!expect(TokenType::OpenParen))
         return nullptr;
-    if (!expect(TokenType::Void))
+    std::unique_ptr<std::vector<std::string>> params = paramsListParse();
+    if (params == nullptr)
         return nullptr;
+    result->params = std::move(*params);
     if (!expect(TokenType::CloseParen))
         return nullptr;
-    auto function = std::make_unique<FunDecl>(iden);
+    if (expect(TokenType::Semicolon))
+        return result;
     auto block = blockParse();
     if (block == nullptr)
         return nullptr;
-    function->body = std::move(block);
-    return function;
+    result->body = std::move(block);
+    return result;
+}
+
+std::unique_ptr<std::vector<std::string>> Parser::paramsListParse()
+{
+    if (expect(TokenType::Void))
+        return std::make_unique<std::vector<std::string>>();
+    std::unique_ptr<std::vector<std::string>> params = std::make_unique<std::vector<std::string>>();
+    if (!expect(TokenType::IntKeyword))
+        return nullptr;
+    Lexing::Token lexeme = advance();
+    if (lexeme.m_type != TokenType::Identifier)
+        return nullptr;
+    params->push_back(lexeme.m_lexeme);
+    while (expect(TokenType::Comma)) {
+        if (!expect(TokenType::IntKeyword))
+            return nullptr;
+        lexeme = advance();
+        if (lexeme.m_type != TokenType::Identifier)
+            return nullptr;
+        params->push_back(lexeme.m_lexeme);
+    }
+    return params;
 }
 
 std::unique_ptr<Block> Parser::blockParse()
@@ -73,45 +128,31 @@ std::unique_ptr<BlockItem> Parser::blockItemParse()
     return std::make_unique<StmtBlockItem>(std::move(statement));
 }
 
-std::unique_ptr<VarDecl> Parser::declarationParse()
-{
-    if (!expect(TokenType::IntKeyword))
-        return nullptr;
-    const Lexing::Token lexeme = advance();
-    if (lexeme.m_type != TokenType::Identifier)
-        return nullptr;
-    auto declaration = std::make_unique<VarDecl>(lexeme.m_lexeme);
-    if (expect(TokenType::Equal)) {
-        std::unique_ptr<Expr> expr = exprParse(0);
-        if (expr == nullptr)
-            return nullptr;
-        declaration->init = std::move(expr);
-    }
-    if (!expect(TokenType::Semicolon))
-        return nullptr;
-    return declaration;
-}
-
 std::unique_ptr<ForInit> Parser::forInitParse()
 {
-    if (peek().m_type == TokenType::Semicolon)
+    if (expect(TokenType::Semicolon))
         return nullptr;
     if (expect(TokenType::IntKeyword)) {
         const Lexing::Token lexeme = advance();
         if (lexeme.m_type != TokenType::Identifier)
             return nullptr;
         auto decl = std::make_unique<VarDecl>(lexeme.m_lexeme);
+        auto result = std::make_unique<DeclForInit>(std::move(decl));
         if (peek().m_type != TokenType::Equal)
-            return std::make_unique<DeclForInit>(std::move(decl));
+            return result;
         advance();
         std::unique_ptr<Expr> expr = exprParse(0);
         if (expr == nullptr)
             return nullptr;
-        decl->init = std::move(expr);
-        return std::make_unique<DeclForInit>(std::move(decl));
+        if (!expect(TokenType::Semicolon))
+            return nullptr;
+        result->decl->init = std::move(expr);
+        return result;
     }
     std::unique_ptr<Expr> expr = exprParse(0);
     if (expr == nullptr)
+        return nullptr;
+    if (!expect(TokenType::Semicolon))
         return nullptr;
     return std::make_unique<ExprForInit>(std::move(expr));
 }
@@ -334,8 +375,6 @@ std::unique_ptr<Stmt> Parser::forStmtParse()
     if (!expect(TokenType::OpenParen))
         return nullptr;
     std::unique_ptr<ForInit> init = forInitParse();
-    if (!expect(TokenType::Semicolon))
-        return nullptr;
     std::unique_ptr<Expr> condition = exprParse(0);
     if (!expect(TokenType::Semicolon))
         return nullptr;
@@ -465,7 +504,14 @@ std::unique_ptr<Expr> Parser::factorParse()
         }
         case TokenType::Identifier: {
             advance();
-            return std::make_unique<VarExpr>(lexeme.m_lexeme);
+            if (!expect(TokenType::OpenParen))
+                return std::make_unique<VarExpr>(lexeme.m_lexeme);
+            std::unique_ptr<std::vector<std::unique_ptr<Expr>>> arguments = argumentListParse();
+            if (arguments == nullptr)
+                return nullptr;
+            if (!expect(TokenType::CloseParen))
+                return nullptr;
+            return std::make_unique<FunCallExpr>(lexeme.m_lexeme, std::move(*arguments));
         }
         case TokenType::OpenParen: {
             if (advance().m_type == TokenType::EndOfFile)
@@ -478,6 +524,22 @@ std::unique_ptr<Expr> Parser::factorParse()
         default:
             return nullptr;
     }
+}
+
+std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()
+{
+    std::vector<std::unique_ptr<Expr>> arguments;
+    auto expr = exprParse(0);
+    if (expr == nullptr)
+        return nullptr;
+    arguments.push_back(std::move(expr));
+    while (!expect(TokenType::Comma)) {
+        expr = exprParse(0);
+        if (expr == nullptr)
+            return nullptr;
+        arguments.push_back(std::move(expr));
+    }
+    return std::make_unique<std::vector<std::unique_ptr<Expr>>>(std::move(arguments));
 }
 
 bool Parser::match(const TokenType &type)
@@ -500,10 +562,22 @@ bool Parser::expect(const TokenType type)
     return false;
 }
 
+Lexing::Token::Type Parser::peekTokenType() const
+{
+    return c_tokens[m_current].m_type;
+}
+
 Lexing::Token::Type Parser::peekNextTokenType() const
 {
     if (c_tokens.size() <= m_current + 1)
         return TokenType::EndOfFile;
     return c_tokens[m_current + 1].m_type;
+}
+
+Lexing::Token::Type Parser::peekNextNextTokenType() const
+{
+    if (c_tokens.size() <= m_current + 2)
+        return TokenType::EndOfFile;
+    return c_tokens[m_current + 2].m_type;
 }
 } // Parsing

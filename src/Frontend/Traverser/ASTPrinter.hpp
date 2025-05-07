@@ -59,7 +59,7 @@ public:
     void visit(const VarExpr& varExpr) override;
     void visit(const ConditionalExpr& conditionalExpr) override;
 
-    void visit(const FunctionCallExpr& functionCallExpr) override;
+    void visit(const FunCallExpr& functionCallExpr) override;
 };
 } // namespace Parsing
 

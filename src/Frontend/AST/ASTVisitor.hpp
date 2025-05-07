@@ -50,7 +50,7 @@ public:
     virtual void visit(BinaryExpr&) = 0;
     virtual void visit(AssignmentExpr&) = 0;
     virtual void visit(ConditionalExpr&) = 0;
-    virtual void visit(FunctionCallExpr&) = 0;
+    virtual void visit(FunCallExpr&) = 0;
 };
 
 class ConstASTVisitor {
@@ -96,7 +96,7 @@ public:
     virtual void visit(const BinaryExpr&) = 0;
     virtual void visit(const AssignmentExpr&) = 0;
     virtual void visit(const ConditionalExpr&) = 0;
-    virtual void visit(const FunctionCallExpr&) = 0;
+    virtual void visit(const FunCallExpr&) = 0;
 };
 
 } // Parsing
