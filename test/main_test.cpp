@@ -3,17 +3,23 @@
 #include "Frontend/Lexing/Lexer.hpp"
 #include "Frontend/Parsing/Parser.hpp"
 #include "../src/Frontend/Semantics/VariableResolution.hpp"
-
-#include <filesystem>
-#include <fstream>
-
 #include "LabelsUnique.hpp"
 #include "LvalueVerification.hpp"
 #include "LoopLabeling.hpp"
 
+#include <filesystem>
+#include <fstream>
+
 namespace fs = std::filesystem;
 
 const fs::path testsFolderPath = fs::path(PROJECT_ROOT_DIR) / "test/external/writing-a-c-compiler-tests/tests";
+
+std::string getSourceCode(const std::filesystem::path& inputFile)
+{
+    std::ifstream file(inputFile);
+    std::string source((std::istreambuf_iterator(file)), std::istreambuf_iterator<char>());
+    return source;
+}
 
 std::string removeLinesStartingWithHash(const std::string& input)
 {

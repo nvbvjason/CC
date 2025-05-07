@@ -53,6 +53,7 @@ ErrorCode CompilerDriver::run()
         assemble(m_outputFileName, inputFile.substr(0, inputFile.length() - 2));
     return ErrorCode::OK;
 }
+
 void CompilerDriver::writeAssmFile(const std::string& inputFile, const std::string& output)
 {
     std::string stem = std::filesystem::path(inputFile).stem();

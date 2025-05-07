@@ -15,12 +15,13 @@
 #include <fstream>
 #include <iostream>
 
-static i32 lex(std::vector<Lexing::Token>& lexemes, const std::string& inputFile);
+static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program* program);
 static ErrorCode validateSemantics(Parsing::Program& programNode);
 static Ir::Program ir(const Parsing::Program* parsingProgram);
 static std::string preProcess(const std::string &file);
+static std::string getSourceCode(const std::filesystem::path &inputFile);
 
 std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> FrontendDriver::run() const
 {
@@ -46,7 +47,7 @@ std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> FrontendDriver::run() const
     return {std::move(irProgram), ErrorCode::OK};
 }
 
-std::string getSourceCode(const std::string &inputFile)
+std::string getSourceCode(const std::filesystem::path& inputFile)
 {
     std::ifstream file(inputFile);
     std::string source((std::istreambuf_iterator(file)), std::istreambuf_iterator<char>());
@@ -80,7 +81,7 @@ void printParsingAst(const Parsing::Program* program)
     std::cout << printer.getString();
 }
 
-i32 lex(std::vector<Lexing::Token> &lexemes, const std::string& inputFile)
+i32 lex(std::vector<Lexing::Token> &lexemes, const std::filesystem::path& inputFile)
 {
     const std::string source = preProcess(inputFile);
     Lexing::Lexer lexer(source);

@@ -33,7 +33,7 @@ bool VariableStack::tryDeclare(const std::string& name, const Variable::Type typ
         const auto it = m_stack[i].find(name);
         if (it == m_stack[i].end())
             continue;
-        if (it->second.type != type)
+        if (it->second.type != type && i == m_stack.size() - 1)
             return false;
         return true;
     }
@@ -42,6 +42,9 @@ bool VariableStack::tryDeclare(const std::string& name, const Variable::Type typ
 
 std::string VariableStack::tryCall(const std::string& name, Variable::Type type) const
 {
+    if (m_args.contains(name))
+        return name;
+    assert(!m_stack.empty() && "VariableStack underflow tryCall()");
     for (i64 i = m_stack.size() - 1; 0 <= i; --i) {
         const auto it = m_stack[i].find(name);
         if (it == m_stack[i].end())

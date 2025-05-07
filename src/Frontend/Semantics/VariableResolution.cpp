@@ -27,22 +27,21 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
         m_valid = false;
         return;
     }
-    const std::string var =  m_variableStack.tryCall(funDecl.name, Variable::Type::Function);
-    if (!var.empty()) {
+    if (!m_variableStack.tryDeclare(funDecl.name, Variable::Type::Function)) {
         m_valid = false;
         return;
     }
-    // if (m_variableStack.isDeclared(funDecl.name)) {
-    //     m_valid = false;
-    //     return;
-    // }
     if (m_funcDecls.contains(funDecl.name)) {
         if (funDecl.params.size() != m_funcDecls[funDecl.name].size()) {
             m_valid = false;
             return;
         }
     }
-    if (m_inFunctionBody && funDecl.body != nullptr) {
+    if (functionDefinitionInOtherFunctionBody(funDecl)) {
+        m_valid = false;
+        return;
+    }
+    if (functionAlreadyDefined(funDecl)) {
         m_valid = false;
         return;
     }
@@ -50,6 +49,7 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
     m_variableStack.addDecl(funDecl.name, makeTemporary(funDecl.name), Variable::Type::Function);
     if (funDecl.body == nullptr)
         return;
+    m_definedFunctions.insert(funDecl.name);
     m_inFunctionBody = true;
     m_variableStack.addArgs(funDecl.params);
     ASTTraverser::visit(funDecl);
@@ -145,5 +145,15 @@ bool VariableResolution::hasDuplicates(const std::vector<std::string>& vec)
         seen.insert(str);
     }
     return false;
+}
+
+bool VariableResolution::functionAlreadyDefined(const Parsing::FunDecl& funDecl) const
+{
+    return funDecl.body != nullptr && m_definedFunctions.contains(funDecl.name);
+}
+
+bool VariableResolution::functionDefinitionInOtherFunctionBody(const Parsing::FunDecl& funDecl) const
+{
+    return m_inFunctionBody && funDecl.body != nullptr;
 }
 } // Semantics
