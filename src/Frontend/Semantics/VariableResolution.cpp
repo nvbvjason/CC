@@ -44,6 +44,11 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
     m_funcDecls[funDecl.name] = funDecl.params;
     if (funDecl.body == nullptr)
         return;
+    if (m_definedFunctions.contains(funDecl.name)) {
+        m_valid = false;
+        return;
+    }
+    m_definedFunctions.insert(funDecl.name);
     m_inFunctionBody = true;
     m_variableStack.addArgs(funDecl.params);
     ASTTraverser::visit(funDecl);

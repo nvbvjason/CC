@@ -15,6 +15,7 @@ namespace Semantics {
 class VariableResolution : public Parsing::ASTTraverser {
     VariableStack m_variableStack;
     std::unordered_map<std::string, std::vector<std::string>> m_funcDecls;
+    std::unordered_set<std::string> m_definedFunctions;
     i32 m_counter = 0;
     Parsing::Program& program;
     bool m_valid = true;
