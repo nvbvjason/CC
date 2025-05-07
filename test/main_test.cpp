@@ -154,7 +154,7 @@ TEST(Chapter3, lexingValid)
 TEST(Chapter3, parsingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_3/valid";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
@@ -164,27 +164,7 @@ TEST(Chapter3, parsingValid)
 TEST(Chapter3, parsingInvalid)
 {
     const fs::path invalidPath = testsFolderPath / "chapter_3/invalid_parse";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter3, parsingValidExtra)
-{
-    const fs::path validPath = testsFolderPath / "chapter_3/valid/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter3, parsingInvalidExtra)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_3/invalid_parse/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
@@ -229,34 +209,12 @@ TEST(Chapter5, lexingValid)
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
-    const fs::path validPathExtra = testsFolderPath / "chapter_5/valid/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(validPathExtra)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
-    const fs::path invalidSemantics = testsFolderPath / "chapter_5/invalid_semantics";
-    for (const auto& path : std::filesystem::directory_iterator(validPathExtra)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
 }
 
 TEST(Chapter5, parsingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_5/valid";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter5, parsingValidExtraCredit)
-{
-    const fs::path validPath = testsFolderPath / "chapter_5/valid/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
@@ -276,17 +234,7 @@ TEST(Chapter5, parsingValidForInvalidSemantics)
 TEST(Chapter5, parsingInvalid)
 {
     const fs::path invalidPath = testsFolderPath / "chapter_5/invalid_parse";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter5, parsingInvalidExtraCredit)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_5/invalid_parse/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
@@ -296,17 +244,7 @@ TEST(Chapter5, parsingInvalidExtraCredit)
 TEST(Chapter5, semanticsInvalid)
 {
     const fs::path validPath = testsFolderPath / "chapter_5/invalid_semantics";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter5, semanticsInvalidExtraCredit)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_5/invalid_semantics/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
@@ -327,18 +265,6 @@ TEST(Chapter6, lexingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_6/valid";
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
-    const fs::path invalidSemantics = testsFolderPath / "chapter_6/invalid_semantics";
-    for (const auto& path : std::filesystem::directory_iterator(invalidSemantics)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
-    const fs::path invalidParse = testsFolderPath / "chapter_6/invalid_parse";
-    for (const auto& path : std::filesystem::directory_iterator(invalidParse)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
@@ -453,24 +379,12 @@ TEST(Chapter7, lexingValid)
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
-    const fs::path invalidSemantics = testsFolderPath / "chapter_7/invalid_semantics";
-    for (const auto& path : std::filesystem::directory_iterator(invalidSemantics)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
-    const fs::path invalidParse = testsFolderPath / "chapter_7/invalid_parse";
-    for (const auto& path : std::filesystem::directory_iterator(invalidParse)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
 }
 
 TEST(Chapter7, parsingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_7/valid";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
@@ -480,7 +394,7 @@ TEST(Chapter7, parsingValid)
 TEST(Chapter7, parsingInvalid)
 {
     const fs::path invalidPath = testsFolderPath / "chapter_7/invalid_parse";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
@@ -490,7 +404,7 @@ TEST(Chapter7, parsingInvalid)
 TEST(Chapter7, semanticsInvalid)
 {
     const fs::path validPath = testsFolderPath / "chapter_7/invalid_semantics";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
@@ -500,7 +414,7 @@ TEST(Chapter7, semanticsInvalid)
 TEST(Chapter7, semanticsvalid)
 {
     const fs::path validPath = testsFolderPath / "chapter_7/valid";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
@@ -510,19 +424,7 @@ TEST(Chapter7, semanticsvalid)
 TEST(Chapter8, lexingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_8/valid";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
-    const fs::path invalidSemantics = testsFolderPath / "chapter_8/invalid_semantics";
-    for (const auto& path : std::filesystem::directory_iterator(invalidSemantics)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
-    const fs::path invalidParse = testsFolderPath / "chapter_8/invalid_parse";
-    for (const auto& path : std::filesystem::directory_iterator(invalidParse)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
@@ -532,7 +434,7 @@ TEST(Chapter8, lexingValid)
 TEST(Chapter8, parsingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_8/valid";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
@@ -542,7 +444,7 @@ TEST(Chapter8, parsingValid)
 TEST(Chapter8, parsingInvalid)
 {
     const fs::path invalidPath = testsFolderPath / "chapter_8/invalid_parse";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
@@ -552,59 +454,7 @@ TEST(Chapter8, parsingInvalid)
 TEST(Chapter8, semanticsInvalid)
 {
     const fs::path validPath = testsFolderPath / "chapter_8/invalid_semantics";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter8, lexingValidExtraCredit)
-{
-    const fs::path validPath = testsFolderPath / "chapter_8/valid/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
-    const fs::path invalidSemantics = testsFolderPath / "chapter_8/invalid_semantics/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(invalidSemantics)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
-    const fs::path invalidParse = testsFolderPath / "chapter_8/invalid_parse/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(invalidParse)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter8, parsingValidExtraCredit)
-{
-    const fs::path validPath = testsFolderPath / "chapter_8/valid/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter8, parsingInValidExtraCredit)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_8/invalid_parse/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter8, semanticsInvalidExtraCredit)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_8/invalid_semantics/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
@@ -651,7 +501,6 @@ TEST(Chapter9, parsingInvalid)
     }
 }
 
-
 TEST(Chapter9, invalidSemantics)
 {
     const fs::path invalidPathDeclarations = testsFolderPath / "chapter_9/invalid_declarations";
@@ -665,6 +514,16 @@ TEST(Chapter9, invalidSemantics)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter9, validSemantics)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_9/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
     }
 }
 
