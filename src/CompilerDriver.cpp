@@ -21,7 +21,16 @@ static void assemble(const std::string& asmFile, const std::string& outputFile);
 static void makeLib(const std::string& asmFile, const std::string& outputFile);
 static void cleanUp();
 
-ErrorCode CompilerDriver::run()
+i32 CompilerDriver::run()
+{
+    ErrorCode code = wrappedRun();
+    if (code == ErrorCode::OK)
+        return 0;
+    std::cerr << to_string(code) << '\n';
+    return static_cast<i32>(code);
+}
+
+ErrorCode CompilerDriver::wrappedRun()
 {
     std::string argument;
     ErrorCode value1;

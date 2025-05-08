@@ -23,7 +23,8 @@ public:
         : args(std::move(args)) {}
 
     bool validateCommandLineArguments(std::string& argument, ErrorCode& value1) const;
-    [[nodiscard]] ErrorCode run();
+    [[nodiscard]] ErrorCode wrappedRun();
+    [[nodiscard]] i32 run();
 private:
     void writeAssmFile(const std::string& inputFile, const std::string& output);
 };
