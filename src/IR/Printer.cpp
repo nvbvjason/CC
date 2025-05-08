@@ -7,12 +7,12 @@ std::string Printer::print(const Program& program)
 {
     m_oss << "Program:\n";
     indentLevel++;
-    if (program.function)
-        print(*program.function);
-    else {
-        printIndent();
-        m_oss << "<empty>\n";
-    }
+    // if (program.function)
+    //     print(*program.function);
+    // else {
+    //     printIndent();
+    //     m_oss << "<empty>\n";
+    // }
     indentLevel--;
     return m_oss.str();
 }

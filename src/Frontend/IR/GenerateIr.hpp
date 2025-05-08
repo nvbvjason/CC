@@ -61,8 +61,10 @@ std::shared_ptr<Value> simpleAssignInst(const Parsing::AssignmentExpr& assignExp
                                         std::vector<std::unique_ptr<Instruction>>& instructions);
 std::shared_ptr<Value> compoundAssignInst(const Parsing::AssignmentExpr& assignExpr,
                                           std::vector<std::unique_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> conditionalExpr(const Parsing::Expr& stmt,
+std::shared_ptr<Value> conditionalInst(const Parsing::Expr& stmt,
                                        std::vector<std::unique_ptr<Instruction>>& insts);
+std::shared_ptr<Value> funcCallInst(const Parsing::Expr& stmt,
+                                          std::vector<std::unique_ptr<Instruction> >& insts);
 std::shared_ptr<Value> constInst(const Parsing::Expr& parsingExpr);
 std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr);
 

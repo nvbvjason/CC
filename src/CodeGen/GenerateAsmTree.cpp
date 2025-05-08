@@ -9,7 +9,7 @@ namespace CodeGen {
 
 void program(const Ir::Program &program, Program &programCodegen)
 {
-    programCodegen.function = function(program.function.get());
+    //programCodegen.function = function(program.function.get());
 }
 
 std::unique_ptr<Function> function(const Ir::Function *function)

@@ -1,5 +1,6 @@
 #include "GenerateIr.hpp"
 
+#include <assert.h>
 #include <stdexcept>
 
 namespace Ir {
@@ -14,7 +15,14 @@ static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Opera
 
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 {
-    // tackyProgram.function = function(*parsingProgram->functions);
+    for (const auto& func : parsingProgram->functions) {
+        if (func->body == nullptr)
+            continue;
+        auto functionTacky = function(*func);
+        for (const std::string& arg : func->params)
+            functionTacky->args.push_back(Identifier(arg));
+        tackyProgram.functions.push_back(std::move(functionTacky));
+    }
 }
 
 std::unique_ptr<Function> function(const Parsing::FunDecl& parsingFunction)
@@ -351,21 +359,25 @@ void switchStatement(const Parsing::SwitchStmt& stmt,
 std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
                             std::vector<std::unique_ptr<Instruction>>& instructions)
 {
+    using ExprKind = Parsing::Expr::Kind;
     switch (parsingExpr.kind) {
-        case Parsing::Expr::Kind::Var:
+        case ExprKind::Var:
             return varInst(parsingExpr);
-        case Parsing::Expr::Kind::Constant:
+        case ExprKind::Constant:
             return constInst(parsingExpr);
-        case Parsing::Expr::Kind::Unary:
+        case ExprKind::Unary:
             return unaryInst(parsingExpr, instructions);
-        case Parsing::Expr::Kind::Binary:
+        case ExprKind::Binary:
             return binaryInst(parsingExpr, instructions);
-        case Parsing::Expr::Kind::Assignment:
+        case ExprKind::Assignment:
             return assignInst(parsingExpr, instructions);
-        case Parsing::Expr::Kind::Conditional:
-            return conditionalExpr(parsingExpr, instructions);
+        case ExprKind::Conditional:
+            return conditionalInst(parsingExpr, instructions);
+        case ExprKind::FunctionCall:
+            return funcCallInst(parsingExpr, instructions);
         default:
-            throw std::invalid_argument("Unexpected expression type ir generateInst");
+            assert("Unexpected expression type ir generateInst");
+            std::unreachable();
     }
 }
 
@@ -518,7 +530,7 @@ std::shared_ptr<Value> constInst(const Parsing::Expr& parsingExpr)
     return result;
 }
 
-std::shared_ptr<Value> conditionalExpr(const Parsing::Expr& stmt,
+std::shared_ptr<Value> conditionalInst(const Parsing::Expr& stmt,
                                        std::vector<std::unique_ptr<Instruction>>& insts)
 {
     auto result = std::make_shared<ValueVar>(makeTemporaryName());
@@ -541,6 +553,20 @@ std::shared_ptr<Value> conditionalExpr(const Parsing::Expr& stmt,
 
     insts.push_back(std::make_unique<LabelInst>(endLabelIden));
     return result;
+}
+
+std::shared_ptr<Value> funcCallInst(const Parsing::Expr& stmt,
+                                          std::vector<std::unique_ptr<Instruction> >& insts)
+{
+    const auto parseFunction = dynamic_cast<const Parsing::FunCallExpr*>(&stmt);
+    std::vector<std::shared_ptr<Value>> arguments;
+    for (const auto& expr : parseFunction->args)
+        arguments.push_back(inst(*expr, insts));
+    auto returnZero = std::make_shared<ValueConst>(0);
+    insts.push_back(std::make_unique<FunCallInst>(
+        Identifier(parseFunction->identifier), std::move(arguments), std::move(returnZero)
+        ));
+    return returnZero;
 }
 
 Identifier makeTemporaryName()

@@ -22,6 +22,7 @@ instruction = Return(val)
             | JumpIfZero(val condition, identifier target)
             | JumpIfNotZero(val condition, identifier target)
             | Label(identifier)
+            | FunCall(identifier fun_name, val* args, val dst)
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate | Not
 binary_operator = Add | Subtract | Multiplay | Divide | Remainder |
@@ -44,11 +45,12 @@ struct Identifier {
 };
 
 struct Program {
-    std::unique_ptr<Function> function = nullptr;
+    std::vector<std::unique_ptr<Function>> functions;
 };
 
 struct Function {
     std::string name;
+    std::vector<Identifier> args;
     std::vector<std::unique_ptr<Instruction>> insts;
     explicit Function(std::string identifier)
         : name(std::move(identifier)) {}
@@ -57,7 +59,8 @@ struct Function {
 
 struct Instruction {
     enum class Type {
-        Return, Unary, Binary, Copy, Jump, JumpIfZero, JumpIfNotZero, Label
+        Return, Unary, Binary, Copy, Jump, JumpIfZero, JumpIfNotZero, Label,
+        FunCall
     };
     Type type;
 
@@ -150,6 +153,16 @@ struct LabelInst final : Instruction {
         : Instruction(Type::Label), target(std::move(target)) {}
 
     LabelInst() = delete;
+};
+
+struct FunCallInst final : Instruction {
+    Identifier funName;
+    std::vector<std::shared_ptr<Value>> args;
+    std::shared_ptr<Value> destination;
+    FunCallInst(Identifier funName, std::vector<std::shared_ptr<Value>> args, std::shared_ptr<Value> dst)
+        : Instruction(Type::FunCall), funName(std::move(funName)), args(std::move(args)), destination(std::move(dst)) {}
+
+    FunCallInst() = delete;
 };
 
 struct Value {
