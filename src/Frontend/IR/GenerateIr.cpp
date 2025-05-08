@@ -1,6 +1,6 @@
 #include "GenerateIr.hpp"
 
-#include <assert.h>
+#include <cassert>
 #include <stdexcept>
 
 namespace Ir {
@@ -411,7 +411,7 @@ std::shared_ptr<Value> unaryPrefixInst(const Parsing::UnaryExpr& unaryExpr,
 std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
                                  std::vector<std::unique_ptr<Instruction>>& instructions)
 {
-    const auto unaryParsingPtr = static_cast<const Parsing::UnaryExpr*>(&parsingExpr);
+    const auto unaryParsingPtr = dynamic_cast<const Parsing::UnaryExpr*>(&parsingExpr);
     if (isPostfixOp(unaryParsingPtr->op))
         return unaryPostfixInst(*unaryParsingPtr, instructions);
     if (isPrefixOp(unaryParsingPtr->op))

@@ -55,9 +55,6 @@ namespace Parsing {
 class Parser {
     using TokenType = Lexing::Token::Type;
     std::vector<Lexing::Token> c_tokens;
-    std::string m_breakLabel;
-    std::string m_continueLabel;
-    std::string m_switchLabel;
     size_t m_current = 0;
 public:
     Parser() = delete;
@@ -105,14 +102,7 @@ private:
     [[nodiscard]] TokenType peekNextTokenType() const;
     [[nodiscard]] TokenType peekNextNextTokenType() const;
     [[nodiscard]] bool expect(TokenType type);
-    static std::string makeTemporary(const std::string& name);
 };
-
-inline std::string Parser::makeTemporary(const std::string& name)
-{
-    static i32 m_counter = 0;
-    return name + '.' + std::to_string(m_counter++);
-}
 
 inline bool Parser::continuePrecedenceClimbing(const i32 minPrecedence, TokenType nextToken)
 {

@@ -257,7 +257,7 @@ std::unique_ptr<Stmt> Parser::breakStmtParse()
         return nullptr;
     if (!expect(TokenType::Semicolon))
         return nullptr;
-    return std::make_unique<BreakStmt>(m_breakLabel);
+    return std::make_unique<BreakStmt>();
 }
 
 std::unique_ptr<Stmt> Parser::continueStmtParse()
@@ -266,7 +266,7 @@ std::unique_ptr<Stmt> Parser::continueStmtParse()
         return nullptr;
     if (!expect(TokenType::Semicolon))
         return nullptr;
-    return std::make_unique<ContinueStmt>(m_continueLabel);
+    return std::make_unique<ContinueStmt>();
 }
 
 std::unique_ptr<Stmt> Parser::labelStmtParse()
@@ -294,7 +294,7 @@ std::unique_ptr<Stmt> Parser::caseStmtParse()
     std::unique_ptr<Stmt> stmt = stmtParse();
     if (stmt == nullptr)
         return nullptr;
-    return std::make_unique<CaseStmt>(m_switchLabel, std::move(expr), std::move(stmt));
+    return std::make_unique<CaseStmt>(std::move(expr), std::move(stmt));
 }
 
 std::unique_ptr<Stmt> Parser::defaultStmtParse()
@@ -306,16 +306,11 @@ std::unique_ptr<Stmt> Parser::defaultStmtParse()
     std::unique_ptr<Stmt> stmt = stmtParse();
     if (stmt == nullptr)
         return nullptr;
-    return std::make_unique<DefaultStmt>(m_switchLabel, std::move(stmt));
+    return std::make_unique<DefaultStmt>(std::move(stmt));
 }
 
 std::unique_ptr<Stmt> Parser::whileStmtParse()
 {
-    const std::string continueTemp = m_continueLabel;
-    const std::string breakTemp = m_breakLabel;
-    const std::string whileLabel = makeTemporary("while");
-    m_continueLabel = whileLabel;
-    m_breakLabel = whileLabel;
     if (!expect(TokenType::While))
         return nullptr;
     if (!expect(TokenType::OpenParen))
@@ -328,18 +323,11 @@ std::unique_ptr<Stmt> Parser::whileStmtParse()
     std::unique_ptr<Stmt> body = stmtParse();
     if (body == nullptr)
         return nullptr;
-    m_continueLabel = continueTemp;
-    m_breakLabel = breakTemp;
-    return std::make_unique<WhileStmt>(std::move(condition), std::move(body), whileLabel);
+    return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
 }
 
 std::unique_ptr<Stmt> Parser::doWhileStmtParse()
 {
-    const std::string continueTemp = m_continueLabel;
-    const std::string breakTemp = m_breakLabel;
-    const std::string doLabel = makeTemporary("do.While");
-    m_continueLabel = doLabel;
-    m_breakLabel = doLabel;
     if (!expect(TokenType::Do))
         return nullptr;
     std::unique_ptr<Stmt> body = stmtParse();
@@ -356,18 +344,11 @@ std::unique_ptr<Stmt> Parser::doWhileStmtParse()
         return nullptr;
     if (!expect(TokenType::Semicolon))
         return nullptr;
-    m_continueLabel = continueTemp;
-    m_breakLabel = breakTemp;
-    return std::make_unique<DoWhileStmt>(std::move(body), std::move(condition), doLabel);
+    return std::make_unique<DoWhileStmt>(std::move(body), std::move(condition));
 }
 
 std::unique_ptr<Stmt> Parser::forStmtParse()
 {
-    const std::string continueTemp = m_continueLabel;
-    const std::string breakTemp = m_breakLabel;
-    const std::string forLabel = makeTemporary("for");
-    m_continueLabel = forLabel;
-    m_breakLabel = forLabel;
     if (!expect(TokenType::For))
         return nullptr;
     if (!expect(TokenType::OpenParen))
@@ -382,25 +363,18 @@ std::unique_ptr<Stmt> Parser::forStmtParse()
     std::unique_ptr<Stmt> body = stmtParse();
     if (body == nullptr)
         return nullptr;
-    auto result = std::make_unique<ForStmt>(std::move(body), forLabel);
+    auto result = std::make_unique<ForStmt>(std::move(body));
     if (init != nullptr)
         result->init = std::move(init);
     if (condition != nullptr)
         result->condition = std::move(condition);
     if (post != nullptr)
         result->post = std::move(post);
-    m_continueLabel = continueTemp;
-    m_breakLabel = breakTemp;
     return result;
 }
 
 std::unique_ptr<Stmt> Parser::switchStmtParse()
 {
-    const std::string breakTemp = m_breakLabel;
-    const std::string switchTemp = m_switchLabel;
-    const std::string switchLabel = makeTemporary("switch");
-    m_breakLabel = switchLabel;
-    m_switchLabel = switchLabel;
     if (!expect(TokenType::Switch))
         return nullptr;
     if (!expect(TokenType::OpenParen))
@@ -413,9 +387,7 @@ std::unique_ptr<Stmt> Parser::switchStmtParse()
     std::unique_ptr<Stmt> body = stmtParse();
     if (body == nullptr)
         return nullptr;
-    m_breakLabel = breakTemp;
-    m_switchLabel = switchTemp;
-    return std::make_unique<SwitchStmt>(switchLabel, std::move(expr), std::move(body));
+    return std::make_unique<SwitchStmt>(std::move(expr), std::move(body));
 }
 
 std::unique_ptr<Stmt> Parser::nullStmtParse()
