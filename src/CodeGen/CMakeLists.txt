@@ -9,6 +9,8 @@ add_library(CodeGen
         AsmAST.hpp
         GenerateAsmTree.cpp
         GenerateAsmTree.hpp
+        AsmPrinter.cpp
+        AsmPrinter.hpp
 )
 
 target_include_directories(CodeGen PUBLIC

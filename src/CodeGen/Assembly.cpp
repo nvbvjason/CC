@@ -34,7 +34,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Move: {
             const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
-            const std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
+            std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
             result += asmFormatInstruction("movl", operand);;
             return;
         }
@@ -82,7 +82,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::SetCC: {
             const auto setCCInst = dynamic_cast<SetCCInst*>(instruction.get());
-            result += asmFormatInstruction("set" + condCode(setCCInst->condition), asmByteOperand(setCCInst->operand));
+            result += asmFormatInstruction("set" + condCode(setCCInst->condition), asmOperand(setCCInst->operand));
             return;
         }
         case Inst::Kind::Label: {
@@ -92,7 +92,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Push: {
             const auto pushInst = dynamic_cast<PushInst*>(instruction.get());
-            result += asmFormatInstruction("pushq", asmByteOperand(pushInst->operand));
+            result += asmFormatInstruction("pushq", asmOperand(pushInst->operand));
             return;
         }
         case Inst::Kind::Call: {
@@ -108,28 +108,6 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         default:
             result += asmFormatInstruction("not set asmInstruction");
             return;
-    }
-}
-
-std::string asmByteOperand(const std::shared_ptr<Operand>& operand)
-{
-    switch (operand->kind) {
-        case Operand::Kind::Register: {
-            const auto registerOperand = dynamic_cast<RegisterOperand*>(operand.get());
-            return asmRegister(registerOperand);
-        }
-        case Operand::Kind::Pseudo:
-            return "invalid pseudo";
-        case Operand::Kind::Imm: {
-            const auto immOperand = dynamic_cast<ImmOperand*>(operand.get());
-            return "$" + std::to_string(immOperand->value);
-        }
-        case Operand::Kind::Stack: {
-            const auto stackOperand = dynamic_cast<StackOperand*>(operand.get());
-            return std::to_string(stackOperand->value) + "(%rbp)";
-        }
-        default:
-            return "not set asmOperand";
     }
 }
 
@@ -163,10 +141,10 @@ std::string asmRegister(const RegisterOperand* reg)
         {
             //                   1-byte   2-byte   4-byte   8-byte
             {Type::AX,  {"%al",   "%ah",   "%eax",  "%rax"}},
-            {Type::DX,  {"%dl",   "%dil",  "%edx",  "%rdx"}},
             {Type::CX,  {"%cl",   "%ch",   "%ecx",  "%rcx"}},
-            {Type::DI,  {"%dil",  "%dh",   "%edi",  "%rdi"}},
-            {Type::SI,  {"%sil",  "%dh",   "%esi",  "%rsi"}},
+            {Type::DX,  {"%dl",   "%dx",   "%edx",  "%rdx"}},
+            {Type::DI,  {"%dil",  "%di",   "%edi",  "%rdi"}},
+            {Type::SI,  {"%sil",  "%si",   "%esi",  "%rsi"}},
             {Type::R8,  {"%r8b",  "%r8w",  "%r8d",  "%r8"}},
             {Type::R9,  {"%r9b",  "%r9w",  "%r9d",  "%r9"}},
             {Type::R10, {"%r10b", "%r10w", "%r10d", "%r10"}},

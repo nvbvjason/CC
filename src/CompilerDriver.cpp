@@ -124,12 +124,12 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 
 void assemble(const std::string& asmFile, const std::string& outputFile)
 {
-    const std::string command = "gcc " + asmFile + "-o" + outputFile;
+    const std::string command = "gcc " + asmFile + " -o " + outputFile;
     system(command.c_str());
 }
 
 void makeLib(const std::string& asmFile, const std::string& outputFile)
 {
-    const std::string command = "gcc -c" + asmFile + "-o" + outputFile;
+    const std::string command = "gcc -c" + asmFile + " -o " + outputFile;
     system(command.c_str());
 }

@@ -12,9 +12,9 @@ bool LoopLabeling::programValidate(Parsing::Program& program)
 void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
 {
     caseStmt.identifier = m_switchLabel;
-    if (caseStmt.identifier.empty())
+    if (isOutsideSwitchStmt(caseStmt))
         m_valid = false;
-    if (caseStmt.condition->kind != Parsing::Expr::Kind::Constant)
+    if (isNonConstantInSwitchCase(caseStmt))
         m_valid = false;
     const auto constantExpr = static_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
     const i32 value = constantExpr->value;

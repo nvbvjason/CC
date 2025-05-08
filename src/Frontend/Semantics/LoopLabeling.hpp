@@ -4,12 +4,14 @@
 #define CC_SEMANTICS_SWITCH_HPP
 
 #include "ASTTraverser.hpp"
+#include "ASTParser.hpp"
 #include "ShortTypes.hpp"
 
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+
 
 namespace Semantics {
 
@@ -32,8 +34,20 @@ public:
     void visit(Parsing::ForStmt&) override;
     void visit(Parsing::SwitchStmt&) override;
 private:
+    static bool isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt);
+    static bool isNonConstantInSwitchCase(Parsing::CaseStmt& caseStmt);
     static std::string makeTemporary(const std::string& name);
 };
+
+bool LoopLabeling::isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt)
+{
+    return caseStmt.identifier.empty();
+}
+
+bool LoopLabeling::isNonConstantInSwitchCase(Parsing::CaseStmt& caseStmt)
+{
+    return caseStmt.condition->kind != Parsing::Expr::Kind::Constant;
+}
 
 inline std::string LoopLabeling::makeTemporary(const std::string& name)
 {

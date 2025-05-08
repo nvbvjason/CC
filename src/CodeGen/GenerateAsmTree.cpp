@@ -173,6 +173,19 @@ void binaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst*
     }
 }
 
+void generateBinaryCondInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
+{
+    std::shared_ptr<Operand> src1 = operand(irBinary->source1);
+    std::shared_ptr<Operand> src2 = operand(irBinary->source2);
+    insts.push_back(std::make_unique<CmpInst>(src2, src1));
+
+    std::shared_ptr<Operand> dst = operand(irBinary->destination);
+    std::shared_ptr<Operand> imm = std::make_shared<ImmOperand>(0);
+    insts.push_back(std::make_unique<MoveInst>(imm, dst));
+
+    BinaryInst::CondCode cc = condCode(irBinary->operation);
+    insts.push_back(std::make_unique<SetCCInst>(cc, dst));
+}
 
 void generateBinaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
@@ -187,20 +200,6 @@ void generateBinaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const I
 
     std::shared_ptr<Operand> dst = operand(irBinary->destination);
     insts.push_back(std::make_unique<MoveInst>(regAX, dst));
-}
-
-void generateBinaryCondInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
-{
-    std::shared_ptr<Operand> src1 = operand(irBinary->source1);
-    std::shared_ptr<Operand> src2 = operand(irBinary->source2);
-    insts.push_back(std::make_unique<CmpInst>(src2, src1));
-
-    std::shared_ptr<Operand> dst = operand(irBinary->destination);
-    std::shared_ptr<Operand> imm = std::make_shared<ImmOperand>(0);
-    insts.push_back(std::make_unique<MoveInst>(imm, dst));
-
-    BinaryInst::CondCode cc = condCode(irBinary->operation);
-    insts.push_back(std::make_unique<SetCCInst>(cc, dst));
 }
 
 void generateBinaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
