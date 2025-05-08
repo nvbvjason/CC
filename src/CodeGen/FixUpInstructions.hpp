@@ -22,6 +22,9 @@ public:
     void visit(BinaryInst& binary) override;
     void visit(CmpInst& cmp) override;
     void visit(IdivInst& idiv) override;
+    void visit(DeallocStackInst&) override {}
+    void visit(PushInst&) override {}
+    void visit(CallInst&) override {}
 
     // Unchanged instructions handled in fixUp
     void visit(UnaryInst&) override {}

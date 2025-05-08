@@ -68,7 +68,7 @@ void generateJumpIfZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
                             const Ir::JumpIfZeroInst* irBinary);
 void generateJumpIfNotZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
                                const Ir::JumpIfNotZeroInst* irBinary);
-void generateCopyInst(std::vector<std::unique_ptr<Inst>>& insts, Ir::CopyInst* type);
+void generateCopyInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::CopyInst* type);
 
 void generateLabelInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::LabelInst* irLabel);
 

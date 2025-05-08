@@ -32,7 +32,7 @@
                               | <exp> "?" <exp> ":" <exp>
     <unary_exp>             ::= <postfix_exp> | <unop> <unary_exp>
     <postfix_exp>           ::= <factor> | <postfix_exp> <postfixop>
-    <factor>                ::= <int> | <identifier> | "(" <exp> ")"
+    <factor>                ::= <int> | <identifier> | <identifier> "(" [ <argument-list> ] ")" | "(" <exp> ")"
     <argument-list>         ::= <exp> { "," <exp> }
     <unop>                  ::= "-" | "~" | "!" | "--" | "++"
     <postfixop>             ::= "--" | "++"

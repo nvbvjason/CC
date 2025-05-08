@@ -28,7 +28,7 @@ void FixUpInstructions::fixUp() {
 
 void FixUpInstructions::visit(MoveInst& moveInst) {
     if (areBothOnTheStack(moveInst)) {
-        auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
+        auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10, 4);
         auto first = std::make_unique<MoveInst>(moveInst.src, regR10);
         auto second = std::make_unique<MoveInst>(regR10, moveInst.dst);
         insert(std::move(first), std::move(second));
@@ -47,15 +47,15 @@ void FixUpInstructions::visit(BinaryInst& binaryInst) {
 }
 
 void FixUpInstructions::binaryShift(BinaryInst& binaryInst) {
-    auto regCX = std::make_shared<RegisterOperand>(RegisterOperand::Type::CX);
-    auto regCL = std::make_shared<RegisterOperand>(RegisterOperand::Type::CL);
+    auto regCX = std::make_shared<RegisterOperand>(RegisterOperand::Type::CX, 4);
+    auto regCL = std::make_shared<RegisterOperand>(RegisterOperand::Type::CX, 1);
     auto first = std::make_unique<MoveInst>(binaryInst.lhs, regCX);
     auto second = std::make_unique<BinaryInst>(binaryInst.oper, regCL, binaryInst.rhs);
     insert(std::move(first), std::move(second));
 }
 
 void FixUpInstructions::binaryMul(BinaryInst& binaryInst) {
-    auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11);
+    auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11, 4);
     auto first = std::make_unique<MoveInst>(binaryInst.rhs, regR11);
     auto second = std::make_unique<BinaryInst>(binaryInst.oper, binaryInst.lhs, regR11);
     auto third = std::make_unique<MoveInst>(regR11, binaryInst.rhs);
@@ -63,7 +63,7 @@ void FixUpInstructions::binaryMul(BinaryInst& binaryInst) {
 }
 
 void FixUpInstructions::binaryOthers(BinaryInst& binaryInst) {
-    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
+    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10, 4);
     auto first = std::make_unique<MoveInst>(binaryInst.lhs, regR10);
     auto second = std::make_unique<BinaryInst>(binaryInst.oper, regR10, binaryInst.rhs);
     insert(std::move(first), std::move(second));
@@ -71,13 +71,13 @@ void FixUpInstructions::binaryOthers(BinaryInst& binaryInst) {
 
 void FixUpInstructions::visit(CmpInst& cmpInst) {
     if (areBothOnTheStack(cmpInst)) {
-        auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
+        auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10, 4);
         auto first = std::make_unique<MoveInst>(cmpInst.lhs, regR10);
         auto second = std::make_unique<CmpInst>(regR10, cmpInst.rhs);
         insert(std::move(first), std::move(second));
     }
     else if (cmpInst.rhs->kind == Operand::Kind::Imm) {
-        auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11);
+        auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11, 4);
         auto first = std::make_unique<MoveInst>(cmpInst.rhs, regR11);
         auto second = std::make_unique<CmpInst>(cmpInst.lhs, regR11);
         insert(std::move(first), std::move(second));
@@ -87,7 +87,7 @@ void FixUpInstructions::visit(CmpInst& cmpInst) {
 }
 
 void FixUpInstructions::visit(IdivInst& idivInst) {
-    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10);
+    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10, 4);
     auto first = std::make_unique<MoveInst>(idivInst.operand, regR10);
     auto second = std::make_unique<IdivInst>(regR10);
     insert(std::move(first), std::move(second));

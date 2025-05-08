@@ -13,7 +13,6 @@ namespace CodeGen {
     std::string asmOperand(const std::shared_ptr<Operand>& operand);
     std::string asmByteOperand(const std::shared_ptr<Operand>& operand);
     std::string asmRegister(const RegisterOperand* reg);
-    std::string asmByteRegister(const RegisterOperand* reg);
     std::string asmUnaryOperator(UnaryInst::Operator oper);
     std::string asmBinaryOperator(BinaryInst::Operator oper);
     std::string asmFormatLabel(const std::string& name);

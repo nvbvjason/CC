@@ -23,6 +23,9 @@ public:
     void visit(CmpInst&) override;
     void visit(SetCCInst&) override;
 
+    void visit(DeallocStackInst&) override {}
+    void visit(PushInst&) override {}
+    void visit(CallInst&) override {}
     void visit(CdqInst&) override {}
     void visit(AllocStackInst&) override {}
     void visit(ReturnInst&) override {}

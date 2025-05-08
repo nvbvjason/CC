@@ -9,7 +9,8 @@ namespace CodeGen {
 
 void program(const Ir::Program &program, Program &programCodegen)
 {
-    //programCodegen.function = function(program.function.get());
+    for (const auto& functionIR : program.functions)
+        programCodegen.functions.push_back(function(functionIR.get()));
 }
 
 std::unique_ptr<Function> function(const Ir::Function *function)
@@ -100,7 +101,7 @@ void generateJumpIfNotZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
     insts.push_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::NE, target));
 }
 
-void generateCopyInst(std::vector<std::unique_ptr<Inst>>& insts, Ir::CopyInst* type)
+void generateCopyInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::CopyInst* type)
 {
     std::shared_ptr<Operand> src = operand(type->source);
     std::shared_ptr<Operand> dst = operand(type->destination);
@@ -176,7 +177,7 @@ void binaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst*
 void generateBinaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary->source1);
-    std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX);
+    std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX, 4);
     insts.push_back(std::make_unique<MoveInst>(src1, regAX));
 
     insts.push_back(std::make_unique<CdqInst>());
@@ -205,7 +206,7 @@ void generateBinaryCondInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir:
 void generateBinaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary->source1);
-    std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX);
+    std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX, 4);
     insts.push_back(std::make_unique<MoveInst>(src1, regAX));
 
     insts.push_back(std::make_unique<CdqInst>());
@@ -214,7 +215,7 @@ void generateBinaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, cons
     insts.push_back(std::make_unique<IdivInst>(src2));
 
     std::shared_ptr<Operand> dst = operand(irBinary->destination);
-    const auto regDX = std::make_shared<RegisterOperand>(RegisterOperand::Type::DX);
+    const auto regDX = std::make_shared<RegisterOperand>(RegisterOperand::Type::DX, 4);
     insts.push_back(std::make_unique<MoveInst>(regDX, dst));
 }
 
@@ -232,7 +233,7 @@ void generateBinaryBasicInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir
 void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst)
 {
     std::shared_ptr<Operand> val = operand(inst->returnValue);
-    std::shared_ptr<Operand> operandRegister = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX);
+    std::shared_ptr<Operand> operandRegister = std::make_shared<RegisterOperand>(RegisterOperand::Type::AX, 4);
     insts.push_back(std::make_unique<MoveInst>(val, operandRegister));
 
     insts.push_back(std::make_unique<ReturnInst>());
@@ -310,15 +311,18 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
 i32 replacingPseudoRegisters(Program& programCodegen)
 {
     PseudoRegisterReplacer pseudoRegisterReplacer;
-    for (std::unique_ptr<Inst>& inst : programCodegen.function->instructions)
-        inst->accept(pseudoRegisterReplacer);
+    for (const auto& function : programCodegen.functions)
+        for (auto& inst : function->instructions)
+            inst->accept(pseudoRegisterReplacer);
     return pseudoRegisterReplacer.stackPointer();
 }
 
 void fixUpInstructions(Program& programCodegen, const i32 stackAlloc)
 {
-    FixUpInstructions fixUpInstructions(programCodegen.function->instructions, stackAlloc);
-    fixUpInstructions.fixUp();
+    for (auto& function : programCodegen.functions) {
+        FixUpInstructions fixUpInstructions(function->instructions, stackAlloc);
+        fixUpInstructions.fixUp();
+    }
 }
 
 }// namespace CodeGen

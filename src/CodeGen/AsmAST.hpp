@@ -269,12 +269,13 @@ struct ImmOperand final : Operand {
 };
 
 struct RegisterOperand final : Operand {
-    enum class Type {
+    enum class Type : u8 {
         AX, CX, DX, DI, SI, R8, R9, R10, R11
     };
     Type type;
-    explicit RegisterOperand(const Type k)
-        : Operand(Operand::Kind::Register), type(k) {}
+    u8 size;
+    explicit RegisterOperand(const Type k, const u8 size)
+        : Operand(Operand::Kind::Register), type(k), size(size) {}
 
     RegisterOperand() = delete;
 };

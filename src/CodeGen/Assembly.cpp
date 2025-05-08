@@ -8,7 +8,8 @@ namespace CodeGen {
 std::string asmProgram(const Program& program)
 {
     std::string result;
-    asmFunction(result, program.function);
+    for (const std::unique_ptr<Function>& function : program.functions)
+        asmFunction(result, function);
     result += ".section .note.GNU-stack,\"\",@progbits\n";
     return result;
 }
@@ -89,6 +90,21 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             result += asmFormatLabel(createLabel(labelInst->target.value));
             return;
         }
+        case Inst::Kind::Push: {
+            const auto pushInst = dynamic_cast<PushInst*>(instruction.get());
+            result += asmFormatInstruction("pushq", asmByteOperand(pushInst->operand));
+            return;
+        }
+        case Inst::Kind::Call: {
+            const auto callInst = dynamic_cast<CallInst*>(instruction.get());
+            result += asmFormatInstruction("call", createLabel(callInst->funName.value));
+            return;
+        }
+        case Inst::Kind::DeallocateStack: {
+            const auto deallocateStack = dynamic_cast<DeallocStackInst*>(instruction.get());
+            result += asmFormatInstruction("addq", "$" + std::to_string(deallocateStack->dealloc) + ", %rsp");
+            return;
+        }
         default:
             result += asmFormatInstruction("not set asmInstruction");
             return;
@@ -100,7 +116,7 @@ std::string asmByteOperand(const std::shared_ptr<Operand>& operand)
     switch (operand->kind) {
         case Operand::Kind::Register: {
             const auto registerOperand = dynamic_cast<RegisterOperand*>(operand.get());
-            return asmByteRegister(registerOperand);
+            return asmRegister(registerOperand);
         }
         case Operand::Kind::Pseudo:
             return "invalid pseudo";
@@ -141,38 +157,48 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
 
 std::string asmRegister(const RegisterOperand* reg)
 {
-    switch (reg->type) {
-        case RegisterOperand::Type::R10:
-            return "%r10d";
-        case RegisterOperand::Type::AX:
-            return "%eax";
-        case RegisterOperand::Type::R11:
-            return "%r11d";
-        case RegisterOperand::Type::DX:
-            return "%edx";
-        case RegisterOperand::Type::CX:
-            return "%ecx";
-        case RegisterOperand::Type::CL:
-            return "%cl";
-        default:
-            return "not set asmRegister";
-    }
-}
+    using Type = RegisterOperand::Type;
+    using RegisterNames = std::array<const char*, 4>;
+    static const std::array<std::pair<Type, RegisterNames>, 9> registerMap = {
+        {
+            //                   1-byte   2-byte   4-byte   8-byte
+            {Type::AX,  {"%al",   "%ah",   "%eax",  "%rax"}},
+            {Type::DX,  {"%dl",   "%dil",  "%edx",  "%rdx"}},
+            {Type::CX,  {"%cl",   "%ch",   "%ecx",  "%rcx"}},
+            {Type::DI,  {"%dil",  "%dh",   "%edi",  "%rdi"}},
+            {Type::SI,  {"%sil",  "%dh",   "%esi",  "%rsi"}},
+            {Type::R8,  {"%r8b",  "%r8w",  "%r8d",  "%r8"}},
+            {Type::R9,  {"%r9b",  "%r9w",  "%r9d",  "%r9"}},
+            {Type::R10, {"%r10b", "%r10w", "%r10d", "%r10"}},
+            {Type::R11, {"%r11b", "%r11w", "%r11d", "%r11"}}
+        }};
 
-std::string asmByteRegister(const RegisterOperand* reg)
-{
-    switch (reg->type) {
-        case RegisterOperand::Type::R10:
-            return "%r10b";
-        case RegisterOperand::Type::AX:
-            return "%al";
-        case RegisterOperand::Type::R11:
-            return "%r11b";
-        case RegisterOperand::Type::DX:
-            return "%dl";
-        default:
-            return "not set asmByteRegister";
+    static_assert(sizeof(RegisterNames) == sizeof(const char*[4]),
+        "RegisterNames size mismatch");
+
+    const auto it = std::lower_bound(
+        registerMap.begin(), registerMap.end(), reg->type,
+        [](const auto& pair, Type type) { return pair.first < type; }
+    );
+
+    if (it == registerMap.end() || it->first != reg->type)
+        return "invalid_register";
+
+    const auto& names = it->second;
+    const u8 size = reg->size;
+    if (size != 1 && size != 2 && size != 4 && size != 8)
+        return "invalid_size";
+
+    size_t index;
+    switch (size) {
+        case 1:  index = 0; break;
+        case 2:  index = 1; break;
+        case 4:  index = 2; break;
+        case 8:  index = 3; break;
+        default: return "invalid_size";
     }
+
+    return names[std::bit_width(index)];
 }
 
 std::string asmUnaryOperator(const UnaryInst::Operator oper)
