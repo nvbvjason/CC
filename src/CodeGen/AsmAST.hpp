@@ -24,6 +24,9 @@ instruction = Mov(operand src, operand dst)
             | SetCC(cond_code, operand)
             | Label(identifier)
             | Allocate_stack(int)
+            | DeallocateStack(int)
+            | Push(operand)
+            | Call(identifier)
             | Ret
 unary_operator = Neg | Not
 binary_operator = Add | Sub | Mult |
@@ -34,7 +37,7 @@ operand = Imm(int)
         | Pseudo(identifier)
         | Stack(int)
 cond_code = E | NE | G | GE | L | LE
-reg = AX | DX | R10 | R11 | CX | CL
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11
 
 */
 
@@ -48,7 +51,7 @@ struct Operand;
 struct InstVisitor;
 
 struct Program {
-    std::unique_ptr<Function> function;
+    std::vector<std::unique_ptr<Function>> functions;
 };
 
 struct Function {
@@ -64,7 +67,8 @@ struct Identifier {
 
 struct Inst {
     enum class Kind {
-        Move, Unary, Binary, Cmp, Idiv, Cdq, Jmp, JmpCC, SetCC, Label, AllocateStack, Ret
+        Move, Unary, Binary, Cmp, Idiv, Cdq, Jmp, JmpCC, SetCC, Label,
+        AllocateStack, DeallocateStack, Push, Call, Ret
     };
     enum class CondCode {
         E, NE, G, GE, L, LE
@@ -205,6 +209,36 @@ struct AllocStackInst final : Inst {
     AllocStackInst() = delete;
 };
 
+struct DeallocStackInst final : Inst {
+    i32 dealloc;
+    explicit DeallocStackInst(i32 dealloc)
+        : Inst(Kind::DeallocateStack), dealloc(dealloc) {}
+
+    void accept(InstVisitor& visitor) override;
+
+    DeallocStackInst() = delete;
+};
+
+struct PushInst final : Inst {
+    std::shared_ptr<Operand> operand;
+    explicit PushInst(const std::shared_ptr<Operand>& operand)
+        : Inst(Kind::Push), operand(operand) {}
+
+    void accept(InstVisitor& visitor) override;
+
+    PushInst() = delete;
+};
+
+struct CallInst final : Inst {
+    Identifier funName;
+    explicit CallInst(Identifier  iden)
+        : Inst(Kind::Call), funName(std::move(iden)) {}
+
+    void accept(InstVisitor& visitor) override;
+
+    CallInst() = delete;
+};
+
 struct ReturnInst final : Inst {
     ReturnInst()
         : Inst(Kind::Ret) {}
@@ -236,7 +270,7 @@ struct ImmOperand final : Operand {
 
 struct RegisterOperand final : Operand {
     enum class Type {
-        AX, DX, R10, R11, CX, CL
+        AX, CX, DX, DI, SI, R8, R9, R10, R11
     };
     Type type;
     explicit RegisterOperand(const Type k)
@@ -275,6 +309,9 @@ struct InstVisitor {
     virtual void visit(SetCCInst&) = 0;
     virtual void visit(LabelInst&) = 0;
     virtual void visit(AllocStackInst&) = 0;
+    virtual void visit(DeallocStackInst&) = 0;
+    virtual void visit(PushInst&) = 0;
+    virtual void visit(CallInst&) = 0;
     virtual void visit(ReturnInst&) = 0;
 };
 
@@ -289,6 +326,9 @@ inline void JmpCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void SetCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void LabelInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void AllocStackInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
+inline void DeallocStackInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
+inline void PushInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
+inline void CallInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void ReturnInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 
 }
