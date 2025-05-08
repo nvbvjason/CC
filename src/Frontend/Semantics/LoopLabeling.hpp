@@ -12,7 +12,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-
 namespace Semantics {
 
 class LoopLabeling : public Parsing::ASTTraverser {
@@ -35,16 +34,16 @@ public:
     void visit(Parsing::SwitchStmt&) override;
 private:
     static bool isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt);
-    static bool isNonConstantInSwitchCase(Parsing::CaseStmt& caseStmt);
+    static bool isNonConstantInSwitchCase(const Parsing::CaseStmt& caseStmt);
     static std::string makeTemporary(const std::string& name);
 };
 
-bool LoopLabeling::isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt)
+inline bool LoopLabeling::isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt)
 {
     return caseStmt.identifier.empty();
 }
 
-bool LoopLabeling::isNonConstantInSwitchCase(Parsing::CaseStmt& caseStmt)
+inline bool LoopLabeling::isNonConstantInSwitchCase(const Parsing::CaseStmt& caseStmt)
 {
     return caseStmt.condition->kind != Parsing::Expr::Kind::Constant;
 }

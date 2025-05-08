@@ -59,48 +59,45 @@ void LoopLabeling::visit(Parsing::WhileStmt& whileStmt)
 {
     const std::string continueTemp = m_continueLabel;
     const std::string breakTemp = m_breakLabel;
-    const std::string whileLabel = makeTemporary("while");
-    m_continueLabel = whileLabel;
-    m_breakLabel = whileLabel;
+    whileStmt.identifier = makeTemporary("while");
+    m_continueLabel = whileStmt.identifier;
+    m_breakLabel = whileStmt.identifier;
     ASTTraverser::visit(whileStmt);
     m_continueLabel = continueTemp;
     m_breakLabel = breakTemp;
-    whileStmt.identifier = whileLabel;
 }
 
 void LoopLabeling::visit(Parsing::DoWhileStmt& doWhileStmt)
 {
     const std::string continueTemp = m_continueLabel;
     const std::string breakTemp = m_breakLabel;
-    const std::string doLabel = makeTemporary("do.While");
-    m_continueLabel = doLabel;
-    m_breakLabel = doLabel;
+    doWhileStmt.identifier = makeTemporary("do.While");
+    m_continueLabel = doWhileStmt.identifier;
+    m_breakLabel = doWhileStmt.identifier;
     ASTTraverser::visit(doWhileStmt);
     m_continueLabel = continueTemp;
     m_breakLabel = breakTemp;
-    doWhileStmt.identifier = doLabel;
 }
 
 void LoopLabeling::visit(Parsing::ForStmt& forStmt)
 {
     const std::string continueTemp = m_continueLabel;
     const std::string breakTemp = m_breakLabel;
-    const std::string forLabel = makeTemporary("for");
-    m_continueLabel = forLabel;
-    m_breakLabel = forLabel;
+    forStmt.identifier = makeTemporary("for");
+    m_continueLabel = forStmt.identifier;
+    m_breakLabel = forStmt.identifier;
     ASTTraverser::visit(forStmt);
     m_continueLabel = continueTemp;
     m_breakLabel = breakTemp;
-    forStmt.identifier = forLabel;
 }
 
 void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
 {
     const std::string breakTemp = m_breakLabel;
     const std::string switchTemp = m_switchLabel;
-    const std::string switchLabel = makeTemporary("switch");
-    m_breakLabel = switchLabel;
-    m_switchLabel = switchLabel;
+    switchStmt.identifier = makeTemporary("switch");
+    m_breakLabel = switchStmt.identifier;
+    m_switchLabel = switchStmt.identifier;
     m_case[switchStmt.identifier] = std::vector<i32>();
     ASTTraverser::visit(switchStmt);
     for (const i32 value : m_case[switchStmt.identifier])
@@ -111,6 +108,5 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
         switchStmt.hasDefault = true;
     m_breakLabel = breakTemp;
     m_switchLabel = switchTemp;
-    switchStmt.identifier = switchLabel;
 }
 } // Semantics

@@ -64,6 +64,13 @@ void VariableResolution::visit(Parsing::Block& block)
     m_variableStack.pop();
 }
 
+void VariableResolution::visit(Parsing::ForStmt& function)
+{
+    m_variableStack.push();
+    ASTTraverser::visit(function);
+    m_variableStack.pop();
+}
+
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (!m_valid)

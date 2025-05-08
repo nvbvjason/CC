@@ -29,6 +29,8 @@ public:
     void visit(Parsing::FunDecl& funDecl) override;
     void visit(Parsing::Block& function) override;
 
+    void visit(Parsing::ForStmt& function) override;
+
     void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;

@@ -467,10 +467,10 @@ TEST(Chapter8, semanticsInvalid)
     }
 }
 
-TEST(Chapter8, semanticsValidExtraCredit)
+TEST(Chapter8, semanticsValid)
 {
-    const fs::path validPath = testsFolderPath / "chapter_8/valid/extra_credit";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    const fs::path validPath = testsFolderPath / "chapter_8/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
