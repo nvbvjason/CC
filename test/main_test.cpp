@@ -510,13 +510,19 @@ TEST(Chapter9, parsingInvalid)
 TEST(Chapter9, invalidSemantics)
 {
     const fs::path invalidPathDeclarations = testsFolderPath / "chapter_9/invalid_declarations";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPathDeclarations)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPathDeclarations)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
     }
     const fs::path invalidPathTypes = testsFolderPath / "chapter_9/invalid_types";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPathTypes)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPathTypes)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+    const fs::path invalidPathLabels = testsFolderPath / "chapter_9/invalid_labels";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPathLabels)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();

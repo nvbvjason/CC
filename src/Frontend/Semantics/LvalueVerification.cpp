@@ -17,6 +17,7 @@ void LvalueVerification::visit(const Parsing::UnaryExpr& unaryExpr)
         return;
     if (unaryExpr.operand->kind == Parsing::Expr::Kind::Assignment ||
         unaryExpr.operand->kind == Parsing::Expr::Kind::Binary ||
+        unaryExpr.operand->kind == Parsing::Expr::Kind::FunctionCall ||
         unaryExpr.operand->kind == Parsing::Expr::Kind::Constant) {
         m_valid = false;
         return;
