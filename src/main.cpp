@@ -3,5 +3,5 @@
 int main(const int argc, char *argv[])
 {
     CompilerDriver program(std::vector<std::string>(argv, argv + argc));
-    return static_cast<i32>(program.run());
+    return program.run();
 }

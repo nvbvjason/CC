@@ -3,7 +3,7 @@
 #include "Frontend/FrontendDriver.hpp"
 
 #include "IR/ASTIr.hpp"
-#include "IR/Printer.hpp"
+#include "IR/IrPrinter.hpp"
 
 #include "CodeGen/AsmAST.hpp"
 #include "CodeGen/GenerateAsmTree.hpp"
@@ -103,7 +103,7 @@ void cleanUp()
 
 void printIr(const Ir::Program& irProgram)
 {
-    Ir::Printer printer;
+    Ir::IrPrinter printer;
     std::cout << printer.print(irProgram);
 }
 

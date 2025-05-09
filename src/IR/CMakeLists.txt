@@ -1,6 +1,6 @@
 add_library(IR
-        Printer.cpp
-        Printer.hpp
+        IrPrinter.cpp
+        IrPrinter.hpp
         ASTIr.cpp
         ASTIr.hpp
 )

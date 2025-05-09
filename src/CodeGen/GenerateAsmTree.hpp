@@ -69,10 +69,9 @@ void generateJumpIfZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
 void generateJumpIfNotZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
                                const Ir::JumpIfNotZeroInst* irBinary);
 void generateCopyInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::CopyInst* type);
-
 void generateLabelInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::LabelInst* irLabel);
-
 void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst);
+void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type);
 
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);

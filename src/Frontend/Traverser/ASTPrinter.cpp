@@ -72,220 +72,238 @@ std::string ASTPrinter::getString() const
 
 void ASTPrinter::visit(const Program& program)
 {
-    oss << "Program:\n";
+    addLine("Program:");
     for (const auto& funDecl : program.functions)
         funDecl->accept(*this);
 }
 
 void ASTPrinter::visit(const VarDecl& varDecl)
 {
-    oss << "    VarDecl\n";
+    IndentGuard guard(m_indetLevel);
+    addLine("VarDecl " + varDecl.name);
     if (varDecl.init)
         varDecl.init->accept(*this);
 }
 
 void ASTPrinter::visit(const FunDecl& funDecl)
 {
-    oss << "    FunDecl\n";
+    IndentGuard guard(m_indetLevel);
+    addLine("FunDecl: " + funDecl.name);
     if (funDecl.body)
         funDecl.body->accept(*this);
 }
 
 void ASTPrinter::visit(const Block& block)
 {
-    oss << "  Body:\n";
+    IndentGuard guard(m_indetLevel);
+    addLine("Block");
     for (const auto& blockItem : block.body)
         blockItem->accept(*this);
 }
 
 void ASTPrinter::visit(const StmtBlockItem& stmtBlockItem)
 {
-    oss << "    StmtBlockItem:\n";
+    IndentGuard guard(m_indetLevel);
+    addLine("StmtBlockItem:");
     stmtBlockItem.stmt->accept(*this);
 }
 
 void ASTPrinter::visit(const DeclBlockItem& declBlockItem)
 {
-    oss << "    DeclBlockItem:\n";
+    IndentGuard guard(m_indetLevel);
+    addLine("DeclBlockItem:");
     declBlockItem.decl->accept(*this);
 }
 
 void ASTPrinter::visit(const DeclForInit& declForInit)
 {
-    oss << "      DeclForInit: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("DeclForInit: ");
     declForInit.decl->accept(*this);
-    oss << "\n";
 }
 
 void ASTPrinter::visit(const ExprForInit& exprForInit)
 {
-    oss << "      ExprForInit: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("ExprForInit: ");
     exprForInit.expression->accept(*this);
-    oss << "\n";
 }
 
 void ASTPrinter::visit(const IfStmt& ifStmt)
 {
-    oss << "      IfStmt: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("IfStmt: ");
     ifStmt.condition->accept(*this);
-    oss << "\n";
     ifStmt.thenStmt->accept(*this);
     if (ifStmt.elseStmt) {
-        oss << "      ElseStmt: ";
+        addLine("ElseStmt: ");
         ifStmt.elseStmt->accept(*this);
     }
 }
 
 void ASTPrinter::visit(const GotoStmt& gotoStmt)
 {
-    oss << "      GotoStmt "  << gotoStmt.identifier << '\n';
+    IndentGuard guard(m_indetLevel);
+    addLine("GotoStmt " + gotoStmt.identifier);
 }
 
 void ASTPrinter::visit(const ReturnStmt& returnStmt)
 {
-    oss << "      Return: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("Return: ");
     returnStmt.expr->accept(*this);
-    oss << "\n";
 }
 
 void ASTPrinter::visit(const ExprStmt& exprStmt)
 {
-    oss << "      ExprStmt: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("ExprStmt: ");
     exprStmt.expr->accept(*this);
-    oss << "\n";
 }
 
 void ASTPrinter::visit(const CompoundStmt& function)
 {
-    oss << "      CompoundStmt:\n";
+    IndentGuard guard(m_indetLevel);
+    addLine("CompoundStmt:");
     function.block->accept(*this);
 }
 
 void ASTPrinter::visit(const BreakStmt& breakStmt)
 {
-    oss << "      BreakStmt "  << breakStmt.identifier << '\n';
+    IndentGuard guard(m_indetLevel);
+    addLine("BreakStmt " + breakStmt.identifier);
 }
 
 void ASTPrinter::visit(const ContinueStmt& continueStmt)
 {
-    oss << "      ContinueStmt "  << continueStmt.identifier << '\n';
+    IndentGuard guard(m_indetLevel);
+    addLine("ContinueStmt "  + continueStmt.identifier);
 }
 
 void ASTPrinter::visit(const LabelStmt& labelStmt)
 {
-    oss << "      GotoStmt "  << labelStmt.identifier << '\n';
+    IndentGuard guard(m_indetLevel);
+    addLine("LabelStmt "  + labelStmt.identifier);
 }
 
 void ASTPrinter::visit(const CaseStmt& caseStmt)
 {
-    oss << "      CaseStmt: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("CaseStmt: " + caseStmt.identifier);
     caseStmt.condition->accept(*this);
     caseStmt.body->accept(*this);
-    oss << "\n";
 }
 
 void ASTPrinter::visit(const DefaultStmt& defaultStmt)
 {
-    oss << "      DefaultStmt: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("DefaultStmt: ");
     defaultStmt.body->accept(*this);
-    oss << "\n";
 }
 
 void ASTPrinter::visit(const WhileStmt& whileStmt)
 {
-    oss << "      WhileStmt: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("WhileStmt: ");
     whileStmt.condition->accept(*this);
-    oss << "\n";
     whileStmt.body->accept(*this);
 }
 
 void ASTPrinter::visit(const DoWhileStmt& doWhileStmt)
 {
-    oss << "      DoWhileStmt: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("DoWhileStmt: ");
     doWhileStmt.body->accept(*this);
-    oss << "\n";
     doWhileStmt.condition->accept(*this);
 }
 
 void ASTPrinter::visit(const ForStmt& forStmt)
 {
-    oss << "      ForStmt: ";
-    if (forStmt.init) {
-        oss << " ";
+    IndentGuard guard(m_indetLevel);
+    addLine("ForStmt: ");
+    if (forStmt.init)
         forStmt.init->accept(*this);
-    }
-    if (forStmt.condition) {
-        oss << " ";
+    if (forStmt.condition)
         forStmt.condition->accept(*this);
-    }
-    if (forStmt.post) {
-        oss << " ";
+    if (forStmt.post)
         forStmt.post->accept(*this);
-    }
 }
 
 void ASTPrinter::visit(const SwitchStmt& switchStmt)
 {
-    oss << "      SwitchStmt: ";
+    IndentGuard guard(m_indetLevel);
+    addLine("SwitchStmt: ");
     switchStmt.condition->accept(*this);
-    oss << "\n";
     switchStmt.body->accept(*this);
 }
 
 void ASTPrinter::visit(const UnaryExpr& unaryExpr)
 {
-    oss << "(" << unaryOpToString(unaryExpr.op) << " ";
+    IndentGuard guard(m_indetLevel);
+    addLine("(" + unaryOpToString(unaryExpr.op) + " ");
     unaryExpr.operand->accept(*this);
-    oss << ")";
 }
 
 void ASTPrinter::visit(const BinaryExpr& binaryExpr)
 {
-    oss << "(";
+    IndentGuard guard(m_indetLevel);
+    addLine("Binary " + binaryOpToString(binaryExpr.op));
     binaryExpr.lhs->accept(*this);
-    oss << " " << binaryOpToString(binaryExpr.op) << " ";
     binaryExpr.rhs->accept(*this);
-    oss << ")";
 }
 
 void ASTPrinter::visit(const AssignmentExpr& assignmentExpr)
 {
-    oss << "(";
+    IndentGuard guard(m_indetLevel);
     assignmentExpr.lhs->accept(*this);
-    oss << assignmentOpToString(assignmentExpr.op);
+    addLine(assignmentOpToString(assignmentExpr.op));
     assignmentExpr.rhs->accept(*this);
-    oss << ")";
 }
 
 void ASTPrinter::visit(const ConstExpr& constExpr)
 {
-    oss << constExpr.value;
+    IndentGuard guard(m_indetLevel);
+    addLine(std::to_string(constExpr.value));
 }
 
 void ASTPrinter::visit(const VarExpr& varExpr)
 {
-    oss << varExpr.name;
+    IndentGuard guard(m_indetLevel);
+    addLine(varExpr.name);
 }
 
 void ASTPrinter::visit(const ConditionalExpr& conditionalExpr)
 {
+    IndentGuard guard(m_indetLevel);
     conditionalExpr.condition->accept(*this);
-    oss << "?";
+    addLine("?");
     conditionalExpr.first->accept(*this);
-    oss << ":";
+    addLine(":");
     conditionalExpr.second->accept(*this);
-    oss << ";";
+    addLine(";");
 }
 
 void ASTPrinter::visit(const NullStmt& nullStmt)
 {
-    oss << "      NullStmt (;)\n";
+    IndentGuard guard(m_indetLevel);
+    addLine("NullStmt (;)");
 }
 
 void ASTPrinter::visit(const FunCallExpr& functionCallExpr)
 {
-    oss << "        Function Call\n";
+    IndentGuard guard(m_indetLevel);
+    addLine("Function Call");
     for (const auto& expr : functionCallExpr.args)
         expr->accept(*this);
+}
+
+void ASTPrinter::addLine(const std::string& line)
+{
+    oss << getIndent() << line << '\n';
+}
+
+std::string ASTPrinter::getIndent() const
+{
+    return std::string(m_indetLevel * 2, ' ');
 }
 } // namespace Parsing

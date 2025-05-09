@@ -15,56 +15,63 @@ void program(const Ir::Program &program, Program &programCodegen)
 
 std::unique_ptr<Function> function(const Ir::Function *function)
 {
+    using Type = Ir::Instruction::Type;
     auto functionCodeGen = std::make_unique<Function>();
     functionCodeGen->name = function->name;
     for (const std::unique_ptr<Ir::Instruction>& inst : function->insts) {
         switch (inst->type) {
-            case Ir::Instruction::Type::Unary: {
+            case Type::Unary: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto irUnary = static_cast<Ir::UnaryInst*>(inst.get());
                 unaryInst(functionCodeGen->instructions, irUnary);
                 break;
             }
-            case Ir::Instruction::Type::Return: {
+            case Type::Return: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto irReturn = static_cast<Ir::ReturnInst*>(inst.get());
                 returnInst(functionCodeGen->instructions, irReturn);
                 break;
             }
-            case Ir::Instruction::Type::Binary: {
+            case Type::Binary: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto irBinary = static_cast<Ir::BinaryInst*>(inst.get());
                 binaryInst(functionCodeGen->instructions, irBinary);
                 break;
             }
-            case Ir::Instruction::Type::Label: {
+            case Type::Label: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto irLabel = static_cast<Ir::LabelInst*>(inst.get());
                 generateLabelInst(functionCodeGen->instructions, irLabel);
                 break;
             }
-            case Ir::Instruction::Type::Jump: {
+            case Type::Jump: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto irJump = static_cast<Ir::JumpInst*>(inst.get());
                 generateJumpInst(functionCodeGen->instructions, irJump);
                 break;
             }
-            case Ir::Instruction::Type::JumpIfZero: {
+            case Type::JumpIfZero: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto irJumpIfZero = static_cast<Ir::JumpIfZeroInst*>(inst.get());
                 generateJumpIfZeroInst(functionCodeGen->instructions, irJumpIfZero);
                 break;
             }
-            case Ir::Instruction::Type::JumpIfNotZero: {
+            case Type::JumpIfNotZero: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto irJumpIfNotZero = static_cast<Ir::JumpIfNotZeroInst*>(inst.get());
                 generateJumpIfNotZeroInst(functionCodeGen->instructions, irJumpIfNotZero);
                 break;
             }
-            case Ir::Instruction::Type::Copy: {
+            case Type::Copy: {
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto irCopy = static_cast<Ir::CopyInst*>(inst.get());
                 generateCopyInst(functionCodeGen->instructions, irCopy);
+                break;
+            }
+            case Type::FunCall: {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+                const auto irFunCall = static_cast<Ir::FunCallInst*>(inst.get());
+                generateFunCallInst(functionCodeGen->instructions, irFunCall);
                 break;
             }
             default:
@@ -237,6 +244,12 @@ void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst*
 
     insts.push_back(std::make_unique<ReturnInst>());
 }
+
+void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type)
+{
+    static const std::vector<RegisterOperand::Type> registerTypes = {}
+}
+
 
 UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 {

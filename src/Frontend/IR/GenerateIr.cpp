@@ -348,8 +348,9 @@ void switchStatement(const Parsing::SwitchStmt& stmt,
         insts.push_back(
             std::make_unique<JumpInst>(Identifier(stmt.identifier + "default"))
             );
-    insts.push_back(
-        std::make_unique<JumpInst>(Identifier(stmt.identifier + "break")));
+    else
+        insts.push_back(
+            std::make_unique<JumpInst>(Identifier(stmt.identifier + "break")));
     statement(*stmt.body, insts);
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(stmt.identifier + "break"))
@@ -556,17 +557,17 @@ std::shared_ptr<Value> conditionalInst(const Parsing::Expr& stmt,
 }
 
 std::shared_ptr<Value> funcCallInst(const Parsing::Expr& stmt,
-                                          std::vector<std::unique_ptr<Instruction> >& insts)
+                                    std::vector<std::unique_ptr<Instruction> >& insts)
 {
     const auto parseFunction = dynamic_cast<const Parsing::FunCallExpr*>(&stmt);
     std::vector<std::shared_ptr<Value>> arguments;
     for (const auto& expr : parseFunction->args)
         arguments.push_back(inst(*expr, insts));
-    auto returnZero = std::make_shared<ValueConst>(0);
+    auto dst = std::make_shared<ValueVar>(makeTemporaryName());
     insts.push_back(std::make_unique<FunCallInst>(
-        Identifier(parseFunction->identifier), std::move(arguments), std::move(returnZero)
+        Identifier(parseFunction->identifier), std::move(arguments), dst
         ));
-    return returnZero;
+    return dst;
 }
 
 Identifier makeTemporaryName()
