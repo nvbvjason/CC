@@ -1,6 +1,7 @@
 /build/
 /.idea/
-/generated_files/
+/generated_files/*
+!/generated_files/.gitkeep
 /writing-a-c-compiler-tests/
 /AssemblyFiles/
 /AssemblyFiles/*
