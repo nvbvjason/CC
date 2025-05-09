@@ -1,5 +1,7 @@
 #include "CompilerDriver.hpp"
 
+#include <algorithm>
+
 #include "Frontend/FrontendDriver.hpp"
 
 #include "IR/ASTIr.hpp"
@@ -12,11 +14,14 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <format>
+
+#include "AsmPrinter.hpp"
 
 static void printIr(const Ir::Program& irProgram);
 static CodeGen::Program codegen(const Ir::Program& irProgram);
-static bool fileExists(const std::string &name);
-static bool isCommandLineArgumentValid(const std::string &argument);
+static bool fileExists(const std::filesystem::path& name);
+static bool isCommandLineArgumentValid(const std::string& argument);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
 static void makeLib(const std::string& asmFile, const std::string& outputFile);
 static void cleanUp();
@@ -54,8 +59,15 @@ ErrorCode CompilerDriver::wrappedRun()
     CodeGen::Program codegenProgram = codegen(*irProgram);
     if (argument == "--codegen")
         return ErrorCode::OK;
+    if (argument == "--printAsm") {
+        CodeGen::AsmPrinter printer;
+        std::cout << printer.printProgram(codegenProgram);
+        return ErrorCode::OK;
+    }
     std::string output = CodeGen::asmProgram(codegenProgram);
     writeAssmFile(inputFile, output);
+    if (argument == "--assemble")
+        return ErrorCode::OK;
     if (argument == "-c")
         makeLib(m_outputFileName, inputFile.substr(0, inputFile.length() - 2));
     else
@@ -65,8 +77,9 @@ ErrorCode CompilerDriver::wrappedRun()
 
 void CompilerDriver::writeAssmFile(const std::string& inputFile, const std::string& output)
 {
-    std::string stem = std::filesystem::path(inputFile).stem();
-    m_outputFileName = std::format("/home/jason/src/CC/generated_files/{}.s", stem);
+    std::string stem = std::filesystem::path(inputFile).stem().string();
+
+    m_outputFileName = std::format(PROJECT_ROOT_DIR"/generated_files/{}.s", stem);
     std::ofstream ofs(m_outputFileName);
     ofs << output;
     ofs.close();
@@ -116,7 +129,7 @@ CodeGen::Program codegen(const Ir::Program& irProgram)
     return codegenProgram;
 }
 
-static bool fileExists(const std::string &name)
+static bool fileExists(const std::filesystem::path& name)
 {
     const std::ifstream ifs(name.c_str());
     return ifs.good();
@@ -125,8 +138,9 @@ static bool fileExists(const std::string &name)
 static bool isCommandLineArgumentValid(const std::string &argument)
 {
     const std::vector<std::string> validArguments = {"",  "--printAst","--help", "-h", "--version",
-        "--lex", "--parse", "--tacky", "--codegen", "--printTacky", "--validate"};
-    return std::any_of(validArguments.begin(), validArguments.end(), [&](const std::string &arg) {
+        "--lex", "--parse", "--tacky", "--codegen", "--printTacky", "--validate",
+        "--assemble", "--printAsm", "-c"};
+    return std::ranges::any_of(validArguments, [&](const std::string &arg) {
         return arg == argument;
     });
 }

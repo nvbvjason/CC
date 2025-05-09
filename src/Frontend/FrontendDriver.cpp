@@ -20,13 +20,13 @@ static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& pr
 static void printParsingAst(const Parsing::Program* program);
 static ErrorCode validateSemantics(Parsing::Program& programNode);
 static Ir::Program ir(const Parsing::Program* parsingProgram);
-static std::string preProcess(const std::string &file);
-static std::string getSourceCode(const std::filesystem::path &inputFile);
+static std::string preProcess(const std::filesystem::path& file);
+static std::string getSourceCode(const std::filesystem::path& inputFile);
 
 std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> FrontendDriver::run() const
 {
     std::vector<Lexing::Token> tokens;
-    if (const i32 err = lex(tokens, m_inputFile) != 0)
+    if (lex(tokens, m_inputFile) != 0)
         return {nullptr, ErrorCode::Lexer};
     if (m_arg == "--lex")
         return {nullptr, ErrorCode::OK};
@@ -106,7 +106,7 @@ Ir::Program ir(const Parsing::Program* parsingProgram)
 }
 
 
-static std::string preProcess(const std::string &file)
+static std::string preProcess(const std::filesystem::path& file)
 {
     const std::filesystem::path inputFile(file);
     const std::filesystem::path generatedFilesDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";

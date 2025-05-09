@@ -166,49 +166,49 @@ void AsmPrinter::add(const ReturnInst& returnInst)
     addLine("Return: ");
 }
 
-std::string add(const Identifier& identifier)
+std::string to_string(const Identifier& identifier)
 {
     return identifier.value;
 }
 
-std::string add(const Operand& operand)
+std::string to_string(const Operand& operand)
 {
     using Kind = Operand::Kind;
     switch (operand.kind) {
         case Kind::Imm:
-            return add(static_cast<const ImmOperand&>(operand));
+            return to_string(static_cast<const ImmOperand&>(operand));
         case Kind::Register:
-            return add(static_cast<const RegisterOperand&>(operand));
+            return to_string(static_cast<const RegisterOperand&>(operand));
         case Kind::Pseudo:
-            return add(static_cast<const PseudoOperand&>(operand));
+            return to_string(static_cast<const PseudoOperand&>(operand));
         case Kind::Stack:
-            return add(static_cast<const StackOperand&>(operand));
+            return to_string(static_cast<const StackOperand&>(operand));
         default:
             std::unreachable();
     }
 }
 
-std::string add(const ImmOperand& immOperand)
+std::string to_string(const ImmOperand& immOperand)
 {
-    return "Imm(" + std::to_string(immOperand.value) + ")";
+    return "to_string(" + std::to_string(immOperand.value) + ")";
 }
 
-std::string add(const RegisterOperand& registerOperand)
+std::string to_string(const RegisterOperand& registerOperand)
 {
     return "Register(" + std::to_string(registerOperand.size) + ")";
 }
 
-std::string add(const PseudoOperand& pseudoOperand)
+std::string to_string(const PseudoOperand& pseudoOperand)
 {
     return "Pseudo(" + pseudoOperand.identifier + ")";
 }
 
-std::string add(const StackOperand& stackOperand)
+std::string to_string(const StackOperand& stackOperand)
 {
     return "Stack(" + std::to_string(stackOperand.value) + ")";
 }
 
-std::string add(const RegisterOperand::Type& type)
+std::string to_string(const RegisterOperand::Type& type)
 {
     using Type = RegisterOperand::Type;
     switch (type) {
@@ -225,7 +225,7 @@ std::string add(const RegisterOperand::Type& type)
     }
 }
 
-std::string add(const UnaryInst::Operator& oper)
+std::string to_string(const UnaryInst::Operator& oper)
 {
     using Oper = UnaryInst::Operator;
     switch (oper) {
@@ -235,7 +235,7 @@ std::string add(const UnaryInst::Operator& oper)
     }
 }
 
-std::string add(const BinaryInst::Operator& oper)
+std::string to_string(const BinaryInst::Operator& oper)
 {
     using Oper = BinaryInst::Operator;
     switch (oper) {
@@ -251,7 +251,7 @@ std::string add(const BinaryInst::Operator& oper)
     }
 }
 
-std::string add(const Inst::CondCode& condCode)
+std::string to_string(const Inst::CondCode& condCode)
 {
     using CondCode = Inst::CondCode;
     switch (condCode) {

@@ -247,9 +247,8 @@ void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst*
 
 void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type)
 {
-    static const std::vector<RegisterOperand::Type> registerTypes = {}
+    //static const std::vector<RegisterOperand::Type> registerTypes = {}
 }
-
 
 UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 {
