@@ -110,8 +110,19 @@ bool CompilerDriver::validateCommandLineArguments(std::string& argument, ErrorCo
 void cleanUp()
 {
     const std::filesystem::path generatedDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";
-    for (const auto& entry : std::filesystem::directory_iterator(generatedDir))
-        remove_all(entry.path());
+    for (const auto& entry : std::filesystem::directory_iterator(generatedDir)) {
+        if (entry.path().filename() == ".gitkeep")
+            continue;
+        try {
+            if (std::filesystem::is_directory(entry.path()))
+                std::filesystem::remove_all(entry.path());
+            else
+                std::filesystem::remove(entry.path());
+        }
+        catch (const std::filesystem::filesystem_error& e) {
+            std::cerr << "Error deleting " << entry.path() << ": " << e.what() << '\n';
+        }
+    }
 }
 
 void printIr(const Ir::Program& irProgram)
@@ -124,8 +135,10 @@ CodeGen::Program codegen(const Ir::Program& irProgram)
 {
     CodeGen::Program codegenProgram;
     CodeGen::program(irProgram, codegenProgram);
-    const i32 stackAlloc = CodeGen::replacingPseudoRegisters(codegenProgram);
-    CodeGen::fixUpInstructions(codegenProgram, stackAlloc);
+    for (auto& function : codegenProgram.functions) {
+        const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function);
+        CodeGen::fixUpInstructions(*function, stackAlloc);
+    }
     return codegenProgram;
 }
 

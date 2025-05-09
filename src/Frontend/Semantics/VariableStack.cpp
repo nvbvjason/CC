@@ -29,7 +29,7 @@ bool VariableStack::tryDeclare(const std::string& name, const Variable::Type typ
     assert(!m_stack.empty() && "VariableStack underflow isDeclared()");
     if (m_args.contains(name))
         return false;
-    for (int i = m_stack.size() - 1; 0 <= i; --i) {
+    for (i64 i = m_stack.size() - 1; 0 <= i; --i) {
         const auto it = m_stack[i].find(name);
         if (it == m_stack[i].end())
             continue;

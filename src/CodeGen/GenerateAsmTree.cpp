@@ -247,17 +247,49 @@ void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst*
 
 void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type)
 {
-    //static const std::vector<RegisterOperand::Type> registerTypes = {}
+    using RegType = RegisterOperand::Type;
+    static const std::vector<RegType> registerTypes = {RegType::DI, RegType::SI, RegType::DX,
+                                                       RegType::CX, RegType::R8, RegType::R9};
+    i32 stackPadding = 0;
+    if (type->args.size() % 2 != 0)
+        stackPadding += 8;
+    if (stackPadding != 0)
+        insts.push_back(std::make_unique<AllocStackInst>(8));
+    i32 regIndex = 0;
+    for (; regIndex < type->args.size() && regIndex < registerTypes.size(); ++regIndex) {
+        std::shared_ptr<Operand> src = operand(type->args[regIndex]);
+        insts.push_back(
+            std::make_unique<MoveInst>(src, std::make_unique<RegisterOperand>(registerTypes[regIndex], 8))
+            );
+    }
+    for (i64 i = type->args.size() - 1; regIndex < i; --i) {
+        std::shared_ptr<Operand> src = operand(type->args[i]);
+        if (src->kind == Operand::Kind::Imm ||
+            src->kind == Operand::Kind::Register) {
+            insts.push_back(std::make_unique<PushInst>(src));
+        }
+        else
+            insts.push_back(
+                std::make_unique<MoveInst>(src, std::make_unique<RegisterOperand>(RegType::AX, 8))
+                );
+    }
+    insts.push_back(std::make_unique<CallInst>(Identifier(type->funName.value)));
+    const i64 bytesToRemove = 8 * (type->args.size() - 6) + stackPadding;
+    if (0 < bytesToRemove)
+        insts.push_back(std::make_unique<DeallocStackInst>(bytesToRemove));
+    std::shared_ptr<Operand> destination = operand(type->destination);
+    insts.push_back(
+        std::make_unique<MoveInst>(std::make_shared<RegisterOperand>(RegType::AX, 4), destination)
+        );
 }
 
 UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 {
+    using IrOper = Ir::UnaryInst::Operation;
     switch (type)
     {
-        case Ir::UnaryInst::Operation::Complement:
-            return UnaryInst::Operator::Not;
-        case Ir::UnaryInst::Operation::Negate:
-            return UnaryInst::Operator::Neg;
+        case IrOper::Complement:        return UnaryInst::Operator::Not;
+        case IrOper::Negate:            return UnaryInst::Operator::Neg;
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");
     }
@@ -267,7 +299,6 @@ BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
 {
     using IrOper = Ir::BinaryInst::Operation;
     using AsmOper = BinaryInst::Operator;
-
     switch (type) {
         case IrOper::Add:          return AsmOper::Add;
         case IrOper::Subtract:     return AsmOper::Sub;
@@ -288,7 +319,6 @@ BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation type)
 {
     using IrOper = Ir::BinaryInst::Operation;
     using BinCond = BinaryInst::CondCode;
-
     switch (type) {
         case IrOper::Equal:             return BinCond::E;
         case IrOper::NotEqual:          return BinCond::NE;
@@ -319,21 +349,18 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
     }
 }
 
-i32 replacingPseudoRegisters(Program& programCodegen)
+i32 replacingPseudoRegisters(Function& function)
 {
     PseudoRegisterReplacer pseudoRegisterReplacer;
-    for (const auto& function : programCodegen.functions)
-        for (auto& inst : function->instructions)
-            inst->accept(pseudoRegisterReplacer);
+    for (auto& inst : function.instructions)
+        inst->accept(pseudoRegisterReplacer);
     return pseudoRegisterReplacer.stackPointer();
 }
 
-void fixUpInstructions(Program& programCodegen, const i32 stackAlloc)
+void fixUpInstructions(Function& function, const i32 stackAlloc)
 {
-    for (auto& function : programCodegen.functions) {
-        FixUpInstructions fixUpInstructions(function->instructions, stackAlloc);
-        fixUpInstructions.fixUp();
-    }
+    FixUpInstructions fixUpInstructions(function.instructions, stackAlloc);
+    fixUpInstructions.fixUp();
 }
 
 }// namespace CodeGen

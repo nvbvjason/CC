@@ -181,37 +181,28 @@ std::string asmRegister(const RegisterOperand* reg)
 
 std::string asmUnaryOperator(const UnaryInst::Operator oper)
 {
+    using Operator = UnaryInst::Operator;
     switch (oper) {
-        case UnaryInst::Operator::Neg:
-            return "negl";
-        case UnaryInst::Operator::Not:
-            return "notl";
-        default:
-            return "not set asmUnaryOperator";
+        case Operator::Neg:      return "negl";
+        case Operator::Not:      return "notl";
+        default:                 return "not set asmUnaryOperator";
     }
 }
 
 std::string asmBinaryOperator(BinaryInst::Operator oper)
 {
+    using Operator = BinaryInst::Operator;
     switch (oper) {
-        case BinaryInst::Operator::Mul:
-            return "imull";
-        case BinaryInst::Operator::Add:
-            return "addl";
-        case BinaryInst::Operator::Sub:
-            return "subl";
+        case Operator::Mul:             return "imull";
+        case Operator::Add:             return "addl";
+        case Operator::Sub:             return "subl";
 
-        case BinaryInst::Operator::BitwiseAnd:
-            return "andl";
-        case BinaryInst::Operator::BitwiseOr:
-            return "orl";
-        case BinaryInst::Operator::BitwiseXor:
-            return "xorl";
+        case Operator::BitwiseAnd:      return "andl";
+        case Operator::BitwiseOr:       return "orl";
+        case Operator::BitwiseXor:      return "xorl";
 
-        case BinaryInst::Operator::LeftShift:
-            return "shll";
-        case BinaryInst::Operator::RightShift:
-            return "sarl";
+        case Operator::LeftShift:       return "shll";
+        case Operator::RightShift:      return "sarl";
         default:
             return "not set asmBinaryOperator";
     }

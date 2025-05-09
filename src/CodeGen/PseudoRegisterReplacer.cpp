@@ -35,14 +35,19 @@ void PseudoRegisterReplacer::visit(IdivInst& idiv)
     replaceIfPseudo(idiv.operand);
 }
 
-void PseudoRegisterReplacer::visit(CmpInst& cmp)
+void PseudoRegisterReplacer::visit(CmpInst& cmpInst)
 {
-    replaceIfPseudo(cmp.lhs);
-    replaceIfPseudo(cmp.rhs);
+    replaceIfPseudo(cmpInst.lhs);
+    replaceIfPseudo(cmpInst.rhs);
 }
 
-void PseudoRegisterReplacer::visit(SetCCInst& setCC)
+void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 {
-    replaceIfPseudo(setCC.operand);
+    replaceIfPseudo(setCCInst.operand);
+}
+
+void PseudoRegisterReplacer::visit(PushInst& pushInst)
+{
+    replaceIfPseudo(pushInst.operand);
 }
 } // namespace CodeGen

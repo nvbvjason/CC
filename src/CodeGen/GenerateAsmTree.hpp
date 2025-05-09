@@ -79,8 +79,8 @@ BinaryInst::CondCode condCode(Ir::BinaryInst::Operation type);
 
 std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 
-[[nodiscard]] i32 replacingPseudoRegisters(Program &programCodegen);
-void fixUpInstructions(Program &programCodegen, i32 stackAlloc);
+[[nodiscard]] i32 replacingPseudoRegisters(Function& function);
+void fixUpInstructions(Function& function, i32 stackAlloc);
 
 }
 

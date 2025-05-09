@@ -190,12 +190,12 @@ std::string to_string(const Operand& operand)
 
 std::string to_string(const ImmOperand& immOperand)
 {
-    return "to_string(" + std::to_string(immOperand.value) + ")";
+    return "ImmOperand(" + std::to_string(immOperand.value) + ")";
 }
 
 std::string to_string(const RegisterOperand& registerOperand)
 {
-    return "Register(" + std::to_string(registerOperand.size) + ")";
+    return "Register(" + to_string(registerOperand.type) + ", " + std::to_string(registerOperand.size) + ")";
 }
 
 std::string to_string(const PseudoOperand& pseudoOperand)
@@ -271,10 +271,12 @@ void AsmPrinter::addLine(const std::string& name,
 {
     constexpr int mnemonicWidth = 8;
     constexpr int operandsWidth = 50;
-
-    m_oss << "    " << std::left << std::setw(mnemonicWidth) << name
-          << std::setw(operandsWidth) << operands;
-    m_oss << "\n";
+    std::ostringstream oss;
+    oss << getIndent();
+    oss << std::left << std::setw(mnemonicWidth) << name
+        << std::setw(operandsWidth) << operands;
+    oss << "\n";
+    m_oss << oss.str();
 }
 
 std::string AsmPrinter::getIndent() const

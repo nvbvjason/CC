@@ -20,11 +20,11 @@ public:
     void visit(UnaryInst& unary) override;
     void visit(BinaryInst& binary) override;
     void visit(IdivInst& idiv) override;
-    void visit(CmpInst&) override;
-    void visit(SetCCInst&) override;
+    void visit(CmpInst& cmpInst) override;
+    void visit(SetCCInst& setCCInst) override;
+    void visit(PushInst& pushInst) override;
 
     void visit(DeallocStackInst&) override {}
-    void visit(PushInst&) override {}
     void visit(CallInst&) override {}
     void visit(CdqInst&) override {}
     void visit(AllocStackInst&) override {}

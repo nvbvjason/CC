@@ -57,6 +57,7 @@ struct Program {
 struct Function {
     std::string name;
     std::vector<std::unique_ptr<Inst>> instructions;
+    i64 stackAlloc;
 };
 
 struct Identifier {
