@@ -8,11 +8,14 @@ bool LabelsUnique::programValidate(Parsing::Program& program)
     return m_valid;
 }
 
-void LabelsUnique::visit(const Parsing::FunDecl& funDecl)
+void LabelsUnique::visit(Parsing::FunDecl& funDecl)
 {
+    if (funDecl.body == nullptr)
+        return;
     m_labels.clear();
     m_goto.clear();
-    ConstASTTraverser::visit(funDecl);
+    m_funName = funDecl.name;
+    ASTTraverser::visit(funDecl);
     for (auto& label : m_labels)
         if (1 < label.second)
             m_valid = false;
@@ -21,14 +24,16 @@ void LabelsUnique::visit(const Parsing::FunDecl& funDecl)
             m_valid = false;
 }
 
-void LabelsUnique::visit(const Parsing::GotoStmt& gotoStmt)
+void LabelsUnique::visit(Parsing::GotoStmt& gotoStmt)
 {
+    gotoStmt.identifier += '.' + m_funName;
     m_goto.insert(gotoStmt.identifier);
 }
 
-void LabelsUnique::visit(const Parsing::LabelStmt& labelStmt)
+void LabelsUnique::visit(Parsing::LabelStmt& labelStmt)
 {
+    labelStmt.identifier += '.' + m_funName;
     ++m_labels[labelStmt.identifier];
-    ConstASTTraverser::visit(labelStmt);
+    ASTTraverser::visit(labelStmt);
 }
 } // Semantics
