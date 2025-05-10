@@ -553,7 +553,7 @@ TEST(Chapter10, parsingValid)
 TEST(Chapter10, parsingInvalid)
 {
     const fs::path invalidPath = testsFolderPath / "chapter_10/invalid_parse";
-    for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();

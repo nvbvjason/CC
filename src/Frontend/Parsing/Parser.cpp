@@ -110,7 +110,7 @@ std::unique_ptr<Block> Parser::blockParse()
 
 std::unique_ptr<BlockItem> Parser::blockItemParse()
 {
-    if (peek().m_type == TokenType::IntKeyword) {
+    if (Operators::isSpecifier(peekTokenType())) {
         std::unique_ptr<Declaration> declaration = declarationParse();
         if (declaration == nullptr)
             return nullptr;
