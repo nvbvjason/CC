@@ -128,8 +128,6 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
         return {nullptr, false};
     if (peekTokenType() == TokenType::IntKeyword) {
         auto decl = declarationParse();
-        // if (!expect(TokenType::Semicolon))
-        //     return {nullptr, false};
         if (decl == nullptr)
             return {nullptr, true};
         if (decl->kind == Declaration::Kind::FunctionDecl)

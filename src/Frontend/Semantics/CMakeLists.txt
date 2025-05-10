@@ -8,6 +8,8 @@ add_library(Semantics
         LoopLabeling.hpp
         VariableStack.cpp
         VariableStack.hpp
+        TypeResolution.cpp
+        TypeResolution.hpp
 )
 
 target_include_directories(Semantics PUBLIC

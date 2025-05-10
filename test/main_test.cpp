@@ -55,27 +55,26 @@ bool ParseFileAndGiveResult(const std::filesystem::directory_entry& filePath)
 
 bool CheckSemantics(const std::filesystem::directory_entry& filePath)
 {
-    return false;
-    // const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
-    // std::vector<Lexing::Token> lexemes;
-    // Lexing::Lexer lexer(sourceCode);
-    // lexer.getLexemes(lexemes);
-    // Parsing::Parser parser(lexemes);
-    // Parsing::Program program;
-    // parser.programParse(program);
-    // Semantics::VariableResolution variableResolution(program);
-    // if (!variableResolution.resolve())
-    //     return false;
-    // Semantics::LvalueVerification lvalueVerification(program);
-    // if (!lvalueVerification.resolve())
-    //     return false;
-    // Semantics::LabelsUnique labelsUnique;
-    // if (!labelsUnique.programValidate(program))
-    //     return false;
-    // Semantics::LoopLabeling switchVerification;
-    // if (!switchVerification.programValidate(program))
-    //     return false;
-    // return true;
+    const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
+    std::vector<Lexing::Token> lexemes;
+    Lexing::Lexer lexer(sourceCode);
+    lexer.getLexemes(lexemes);
+    Parsing::Parser parser(lexemes);
+    Parsing::Program program;
+    parser.programParse(program);
+    Semantics::VariableResolution variableResolution(program);
+    if (!variableResolution.resolve())
+        return false;
+    Semantics::LvalueVerification lvalueVerification(program);
+    if (!lvalueVerification.resolve())
+        return false;
+    Semantics::LabelsUnique labelsUnique;
+    if (!labelsUnique.programValidate(program))
+        return false;
+    Semantics::LoopLabeling switchVerification;
+    if (!switchVerification.programValidate(program))
+        return false;
+    return true;
 }
 
 TEST(Chapter1, lexingValid)
@@ -557,6 +556,38 @@ TEST(Chapter10, parsingInvalid)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter10, validSemantics)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_10/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter10, invalidSemantics)
+{
+    const fs::path invalidPathDeclarations = testsFolderPath / "chapter_10/invalid_declarations";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPathDeclarations)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+    const fs::path invalidPathTypes = testsFolderPath / "chapter_10/invalid_types";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPathTypes)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+    const fs::path invalidPathLabels = testsFolderPath / "chapter_10/invalid_labels";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPathLabels)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
     }
 }
 

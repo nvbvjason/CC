@@ -15,6 +15,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "TypeResolution.hpp"
+
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program* program);
@@ -71,6 +73,9 @@ ErrorCode validateSemantics(Parsing::Program& programNode)
     Semantics::LoopLabeling loopLabeling;
     if (!loopLabeling.programValidate(programNode))
         return ErrorCode::LoopLabeling;
+    Semantics::TypeResolution typeResolution;
+    if (!typeResolution.validate(programNode))
+        return ErrorCode::TypeResolution;
     return ErrorCode::OK;
 }
 
