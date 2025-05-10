@@ -129,6 +129,16 @@ TEST(LexerTests, Default)
     TestSingleTokenLexing("default", TokenType::Default);
 }
 
+TEST(LexerTests, Static)
+{
+    TestSingleTokenLexing("static", TokenType::Static);
+}
+
+TEST(LexerTests, Extern)
+{
+    TestSingleTokenLexing("extern", TokenType::Extern);
+}
+
 TEST(LexerTests, Percent)
 {
     TestSingleTokenLexing("%", TokenType::Percent);

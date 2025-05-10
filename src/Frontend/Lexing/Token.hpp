@@ -89,6 +89,8 @@ struct Token {
         Switch,                          // switch
         Case,                            // case
         Default,                         // default
+        Static,                          // static
+        Extern,                          // extern
 
         // Special Tokens
         EndOfFile,                       // EOF marker

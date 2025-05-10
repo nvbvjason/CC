@@ -480,7 +480,7 @@ TEST(Chapter8, semanticsValid)
 TEST(Chapter9, lexingValid)
 {
     const fs::path validPath = testsFolderPath / "chapter_9/valid";
-    for (const auto& path : std::filesystem::directory_iterator(validPath)) {
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
@@ -536,6 +536,16 @@ TEST(Chapter9, validSemantics)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter10, lexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_10/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
 }
 
