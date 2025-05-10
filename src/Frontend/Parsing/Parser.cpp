@@ -122,33 +122,27 @@ std::unique_ptr<BlockItem> Parser::blockItemParse()
     return std::make_unique<StmtBlockItem>(std::move(statement));
 }
 
-std::unique_ptr<ForInit> Parser::forInitParse()
+std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
 {
     if (expect(TokenType::Semicolon))
-        return nullptr;
-    if (expect(TokenType::IntKeyword)) {
-        const Lexing::Token lexeme = advance();
-        if (lexeme.m_type != TokenType::Identifier)
-            return nullptr;
-        auto decl = std::make_unique<VarDecl>(lexeme.m_lexeme);
-        auto result = std::make_unique<DeclForInit>(std::move(decl));
-        if (peek().m_type != TokenType::Equal)
-            return result;
-        advance();
-        std::unique_ptr<Expr> expr = exprParse(0);
-        if (expr == nullptr)
-            return nullptr;
-        if (!expect(TokenType::Semicolon))
-            return nullptr;
-        result->decl->init = std::move(expr);
-        return result;
+        return {nullptr, false};
+    if (peekTokenType() == TokenType::IntKeyword) {
+        auto decl = declarationParse();
+        // if (!expect(TokenType::Semicolon))
+        //     return {nullptr, false};
+        if (decl == nullptr)
+            return {nullptr, true};
+        if (decl->kind == Declaration::Kind::FunctionDecl)
+            return {nullptr, true};
+        auto varDecl = static_cast<VarDecl*>(decl.release());
+        return {std::make_unique<DeclForInit>(std::unique_ptr<VarDecl>(varDecl)), false};
     }
     std::unique_ptr<Expr> expr = exprParse(0);
-    if (expr == nullptr)
-        return nullptr;
     if (!expect(TokenType::Semicolon))
-        return nullptr;
-    return std::make_unique<ExprForInit>(std::move(expr));
+        return {nullptr, true};
+    if (expr == nullptr)
+        return {nullptr, false};
+    return {std::make_unique<ExprForInit>(std::move(expr)), false};
 }
 
 std::unique_ptr<Stmt> Parser::stmtParse()
@@ -349,7 +343,9 @@ std::unique_ptr<Stmt> Parser::forStmtParse()
         return nullptr;
     if (!expect(TokenType::OpenParen))
         return nullptr;
-    std::unique_ptr<ForInit> init = forInitParse();
+    auto [init, err] = forInitParse();
+    if (err)
+        return nullptr;
     std::unique_ptr<Expr> condition = exprParse(0);
     if (!expect(TokenType::Semicolon))
         return nullptr;
@@ -515,13 +511,14 @@ std::tuple<Lexing::Token::Type, Declaration::StorageClass> Parser::specifierPars
     using Storage = Declaration::StorageClass;
     std::vector<Storage> declarations;
     std::vector<TokenType> types;
-    Lexing::Token token = peek();
-    while (Operators::isSpecifier(token.m_type)) {
-        if (Operators::isType(token.m_type))
-            types.push_back(token.m_type);
-        if (Operators::isStorageSpecifier(token.m_type))
-            declarations.push_back(Operators::storageClass(token.m_type));
+    TokenType type = peekTokenType();
+    while (Operators::isSpecifier(type)) {
+        if (Operators::isType(type))
+            types.push_back(type);
+        if (Operators::isStorageSpecifier(type))
+            declarations.push_back(Operators::storageClass(type));
         advance();
+        type = peekTokenType();
     }
     if (types.size() != 1)
         return {TokenType::Invalid, Declaration::StorageClass::None};

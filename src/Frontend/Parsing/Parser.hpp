@@ -74,7 +74,7 @@ public:
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
-    [[nodiscard]] std::unique_ptr<ForInit> forInitParse();
+    [[nodiscard]] std::tuple<std::unique_ptr<ForInit>, bool> forInitParse();
 
     [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
     [[nodiscard]] std::unique_ptr<Stmt> returnStmtParse();

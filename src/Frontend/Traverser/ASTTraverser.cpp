@@ -5,8 +5,8 @@ namespace Parsing {
 
 void ASTTraverser::visit(Program& program)
 {
-    for (auto& funDecl : program.functions)
-        funDecl->accept(*this);
+    for (auto& decl : program.functions)
+        decl->accept(*this);
 }
 
 void ASTTraverser::visit(VarDecl& varDecl)

@@ -16,12 +16,12 @@ static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Opera
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 {
     for (const auto& func : parsingProgram->functions) {
-        if (func->body == nullptr)
-            continue;
-        auto functionTacky = function(*func);
-        for (const std::string& arg : func->params)
-            functionTacky->args.push_back(Identifier(arg));
-        tackyProgram.functions.push_back(std::move(functionTacky));
+        // if (func->body == nullptr)
+        //     continue;
+        // auto functionTacky = function(*func);
+        // for (const std::string& arg : func->params)
+        //     functionTacky->args.push_back(Identifier(arg));
+        // tackyProgram.functions.push_back(std::move(functionTacky));
     }
 }
 

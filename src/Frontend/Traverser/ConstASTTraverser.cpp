@@ -5,8 +5,8 @@ namespace Parsing {
 
 void ConstASTTraverser::visit(const Program& program)
 {
-    for (const std::unique_ptr<FunDecl>& funDecl : program.functions)
-        funDecl->accept(*this);
+    for (const auto& decl : program.functions)
+        decl->accept(*this);
 }
 
 void ConstASTTraverser::visit(const Block& block)
