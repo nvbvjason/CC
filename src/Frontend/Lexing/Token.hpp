@@ -94,6 +94,7 @@ struct Token {
 
         // Special Tokens
         EndOfFile,                       // EOF marker
+        NotAToken,                       // maybe bad design
         Invalid                          // Invalid token
     };
     std::variant<i32> m_data;

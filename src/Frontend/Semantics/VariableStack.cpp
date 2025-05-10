@@ -2,7 +2,8 @@
 #include "ShortTypes.hpp"
 
 #include <cassert>
-#include <ranges>
+
+#include "Frontend/Parsing/Operators.hpp"
 
 namespace Semantics {
 
@@ -12,6 +13,11 @@ void VariableStack::pop()
     m_stack.pop_back();
 }
 
+void VariableStack::push()
+{
+    m_stack.emplace_back();
+}
+
 void VariableStack::addDecl(const std::string& name,
                             const std::string& value,
                             const Variable::Type type,
@@ -19,11 +25,6 @@ void VariableStack::addDecl(const std::string& name,
 {
     assert(!m_stack.empty() && "VariableStack underflow addDecl()");
     m_stack.back().emplace(name, Variable(value, type, storageClass));
-}
-
-void VariableStack::push()
-{
-    m_stack.emplace_back();
 }
 
 bool VariableStack::tryDeclare(const std::string& name,
@@ -81,8 +82,15 @@ bool VariableStack::inArg(const std::string& name) const noexcept
     return m_args.contains(name);
 }
 
-bool VariableStack::inInnerMost(const std::string& name) const
+bool VariableStack::cannotDeclareInInnerMost(const std::string& name,
+                                const StorageClass storageClass) const
 {
-    return m_stack.back().contains(name);
+    const auto it = m_stack.back().find(name);
+    if (it == m_stack.back().end())
+        return false;
+    if (it->second.storage == StorageClass::ExternLocal &&
+        storageClass == StorageClass::ExternLocal)
+        return false;
+    return true;
 }
 } // Semantics

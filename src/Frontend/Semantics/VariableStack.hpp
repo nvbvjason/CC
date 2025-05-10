@@ -5,12 +5,12 @@
 
 #include "ShortTypes.hpp"
 
+#include "ASTParser.hpp"
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
-
-#include "ASTParser.hpp"
 
 namespace Semantics {
 
@@ -22,13 +22,14 @@ struct Variable {
     std::string name;
     Type type;
     Parsing::Declaration::StorageClass storage;
-    Variable(const std::string& name, Type type, Parsing::Declaration::StorageClass storage)
-        : name(name), type(type), storage(storage) {}
+    Variable(std::string  name, Type type, Parsing::Declaration::StorageClass storage)
+        : name(std::move(name)), type(type), storage(storage) {}
 
     Variable() = delete;
 };
 
 class VariableStack {
+    using StorageClass = Parsing::Declaration::StorageClass;
     std::vector<std::unordered_map<std::string, Variable>> m_stack;
     std::unordered_set<std::string> m_args;
 public:
@@ -47,7 +48,8 @@ public:
     [[nodiscard]] std::string tryCall(const std::string& value,
                                       Variable::Type type) const;
     [[nodiscard]] bool inArg(const std::string& name) const noexcept;
-    [[nodiscard]] bool inInnerMost(const std::string& name) const;
+    [[nodiscard]] bool cannotDeclareInInnerMost(const std::string& name,
+                                   StorageClass storageClass) const;
 };
 
 } // Semantics

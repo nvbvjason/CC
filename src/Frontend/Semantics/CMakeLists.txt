@@ -15,6 +15,7 @@ add_library(Semantics
 target_include_directories(Semantics PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/src/Frontend/AST
+        ${CMAKE_SOURCE_DIR}/src/Frontend/Lexing
         ${CMAKE_SOURCE_DIR}/src/Frontend/Traverser
 )
 

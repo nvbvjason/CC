@@ -14,11 +14,6 @@ void TypeResolution::visit(const Parsing::FunDecl& funDecl)
 {
     if (!m_storageClassMap.contains(funDecl.name))
         m_storageClassMap[funDecl.name] = funDecl.storageClass;
-    else
-        if (m_storageClassMap[funDecl.name] != funDecl.storageClass) {
-            m_valid = false;
-            return;
-        }
     m_atFileScope = false;
     ConstASTTraverser::visit(funDecl);
     m_atFileScope = true;
@@ -26,22 +21,20 @@ void TypeResolution::visit(const Parsing::FunDecl& funDecl)
 
 void TypeResolution::visit(const Parsing::DeclForInit& declForInit)
 {
-    if (declForInit.decl->storageClass != StorageClass::None)
+    if (hasStorageClassSpecifier(declForInit))
         m_valid = false;
     ConstASTTraverser::visit(declForInit);
 }
 
 void TypeResolution::visit(const Parsing::VarDecl& varDecl)
 {
-    if (varDecl.storageClass == StorageClass::Extern &&
-        varDecl.init != nullptr && !m_atFileScope) {
-        m_valid = false;
-        return;
-    }
     m_isConst = true;
     ConstASTTraverser::visit(varDecl);
-    if (!m_isConst && (varDecl.storageClass == StorageClass::Static ||
-                       varDecl.storageClass == StorageClass::Extern))
+    if (!m_isConst && (varDecl.storageClass == StorageClass::StaticGlobal ||
+                       varDecl.storageClass == StorageClass::StaticLocal ||
+                       varDecl.storageClass == StorageClass::ExternGlobalInitialized ||
+                       varDecl.storageClass == StorageClass::AutoGlobalScope ||
+                       varDecl.storageClass == StorageClass::ExternGlobalInitialized))
         m_valid = false;
 }
 

@@ -23,7 +23,13 @@ public:
     void visit(const Parsing::DeclForInit& declForInit) override;
     void visit(const Parsing::VarDecl& varDecl) override;
     void visit(const Parsing::VarExpr& varExpr) override;
+    static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 };
+
+inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
+{
+    return declForInit.decl->storageClass != StorageClass::AutoLocalScope;
+}
 } // Semantics
 
 #endif // CC_SEMANTICS_TYPE_RESOLUTION_HPP

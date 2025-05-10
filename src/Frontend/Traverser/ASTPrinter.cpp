@@ -69,9 +69,15 @@ std::string storageClass(const Declaration::StorageClass storageClass)
 {
     using StorageClass = Declaration::StorageClass;
     switch (storageClass) {
-        case StorageClass::Static:       return "static";
-        case StorageClass::Extern:       return "extern";
-        case StorageClass::None:         return "none";
+        case StorageClass::AutoLocalScope:           return "AutoLocalScope";
+        case StorageClass::AutoGlobalScope:          return "AutoGlobalScope";
+        case StorageClass::StaticGlobal:             return "StaticGlobal";
+        case StorageClass::StaticLocal:              return "StaticLocal";
+        case StorageClass::ExternFunction:           return "ExternFunction";
+        case StorageClass::ExternLocal:              return "ExternLocal";
+        case StorageClass::ExternGlobal:             return "ExternGlobal";
+        case StorageClass::ExternGlobalInitialized:  return "ExternGlobalInitialized";
+        case StorageClass::GlobalDefinition:         return "GlobalDefinition";
         default:
             return "storageClass not defined";
     }

@@ -51,6 +51,8 @@
 
 #include <vector>
 
+#include "Token.hpp"
+
 namespace Parsing {
 
 class Parser {
@@ -66,11 +68,11 @@ public:
     bool programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(TokenType type,
-                                                        Storage storage,
-                                                        std::string iden);
+                                                        TokenType storageToken,
+                                                        const std::string& iden);
     [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(TokenType type,
-                                                        Storage storage,
-                                                        std::string iden);
+                                                        TokenType storage,
+                                                        const std::string& iden);
     [[nodiscard]] std::unique_ptr<std::vector<std::string>> paramsListParse();
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
@@ -99,7 +101,7 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
-    [[nodiscard]] std::tuple<TokenType, Declaration::StorageClass> specifierParse();
+    [[nodiscard]] std::tuple<TokenType, TokenType> specifierParse();
 private:
     bool match(const TokenType& type);
     Lexing::Token advance() { return c_tokens[m_current++]; }
@@ -111,6 +113,9 @@ private:
     [[nodiscard]] TokenType peekNextNextTokenType() const;
     [[nodiscard]] bool expect(TokenType type);
 };
+
+Declaration::StorageClass getVarStorageClass(Lexing::Token::Type tokenType, bool inBlock, bool hasDefinition);
+Declaration::StorageClass getFunctionStorageClass(Lexing::Token::Type tokenType);
 
 inline bool Parser::continuePrecedenceClimbing(const i32 minPrecedence, TokenType nextToken)
 {

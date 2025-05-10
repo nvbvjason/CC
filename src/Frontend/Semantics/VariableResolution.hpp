@@ -26,6 +26,7 @@ public:
 
     bool resolve();
     void visit(Parsing::Program& program) override;
+    bool isIllegalFuncDeclaration(const Parsing::FunDecl& funDecl);
     void visit(Parsing::FunDecl& funDecl) override;
     void visit(Parsing::Block& function) override;
 

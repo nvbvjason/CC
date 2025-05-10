@@ -86,6 +86,7 @@ std::string Token::getTypeName() const
 
         // Special Tokens
         case Type::EndOfFile:           return "End Of File";
+        case Type::NotAToken:           return "Not a Token";
         case Type::Invalid:             return "Invalid";
 
         default:                        return "Unknown Token";

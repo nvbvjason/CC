@@ -1,7 +1,5 @@
 #include "VariableResolution.hpp"
 
-#include <unordered_set>
-
 namespace Semantics {
 
 bool VariableResolution::resolve()
@@ -15,36 +13,56 @@ bool VariableResolution::resolve()
 void VariableResolution::visit(Parsing::Program& program)
 {
     m_variableStack.push();
-    ASTTraverser::visit(program);
+    for (auto& decl : program.declarations)
+        if (decl->kind == Parsing::Declaration::Kind::VariableDeclaration) {
+            auto varDecl = static_cast<Parsing::VarDecl*>(decl.get());
+            m_variableStack.addDecl(varDecl->name,
+                                    varDecl->name,
+                                    Variable::Type::Int,
+                                    varDecl->storageClass);
+        }
+    for (auto& decl : program.declarations) {
+        if (decl->kind == Parsing::Declaration::Kind::VariableDeclaration)
+            continue;
+        auto funcDecl = static_cast<Parsing::FunDecl*>(decl.get());
+        VariableResolution::visit(*funcDecl);
+    }
     m_variableStack.pop();
+}
+
+bool VariableResolution::isIllegalFuncDeclaration(const Parsing::FunDecl& funDecl)
+{
+    if (hasDuplicates(funDecl.params)) {
+        m_valid = false;
+        return true;
+    }
+    if (!m_variableStack.tryDeclare(funDecl.name, Variable::Type::Function, funDecl.storageClass)) {
+        m_valid = false;
+        return true;
+    }
+    if (m_funcDecls.contains(funDecl.name)) {
+        if (funDecl.params.size() != m_funcDecls[funDecl.name].size()) {
+            m_valid = false;
+            return true;
+        }
+    }
+    if (functionDefinitionInOtherFunctionBody(funDecl)) {
+        m_valid = false;
+        return true;
+    }
+    if (functionAlreadyDefined(funDecl)) {
+        m_valid = false;
+        return true;
+    }
+    return false;
 }
 
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
     if (!m_valid)
         return;
-    if (hasDuplicates(funDecl.params)) {
-        m_valid = false;
+    if (isIllegalFuncDeclaration(funDecl))
         return;
-    }
-    if (!m_variableStack.tryDeclare(funDecl.name, Variable::Type::Function, funDecl.storageClass)) {
-        m_valid = false;
-        return;
-    }
-    if (m_funcDecls.contains(funDecl.name)) {
-        if (funDecl.params.size() != m_funcDecls[funDecl.name].size()) {
-            m_valid = false;
-            return;
-        }
-    }
-    if (functionDefinitionInOtherFunctionBody(funDecl)) {
-        m_valid = false;
-        return;
-    }
-    if (functionAlreadyDefined(funDecl)) {
-        m_valid = false;
-        return;
-    }
     m_funcDecls[funDecl.name] = funDecl.params;
     m_variableStack.addDecl(funDecl.name,
                             makeTemporary(funDecl.name),
@@ -78,7 +96,7 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (!m_valid)
          return;
-    if (m_variableStack.inInnerMost(varDecl.name)) {
+    if (m_variableStack.cannotDeclareInInnerMost(varDecl.name, varDecl.storageClass)) {
         m_valid = false;
         return;
     }

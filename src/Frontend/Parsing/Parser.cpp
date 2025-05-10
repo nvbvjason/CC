@@ -33,29 +33,32 @@ std::unique_ptr<Declaration> Parser::declarationParse()
 }
 
 std::unique_ptr<VarDecl> Parser::varDeclParse(TokenType type,
-                                              Storage storage,
-                                              std::string iden)
+                                              const TokenType storageToken,
+                                              const std::string& iden)
 {
-    if (storage == Storage::None && m_atFileScope)
-        storage = Storage::Extern;
-    auto declaration = std::make_unique<VarDecl>(storage, iden);
+    std::unique_ptr<Expr> init;
     if (expect(TokenType::Equal)) {
         std::unique_ptr<Expr> expr = exprParse(0);
         if (expr == nullptr)
             return nullptr;
-        declaration->init = std::move(expr);
+        init = std::move(expr);
     }
     if (!expect(TokenType::Semicolon))
         return nullptr;
-    return declaration;
+    Storage storage = getVarStorageClass(storageToken,
+                                        !m_atFileScope,
+                                        init != nullptr);
+    auto varDecl = std::make_unique<VarDecl>(storage, iden);
+    if (init)
+        varDecl->init = std::move(init);
+    return varDecl;
 }
 
 std::unique_ptr<FunDecl> Parser::funDeclParse(TokenType type,
-                                              Storage storage,
-                                              std::string iden)
+                                              const TokenType storageToken,
+                                              const std::string& iden)
 {
-    if (storage != Declaration::StorageClass::Static)
-        storage = Declaration::StorageClass::Extern;
+    Storage storage = getFunctionStorageClass(storageToken);
     auto result = std::make_unique<FunDecl>(storage, iden);
     if (!expect(TokenType::OpenParen))
         return nullptr;
@@ -510,28 +513,67 @@ std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()
     return std::make_unique<std::vector<std::unique_ptr<Expr>>>(std::move(arguments));
 }
 
-std::tuple<Lexing::Token::Type, Declaration::StorageClass> Parser::specifierParse()
+std::tuple<Lexing::Token::Type, Lexing::Token::Type> Parser::specifierParse()
 {
-    using Storage = Declaration::StorageClass;
-    std::vector<Storage> declarations;
+    std::vector<TokenType> declarations;
     std::vector<TokenType> types;
     TokenType type = peekTokenType();
     while (Operators::isSpecifier(type)) {
         if (Operators::isType(type))
             types.push_back(type);
         if (Operators::isStorageSpecifier(type))
-            declarations.push_back(Operators::storageClass(type));
+            declarations.push_back(type);
         advance();
         type = peekTokenType();
     }
     if (types.size() != 1)
-        return {TokenType::Invalid, Declaration::StorageClass::None};
+        return {TokenType::Invalid, TokenType::NotAToken};
     if (1 < declarations.size())
-        return {TokenType::Invalid, Declaration::StorageClass::None};
-    auto storageClass = Declaration::StorageClass::None;
-    if (declarations.size() != 0)
-        storageClass = declarations.front();
-    return std::make_tuple(types[0], storageClass);
+        return {TokenType::Invalid, TokenType::NotAToken};
+    auto storage = TokenType::NotAToken;
+    if (!declarations.empty())
+        storage = declarations.front();
+    return std::make_tuple(types[0], storage);
+}
+
+Declaration::StorageClass getVarStorageClass(const Lexing::Token::Type tokenType,
+                                             const bool inBlock, const bool hasDefinition)
+{
+    using TokenType = Lexing::Token::Type;
+    using StorageClass = Declaration::StorageClass;
+    if (tokenType == TokenType::NotAToken) {
+        if (inBlock)
+            return StorageClass::AutoLocalScope;
+        if (hasDefinition)
+            return StorageClass::GlobalDefinition;
+        return StorageClass::AutoGlobalScope;
+    }
+    if (tokenType == TokenType::Static) {
+        if (inBlock)
+            return StorageClass::StaticLocal;
+        return StorageClass::StaticGlobal;
+    }
+    if (tokenType == TokenType::Extern) {
+        if (inBlock)
+            return StorageClass::ExternLocal;
+        if (hasDefinition)
+            return StorageClass::ExternGlobalInitialized;
+        return StorageClass::ExternGlobal;
+    }
+    assert("getVarStorageClass invalid TokenType");
+    std::unreachable();
+}
+
+Declaration::StorageClass getFunctionStorageClass(Lexing::Token::Type tokenType)
+{
+    using TokenType = Lexing::Token::Type;
+    using StorageClass = Declaration::StorageClass;
+    if (tokenType == TokenType::NotAToken || tokenType == TokenType::Extern)
+        return StorageClass::ExternFunction;
+    if (tokenType == TokenType::Static)
+        return StorageClass::StaticGlobal;
+    assert("getVarStorageClass invalid TokenType");
+    std::unreachable();
 }
 
 bool Parser::match(const TokenType &type)
