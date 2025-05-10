@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iomanip>
+#include <unordered_map>
 
 namespace CodeGen {
 
@@ -97,7 +98,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Call: {
             const auto callInst = dynamic_cast<CallInst*>(instruction.get());
-            result += asmFormatInstruction("call", createLabel(callInst->funName.value));
+            result += asmFormatInstruction("call", callInst->funName.value);
             return;
         }
         case Inst::Kind::DeallocateStack: {
@@ -136,47 +137,33 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
 std::string asmRegister(const RegisterOperand* reg)
 {
     using Type = RegisterOperand::Type;
-    using RegisterNames = std::array<const char*, 4>;
-    static const std::array<std::pair<Type, RegisterNames>, 9> registerMap = {
-        {
-            //                   1-byte   2-byte   4-byte   8-byte
-            {Type::AX,  {"%al",   "%ah",   "%eax",  "%rax"}},
-            {Type::CX,  {"%cl",   "%ch",   "%ecx",  "%rcx"}},
-            {Type::DX,  {"%dl",   "%dx",   "%edx",  "%rdx"}},
-            {Type::DI,  {"%dil",  "%di",   "%edi",  "%rdi"}},
-            {Type::SI,  {"%sil",  "%si",   "%esi",  "%rsi"}},
-            {Type::R8,  {"%r8b",  "%r8w",  "%r8d",  "%r8"}},
-            {Type::R9,  {"%r9b",  "%r9w",  "%r9d",  "%r9"}},
-            {Type::R10, {"%r10b", "%r10w", "%r10d", "%r10"}},
-            {Type::R11, {"%r11b", "%r11w", "%r11d", "%r11"}}
-        }};
+    static const std::unordered_map<Type, std::array<const char*, 4>> registerMap = {
+        {Type::AX,  {"%al",   "%ax",   "%eax",  "%rax"}},
+        {Type::CX,  {"%cl",   "%cx",   "%ecx",  "%rcx"}},
+        {Type::DX,  {"%dl",   "%dx",   "%edx",  "%rdx"}},
+        {Type::DI,  {"%dil",  "%di",   "%edi",  "%rdi"}},
+        {Type::SI,  {"%sil",  "%si",   "%esi",  "%rsi"}},
+        {Type::R8,  {"%r8b",  "%r8w",  "%r8d",  "%r8"}},
+        {Type::R9,  {"%r9b",  "%r9w",  "%r9d",  "%r9"}},
+        {Type::R10, {"%r10b", "%r10w", "%r10d", "%r10"}},
+        {Type::R11, {"%r11b", "%r11w", "%r11d", "%r11"}}
+    };
 
-    static_assert(sizeof(RegisterNames) == sizeof(const char*[4]),
-        "RegisterNames size mismatch");
-
-    const auto it = std::lower_bound(
-        registerMap.begin(), registerMap.end(), reg->type,
-        [](const auto& pair, Type type) { return pair.first < type; }
-    );
-
-    if (it == registerMap.end() || it->first != reg->type)
+    // Find the register in our map
+    auto it = registerMap.find(reg->type);
+    if (it == registerMap.end()) {
         return "invalid_register";
-
-    const auto& names = it->second;
-    const u8 size = reg->size;
-    if (size != 1 && size != 2 && size != 4 && size != 8)
-        return "invalid_size";
-
-    size_t index;
-    switch (size) {
-        case 1:  index = 0; break;
-        case 2:  index = 1; break;
-        case 4:  index = 2; break;
-        case 8:  index = 3; break;
-        default: return "invalid_size";
     }
 
-    return names[std::bit_width(index)];
+    // Get the appropriate name based on size
+    const auto& names = it->second;
+    switch (reg->size) {
+        case 1: return names[0];  // 8-bit
+        case 2: return names[1];  // 16-bit
+        case 4: return names[2];  // 32-bit
+        case 8: return names[3];  // 64-bit
+        default: return "invalid_size";
+    }
 }
 
 std::string asmUnaryOperator(const UnaryInst::Operator oper)

@@ -65,7 +65,7 @@ ErrorCode CompilerDriver::wrappedRun()
         return ErrorCode::OK;
     }
     std::string output = CodeGen::asmProgram(codegenProgram);
-    writeAssmFile(inputFile, output);
+    writeAssmFile(inputFile, output, argument);
     if (argument == "--assemble")
         return ErrorCode::OK;
     if (argument == "-c")
@@ -75,11 +75,12 @@ ErrorCode CompilerDriver::wrappedRun()
     return ErrorCode::OK;
 }
 
-void CompilerDriver::writeAssmFile(const std::string& inputFile, const std::string& output)
+void CompilerDriver::writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument)
 {
     std::string stem = std::filesystem::path(inputFile).stem().string();
-
-    m_outputFileName = std::format(PROJECT_ROOT_DIR"/generated_files/{}.s", stem);
+    const std::string inputFolder = std::filesystem::path(inputFile).parent_path().string();
+    m_outputFileName = std::format("{}/{}.s", inputFolder, stem);
+    // m_outputFileName = std::format("/home/jason/src/CC/generated_files/{}.s", stem);
     std::ofstream ofs(m_outputFileName);
     ofs << output;
     ofs.close();
@@ -166,6 +167,6 @@ void assemble(const std::string& asmFile, const std::string& outputFile)
 
 void makeLib(const std::string& asmFile, const std::string& outputFile)
 {
-    const std::string command = "gcc -c" + asmFile + " -o " + outputFile;
+    const std::string command = "gcc -c " + asmFile + " -o " + outputFile + ".o";
     system(command.c_str());
 }

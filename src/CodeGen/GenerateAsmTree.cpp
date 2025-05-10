@@ -15,70 +15,92 @@ void program(const Ir::Program &program, Program &programCodegen)
 
 std::unique_ptr<Function> function(const Ir::Function *function)
 {
-    using Type = Ir::Instruction::Type;
+    using RegType = RegisterOperand::Type;
+    static const std::vector<RegType> registerTypes = {RegType::DI, RegType::SI, RegType::DX,
+                                                       RegType::CX, RegType::R8, RegType::R9};
     auto functionCodeGen = std::make_unique<Function>();
     functionCodeGen->name = function->name;
-    for (const std::unique_ptr<Ir::Instruction>& inst : function->insts) {
-        switch (inst->type) {
-            case Type::Unary: {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto irUnary = static_cast<Ir::UnaryInst*>(inst.get());
-                unaryInst(functionCodeGen->instructions, irUnary);
-                break;
-            }
-            case Type::Return: {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto irReturn = static_cast<Ir::ReturnInst*>(inst.get());
-                returnInst(functionCodeGen->instructions, irReturn);
-                break;
-            }
-            case Type::Binary: {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto irBinary = static_cast<Ir::BinaryInst*>(inst.get());
-                binaryInst(functionCodeGen->instructions, irBinary);
-                break;
-            }
-            case Type::Label: {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto irLabel = static_cast<Ir::LabelInst*>(inst.get());
-                generateLabelInst(functionCodeGen->instructions, irLabel);
-                break;
-            }
-            case Type::Jump: {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto irJump = static_cast<Ir::JumpInst*>(inst.get());
-                generateJumpInst(functionCodeGen->instructions, irJump);
-                break;
-            }
-            case Type::JumpIfZero: {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto irJumpIfZero = static_cast<Ir::JumpIfZeroInst*>(inst.get());
-                generateJumpIfZeroInst(functionCodeGen->instructions, irJumpIfZero);
-                break;
-            }
-            case Type::JumpIfNotZero: {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto irJumpIfNotZero = static_cast<Ir::JumpIfNotZeroInst*>(inst.get());
-                generateJumpIfNotZeroInst(functionCodeGen->instructions, irJumpIfNotZero);
-                break;
-            }
-            case Type::Copy: {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto irCopy = static_cast<Ir::CopyInst*>(inst.get());
-                generateCopyInst(functionCodeGen->instructions, irCopy);
-                break;
-            }
-            case Type::FunCall: {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto irFunCall = static_cast<Ir::FunCallInst*>(inst.get());
-                generateFunCallInst(functionCodeGen->instructions, irFunCall);
-                break;
-            }
-            default:
-                throw std::runtime_error("Unsupported instruction type");
-        }
+    i32 regIndex = 0;
+    for (; regIndex < function->args.size() && regIndex < registerTypes.size(); ++regIndex) {
+        auto src = std::make_shared<RegisterOperand>(registerTypes[regIndex], 4);
+        auto arg = std::make_shared<Ir::ValueVar>(function->args[regIndex]);
+        std::shared_ptr<Operand> dst = operand(arg);
+        functionCodeGen->instructions.push_back(
+            std::make_unique<MoveInst>(src, dst)
+            );
     }
+    i32 stackPtr = 2;
+    for (; regIndex < function->args.size(); ++regIndex, ++stackPtr) {
+        auto stack = std::make_shared<StackOperand>(8 * stackPtr);
+        auto arg = std::make_shared<Ir::ValueVar>(function->args[regIndex]);
+        std::shared_ptr<Operand> dst = operand(arg);
+        functionCodeGen->instructions.push_back(std::make_unique<MoveInst>(stack, dst));
+    }
+    for (const std::unique_ptr<Ir::Instruction>& inst : function->insts)
+        transformInst(functionCodeGen, inst);
     return functionCodeGen;
+}
+
+void transformInst(const std::unique_ptr<Function>& functionCodeGen, const std::unique_ptr<Ir::Instruction>& inst)
+{
+    switch (inst->type) {
+        case Ir::Instruction::Type::Unary: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irUnary = static_cast<Ir::UnaryInst*>(inst.get());
+            unaryInst(functionCodeGen->instructions, irUnary);
+            break;
+        }
+        case Ir::Instruction::Type::Return: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irReturn = static_cast<Ir::ReturnInst*>(inst.get());
+            returnInst(functionCodeGen->instructions, irReturn);
+            break;
+        }
+        case Ir::Instruction::Type::Binary: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irBinary = static_cast<Ir::BinaryInst*>(inst.get());
+            binaryInst(functionCodeGen->instructions, irBinary);
+            break;
+        }
+        case Ir::Instruction::Type::Label: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irLabel = static_cast<Ir::LabelInst*>(inst.get());
+            generateLabelInst(functionCodeGen->instructions, irLabel);
+            break;
+        }
+        case Ir::Instruction::Type::Jump: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irJump = static_cast<Ir::JumpInst*>(inst.get());
+            generateJumpInst(functionCodeGen->instructions, irJump);
+            break;
+        }
+        case Ir::Instruction::Type::JumpIfZero: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irJumpIfZero = static_cast<Ir::JumpIfZeroInst*>(inst.get());
+            generateJumpIfZeroInst(functionCodeGen->instructions, irJumpIfZero);
+            break;
+        }
+        case Ir::Instruction::Type::JumpIfNotZero: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irJumpIfNotZero = static_cast<Ir::JumpIfNotZeroInst*>(inst.get());
+            generateJumpIfNotZeroInst(functionCodeGen->instructions, irJumpIfNotZero);
+            break;
+        }
+        case Ir::Instruction::Type::Copy: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irCopy = static_cast<Ir::CopyInst*>(inst.get());
+            generateCopyInst(functionCodeGen->instructions, irCopy);
+            break;
+        }
+        case Ir::Instruction::Type::FunCall: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irFunCall = static_cast<Ir::FunCallInst*>(inst.get());
+            generateFunCallInst(functionCodeGen->instructions, irFunCall);
+            break;
+        }
+        default:
+            throw std::runtime_error("Unsupported instruction type");
+    }
 }
 
 void generateJumpInst(std::vector<std::unique_ptr<Inst>>& insts,
@@ -247,40 +269,57 @@ void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst*
 
 void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type)
 {
+    const i32 stackPadding = getStackPadding(type->args.size());
+    if (0 < stackPadding)
+        insts.push_back(std::make_unique<AllocStackInst>(8));
+    pushFunCallArgs(insts, type);
+    insts.push_back(std::make_unique<CallInst>(Identifier(type->funName.value)));
+    const i32 bytesToRemove = 8 * (type->args.size() - 6) + stackPadding;
+    if (0 < bytesToRemove)
+        insts.push_back(std::make_unique<DeallocStackInst>(bytesToRemove));
+    std::shared_ptr<Operand> destination = operand(type->destination);
+    insts.push_back(
+        std::make_unique<MoveInst>(std::make_shared<RegisterOperand>(RegisterOperand::Type::AX, 4), destination)
+        );
+}
+
+i32 getStackPadding(size_t numArgs)
+{
+    if (numArgs <= 6)
+        return 0;
+    i32 stackPadding = 0;
+    if (numArgs % 2 == 1)
+        stackPadding += 8;
+    return stackPadding;
+}
+
+void pushFunCallArgs(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type)
+{
     using RegType = RegisterOperand::Type;
     static const std::vector<RegType> registerTypes = {RegType::DI, RegType::SI, RegType::DX,
                                                        RegType::CX, RegType::R8, RegType::R9};
-    i32 stackPadding = 0;
-    if (type->args.size() % 2 != 0)
-        stackPadding += 8;
-    if (stackPadding != 0)
-        insts.push_back(std::make_unique<AllocStackInst>(8));
     i32 regIndex = 0;
     for (; regIndex < type->args.size() && regIndex < registerTypes.size(); ++regIndex) {
         std::shared_ptr<Operand> src = operand(type->args[regIndex]);
         insts.push_back(
-            std::make_unique<MoveInst>(src, std::make_unique<RegisterOperand>(registerTypes[regIndex], 8))
-            );
+            std::make_unique<MoveInst>(src, std::make_unique<RegisterOperand>(registerTypes[regIndex], 4))
+        );
     }
-    for (i64 i = type->args.size() - 1; regIndex < i; --i) {
+    for (i32 i = type->args.size() - 1; regIndex <= i; --i) {
         std::shared_ptr<Operand> src = operand(type->args[i]);
         if (src->kind == Operand::Kind::Imm ||
             src->kind == Operand::Kind::Register) {
             insts.push_back(std::make_unique<PushInst>(src));
         }
-        else
+        else {
             insts.push_back(
-                std::make_unique<MoveInst>(src, std::make_unique<RegisterOperand>(RegType::AX, 8))
-                );
+                std::make_unique<MoveInst>(src, std::make_shared<RegisterOperand>(RegisterOperand::Type::AX, 4))
+            );
+            insts.push_back(
+                std::make_unique<PushInst>(std::make_shared<RegisterOperand>(RegisterOperand::Type::AX, 8))
+            );
+        }
     }
-    insts.push_back(std::make_unique<CallInst>(Identifier(type->funName.value)));
-    const i64 bytesToRemove = 8 * (type->args.size() - 6) + stackPadding;
-    if (0 < bytesToRemove)
-        insts.push_back(std::make_unique<DeallocStackInst>(bytesToRemove));
-    std::shared_ptr<Operand> destination = operand(type->destination);
-    insts.push_back(
-        std::make_unique<MoveInst>(std::make_shared<RegisterOperand>(RegType::AX, 4), destination)
-        );
 }
 
 UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)

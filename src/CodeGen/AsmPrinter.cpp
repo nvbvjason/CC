@@ -16,7 +16,6 @@ std::string AsmPrinter::printProgram(const Program &program)
 
 void AsmPrinter::add(const Function& function)
 {
-    IndentGuard indent(m_indentLevel);
     addLine(function.name);
     for (const auto& inst : function.instructions)
         add(*inst);

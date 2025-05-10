@@ -50,7 +50,7 @@ namespace CodeGen {
 
 void program(const Ir::Program &program, Program &programCodegen);
 std::unique_ptr<Function> function(const Ir::Function *function);
-
+void transformInst(const std::unique_ptr<Function>& functionCodeGen, const std::unique_ptr<Ir::Instruction>& inst);
 void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
 void generateUnaryNotInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
 
@@ -71,6 +71,9 @@ void generateJumpIfNotZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
 void generateCopyInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::CopyInst* type);
 void generateLabelInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::LabelInst* irLabel);
 void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst);
+
+i32 getStackPadding(size_t numArgs);
+void pushFunCallArgs(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type);
 void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type);
 
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);

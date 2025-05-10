@@ -10,6 +10,8 @@ bool ValidateReturn::programValidate(Parsing::Program& program)
 
 void ValidateReturn::visit(Parsing::FunDecl& funDecl)
 {
+    if (funDecl.body == nullptr)
+        return;
     if (funDecl.body->body.empty()) {
             addReturnZero(funDecl);
         return;

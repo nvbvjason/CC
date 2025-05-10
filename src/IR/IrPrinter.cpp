@@ -16,6 +16,11 @@ void IrPrinter::print(const Function& function)
 {
     IndentGuard guard(m_indentLevel);
     addLine("Function " + function.name);
+    IndentGuard guard2(m_indentLevel);
+    std::string args;
+    for (const auto& arg : function.args)
+        args += print(arg) + ", ";
+    addLine("args: " + args);
     for (const auto& inst : function.insts)
         print(*inst);
 }
