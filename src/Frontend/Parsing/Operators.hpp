@@ -14,9 +14,13 @@ using TokenType = Lexing::Token::Type;
 [[nodiscard]] constexpr UnaryExpr::Operator unaryOperator(TokenType type);
 [[nodiscard]] constexpr BinaryExpr::Operator binaryOperator(TokenType type);
 [[nodiscard]] constexpr AssignmentExpr::Operator assignOperator(TokenType type);
+[[nodiscard]] constexpr Declaration::StorageClass storageClass(TokenType type);
 [[nodiscard]] constexpr bool isBinaryOperator(TokenType type);
 [[nodiscard]] constexpr bool isUnaryOperator(TokenType type);
 [[nodiscard]] constexpr bool isAssignmentOperator(TokenType type);
+[[nodiscard]] constexpr bool isStorageSpecifier(const TokenType type);
+[[nodiscard]] constexpr bool isSpecifier(const TokenType type);
+[[nodiscard]] constexpr bool isType(const TokenType type);
 
 // https://en.cppreference.com/w/c/language/operator_precedence
 [[nodiscard]] constexpr i32 precedence(TokenType type);
@@ -95,6 +99,17 @@ constexpr AssignmentExpr::Operator assignOperator(TokenType type)
 
         default:
             assert(false && "Invalid binary operator: assignOperator(Token::Type)");
+            std::unreachable();
+    }
+}
+
+constexpr Declaration::StorageClass storageClass(TokenType type)
+{
+    switch (type) {
+        case TokenType::Static:           return Declaration::StorageClass::Static;
+        case TokenType::Extern:           return Declaration::StorageClass::Extern;
+        default:
+            assert(false && "Invalid storage class specifier: storageClass(Token::Type)");
             std::unreachable();
     }
 }
@@ -235,6 +250,39 @@ constexpr i32 getPrecedenceLevel(const BinaryExpr::Operator oper)
         default:
             assert(false && "Invalid binary operator getPrecedenceLevel");
             std::unreachable();
+    }
+}
+
+constexpr bool isSpecifier(const TokenType type)
+{
+    switch (type) {
+        case TokenType::Static:
+        case TokenType::Extern:
+        case TokenType::IntKeyword:
+            return true;
+        default:
+            return false;
+    }
+}
+
+constexpr bool isStorageSpecifier(const TokenType type)
+{
+    switch (type) {
+        case TokenType::Static:
+        case TokenType::Extern:
+            return true;
+        default:
+            return false;
+    }
+}
+
+constexpr bool isType(const TokenType type)
+{
+    switch (type) {
+        case TokenType::IntKeyword:
+            return true;
+        default:
+            return false;
     }
 }
 

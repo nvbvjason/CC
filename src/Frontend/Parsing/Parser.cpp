@@ -8,35 +8,35 @@ namespace Parsing {
 bool Parser::programParse(Program& program)
 {
     while (!isAtEnd()) {
-        std::unique_ptr<FunDecl> function = funDeclParse();
-        if (function == nullptr)
+        std::unique_ptr<Declaration> declaration = declarationParse();
+        if (declaration == nullptr)
             return false;
-        program.functions.push_back(std::move(function));
+        program.functions.push_back(std::move(declaration));
     }
     return true;
 }
 
 std::unique_ptr<Declaration> Parser::declarationParse()
 {
-    switch (peekNextNextTokenType()) {
-        case TokenType::Equal:
-        case TokenType::Semicolon:
-            return varDeclParse();
-        case TokenType::OpenParen:
-            return funDeclParse();
-        default:
-            return nullptr;
-    }
-}
-
-std::unique_ptr<VarDecl> Parser::varDeclParse()
-{
-    if (!expect(TokenType::IntKeyword))
+    auto [type, storageClass] = specifierParse();
+    if (type == TokenType::Invalid)
         return nullptr;
     const Lexing::Token lexeme = advance();
     if (lexeme.m_type != TokenType::Identifier)
         return nullptr;
-    auto declaration = std::make_unique<VarDecl>(lexeme.m_lexeme);
+    if (peekTokenType() == TokenType::Equal ||
+        peekTokenType() == TokenType::Semicolon)
+        return varDeclParse(type, storageClass, lexeme.m_lexeme);
+    if (peekTokenType() == TokenType::OpenParen)
+        return funDeclParse(type, storageClass, lexeme.m_lexeme);
+    return nullptr;
+}
+
+std::unique_ptr<VarDecl> Parser::varDeclParse(TokenType type,
+                                              Storage storage,
+                                              std::string iden)
+{
+    auto declaration = std::make_unique<VarDecl>(storage, iden);
     if (expect(TokenType::Equal)) {
         std::unique_ptr<Expr> expr = exprParse(0);
         if (expr == nullptr)
@@ -48,15 +48,11 @@ std::unique_ptr<VarDecl> Parser::varDeclParse()
     return declaration;
 }
 
-std::unique_ptr<FunDecl> Parser::funDeclParse()
+std::unique_ptr<FunDecl> Parser::funDeclParse(TokenType type,
+                                              Storage storage,
+                                              std::string iden)
 {
-    if (!expect(TokenType::IntKeyword))
-        return nullptr;
-    const Lexing::Token lexeme = advance();
-    if (lexeme.m_type != TokenType::Identifier)
-        return nullptr;
-    std::string iden = lexeme.m_lexeme;
-    auto result = std::make_unique<FunDecl>(iden);
+    auto result = std::make_unique<FunDecl>(storage, iden);
     if (!expect(TokenType::OpenParen))
         return nullptr;
     std::unique_ptr<std::vector<std::string>> params = paramsListParse();
@@ -512,6 +508,29 @@ std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()
         arguments.push_back(std::move(expr));
     }
     return std::make_unique<std::vector<std::unique_ptr<Expr>>>(std::move(arguments));
+}
+
+std::tuple<Lexing::Token::Type, Declaration::StorageClass> Parser::specifierParse()
+{
+    using Storage = Declaration::StorageClass;
+    std::vector<Storage> declarations;
+    std::vector<TokenType> types;
+    Lexing::Token token = peek();
+    while (Operators::isSpecifier(token.m_type)) {
+        if (Operators::isType(token.m_type))
+            types.push_back(token.m_type);
+        if (Operators::isStorageSpecifier(token.m_type))
+            declarations.push_back(Operators::storageClass(token.m_type));
+        advance();
+    }
+    if (types.size() != 1)
+        return {TokenType::Invalid, Declaration::StorageClass::None};
+    if (1 < declarations.size())
+        return {TokenType::Invalid, Declaration::StorageClass::None};
+    auto storageClass = Declaration::StorageClass::None;
+    if (declarations.size() != 0)
+        storageClass = declarations.front();
+    return std::make_tuple(types[0], storageClass);
 }
 
 bool Parser::match(const TokenType &type)

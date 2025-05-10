@@ -4,11 +4,12 @@
 #define CC_PARSING_CONCRETE_TREE_HPP
 
 /*
-    <program>               ::= { <function-declaration> }
+    <program>               ::= { <declaration> }
     <declaration>           ::= <function_declaration> | <variable_declaration>
-    <variable_declaration>  ::= "int" <identifier> [ <exp> ] ";"
-    <function_declaration>  ::= "init <identifier> "(" <param-list> ")" ( <block> | ";" )
+    <variable_declaration>  ::= { <specifier> }+ <identifier> [ "=" <exp> ] ";"
+    <function_declaration>  ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
     <param-list>            ::= "void" | "int" <identifier> { "," <identifier> }
+    <specifier>             ::= "int" | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
     <block_item>            ::= <statement> | <declaration>
     <for-inti>              ::= <variable-declaration> | <exp> ";"
@@ -54,6 +55,7 @@ namespace Parsing {
 
 class Parser {
     using TokenType = Lexing::Token::Type;
+    using Storage = Declaration::StorageClass;
     std::vector<Lexing::Token> c_tokens;
     size_t m_current = 0;
 public:
@@ -62,8 +64,12 @@ public:
         : c_tokens(c_tokens) {}
     bool programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
-    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse();
-    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse();
+    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(TokenType type,
+                                                        Storage storage,
+                                                        std::string iden);
+    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(TokenType type,
+                                                        Storage storage,
+                                                        std::string iden);
     [[nodiscard]] std::unique_ptr<std::vector<std::string>> paramsListParse();
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
@@ -92,6 +98,7 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
+    [[nodiscard]] std::tuple<TokenType, Declaration::StorageClass> specifierParse();
 private:
     bool match(const TokenType& type);
     Lexing::Token advance() { return c_tokens[m_current++]; }

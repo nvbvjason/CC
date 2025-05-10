@@ -14,7 +14,7 @@
 namespace Parsing {
 
 struct Program {
-    std::vector<std::unique_ptr<FunDecl>> functions;
+    std::vector<std::unique_ptr<Declaration>> functions;
 
     void accept(ASTVisitor& visitor) { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
@@ -24,22 +24,26 @@ struct Declaration {
     enum class Kind {
         VariableDeclaration, FunctionDecl
     };
+    enum class StorageClass {
+        None, Static, Extern
+    };
     Kind kind;
+    StorageClass storageClass = StorageClass::None;
 
     Declaration() = delete;
     virtual ~Declaration() = default;
     virtual void accept(ASTVisitor& visitor) = 0;
     virtual void accept(ConstASTVisitor& visitor) const = 0;
 protected:
-    explicit Declaration(const Kind kind)
-        : kind(kind) {}
+    explicit Declaration(const Kind kind, const StorageClass storageClass)
+        : kind(kind), storageClass(storageClass) {}
 };
 
 struct VarDecl final : Declaration {
     std::string name;
     std::unique_ptr<Expr> init = nullptr;
-    explicit  VarDecl(std::string name)
-        : Declaration(Kind::VariableDeclaration), name(std::move(name)) {}
+    explicit  VarDecl(const StorageClass storageClass, std::string name)
+        : Declaration(Kind::VariableDeclaration, storageClass), name(std::move(name)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -52,8 +56,8 @@ struct FunDecl final : Declaration {
     std::vector<std::string> params;
     std::unique_ptr<Block> body = nullptr;
 
-    explicit FunDecl(std::string name)
-        : Declaration(Kind::FunctionDecl), name(std::move(name)) {}
+    explicit FunDecl(const StorageClass storageClass, std::string name)
+        : Declaration(Kind::FunctionDecl, storageClass), name(std::move(name)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
