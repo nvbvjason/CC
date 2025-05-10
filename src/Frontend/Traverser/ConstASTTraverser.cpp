@@ -5,7 +5,7 @@ namespace Parsing {
 
 void ConstASTTraverser::visit(const Program& program)
 {
-    for (const auto& decl : program.functions)
+    for (const auto& decl : program.declarations)
         decl->accept(*this);
 }
 

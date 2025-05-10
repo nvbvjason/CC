@@ -1,9 +1,8 @@
 #include "VariableStack.hpp"
+#include "ShortTypes.hpp"
 
 #include <cassert>
 #include <ranges>
-
-#include "ShortTypes.hpp"
 
 namespace Semantics {
 
@@ -13,10 +12,13 @@ void VariableStack::pop()
     m_stack.pop_back();
 }
 
-void VariableStack::addDecl(const std::string& name, const std::string& value, const Variable::Type type)
+void VariableStack::addDecl(const std::string& name,
+                            const std::string& value,
+                            const Variable::Type type,
+                            const Parsing::Declaration::StorageClass storageClass)
 {
     assert(!m_stack.empty() && "VariableStack underflow addDecl()");
-    m_stack.back().emplace(name, Variable(value, type));
+    m_stack.back().emplace(name, Variable(value, type, storageClass));
 }
 
 void VariableStack::push()
@@ -24,7 +26,9 @@ void VariableStack::push()
     m_stack.emplace_back();
 }
 
-bool VariableStack::tryDeclare(const std::string& name, const Variable::Type type) const
+bool VariableStack::tryDeclare(const std::string& name,
+                               const Variable::Type type,
+                               const Parsing::Declaration::StorageClass storageClass) const
 {
     assert(!m_stack.empty() && "VariableStack underflow isDeclared()");
     if (m_args.contains(name))
@@ -33,14 +37,17 @@ bool VariableStack::tryDeclare(const std::string& name, const Variable::Type typ
         const auto it = m_stack[i].find(name);
         if (it == m_stack[i].end())
             continue;
-        if (it->second.type != type && i == m_stack.size() - 1)
+        if ((it->second.storage != storageClass ||
+             it->second.type != type) &&
+            i == m_stack.size() - 1)
             return false;
         return true;
     }
     return true;
 }
 
-std::string VariableStack::tryCall(const std::string& name, Variable::Type type) const
+std::string VariableStack::tryCall(const std::string& name,
+                                   const Variable::Type type) const
 {
     if (m_args.contains(name))
         return name;

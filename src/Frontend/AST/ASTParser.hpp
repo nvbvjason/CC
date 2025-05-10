@@ -14,17 +14,17 @@
 namespace Parsing {
 
 struct Program {
-    std::vector<std::unique_ptr<Declaration>> functions;
+    std::vector<std::unique_ptr<Declaration>> declarations;
 
     void accept(ASTVisitor& visitor) { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
 struct Declaration {
-    enum class Kind {
+    enum class Kind : u8 {
         VariableDeclaration, FunctionDecl
     };
-    enum class StorageClass {
+    enum class StorageClass : u8 {
         None, Static, Extern
     };
     Kind kind;
@@ -73,7 +73,7 @@ struct Block {
 };
 
 struct BlockItem {
-    enum class Kind {
+    enum class Kind : u8 {
         Declaration, Statement
     };
     Kind kind;

@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include "FrontendDriver.hpp"
+
 namespace fs = std::filesystem;
 
 const fs::path testsFolderPath = fs::path(PROJECT_ROOT_DIR) / "test/external/writing-a-c-compiler-tests/tests";
@@ -62,19 +64,8 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     Parsing::Parser parser(lexemes);
     Parsing::Program program;
     parser.programParse(program);
-    Semantics::VariableResolution variableResolution(program);
-    if (!variableResolution.resolve())
-        return false;
-    Semantics::LvalueVerification lvalueVerification(program);
-    if (!lvalueVerification.resolve())
-        return false;
-    Semantics::LabelsUnique labelsUnique;
-    if (!labelsUnique.programValidate(program))
-        return false;
-    Semantics::LoopLabeling switchVerification;
-    if (!switchVerification.programValidate(program))
-        return false;
-    return true;
+    ErrorCode err = validateSemantics(program);
+    return err == ErrorCode::OK;
 }
 
 TEST(Chapter1, lexingValid)

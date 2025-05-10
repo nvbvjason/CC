@@ -20,7 +20,6 @@
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program* program);
-static ErrorCode validateSemantics(Parsing::Program& programNode);
 static Ir::Program ir(const Parsing::Program* parsingProgram);
 static std::string preProcess(const std::filesystem::path& file);
 static std::string getSourceCode(const std::filesystem::path& inputFile);
@@ -37,14 +36,14 @@ std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> FrontendDriver::run() const
         return {nullptr, ErrorCode::Parser};
     if (m_arg == "--parse")
         return {nullptr, ErrorCode::OK};
-    if (ErrorCode err = validateSemantics(program); err != ErrorCode::OK)
-        return {nullptr, err};
-    if (m_arg == "--validate")
-        return {nullptr, ErrorCode::OK};
     if (m_arg == "--printAst") {
         printParsingAst(&program);
         return {nullptr, ErrorCode::OK};
     }
+    if (ErrorCode err = validateSemantics(program); err != ErrorCode::OK)
+        return {nullptr, err};
+    if (m_arg == "--validate")
+        return {nullptr, ErrorCode::OK};
     std::unique_ptr<Ir::Program> irProgram = std::make_unique<Ir::Program>(ir(&program));
     return {std::move(irProgram), ErrorCode::OK};
 }

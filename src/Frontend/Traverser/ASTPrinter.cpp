@@ -1,5 +1,7 @@
 #include "ASTPrinter.hpp"
 
+#include "ASTParser.hpp"
+
 namespace Parsing {
 
 namespace {
@@ -63,6 +65,18 @@ std::string assignmentOpToString(const AssignmentExpr::Operator op)
     }
 }
 
+std::string storageClass(const Declaration::StorageClass storageClass)
+{
+    using StorageClass = Declaration::StorageClass;
+    switch (storageClass) {
+        case StorageClass::Static:       return "static";
+        case StorageClass::Extern:       return "extern";
+        case StorageClass::None:         return "none";
+        default:
+            return "storageClass not defined";
+    }
+}
+
 }
 
 std::string ASTPrinter::getString() const
@@ -73,14 +87,14 @@ std::string ASTPrinter::getString() const
 void ASTPrinter::visit(const Program& program)
 {
     addLine("Program:");
-    for (const auto& funDecl : program.functions)
+    for (const auto& funDecl : program.declarations)
         funDecl->accept(*this);
 }
 
 void ASTPrinter::visit(const VarDecl& varDecl)
 {
     IndentGuard guard(m_indetLevel);
-    addLine("VarDecl " + varDecl.name);
+    addLine("VarDecl " + varDecl.name + ' ' + storageClass(varDecl.storageClass));
     if (varDecl.init)
         varDecl.init->accept(*this);
 }
@@ -88,7 +102,7 @@ void ASTPrinter::visit(const VarDecl& varDecl)
 void ASTPrinter::visit(const FunDecl& funDecl)
 {
     IndentGuard guard(m_indetLevel);
-    addLine("FunDecl: " + funDecl.name);
+    addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storageClass));
     if (funDecl.body)
         funDecl.body->accept(*this);
 }

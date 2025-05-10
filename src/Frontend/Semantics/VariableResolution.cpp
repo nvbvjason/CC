@@ -27,7 +27,7 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
         m_valid = false;
         return;
     }
-    if (!m_variableStack.tryDeclare(funDecl.name, Variable::Type::Function)) {
+    if (!m_variableStack.tryDeclare(funDecl.name, Variable::Type::Function, funDecl.storageClass)) {
         m_valid = false;
         return;
     }
@@ -46,7 +46,10 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
         return;
     }
     m_funcDecls[funDecl.name] = funDecl.params;
-    m_variableStack.addDecl(funDecl.name, makeTemporary(funDecl.name), Variable::Type::Function);
+    m_variableStack.addDecl(funDecl.name,
+                            makeTemporary(funDecl.name),
+                                Variable::Type::Function,
+                                funDecl.storageClass);
     if (funDecl.body == nullptr)
         return;
     m_definedFunctions.insert(funDecl.name);
@@ -79,12 +82,12 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
         m_valid = false;
         return;
     }
-    if (!m_variableStack.tryDeclare(varDecl.name, Variable::Type::Int)) {
+    if (!m_variableStack.tryDeclare(varDecl.name, Variable::Type::Int, varDecl.storageClass)) {
         m_valid = false;
         return;
     }
     const std::string uniqueName = makeTemporary(varDecl.name);
-    m_variableStack.addDecl(varDecl.name, uniqueName, Variable::Type::Int);
+    m_variableStack.addDecl(varDecl.name, uniqueName, Variable::Type::Int, varDecl.storageClass);
     varDecl.name = uniqueName;
     if (varDecl.init != nullptr)
         varDecl.init->accept(*this);

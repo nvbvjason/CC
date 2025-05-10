@@ -56,6 +56,7 @@ namespace Parsing {
 class Parser {
     using TokenType = Lexing::Token::Type;
     using Storage = Declaration::StorageClass;
+    bool m_atFileScope = true;
     std::vector<Lexing::Token> c_tokens;
     size_t m_current = 0;
 public:

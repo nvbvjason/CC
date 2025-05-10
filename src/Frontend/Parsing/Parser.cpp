@@ -11,7 +11,7 @@ bool Parser::programParse(Program& program)
         std::unique_ptr<Declaration> declaration = declarationParse();
         if (declaration == nullptr)
             return false;
-        program.functions.push_back(std::move(declaration));
+        program.declarations.push_back(std::move(declaration));
     }
     return true;
 }
@@ -36,6 +36,8 @@ std::unique_ptr<VarDecl> Parser::varDeclParse(TokenType type,
                                               Storage storage,
                                               std::string iden)
 {
+    if (storage == Storage::None && m_atFileScope)
+        storage = Storage::Extern;
     auto declaration = std::make_unique<VarDecl>(storage, iden);
     if (expect(TokenType::Equal)) {
         std::unique_ptr<Expr> expr = exprParse(0);
@@ -52,6 +54,8 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(TokenType type,
                                               Storage storage,
                                               std::string iden)
 {
+    if (storage != Declaration::StorageClass::Static)
+        storage = Declaration::StorageClass::Extern;
     auto result = std::make_unique<FunDecl>(storage, iden);
     if (!expect(TokenType::OpenParen))
         return nullptr;
@@ -63,7 +67,9 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(TokenType type,
         return nullptr;
     if (expect(TokenType::Semicolon))
         return result;
+    m_atFileScope = false;
     auto block = blockParse();
+    m_atFileScope = true;
     if (block == nullptr)
         return nullptr;
     result->body = std::move(block);
@@ -126,7 +132,7 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
 {
     if (expect(TokenType::Semicolon))
         return {nullptr, false};
-    if (peekTokenType() == TokenType::IntKeyword) {
+    if (Operators::isSpecifier(peekTokenType())) {
         auto decl = declarationParse();
         if (decl == nullptr)
             return {nullptr, true};

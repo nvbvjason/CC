@@ -3,22 +3,28 @@
 #ifndef CC_SEMANTICS_VARIABLE_STACK_HPP
 #define CC_SEMANTICS_VARIABLE_STACK_HPP
 
+#include "ShortTypes.hpp"
+
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "ASTParser.hpp"
+
 namespace Semantics {
 
 struct Variable {
-    enum class Type {
+    enum class Type : u8 {
         Function,
         Int
     };
     std::string name;
     Type type;
-    Variable(const std::string& name, Type type)
-        : name(name), type(type) {}
+    Parsing::Declaration::StorageClass storage;
+    Variable(const std::string& name, Type type, Parsing::Declaration::StorageClass storage)
+        : name(name), type(type), storage(storage) {}
+
     Variable() = delete;
 };
 
@@ -29,11 +35,17 @@ public:
     VariableStack() = default;
     void push();
     void pop();
-    void addDecl(const std::string& name, const std::string& value, Variable::Type type);
-    void addArgs(const std::vector<std::string>& args);
     void clearArgs();
-    [[nodiscard]] bool tryDeclare(const std::string& name, const Variable::Type type) const;
-    [[nodiscard]] std::string tryCall(const std::string& name, Variable::Type type) const;
+    void addArgs(const std::vector<std::string>& args);
+    void addDecl(const std::string& name,
+                 const std::string& value,
+                 Variable::Type type,
+                 Parsing::Declaration::StorageClass storageClass);
+    [[nodiscard]] bool tryDeclare(const std::string& value,
+                                  Variable::Type type,
+                                  Parsing::Declaration::StorageClass storageClass) const;
+    [[nodiscard]] std::string tryCall(const std::string& value,
+                                      Variable::Type type) const;
     [[nodiscard]] bool inArg(const std::string& name) const noexcept;
     [[nodiscard]] bool inInnerMost(const std::string& name) const;
 };

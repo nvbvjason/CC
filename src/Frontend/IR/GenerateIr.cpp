@@ -15,7 +15,7 @@ static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Opera
 
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 {
-    for (const auto& func : parsingProgram->functions) {
+    for (const auto& func : parsingProgram->declarations) {
         // if (func->body == nullptr)
         //     continue;
         // auto functionTacky = function(*func);
