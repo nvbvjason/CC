@@ -12,6 +12,10 @@ bool TypeResolution::validate(const Parsing::Program& program)
 
 void TypeResolution::visit(const Parsing::FunDecl& funDecl)
 {
+    if (funDecl.storageClass == StorageClass::StaticGlobal && m_atFileScope) {
+        m_valid = false;
+        return;
+    }
     if (!m_storageClassMap.contains(funDecl.name))
         m_storageClassMap[funDecl.name] = funDecl.storageClass;
     m_atFileScope = false;
@@ -28,13 +32,14 @@ void TypeResolution::visit(const Parsing::DeclForInit& declForInit)
 
 void TypeResolution::visit(const Parsing::VarDecl& varDecl)
 {
+    if (varDecl.storageClass == StorageClass::ExternLocal &&
+        varDecl.init != nullptr) {
+        m_valid = false;
+        return;
+    }
     m_isConst = true;
     ConstASTTraverser::visit(varDecl);
-    if (!m_isConst && (varDecl.storageClass == StorageClass::StaticGlobal ||
-                       varDecl.storageClass == StorageClass::StaticLocal ||
-                       varDecl.storageClass == StorageClass::ExternGlobalInitialized ||
-                       varDecl.storageClass == StorageClass::AutoGlobalScope ||
-                       varDecl.storageClass == StorageClass::ExternGlobalInitialized))
+    if (mustBeConstantInitialised(varDecl, m_isConst))
         m_valid = false;
 }
 

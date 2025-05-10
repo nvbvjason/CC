@@ -2,186 +2,160 @@
 
 namespace Semantics {
 
-bool VariableResolution::resolve()
+bool VariableResolution::resolve(Parsing::Program& program)
 {
     m_valid = true;
-    m_counter = 0;
     program.accept(*this);
     return m_valid;
 }
 
 void VariableResolution::visit(Parsing::Program& program)
 {
-    m_variableStack.push();
-    for (auto& decl : program.declarations)
-        if (decl->kind == Parsing::Declaration::Kind::VariableDeclaration) {
-            auto varDecl = static_cast<Parsing::VarDecl*>(decl.get());
-            m_variableStack.addDecl(varDecl->name,
-                                    varDecl->name,
-                                    Variable::Type::Int,
-                                    varDecl->storageClass);
-        }
-    for (auto& decl : program.declarations) {
-        if (decl->kind == Parsing::Declaration::Kind::VariableDeclaration)
-            continue;
-        auto funcDecl = static_cast<Parsing::FunDecl*>(decl.get());
-        VariableResolution::visit(*funcDecl);
-    }
-    m_variableStack.pop();
-}
-
-bool VariableResolution::isIllegalFuncDeclaration(const Parsing::FunDecl& funDecl)
-{
-    if (hasDuplicates(funDecl.params)) {
-        m_valid = false;
-        return true;
-    }
-    if (!m_variableStack.tryDeclare(funDecl.name, Variable::Type::Function, funDecl.storageClass)) {
-        m_valid = false;
-        return true;
-    }
-    if (m_funcDecls.contains(funDecl.name)) {
-        if (funDecl.params.size() != m_funcDecls[funDecl.name].size()) {
-            m_valid = false;
-            return true;
-        }
-    }
-    if (functionDefinitionInOtherFunctionBody(funDecl)) {
-        m_valid = false;
-        return true;
-    }
-    if (functionAlreadyDefined(funDecl)) {
-        m_valid = false;
-        return true;
-    }
-    return false;
+    ScopeRAII scopeRAII(m_scopeStack);
+    ASTTraverser::visit(program);
 }
 
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
-    if (!m_valid)
-        return;
-    if (isIllegalFuncDeclaration(funDecl))
-        return;
-    m_funcDecls[funDecl.name] = funDecl.params;
-    m_variableStack.addDecl(funDecl.name,
-                            makeTemporary(funDecl.name),
-                                Variable::Type::Function,
-                                funDecl.storageClass);
-    if (funDecl.body == nullptr)
-        return;
-    m_definedFunctions.insert(funDecl.name);
-    m_inFunctionBody = true;
-    m_variableStack.addArgs(funDecl.params);
+    if (!isFunctionDeclarationValid(funDecl, m_functions, m_scopeStack, m_inFunction))
+        m_valid = false;
+    m_functions.emplace(
+        funDecl.name, FunctionClarification(funDecl.params, funDecl.body != nullptr)
+        );
+    m_scopeStack.addDecl(funDecl.name, funDecl.name,
+                         Variable::Type::Function, StorageClass::ExternFunction);
+    m_scopeStack.addArgs(funDecl.params);
+    m_inFunction = true;
     ASTTraverser::visit(funDecl);
-    m_variableStack.clearArgs();
-    m_inFunctionBody = false;
+    m_inFunction = false;
+    m_scopeStack.clearArgs();
 }
 
 void VariableResolution::visit(Parsing::Block& block)
 {
-    m_variableStack.push();
+    ScopeRAII scopeRAII(m_scopeStack);
     ASTTraverser::visit(block);
-    m_variableStack.pop();
 }
 
-void VariableResolution::visit(Parsing::ForStmt& function)
+void VariableResolution::visit(Parsing::ForStmt& forStmt)
 {
-    m_variableStack.push();
-    ASTTraverser::visit(function);
-    m_variableStack.pop();
+    ScopeRAII scopeRAII(m_scopeStack);
+    ASTTraverser::visit(forStmt);
 }
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    if (!m_valid)
-         return;
-    if (m_variableStack.cannotDeclareInInnerMost(varDecl.name, varDecl.storageClass)) {
+    if (!allowedVarDecl(m_scopeStack, varDecl))
         m_valid = false;
-        return;
-    }
-    if (!m_variableStack.tryDeclare(varDecl.name, Variable::Type::Int, varDecl.storageClass)) {
-        m_valid = false;
-        return;
-    }
-    const std::string uniqueName = makeTemporary(varDecl.name);
-    m_variableStack.addDecl(varDecl.name, uniqueName, Variable::Type::Int, varDecl.storageClass);
-    varDecl.name = uniqueName;
-    if (varDecl.init != nullptr)
-        varDecl.init->accept(*this);
+    const std::string newUniqueName = makeTemporary(varDecl.name);
+    m_scopeStack.addDecl(varDecl.name, newUniqueName,
+                         Variable::Type::Int, varDecl.storageClass);
+    varDecl.name = newUniqueName;
+    ASTTraverser::visit(varDecl);
 }
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    if (!m_valid)
-        return;
-    if (m_variableStack.inArg(varExpr.name))
-        return;
-    const std::string varName = m_variableStack.tryCall(varExpr.name, Variable::Type::Int);
-    if (varName.empty()) {
+    if (notDeclared(m_scopeStack, varExpr))
         m_valid = false;
-        return;
-    }
-    varExpr.name = varName;
+    ASTTraverser::visit(varExpr);
 }
 
 void VariableResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
 {
-    if (!m_valid)
-        return;
-    if (assignmentExpr.lhs->kind != Parsing::Expr::Kind::Var) {
-        m_valid = false;
-        return;
-    }
-    auto varExpr = static_cast<Parsing::VarExpr*>(assignmentExpr.lhs.get());
-    const std::string varName = m_variableStack.tryCall(varExpr->name, Variable::Type::Int);
-    if (varName.empty()) {
-        m_valid = false;
-        return;
-    }
-    varExpr->name = varName;
-    assignmentExpr.rhs->accept(*this);
+    ASTTraverser::visit(assignmentExpr);
 }
 
 void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
 {
-    if (!m_valid)
-        return;
-    const std::string varName = m_variableStack.tryCall(funCallExpr.identifier, Variable::Type::Function);
-    if (varName.empty()) {
+    if (!isFunctionCallValid(m_functions, m_scopeStack, funCallExpr))
         m_valid = false;
-        return;
-    }
-    if (m_funcDecls[funCallExpr.identifier].size() != funCallExpr.args.size()) {
-        m_valid = false;
-        return;
-    }
     ASTTraverser::visit(funCallExpr);
 }
 
-std::string VariableResolution::makeTemporary(const std::string& name)
+bool isFunctionDeclarationValid(const Parsing::FunDecl& funDecl,
+                                const std::unordered_map<std::string, FunctionClarification>& functions,
+                                const ScopeStack& scopeStack,
+                                const bool inFunction)
 {
-    return name + '.' + std::to_string(m_counter++);
+    if (isInvalidInFunctionBody(funDecl, inFunction))
+        return false;
+    if (hasDuplicateParameters(funDecl.params))
+        return false;
+    if (matchesExistingDeclaration(funDecl, functions))
+        return false;
+    if (idenAlreadyDeclaredInScope(funDecl, scopeStack, inFunction))
+        return false;
+    return true;
 }
 
-bool VariableResolution::hasDuplicates(const std::vector<std::string>& vec)
+bool idenAlreadyDeclaredInScope(const Parsing::FunDecl& funDecl,
+                                const ScopeStack& scopeStack,
+                                const bool inFunction)
 {
-    std::unordered_set<std::string> seen;
-    for (const auto& str : vec) {
-        if (seen.contains(str))
+    return inFunction && scopeStack.existInInnerMost(funDecl.name, funDecl.storageClass);
+}
+
+bool matchesExistingDeclaration(const Parsing::FunDecl& funDecl,
+                                const std::unordered_map<std::string, FunctionClarification>& functions)
+{
+    const auto it = functions.find(funDecl.name);
+    if (it == functions.end())
+        return false;
+    if (it->second.defined)
+        return true;
+    return it->second.args.size() != funDecl.params.size();
+}
+
+bool isInvalidInFunctionBody(const Parsing::FunDecl& function,
+                              const bool inFunction)
+{
+    return function.body != nullptr && inFunction;
+}
+
+bool hasDuplicateParameters(const std::vector<std::string>& names)
+{
+    std::unordered_set<std::string> duplicates;
+    for (const std::string& name : names) {
+        if (duplicates.contains(name))
             return true;
-        seen.insert(str);
+        duplicates.insert(name);
     }
     return false;
 }
 
-bool VariableResolution::functionAlreadyDefined(const Parsing::FunDecl& funDecl) const
+bool allowedVarDecl(const ScopeStack& variableStack,
+                    const Parsing::VarDecl& varDecl)
 {
-    return funDecl.body != nullptr && m_definedFunctions.contains(funDecl.name);
+    if (variableStack.inArgs(varDecl.name))
+        return false;
+    return !variableStack.existInInnerMost(varDecl.name, varDecl.storageClass);
 }
 
-bool VariableResolution::functionDefinitionInOtherFunctionBody(const Parsing::FunDecl& funDecl) const
+bool notDeclared(const ScopeStack& variableStack, const Parsing::VarExpr& varExpr)
 {
-    return m_inFunctionBody && funDecl.body != nullptr;
+    auto [name, err] = variableStack.tryCall(varExpr.name, Variable::Type::Int);
+    return !err;
 }
+
+bool isFunctionCallValid(const std::unordered_map<std::string, FunctionClarification>& functions,
+                         const ScopeStack& scopeStack,
+                         const Parsing::FunCallExpr& funCallExpr)
+{
+    auto [str, fine] = scopeStack.tryCall(funCallExpr.identifier, Variable::Type::Function);
+    if (!fine)
+        return false;
+    const auto it = functions.find(funCallExpr.identifier);
+    if (functionNotFound(functions, it))
+        return false;
+    return it->second.args.size() == funCallExpr.args.size();
+}
+
+bool functionNotFound(
+    const std::unordered_map<std::string, FunctionClarification>& functions,
+    const std::unordered_map<std::string, FunctionClarification>::const_iterator& functionsIt)
+{
+    return functionsIt == functions.end();
+}
+
 } // Semantics

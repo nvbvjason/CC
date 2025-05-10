@@ -23,12 +23,22 @@ public:
     void visit(const Parsing::DeclForInit& declForInit) override;
     void visit(const Parsing::VarDecl& varDecl) override;
     void visit(const Parsing::VarExpr& varExpr) override;
+    static bool mustBeConstantInitialised(const Parsing::VarDecl& varDecl, bool isConst);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 };
 
 inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
 {
     return declForInit.decl->storageClass != StorageClass::AutoLocalScope;
+}
+
+inline bool TypeResolution::mustBeConstantInitialised(const Parsing::VarDecl& varDecl, const bool isConst)
+{
+    return !isConst && (varDecl.storageClass == StorageClass::StaticGlobal ||
+                        varDecl.storageClass == StorageClass::GlobalDefinition ||
+                        varDecl.storageClass == StorageClass::StaticLocal ||
+                        varDecl.storageClass == StorageClass::AutoGlobalScope ||
+                        varDecl.storageClass == StorageClass::ExternGlobalInitialized);
 }
 } // Semantics
 

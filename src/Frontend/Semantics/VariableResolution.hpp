@@ -5,43 +5,70 @@
 
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
-#include "VariableStack.hpp"
+#include "ScopeStack.hpp"
 
 #include <string>
-#include <unordered_map>
 
 namespace Semantics {
+struct FunctionClarification {
+    std::vector<std::string> args;
+    bool defined;
+    FunctionClarification(const std::vector<std::string>& _args, const bool _defined)
+        : args(_args), defined(_defined) {}
+};
 
 class VariableResolution : public Parsing::ASTTraverser {
-    VariableStack m_variableStack;
-    std::unordered_map<std::string, std::vector<std::string>> m_funcDecls;
-    std::unordered_set<std::string> m_definedFunctions;
-    i32 m_counter = 0;
-    Parsing::Program& program;
+    struct ScopeRAII {
+        ScopeStack& stack;
+        explicit ScopeRAII(ScopeStack& s) : stack(s) { stack.push(); }
+        ~ScopeRAII() { stack.pop(); }
+    };
+    using StorageClass = Parsing::Declaration::StorageClass;
+    ScopeStack m_scopeStack;
+    std::unordered_map<std::string, FunctionClarification> m_functions;
     bool m_valid = true;
-    bool m_inFunctionBody = false;
+    bool m_inFunction = false;
 public:
-    explicit VariableResolution(Parsing::Program& program)
-        : program(program) {}
-
-    bool resolve();
+    VariableResolution() = default;
+    [[nodiscard]] bool resolve(Parsing::Program& program);
     void visit(Parsing::Program& program) override;
-    bool isIllegalFuncDeclaration(const Parsing::FunDecl& funDecl);
     void visit(Parsing::FunDecl& funDecl) override;
-    void visit(Parsing::Block& function) override;
+    void visit(Parsing::Block& block) override;
 
-    void visit(Parsing::ForStmt& function) override;
+    void visit(Parsing::ForStmt& forStmt) override;
 
     void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
     void visit(Parsing::FunCallExpr& funCallExpr) override;
-private:
-    std::string makeTemporary(const std::string& name);
-    [[nodiscard]] static bool hasDuplicates(const std::vector<std::string>& vec);
-    [[nodiscard]] bool functionDefinitionInOtherFunctionBody(const Parsing::FunDecl& funDecl) const;
-    [[nodiscard]] bool functionAlreadyDefined(const Parsing::FunDecl& funDecl) const;
 };
+
+bool isInvalidInFunctionBody(const Parsing::FunDecl& function, bool inFunction);
+bool hasDuplicateParameters(const std::vector<std::string>& names);
+bool allowedVarDecl(const ScopeStack& variableStack, const Parsing::VarDecl& varDecl);
+bool notDeclared(const ScopeStack& variableStack, const Parsing::VarExpr& varExpr);
+bool matchesExistingDeclaration(const Parsing::FunDecl& funDecl,
+                            const std::unordered_map<std::string, FunctionClarification>& functions);
+bool isFunctionDeclarationValid(const Parsing::FunDecl& funDecl,
+                                const std::unordered_map<std::string, FunctionClarification>& functions,
+                                const ScopeStack& variableStack,
+                                bool inFunction);
+bool idenAlreadyDeclaredInScope(const Parsing::FunDecl& funDecl,
+                                const ScopeStack& scopeStack,
+                                bool inFunction);
+
+bool isFunctionCallValid(const std::unordered_map<std::string, FunctionClarification>& functions,
+                        const ScopeStack& scopeStack,
+                        const Parsing::FunCallExpr& funCallExpr);
+bool functionNotFound(
+    const std::unordered_map<std::string, FunctionClarification>& functions,
+    const std::unordered_map<std::string, FunctionClarification>::const_iterator& functionsIt);
+
+inline std::string makeTemporary(const std::string& name)
+{
+    static i32 m_counter = 0;
+    return name + '.' + std::to_string(m_counter++);
+}
 
 } // Semantics
 

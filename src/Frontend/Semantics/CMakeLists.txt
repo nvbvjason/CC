@@ -6,8 +6,8 @@ add_library(Semantics
         LabelsUnique.hpp
         LoopLabeling.cpp
         LoopLabeling.hpp
-        VariableStack.cpp
-        VariableStack.hpp
+        ScopeStack.cpp
+        ScopeStack.hpp
         TypeResolution.cpp
         TypeResolution.hpp
 )

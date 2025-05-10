@@ -57,14 +57,14 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
 
 ErrorCode validateSemantics(Parsing::Program& programNode)
 {
-    Semantics::VariableResolution variableResolution(programNode);
-    if (!variableResolution.resolve())
+    Semantics::VariableResolution variableResolution;
+    if (!variableResolution.resolve(programNode))
         return ErrorCode::VariableResolution;
     Semantics::ValidateReturn validateReturn;
     if (!validateReturn.programValidate(programNode))
         return ErrorCode::ValidateReturn;
-    Semantics::LvalueVerification lvalueVerification(programNode);
-    if (!lvalueVerification.resolve())
+    Semantics::LvalueVerification lvalueVerification;
+    if (!lvalueVerification.resolve(programNode))
         return ErrorCode::LValueVerification;
     Semantics::LabelsUnique labelsUnique;
     if (!labelsUnique.programValidate(programNode))

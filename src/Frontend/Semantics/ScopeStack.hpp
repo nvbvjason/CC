@@ -28,12 +28,12 @@ struct Variable {
     Variable() = delete;
 };
 
-class VariableStack {
+class ScopeStack {
     using StorageClass = Parsing::Declaration::StorageClass;
     std::vector<std::unordered_map<std::string, Variable>> m_stack;
     std::unordered_set<std::string> m_args;
 public:
-    VariableStack() = default;
+    ScopeStack() = default;
     void push();
     void pop();
     void clearArgs();
@@ -45,11 +45,11 @@ public:
     [[nodiscard]] bool tryDeclare(const std::string& value,
                                   Variable::Type type,
                                   Parsing::Declaration::StorageClass storageClass) const;
-    [[nodiscard]] std::string tryCall(const std::string& value,
-                                      Variable::Type type) const;
-    [[nodiscard]] bool inArg(const std::string& name) const noexcept;
-    [[nodiscard]] bool cannotDeclareInInnerMost(const std::string& name,
-                                   StorageClass storageClass) const;
+    [[nodiscard]] std::tuple<std::string, bool> tryCall(const std::string& callName,
+                                                        Variable::Type type) const;
+    [[nodiscard]] bool inArgs(const std::string& name) const noexcept;
+    [[nodiscard]] bool existInInnerMost(const std::string& name,
+                                        StorageClass storageClass) const;
 };
 
 } // Semantics

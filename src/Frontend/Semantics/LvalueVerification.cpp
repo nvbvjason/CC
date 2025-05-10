@@ -2,10 +2,10 @@
 
 namespace Semantics {
 
-bool LvalueVerification::resolve()
+bool LvalueVerification::resolve(Parsing::Program& program)
 {
     m_valid = true;
-    m_program.accept(*this);
+    ConstASTTraverser::visit(program);
     return m_valid;
 }
 
@@ -30,4 +30,10 @@ void LvalueVerification::visit(const Parsing::UnaryExpr& unaryExpr)
         m_valid = false;
 }
 
+void LvalueVerification::visit(const Parsing::AssignmentExpr& assignmentExpr)
+{
+    if (assignmentExpr.lhs->kind != Parsing::Expr::Kind::Var)
+        m_valid = false;
+    ConstASTTraverser::visit(assignmentExpr);
+}
 } // Semantics

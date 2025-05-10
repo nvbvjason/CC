@@ -4,13 +4,10 @@
 #include "Frontend/Parsing/Parser.hpp"
 #include "../src/Frontend/Semantics/VariableResolution.hpp"
 #include "LabelsUnique.hpp"
-#include "LvalueVerification.hpp"
-#include "LoopLabeling.hpp"
+#include "FrontendDriver.hpp"
 
 #include <filesystem>
 #include <fstream>
-
-#include "FrontendDriver.hpp"
 
 namespace fs = std::filesystem;
 
@@ -63,8 +60,9 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     lexer.getLexemes(lexemes);
     Parsing::Parser parser(lexemes);
     Parsing::Program program;
-    parser.programParse(program);
-    ErrorCode err = validateSemantics(program);
+    if (!parser.programParse(program))
+        return false;
+    const ErrorCode err = validateSemantics(program);
     return err == ErrorCode::OK;
 }
 
