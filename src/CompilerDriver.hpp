@@ -18,14 +18,13 @@ class CompilerDriver {
 public:
     CompilerDriver() = delete;
     CompilerDriver(const CompilerDriver& other) = delete;
-    explicit CompilerDriver(std::vector<std::string> args)
-        : args(std::move(args)) {}
+    CompilerDriver(const int argc, char *argv[])
+        : args(std::vector<std::string>(argv, argv + argc)) {}
 
     bool validateCommandLineArguments(std::string& argument, ErrorCode& value1) const;
     [[nodiscard]] ErrorCode wrappedRun();
     [[nodiscard]] i32 run();
 private:
-    std::string getInputFolder() const;
     void writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument);
 };
 

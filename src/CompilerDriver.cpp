@@ -80,7 +80,7 @@ void CompilerDriver::writeAssmFile(const std::string& inputFile, const std::stri
     std::string stem = std::filesystem::path(inputFile).stem().string();
     const std::string inputFolder = std::filesystem::path(inputFile).parent_path().string();
     m_outputFileName = std::format("{}/{}.s", inputFolder, stem);
-    // m_outputFileName = std::format("/home/jason/src/CC/generated_files/{}.s", stem);
+    // m_outputFileName = std::format(PROJECT_ROOT_DIR"/generated_files/{}.s", stem);
     std::ofstream ofs(m_outputFileName);
     ofs << output;
     ofs.close();
