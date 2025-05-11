@@ -9,6 +9,7 @@ add_executable(CC_test
         Codegen.hpp
         Lexer.hpp
         Parser.hpp
+        ParserStmt.cpp
 )
 
 target_include_directories(CC_test PRIVATE
