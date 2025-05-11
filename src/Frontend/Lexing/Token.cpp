@@ -92,6 +92,7 @@ std::string Token::getTypeName() const
         default:                        return "Unknown Token";
     }
 }
+
 std::ostream& operator<<(std::ostream& os, const Token& token)
 {
     os << "line: " << token.line() << " column: " << token.column() << " type: " << token.getTypeName() << " lexeme: " << token.m_lexeme;

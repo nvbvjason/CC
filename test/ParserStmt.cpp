@@ -8,91 +8,91 @@ using Type = Lexing::Token::Type;
 
 TEST(ParserStmtTests, ReturnStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::Return, Type::Integer, Type::Semicolon};
+    const std::vector tokenTypes{Type::Return, Type::Integer, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.returnStmtParse());
 }
 
 TEST(ParserStmtTests, ReturnStmtMissingReturn)
 {
-    const std::vector<Type> tokenTypes{Type::Integer, Type::Semicolon};
+    const std::vector tokenTypes{Type::Integer, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.returnStmtParse());
 }
 
 TEST(ParserStmtTests, ReturnStmtMissingExpr)
 {
-    const std::vector<Type> tokenTypes{Type::Return, Type::Semicolon};
+    const std::vector tokenTypes{Type::Return, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.returnStmtParse());
 }
 
 TEST(ParserStmtTests, ReturnStmtMissingSemicolon)
 {
-    const std::vector<Type> tokenTypes{Type::Return, Type::Integer};
+    const std::vector tokenTypes{Type::Return, Type::Integer};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.returnStmtParse());
 }
 
 TEST(ParserStmtTests, ExprStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::Integer, Type::Semicolon};
+    const std::vector tokenTypes{Type::Integer, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.exprStmtParse());
 }
 
 TEST(ParserStmtTests, ExprStmtMissingSemicolon)
 {
-    const std::vector<Type> tokenTypes{Type::Integer};
+    const std::vector tokenTypes{Type::Integer};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.exprStmtParse());
 }
 
 TEST(ParserStmtTests, IfStmtWrongBracketingSymbols)
 {
-    const std::vector<Type> tokenTypes{Type::If, Type::OpenBrace, Type::Integer, Type::CloseBrace, Type::Semicolon};
+    const std::vector tokenTypes{Type::If, Type::OpenBrace, Type::Integer, Type::CloseBrace, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.ifStmtParse());
 }
 
 TEST(ParserStmtTests, IfStmtMissingIf)
 {
-    const std::vector<Type> tokenTypes{Type::OpenParen, Type::Integer, Type::CloseParen, Type::Semicolon};
+    const std::vector tokenTypes{Type::OpenParen, Type::Integer, Type::CloseParen, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.ifStmtParse());
 }
 
 TEST(ParserStmtTests, IfStmtMissingOpenParen)
 {
-    const std::vector<Type> tokenTypes{Type::If, Type::Integer, Type::CloseParen, Type::Semicolon};
+    const std::vector tokenTypes{Type::If, Type::Integer, Type::CloseParen, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.ifStmtParse());
 }
 
 TEST(ParserStmtTests, IfStmtMissingExpr)
 {
-    const std::vector<Type> tokenTypes{Type::If, Type::OpenParen, Type::CloseParen, Type::Semicolon};
+    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::CloseParen, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.ifStmtParse());
 }
 
 TEST(ParserStmtTests, IfStmtMissingCloseParen)
 {
-    const std::vector<Type> tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::Semicolon};
+    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.ifStmtParse());
 }
 
 TEST(ParserStmtTests, IfStmtMissingBody)
 {
-    const std::vector<Type> tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::CloseParen};
+    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::CloseParen};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.ifStmtParse());
 }
 
 TEST(ParserStmtTests, IfElseStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::CloseParen, Type::Semicolon,
+    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::CloseParen, Type::Semicolon,
                                        Type::Else, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.ifStmtParse());
@@ -100,7 +100,7 @@ TEST(ParserStmtTests, IfElseStmtSuccess)
 
 TEST(ParserStmtTests, IfElseStmtMissingBody)
 {
-    const std::vector<Type> tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::CloseParen, Type::Semicolon,
+    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::CloseParen, Type::Semicolon,
                                        Type::Else};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.ifStmtParse());
@@ -108,84 +108,105 @@ TEST(ParserStmtTests, IfElseStmtMissingBody)
 
 TEST(ParserStmtTests, GotoStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::Goto, Type::Identifier, Type::Semicolon};
+    const std::vector tokenTypes{Type::Goto, Type::Identifier, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.gotoStmtParse());
 }
 
 TEST(ParserStmtTests, GotoStmtMissingGoto)
 {
-    const std::vector<Type> tokenTypes{Type::Identifier, Type::Semicolon};
+    const std::vector tokenTypes{Type::Identifier, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.gotoStmtParse());
 }
 
 TEST(ParserStmtTests, GotoStmtMissingIdentifier)
 {
-    const std::vector<Type> tokenTypes{Type::Goto, Type::Semicolon};
+    const std::vector tokenTypes{Type::Goto, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.gotoStmtParse());
 }
 
 TEST(ParserStmtTests, GotoStmtMissingSemicolon)
 {
-    const std::vector<Type> tokenTypes{Type::Goto, Type::Identifier};
+    const std::vector tokenTypes{Type::Goto, Type::Identifier};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.gotoStmtParse());
 }
 
+TEST(ParserStmtTests, BreakStmtSuccess)
+{
+    const std::vector tokenTypes{Type::Break, Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_NE(nullptr, parser.breakStmtParse());
+}
+
+TEST(ParserStmtTests, BreakStmtMissingBreak)
+{
+    const std::vector tokenTypes{Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.breakStmtParse());
+}
+
+TEST(ParserStmtTests, BreakStmtMissingSemicolon)
+{
+    const std::vector tokenTypes{Type::Break};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.breakStmtParse());
+}
+
 TEST(ParserStmtTests, ContinueStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::Continue, Type::Semicolon};
+    const std::vector tokenTypes{Type::Continue, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.continueStmtParse());
 }
 
 TEST(ParserStmtTests, ContinueStmtMissingContinue)
 {
-    const std::vector<Type> tokenTypes{Type::Semicolon};
+    const std::vector tokenTypes{Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.continueStmtParse());
 }
 
 TEST(ParserStmtTests, ContinueStmtMissingSemicolon)
 {
-    const std::vector<Type> tokenTypes{Type::Continue};
+    const std::vector tokenTypes{Type::Continue};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.continueStmtParse());
 }
 
 TEST(ParserStmtTests, LabelStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::Identifier, Type::Colon, Type::Semicolon};
+    const std::vector tokenTypes{Type::Identifier, Type::Colon, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.labelStmtParse());
 }
 
 TEST(ParserStmtTests, LabelStmtMissingIdentifier)
 {
-    const std::vector<Type> tokenTypes{Type::Colon, Type::Semicolon};
+    const std::vector tokenTypes{Type::Colon, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.labelStmtParse());
 }
 
 TEST(ParserStmtTests, LabelStmtMissingColon)
 {
-    const std::vector<Type> tokenTypes{Type::Identifier, Type::Semicolon};
+    const std::vector tokenTypes{Type::Identifier, Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.labelStmtParse());
 }
 
 TEST(ParserStmtTests, LabelStmtMissingBody)
 {
-    const std::vector<Type> tokenTypes{Type::Identifier, Type::Colon};
+    const std::vector tokenTypes{Type::Identifier, Type::Colon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.labelStmtParse());
 }
 
 TEST(ParserTests, CaseStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::Case, Type::Integer, Type::Colon,
+    const std::vector tokenTypes{Type::Case, Type::Integer, Type::Colon,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.caseStmtParse());
@@ -193,7 +214,7 @@ TEST(ParserTests, CaseStmtSuccess)
 
 TEST(ParserStmtTests, CaseStmtMissingCase)
 {
-    const std::vector<Type> tokenTypes{Type::Integer, Type::Colon,
+    const std::vector tokenTypes{Type::Integer, Type::Colon,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.caseStmtParse());
@@ -201,7 +222,7 @@ TEST(ParserStmtTests, CaseStmtMissingCase)
 
 TEST(ParserStmtTests, CaseStmtMissingColon)
 {
-    const std::vector<Type> tokenTypes{Type::Integer, Type::Colon,
+    const std::vector tokenTypes{Type::Case, Type::Integer,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.caseStmtParse());
@@ -209,7 +230,7 @@ TEST(ParserStmtTests, CaseStmtMissingColon)
 
 TEST(ParserStmtTests, CaseStmtMissingBody)
 {
-    const std::vector<Type> tokenTypes{Type::Integer, Type::Colon,
+    const std::vector tokenTypes{Type::Integer, Type::Colon,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.caseStmtParse());
@@ -217,7 +238,7 @@ TEST(ParserStmtTests, CaseStmtMissingBody)
 
 TEST(ParserStmtTests, DefaultStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::Default, Type::Colon,
+    const std::vector tokenTypes{Type::Default, Type::Colon,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.defaultStmtParse());
@@ -225,7 +246,7 @@ TEST(ParserStmtTests, DefaultStmtSuccess)
 
 TEST(ParserStmtTests, DefaultStmtMissingDefault)
 {
-    const std::vector<Type> tokenTypes{Type::Colon,
+    const std::vector tokenTypes{Type::Colon,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.defaultStmtParse());
@@ -233,7 +254,7 @@ TEST(ParserStmtTests, DefaultStmtMissingDefault)
 
 TEST(ParserStmtTests, DefaultStmtMissingColon)
 {
-    const std::vector<Type> tokenTypes{Type::Default,
+    const std::vector tokenTypes{Type::Default,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.defaultStmtParse());
@@ -241,14 +262,14 @@ TEST(ParserStmtTests, DefaultStmtMissingColon)
 
 TEST(ParserStmtTests, DefaultStmtMissingBody)
 {
-    const std::vector<Type> tokenTypes{Type::Default, Type::Colon};
+    const std::vector tokenTypes{Type::Default, Type::Colon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.defaultStmtParse());
 }
 
 TEST(ParserStmtTests, WhileStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::While, Type::OpenParen, Type::Integer, Type::CloseParen,
+    const std::vector tokenTypes{Type::While, Type::OpenParen, Type::Integer, Type::CloseParen,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.whileStmtParse());
@@ -256,7 +277,7 @@ TEST(ParserStmtTests, WhileStmtSuccess)
 
 TEST(ParserStmtTests, WhileStmtMissingWhile)
 {
-    const std::vector<Type> tokenTypes{Type::OpenParen, Type::Integer, Type::CloseParen,
+    const std::vector tokenTypes{Type::OpenParen, Type::Integer, Type::CloseParen,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.whileStmtParse());
@@ -264,7 +285,7 @@ TEST(ParserStmtTests, WhileStmtMissingWhile)
 
 TEST(ParserStmtTests, WhileStmtMissingOpenParen)
 {
-    const std::vector<Type> tokenTypes{Type::OpenParen, Type::Integer, Type::CloseParen,
+    const std::vector tokenTypes{Type::OpenParen, Type::Integer, Type::CloseParen,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.whileStmtParse());
@@ -272,7 +293,7 @@ TEST(ParserStmtTests, WhileStmtMissingOpenParen)
 
 TEST(ParserStmtTests, WhileStmtMissingCloseParen)
 {
-    const std::vector<Type> tokenTypes{Type::While,
+    const std::vector tokenTypes{Type::While,
         Type::OpenParen, Type::Integer,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
@@ -281,7 +302,7 @@ TEST(ParserStmtTests, WhileStmtMissingCloseParen)
 
 TEST(ParserStmtTests, WhileStmtMissingBody)
 {
-    const std::vector<Type> tokenTypes{Type::While,
+    const std::vector tokenTypes{Type::While,
         Type::OpenParen, Type::Integer};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.whileStmtParse());
@@ -289,17 +310,44 @@ TEST(ParserStmtTests, WhileStmtMissingBody)
 
 TEST(ParserStmtTests, doWhileStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::Do,
+    const std::vector tokenTypes{Type::Do,
         Type::Semicolon, Type::While, Type::OpenParen, Type::Integer, Type::CloseParen,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.doWhileStmtParse());
 }
 
+TEST(ParserStmtTests, doWhileStmtMissingDo)
+{
+    const std::vector tokenTypes{
+        Type::Semicolon, Type::While, Type::OpenParen, Type::Integer, Type::CloseParen,
+        Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.doWhileStmtParse());
+}
+
+TEST(ParserStmtTests, doWhileStmtMissingBody)
+{
+    const std::vector tokenTypes{Type::Do,
+        Type::CloseParen, Type::OpenParen, Type::Integer, Type::CloseParen,
+        Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.doWhileStmtParse());
+}
+
 TEST(ParserStmtTests, doWhileStmtMissingWhile)
 {
-    const std::vector<Type> tokenTypes{Type::Do,
+    const std::vector tokenTypes{Type::Do,
         Type::Semicolon, Type::OpenParen, Type::Integer, Type::CloseParen,
+        Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.doWhileStmtParse());
+}
+
+TEST(ParserStmtTests, doWhileStmtMissingOpenParen)
+{
+    const std::vector tokenTypes{Type::Do,
+        Type::Semicolon, Type::While, Type::Integer, Type::CloseParen,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.doWhileStmtParse());
@@ -307,15 +355,15 @@ TEST(ParserStmtTests, doWhileStmtMissingWhile)
 
 TEST(ParserStmtTests, doWhileStmtMissingSemicolon)
 {
-    const std::vector<Type> tokenTypes{Type::Do,
+    const std::vector tokenTypes{Type::Do,
         Type::Semicolon, Type::While, Type::OpenParen, Type::Integer, Type::CloseParen};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.doWhileStmtParse());
 }
 
-TEST(ParserStmtTests, doWhileStmtMissingParen)
+TEST(ParserStmtTests, doWhileStmtMissingCloseParen)
 {
-    const std::vector<Type> tokenTypes{Type::Do,
+    const std::vector tokenTypes{Type::Do,
         Type::Semicolon, Type::While, Type::OpenParen, Type::Integer,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
@@ -324,7 +372,7 @@ TEST(ParserStmtTests, doWhileStmtMissingParen)
 
 TEST(ParserStmtTests, forStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::For,
+    const std::vector tokenTypes{Type::For,
         Type::OpenParen, Type::Semicolon, Type::Semicolon, Type::CloseParen,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
@@ -333,7 +381,16 @@ TEST(ParserStmtTests, forStmtSuccess)
 
 TEST(ParserStmtTests, forStmtWrongBracketing)
 {
-    const std::vector<Type> tokenTypes{Type::For,
+    const std::vector tokenTypes{Type::For,
+        Type::OpenBrace, Type::Semicolon, Type::Semicolon, Type::CloseBrace,
+        Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.forStmtParse());
+}
+
+TEST(ParserStmtTests, forStmtMissingFor)
+{
+    const std::vector tokenTypes{
         Type::OpenBrace, Type::Semicolon, Type::Semicolon, Type::CloseBrace,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
@@ -342,25 +399,33 @@ TEST(ParserStmtTests, forStmtWrongBracketing)
 
 TEST(ParserStmtTests, forStmtMissingSemicolon)
 {
-    const std::vector<Type> tokenTypes{Type::For,
+    const std::vector tokenTypes{Type::For,
         Type::OpenParen, Type::Semicolon, Type::CloseParen,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.forStmtParse());
 }
 
-TEST(ParserStmtTests, forStmtMissingBrace)
+TEST(ParserStmtTests, forStmtMissingCloseParen)
 {
-    const std::vector<Type> tokenTypes{Type::For,
+    const std::vector tokenTypes{Type::For,
         Type::OpenParen, Type::Semicolon, Type::Semicolon,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.forStmtParse());
 }
 
+TEST(ParserStmtTests, forStmtMissingBody)
+{
+    const std::vector tokenTypes{Type::For,
+        Type::OpenParen, Type::Semicolon, Type::Semicolon, Type::CloseParen};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.forStmtParse());
+}
+
 TEST(ParserStmtTests, switchStmtSuccess)
 {
-    const std::vector<Type> tokenTypes{Type::Switch,
+    const std::vector tokenTypes{Type::Switch,
         Type::OpenParen, Type::Integer, Type::CloseParen,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
@@ -369,7 +434,7 @@ TEST(ParserStmtTests, switchStmtSuccess)
 
 TEST(ParserStmtTests, switchStmtWrongBracketing)
 {
-    const std::vector<Type> tokenTypes{Type::Switch,
+    const std::vector tokenTypes{Type::Switch,
         Type::OpenBrace, Type::Integer, Type::OpenBrace,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
@@ -378,32 +443,58 @@ TEST(ParserStmtTests, switchStmtWrongBracketing)
 
 TEST(ParserStmtTests, switchStmtMissingSwitch)
 {
-    const std::vector<Type> tokenTypes{
+    const std::vector tokenTypes{
         Type::OpenParen, Type::Integer, Type::CloseParen,
         Type::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.switchStmtParse());
 }
 
-TEST(ParserStmtTests, switchStmtMissingParen)
+TEST(ParserStmtTests, switchStmtMissingOpenParen)
 {
-    const std::vector<Type> tokenTypes{Type::Switch,
-        Type::Integer, Type::OpenBrace,
+    const std::vector tokenTypes{Type::Switch,
+        Type::OpenBrace, Type::Integer,
         Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.switchStmtParse());
+}
+
+TEST(ParserStmtTests, switchStmtMissingCondition)
+{
+    const std::vector tokenTypes{Type::Switch,
+        Type::OpenParen, Type::CloseParen,
+        Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.switchStmtParse());
+}
+
+TEST(ParserStmtTests, switchStmtMissingCloseParen)
+{
+    const std::vector tokenTypes{Type::Switch,
+        Type::OpenParen, Type::Integer,
+        Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.switchStmtParse());
+}
+
+TEST(ParserStmtTests, switchStmtMissingBody)
+{
+    const std::vector tokenTypes{Type::Switch,
+        Type::OpenParen, Type::Integer, Type::CloseParen};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(nullptr, parser.switchStmtParse());
 }
 
 TEST(ParserStmtTests, NullStmtSuccess)
 {
-    const std::vector<Type> tokens{Type::Semicolon};
+    const std::vector tokens{Type::Semicolon};
     Parsing::Parser parser = createParser(tokens);
     EXPECT_NE(nullptr, parser.nullStmtParse());
 }
 
 TEST(ParserStmtTests, NullStmtFailure)
 {
-    const std::vector<Type> tokens{Type::OpenBrace};
+    const std::vector tokens{Type::OpenBrace};
     Parsing::Parser parser = createParser(tokens);
     EXPECT_EQ(nullptr, parser.nullStmtParse());
 }
