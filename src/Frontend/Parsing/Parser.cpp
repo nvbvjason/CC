@@ -471,7 +471,7 @@ std::unique_ptr<Expr> Parser::factorParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case TokenType::Integer: {
-            auto constantExpr = std::make_unique<ConstExpr>(std::stoi(lexeme.m_lexeme));
+            auto constantExpr = std::make_unique<ConstExpr>(lexeme.getValue());
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;

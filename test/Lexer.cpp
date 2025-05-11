@@ -38,7 +38,7 @@ namespace {
 TEST(LexerTests, GetTokens) {
     auto tokens = runLexerTest(BASIC_PROGRAM);
 
-    ASSERT_EQ(tokens.size(), 11);
+    EXPECT_EQ(tokens.size(), 11);
 
     const Lexing::Token expected[] = {
         {1, 1, Lexing::Token::Type::IntKeyword, "int"},

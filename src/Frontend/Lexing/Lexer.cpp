@@ -269,9 +269,11 @@ void Lexer::identifier()
 
 void Lexer::addToken(const Token::Type type)
 {
-    i32 ahead = m_current - m_start;
+    const i32 ahead = m_current - m_start;
     std::string text = c_source.substr(m_start, ahead);
     m_tokens.emplace_back(m_line, m_column - ahead, type, text);
+    if (type == Token::Type::Integer)
+        m_tokens.back().m_data = std::stoi(text);
 }
 
 }
