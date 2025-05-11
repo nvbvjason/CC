@@ -38,7 +38,7 @@ namespace Parsing {
         | Assignment(assign_operator, exp, exp)
         | Conditional(exp condition, exp, exp)
         | FunctionCall(identifier, exp* args)
-    unary_operator = Complement | Negate | Not
+    unary_operator = Complement | Negate | Not | Plus
                    | PrefixIncrement | PostFixIncrement
                    | PrefixDecrement | PostFixDecrement
     binary_operator = Add | Subtract | Multiply | Divide | Remainder

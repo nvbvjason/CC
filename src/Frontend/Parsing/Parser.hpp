@@ -35,7 +35,7 @@
     <postfix_exp>           ::= <factor> | <postfix_exp> <postfixop>
     <factor>                ::= <int> | <identifier> | <identifier> "(" [ <argument-list> ] ")" | "(" <exp> ")"
     <argument-list>         ::= <exp> { "," <exp> }
-    <unop>                  ::= "-" | "~" | "!" | "--" | "++"
+    <unop>                  ::= "+" | "-" | "~" | "!" | "--" | "++"
     <postfixop>             ::= "--" | "++"
     <binop>                 ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
                               | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
@@ -50,8 +50,6 @@
 #include "Operators.hpp"
 
 #include <vector>
-
-#include "Token.hpp"
 
 namespace Parsing {
 

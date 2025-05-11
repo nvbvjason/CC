@@ -400,7 +400,7 @@ struct VarExpr final : Expr {
 
 struct UnaryExpr final : Expr {
     enum class Operator {
-        Complement, Negate, Not,
+        Complement, Negate, Not, Plus,
         PrefixIncrement, PostFixIncrement,
         PrefixDecrement, PostFixDecrement
     };

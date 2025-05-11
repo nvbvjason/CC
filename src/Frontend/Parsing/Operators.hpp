@@ -29,17 +29,14 @@ using TokenType = Lexing::Token::Type;
 
 constexpr UnaryExpr::Operator unaryOperator(const TokenType type)
 {
+    using Operator = UnaryExpr::Operator;
     switch (type) {
-        case TokenType::Minus:
-            return UnaryExpr::Operator::Negate;
-        case TokenType::Tilde:
-            return UnaryExpr::Operator::Complement;
-        case TokenType::ExclamationMark:
-            return UnaryExpr::Operator::Not;
-        case TokenType::Increment:
-            return UnaryExpr::Operator::PrefixIncrement;
-        case TokenType::Decrement:
-            return UnaryExpr::Operator::PrefixDecrement;
+        case TokenType::Plus:               return Operator::Plus;
+        case TokenType::Minus:              return Operator::Negate;
+        case TokenType::Tilde:              return Operator::Complement;
+        case TokenType::ExclamationMark:    return Operator::Not;
+        case TokenType::Increment:          return Operator::PrefixIncrement;
+        case TokenType::Decrement:          return Operator::PrefixDecrement;
         default:
             assert(false && "Invalid unary operator unaryOperator");
             std::unreachable();
@@ -134,6 +131,7 @@ constexpr bool isUnaryOperator(const TokenType type)
 {
     switch (type) {
         case TokenType::Minus:
+        case TokenType::Plus:
         case TokenType::Tilde:
         case TokenType::ExclamationMark:
         case TokenType::Increment:

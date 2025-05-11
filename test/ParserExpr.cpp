@@ -7,6 +7,27 @@ namespace {
     using Kind = Parsing::Expr::Kind;
 }
 
+TEST(ParserExprTests, UnarySuccess)
+{
+    const std::vector tokenTypes{Type::Plus, Type::Integer};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_NE(nullptr, parser.unaryExprParse());
+}
+
+TEST(ParserExprTests, UnaryCorrectType)
+{
+    const std::vector tokenTypes{Type::Plus, Type::Integer};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(Kind::Unary, parser.unaryExprParse()->kind);
+}
+
+TEST(ParserExprTests, UnaryFailure)
+{
+    const std::vector tokenTypes{Type::Plus, Type::Semicolon};
+    Parsing::Parser parser = createParser(tokenTypes);
+    EXPECT_EQ(nullptr, parser.unaryExprParse());
+}
+
 TEST(ParserExprTests, PostfixIncrementSuccess)
 {
     const std::vector tokenTypes{Type::Integer, Type::Increment};

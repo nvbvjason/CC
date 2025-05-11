@@ -419,6 +419,8 @@ std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
         return unaryPostfixInst(*unaryParsingPtr, instructions);
     if (isPrefixOp(unaryParsingPtr->op))
         return unaryPrefixInst(*unaryParsingPtr, instructions);
+    if (unaryParsingPtr->op == Parsing::UnaryExpr::Operator::Plus)
+        return inst(*unaryParsingPtr->operand, instructions);
     UnaryInst::Operation operation = convertUnaryOperation(unaryParsingPtr->op);
     auto source = inst(*unaryParsingPtr->operand, instructions);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
