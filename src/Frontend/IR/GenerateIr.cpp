@@ -45,6 +45,7 @@ std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl)
         }
         assert("topLevelIr");
     }
+    std::unreachable();
 }
 
 std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl)

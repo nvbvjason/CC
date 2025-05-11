@@ -8,7 +8,7 @@
 namespace CodeGen {
 
     std::string asmProgram(const Program& program);
-    void asmFunction(std::string& result, const std::unique_ptr<Function>& functionNode);
+    void asmFunction(std::string& result, const Function& functionNode);
     void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction);
     std::string asmOperand(const std::shared_ptr<Operand>& operand);
     std::string asmRegister(const RegisterOperand* reg);

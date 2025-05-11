@@ -77,6 +77,8 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         m_valid = false;
         return;
     }
+    auto [newName, success] = m_scopeStack.tryCall(varExpr.name, Variable::Type::Int);
+    varExpr.name = newName;
     ASTTraverser::visit(varExpr);
 }
 

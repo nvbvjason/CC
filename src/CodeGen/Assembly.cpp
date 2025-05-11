@@ -9,19 +9,23 @@ namespace CodeGen {
 std::string asmProgram(const Program& program)
 {
     std::string result;
-    // for (const std::unique_ptr<Function>& function : program.functions)
-    //     asmFunction(result, function);
+    for (const std::unique_ptr<TopLevel>& topLevel : program.topLevels) {
+        if (topLevel->type == TopLevel::Type::StaticVariable)
+            continue;
+        const auto function = dynamic_cast<Function*>(topLevel.get());
+        asmFunction(result, *function);
+    }
     result += ".section .note.GNU-stack,\"\",@progbits\n";
     return result;
 }
 
-void asmFunction(std::string& result, const std::unique_ptr<Function>& functionNode)
+void asmFunction(std::string& result, const Function& functionNode)
 {
-    result += ".globl    " + functionNode->name + '\n';
-    result += asmFormatLabel(functionNode->name);
+    result += ".globl    " + functionNode.name + '\n';
+    result += asmFormatLabel(functionNode.name);
     result += asmFormatInstruction("pushq", "%rbp");
     result += asmFormatInstruction("movq","%rsp, %rbp");
-    for (const std::unique_ptr<Inst>& inst : functionNode->instructions)
+    for (const std::unique_ptr<Inst>& inst : functionNode.instructions)
         asmInstruction(result, inst);
 }
 

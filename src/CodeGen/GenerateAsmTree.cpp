@@ -33,29 +33,29 @@ std::unique_ptr<TopLevel> generateTopLevel(const Ir::TopLevel& topLevel)
     std::unreachable();
 }
 
-std::unique_ptr<TopLevel> generateFunction(const Ir::Function *function)
+std::unique_ptr<TopLevel> generateFunction(const Ir::Function& function)
 {
     using RegType = RegisterOperand::Type;
     static const std::vector<RegType> registerTypes = {RegType::DI, RegType::SI, RegType::DX,
                                                        RegType::CX, RegType::R8, RegType::R9};
-    auto functionCodeGen = std::make_unique<Function>(function->name, function->isGlobal);
+    auto functionCodeGen = std::make_unique<Function>(function.name, function.isGlobal);
     i32 regIndex = 0;
-    for (; regIndex < function->args.size() && regIndex < registerTypes.size(); ++regIndex) {
+    for (; regIndex < function.args.size() && regIndex < registerTypes.size(); ++regIndex) {
         auto src = std::make_shared<RegisterOperand>(registerTypes[regIndex], 4);
-        auto arg = std::make_shared<Ir::ValueVar>(function->args[regIndex]);
+        auto arg = std::make_shared<Ir::ValueVar>(function.args[regIndex]);
         std::shared_ptr<Operand> dst = operand(arg);
         functionCodeGen->instructions.push_back(
             std::make_unique<MoveInst>(src, dst)
             );
     }
     i32 stackPtr = 2;
-    for (; regIndex < function->args.size(); ++regIndex, ++stackPtr) {
+    for (; regIndex < function.args.size(); ++regIndex, ++stackPtr) {
         auto stack = std::make_shared<StackOperand>(8 * stackPtr);
-        auto arg = std::make_shared<Ir::ValueVar>(function->args[regIndex]);
+        auto arg = std::make_shared<Ir::ValueVar>(function.args[regIndex]);
         std::shared_ptr<Operand> dst = operand(arg);
         functionCodeGen->instructions.push_back(std::make_unique<MoveInst>(stack, dst));
     }
-    for (const std::unique_ptr<Ir::Instruction>& inst : function->insts)
+    for (const std::unique_ptr<Ir::Instruction>& inst : function.insts)
         transformInst(functionCodeGen, inst);
     return functionCodeGen;
 }
@@ -416,7 +416,10 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
 
 i32 getStaticVariableInitial(const Ir::StaticVariable& staticVariable)
 {
-    return 0; // TODO
+    assert(staticVariable.value->type == Ir::Value::Type::Constant &&
+            "StaticVariable must be const initialized");
+    const auto valueConst = static_cast<Ir::ValueConst*>(staticVariable.value.get());
+    return valueConst->value;
 }
 
 i32 replacingPseudoRegisters(Function& function)
