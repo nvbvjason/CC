@@ -12,8 +12,8 @@
 /*
 
 program = Program(function_definition)
-top_level = Function(identifier name,
-function_definition = Function(identifier name, instruciton* instructions)
+top_level = Function(identifier name, bool global, instruction* instructions)
+          | StaticVariable(identifier name, bool global, int init)
 instruction = Mov(operand src, operand dst)
             | Unary(unary_operator, operand)
             | Binary(binary_operator, operand, operand)
@@ -37,6 +37,7 @@ operand = Imm(int)
         | Reg(reg)
         | Pseudo(identifier)
         | Stack(int)
+        | Data(identifier)
 cond_code = E | NE | G | GE | L | LE
 reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11
 
@@ -45,6 +46,7 @@ reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11
 namespace CodeGen {
 
 struct Program;
+struct TopLevel;
 struct Function;
 struct Inst;
 struct Operand;
@@ -52,13 +54,42 @@ struct Operand;
 struct InstVisitor;
 
 struct Program {
-    std::vector<std::unique_ptr<Function>> functions;
+    std::vector<std::unique_ptr<TopLevel>> topLevels;
 };
 
-struct Function {
+struct TopLevel {
+    enum class Type {
+        Function, StaticVariable
+    };
+    Type type;
+
+    TopLevel() = delete;
+
+    virtual ~TopLevel() = default;
+protected:
+    explicit TopLevel(const Type t)
+        : type(t) {}
+};
+
+struct Function : TopLevel {
     std::string name;
     std::vector<std::unique_ptr<Inst>> instructions;
-    i64 stackAlloc;
+    i64 stackAlloc = 0;
+    const bool isGlobal;
+    Function(std::string name, bool isGlobal)
+        : TopLevel(Type::Function), name(std::move(name)), isGlobal(isGlobal) {}
+
+    Function() = delete;
+};
+
+struct StaticVariable : TopLevel {
+    std::string name;
+    i32 init;
+    const bool isGlobal;
+    StaticVariable(std::string name, bool isGlobal, i32 init)
+        : TopLevel(Type::StaticVariable), name(std::move(name)), init(init), isGlobal(isGlobal) {}
+
+    StaticVariable() = delete;
 };
 
 struct Identifier {
@@ -250,7 +281,7 @@ struct ReturnInst final : Inst {
 
 struct Operand {
     enum class Kind {
-        Imm, Register, Pseudo, Stack
+        Imm, Register, Pseudo, Stack, Data
     };
     Kind kind;
 
@@ -296,6 +327,14 @@ struct StackOperand final : Operand {
         : Operand(Kind::Stack), value(value) {}
 
     StackOperand() = delete;
+};
+
+struct DataOperand final : Operand {
+    i32 value;
+    explicit DataOperand(const i32 value)
+        : Operand(Kind::Data), value(value) {}
+
+    DataOperand() = delete;
 };
 
 struct InstVisitor {

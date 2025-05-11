@@ -68,8 +68,8 @@ struct Function : public TopLevel {
     std::string name;
     std::vector<Identifier> args;
     std::vector<std::unique_ptr<Instruction>> insts;
-    bool isGlobal;
-    explicit Function(std::string identifier, const bool isGlobal)
+    const bool isGlobal;
+    Function(std::string identifier, const bool isGlobal)
         : TopLevel(Type::Function), name(std::move(identifier)), isGlobal(isGlobal) {}
 
     Function() = delete;
@@ -78,7 +78,7 @@ struct Function : public TopLevel {
 struct StaticVariable : public TopLevel {
     std::string name;
     std::shared_ptr<Value> value;
-    bool isGlobal;
+    const bool isGlobal;
     explicit StaticVariable(std::string identifier,
                             const std::shared_ptr<Value>& value,
                             const bool isGlobal)

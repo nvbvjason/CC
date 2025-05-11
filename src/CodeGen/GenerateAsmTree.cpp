@@ -3,23 +3,42 @@
 #include "AsmAST.hpp"
 #include "FixUpInstructions.hpp"
 
+#include <cassert>
 #include <stdexcept>
 
 namespace CodeGen {
 
-void program(const Ir::Program &program, Program &programCodegen)
+void generateProgram(const Ir::Program &program, Program &programCodegen)
 {
-    // for (const auto& functionIR : program.functions)
-    //     programCodegen.functions.push_back(function(functionIR.get()));
+    for (const auto& toplevelIr : program.topLevels)
+        programCodegen.topLevels.push_back(std::move(generateTopLevel(*toplevelIr)));
 }
 
-std::unique_ptr<Function> function(const Ir::Function *function)
+std::unique_ptr<TopLevel> generateTopLevel(const Ir::TopLevel& topLevel)
+{
+    using Type = Ir::TopLevel::Type;
+    switch (topLevel.type) {
+        case Type::Function: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto function = static_cast<const Ir::Function*>(&topLevel);
+            return generateFunction(*function);
+        }
+        case Type::StaticVariable: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto staticVariable = static_cast<const Ir::StaticVariable*>(&topLevel);
+            return generateStaticVariable(*staticVariable);
+        }
+        assert("generateTopLevel idk type");
+    }
+    std::unreachable();
+}
+
+std::unique_ptr<TopLevel> generateFunction(const Ir::Function *function)
 {
     using RegType = RegisterOperand::Type;
     static const std::vector<RegType> registerTypes = {RegType::DI, RegType::SI, RegType::DX,
                                                        RegType::CX, RegType::R8, RegType::R9};
-    auto functionCodeGen = std::make_unique<Function>();
-    functionCodeGen->name = function->name;
+    auto functionCodeGen = std::make_unique<Function>(function->name, function->isGlobal);
     i32 regIndex = 0;
     for (; regIndex < function->args.size() && regIndex < registerTypes.size(); ++regIndex) {
         auto src = std::make_shared<RegisterOperand>(registerTypes[regIndex], 4);
@@ -39,6 +58,13 @@ std::unique_ptr<Function> function(const Ir::Function *function)
     for (const std::unique_ptr<Ir::Instruction>& inst : function->insts)
         transformInst(functionCodeGen, inst);
     return functionCodeGen;
+}
+
+std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable)
+{
+    return std::make_unique<StaticVariable>(staticVariable.name,
+                                            getStaticVariableInitial(staticVariable),
+                                            staticVariable.isGlobal);
 }
 
 void transformInst(const std::unique_ptr<Function>& functionCodeGen, const std::unique_ptr<Ir::Instruction>& inst)
@@ -386,6 +412,11 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");
     }
+}
+
+i32 getStaticVariableInitial(const Ir::StaticVariable& staticVariable)
+{
+    return 0; // TODO
 }
 
 i32 replacingPseudoRegisters(Function& function)

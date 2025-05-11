@@ -9,14 +9,43 @@ namespace CodeGen {
 std::string AsmPrinter::printProgram(const Program &program)
 {
     m_indentLevel = 0;
-    for (const auto& function: program.functions)
-        add(*function);
+    for (const auto& topLevel: program.topLevels)
+        add(*topLevel);
     return m_oss.str();
+}
+
+void AsmPrinter::add(const TopLevel& topLevel)
+{
+    using Type = TopLevel::Type;
+    IndentGuard indent(m_indentLevel);
+    switch (topLevel.type) {
+        case Type::Function:
+            add(static_cast<const Function&>(topLevel)); break;
+        case Type::StaticVariable:
+            add(static_cast<const StaticVariable&>(topLevel)); break;
+        default:
+            addLine("Unknown Instruction");
+    }
+}
+
+void AsmPrinter::add(const StaticVariable& staticVariable)
+{
+    std::string global;
+    if (staticVariable.isGlobal)
+        global = "is global";
+    else
+        global = "is not global";
+    addLine(staticVariable.name + " " + std::to_string(staticVariable.init) + " " + global);
 }
 
 void AsmPrinter::add(const Function& function)
 {
-    addLine(function.name);
+    std::string global;
+    if (function.isGlobal)
+        global = "is global";
+    else
+        global = "is not global";
+    addLine(function.name + " " + global);
     for (const auto& inst : function.instructions)
         add(*inst);
 }

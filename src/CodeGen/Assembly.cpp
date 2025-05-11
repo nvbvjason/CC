@@ -9,8 +9,8 @@ namespace CodeGen {
 std::string asmProgram(const Program& program)
 {
     std::string result;
-    for (const std::unique_ptr<Function>& function : program.functions)
-        asmFunction(result, function);
+    // for (const std::unique_ptr<Function>& function : program.functions)
+    //     asmFunction(result, function);
     result += ".section .note.GNU-stack,\"\",@progbits\n";
     return result;
 }

@@ -130,8 +130,11 @@ void printIr(const Ir::Program& irProgram)
 CodeGen::Program codegen(const Ir::Program& irProgram)
 {
     CodeGen::Program codegenProgram;
-    CodeGen::program(irProgram, codegenProgram);
-    for (auto& function : codegenProgram.functions) {
+    CodeGen::generateProgram(irProgram, codegenProgram);
+    for (auto& topLevel : codegenProgram.topLevels) {
+        if (topLevel->type == CodeGen::TopLevel::Type::StaticVariable)
+            continue;
+        auto function = dynamic_cast<CodeGen::Function*>(topLevel.get());
         const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function);
         CodeGen::fixUpInstructions(*function, stackAlloc);
     }

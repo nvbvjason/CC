@@ -22,13 +22,23 @@ std::string IrPrinter::print(const Program& program)
 
 void IrPrinter::print(const StaticVariable& variable)
 {
+    IndentGuard guard(m_indentLevel);
     addLine("Variable: " + variable.name);
+    if (variable.isGlobal)
+        addLine("is Global");
+    else
+        addLine("is not Global");
+    print(*variable.value);
 }
 
 void IrPrinter::print(const Function& function)
 {
     IndentGuard guard(m_indentLevel);
     addLine("Function " + function.name);
+    if (function.isGlobal)
+        addLine("is Global");
+    else
+        addLine("is not Global");
     IndentGuard guard2(m_indentLevel);
     std::string args;
     for (const auto& arg : function.args)
