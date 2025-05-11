@@ -11,6 +11,7 @@ add_executable(CC_test
         Parser.hpp
         ParserStmt.cpp
         Token.cpp
+        ParserExpr.cpp
 )
 
 target_include_directories(CC_test PRIVATE
