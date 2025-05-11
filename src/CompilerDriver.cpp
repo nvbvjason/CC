@@ -1,22 +1,17 @@
 #include "CompilerDriver.hpp"
-
-#include <algorithm>
-
+#include "AsmPrinter.hpp"
 #include "Frontend/FrontendDriver.hpp"
-
 #include "IR/ASTIr.hpp"
 #include "IR/IrPrinter.hpp"
-
 #include "CodeGen/AsmAST.hpp"
 #include "CodeGen/GenerateAsmTree.hpp"
 #include "CodeGen/Assembly.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 #include <format>
-
-#include "AsmPrinter.hpp"
 
 static void printIr(const Ir::Program& irProgram);
 static CodeGen::Program codegen(const Ir::Program& irProgram);

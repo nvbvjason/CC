@@ -12,10 +12,6 @@ bool TypeResolution::validate(const Parsing::Program& program)
 
 void TypeResolution::visit(const Parsing::FunDecl& funDecl)
 {
-    if (funDecl.storageClass == StorageClass::StaticGlobal && m_atFileScope) {
-        m_valid = false;
-        return;
-    }
     if (!m_storageClassMap.contains(funDecl.name))
         m_storageClassMap[funDecl.name] = funDecl.storageClass;
     m_atFileScope = false;

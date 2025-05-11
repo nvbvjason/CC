@@ -70,7 +70,7 @@ std::string storageClass(const Declaration::StorageClass storageClass)
     using StorageClass = Declaration::StorageClass;
     switch (storageClass) {
         case StorageClass::AutoLocalScope:           return "AutoLocalScope";
-        case StorageClass::AutoGlobalScope:          return "AutoGlobalScope";
+        case StorageClass::GlobalScopeDeclaration:          return "AutoGlobalScope";
         case StorageClass::StaticGlobal:             return "StaticGlobal";
         case StorageClass::StaticLocal:              return "StaticLocal";
         case StorageClass::ExternFunction:           return "ExternFunction";

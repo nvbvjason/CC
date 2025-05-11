@@ -12,8 +12,9 @@
 
 /*
 
-program = Program(function_definition)
-function_definition = Function(identifier, instruction* body)
+program = Program(top_level*)
+top_level = Function(identifier, bool global, identifier params, instruction* body)
+          | StaticVariable(identifier, bool global, int init)
 instruction = Return(val)
             | Unary(unary_operator, val src, val dst)
             | Binary(binary_operator, val src1, val src2, val dst)
@@ -48,13 +49,39 @@ struct Program {
     std::vector<std::unique_ptr<Function>> functions;
 };
 
-struct Function {
+struct TopLevel {
+    enum class Type {
+        Function, StaticVariable
+    };
+    Type type;
+
+    TopLevel() = delete;
+
+    virtual ~TopLevel() = default;
+protected:
+    explicit TopLevel(const Type t)
+        : type(t) {}
+};
+
+struct Function : public TopLevel {
     std::string name;
     std::vector<Identifier> args;
     std::vector<std::unique_ptr<Instruction>> insts;
-    explicit Function(std::string identifier)
-        : name(std::move(identifier)) {}
+    bool isGlobal;
+    explicit Function(std::string identifier, const bool isGlobal)
+        : TopLevel(Type::Function), name(std::move(identifier)), isGlobal(isGlobal) {}
+
     Function() = delete;
+};
+
+struct StaticVariable : public TopLevel {
+    std::string name;
+    i32 value;
+    bool isGlobal;
+    explicit StaticVariable(std::string identifier, const bool isGlobal)
+        : TopLevel(Type::StaticVariable), name(std::move(identifier)), isGlobal(isGlobal) {}
+
+    StaticVariable() = delete;
 };
 
 struct Instruction {

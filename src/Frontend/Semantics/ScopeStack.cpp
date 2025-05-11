@@ -19,17 +19,34 @@ void ScopeStack::push()
 }
 
 void ScopeStack::addDecl(const std::string& name,
-                            const std::string& value,
-                            const Variable::Type type,
-                            const Parsing::Declaration::StorageClass storageClass)
+                         const std::string& value,
+                         const Variable::Type type,
+                         const Parsing::Declaration::StorageClass storageClass)
 {
     assert(!m_stack.empty() && "VariableStack underflow addDecl()");
+    auto it = m_stack.back().find(name);
+    if (it->second.storage == St)
     m_stack.back().emplace(name, Variable(value, type, storageClass));
 }
 
+bool ScopeStack::tryDeclareGlobal(const std::string& name,
+                                  const Variable::Type type,
+                                  const Parsing::Declaration::StorageClass storageClass) const
+{
+    assert(m_stack.size() == 1 && "VariableStack underflow tryDeclareGlobal()");
+    if (storageClass == StorageClass::GlobalScopeDeclaration)
+        return true;
+    if (storageClass == StorageClass::ExternGlobal)
+        return true;
+    auto it = m_stack.back().find(name);
+    if (it == m_stack.back().end())
+        return true;
+    return false;
+}
+
 bool ScopeStack::tryDeclare(const std::string& name,
-                               const Variable::Type type,
-                               const Parsing::Declaration::StorageClass storageClass) const
+                            const Variable::Type type,
+                            const Parsing::Declaration::StorageClass storageClass) const
 {
     assert(!m_stack.empty() && "VariableStack underflow isDeclared()");
     if (m_args.contains(name))

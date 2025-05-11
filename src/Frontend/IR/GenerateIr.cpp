@@ -3,11 +3,14 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "ASTParser.hpp"
+
 namespace Ir {
 
 static Identifier makeTemporaryName();
 static bool isPostfixOp(Parsing::UnaryExpr::Operator oper);
 static bool isPrefixOp(Parsing::UnaryExpr::Operator oper);
+static bool isGlobal(Parsing::Declaration::StorageClass storage);
 static BinaryInst::Operation getPostPrefixOperation(Parsing::UnaryExpr::Operator oper);
 static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation);
@@ -27,7 +30,7 @@ void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 
 std::unique_ptr<Function> function(const Parsing::FunDecl& parsingFunction)
 {
-    auto functionTacky = std::make_unique<Function>(parsingFunction.name);
+    auto functionTacky = std::make_unique<Function>(parsingFunction.name, isGlobal(parsingFunction.storageClass));
     blockIr(*parsingFunction.body, functionTacky->insts);
     return functionTacky;
 }
@@ -577,6 +580,25 @@ Identifier makeTemporaryName()
     prefix += std::to_string(id++);
     return {prefix};
 }
+
+static bool isGlobal(Parsing::Declaration::StorageClass storage)
+{
+    using StorageClass = Parsing::Declaration::StorageClass;
+    switch (storage) {
+        case StorageClass::GlobalScopeDeclaration:
+        case StorageClass::ExternFunction:
+        case StorageClass::ExternGlobal:
+        case StorageClass::ExternGlobalInitialized:
+        case StorageClass::GlobalDefinition:
+        case StorageClass::StaticGlobal:
+            return true;
+        case StorageClass::AutoLocalScope:
+        case StorageClass::StaticLocal:
+        case StorageClass::ExternLocal:
+            return false;
+    }
+}
+
 
 UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
 {

@@ -13,6 +13,8 @@ bool Parser::programParse(Program& program)
             return false;
         program.declarations.push_back(std::move(declaration));
     }
+    if (!isAtEnd())
+        return false;
     return true;
 }
 
@@ -546,7 +548,7 @@ Declaration::StorageClass getVarStorageClass(const Lexing::Token::Type tokenType
             return StorageClass::AutoLocalScope;
         if (hasDefinition)
             return StorageClass::GlobalDefinition;
-        return StorageClass::AutoGlobalScope;
+        return StorageClass::GlobalScopeDeclaration;
     }
     if (tokenType == TokenType::Static) {
         if (inBlock)

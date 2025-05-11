@@ -37,7 +37,7 @@ inline bool TypeResolution::mustBeConstantInitialised(const Parsing::VarDecl& va
     return !isConst && (varDecl.storageClass == StorageClass::StaticGlobal ||
                         varDecl.storageClass == StorageClass::GlobalDefinition ||
                         varDecl.storageClass == StorageClass::StaticLocal ||
-                        varDecl.storageClass == StorageClass::AutoGlobalScope ||
+                        varDecl.storageClass == StorageClass::GlobalScopeDeclaration ||
                         varDecl.storageClass == StorageClass::ExternGlobalInitialized);
 }
 } // Semantics

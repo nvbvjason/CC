@@ -42,6 +42,9 @@ public:
                  const std::string& value,
                  Variable::Type type,
                  Parsing::Declaration::StorageClass storageClass);
+    [[nodiscard]] bool tryDeclareGlobal(const std::string& name,
+                                        Variable::Type type,
+                                        Parsing::Declaration::StorageClass storageClass) const;
     [[nodiscard]] bool tryDeclare(const std::string& value,
                                   Variable::Type type,
                                   Parsing::Declaration::StorageClass storageClass) const;

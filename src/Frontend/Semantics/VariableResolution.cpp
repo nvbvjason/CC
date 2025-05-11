@@ -17,10 +17,13 @@ void VariableResolution::visit(Parsing::Program& program)
 
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
-    if (!isFunctionDeclarationValid(funDecl, m_functions, m_scopeStack, m_inFunction))
+    if (!isFunctionDeclarationValid(funDecl, m_functions, m_scopeStack, m_inFunction)) {
         m_valid = false;
+        return;
+    }
     m_functions.emplace(
-        funDecl.name, FunctionClarification(funDecl.params, funDecl.body != nullptr)
+        funDecl.name,
+        FunctionClarification(funDecl.params, funDecl.body != nullptr, funDecl.storageClass)
         );
     m_scopeStack.addDecl(funDecl.name, funDecl.name,
                          Variable::Type::Function, StorageClass::ExternFunction);
@@ -45,8 +48,10 @@ void VariableResolution::visit(Parsing::ForStmt& forStmt)
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    if (!allowedVarDecl(m_scopeStack, varDecl))
+    if (!allowedVarDecl(m_scopeStack, varDecl, m_inFunction)) {
         m_valid = false;
+        return;
+    }
     const std::string newUniqueName = makeTemporary(varDecl.name);
     m_scopeStack.addDecl(varDecl.name, newUniqueName,
                          Variable::Type::Int, varDecl.storageClass);
@@ -56,8 +61,10 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    if (notDeclared(m_scopeStack, varExpr))
+    if (notDeclared(m_scopeStack, varExpr)) {
         m_valid = false;
+        return;
+    }
     ASTTraverser::visit(varExpr);
 }
 
@@ -82,9 +89,11 @@ bool isFunctionDeclarationValid(const Parsing::FunDecl& funDecl,
         return false;
     if (hasDuplicateParameters(funDecl.params))
         return false;
-    if (matchesExistingDeclaration(funDecl, functions))
+    if (!matchesExistingDeclaration(funDecl, functions))
         return false;
     if (idenAlreadyDeclaredInScope(funDecl, scopeStack, inFunction))
+        return false;
+    if (funDecl.storageClass == Parsing::Declaration::StorageClass::StaticGlobal && inFunction)
         return false;
     return true;
 }
@@ -99,12 +108,16 @@ bool idenAlreadyDeclaredInScope(const Parsing::FunDecl& funDecl,
 bool matchesExistingDeclaration(const Parsing::FunDecl& funDecl,
                                 const std::unordered_map<std::string, FunctionClarification>& functions)
 {
+    using StorageClass = Parsing::Declaration::StorageClass;
     const auto it = functions.find(funDecl.name);
     if (it == functions.end())
-        return false;
-    if (it->second.defined)
         return true;
-    return it->second.args.size() != funDecl.params.size();
+    if (it->second.defined && funDecl.body != nullptr)
+        return false;
+    if (it->second.storage == StorageClass::ExternFunction &&
+        funDecl.storageClass == StorageClass::StaticGlobal)
+        return false;
+    return it->second.args.size() == funDecl.params.size();
 }
 
 bool isInvalidInFunctionBody(const Parsing::FunDecl& function,
@@ -125,11 +138,19 @@ bool hasDuplicateParameters(const std::vector<std::string>& names)
 }
 
 bool allowedVarDecl(const ScopeStack& variableStack,
-                    const Parsing::VarDecl& varDecl)
+                    const Parsing::VarDecl& varDecl,
+                    const bool inFunction)
 {
     if (variableStack.inArgs(varDecl.name))
         return false;
+    if (!inFunction && allowedVarDeclGlobal(variableStack, varDecl))
+        return true;
     return !variableStack.existInInnerMost(varDecl.name, varDecl.storageClass);
+}
+
+bool allowedVarDeclGlobal(const ScopeStack& variableStack, const Parsing::VarDecl& varDecl)
+{
+    return variableStack.tryDeclare(varDecl.name, Variable::Type::Int, varDecl.storageClass);
 }
 
 bool notDeclared(const ScopeStack& variableStack, const Parsing::VarExpr& varExpr)

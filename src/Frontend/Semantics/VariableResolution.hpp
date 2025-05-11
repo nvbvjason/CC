@@ -12,9 +12,11 @@
 namespace Semantics {
 struct FunctionClarification {
     std::vector<std::string> args;
+    Parsing::Declaration::StorageClass storage;
     bool defined;
-    FunctionClarification(const std::vector<std::string>& _args, const bool _defined)
-        : args(_args), defined(_defined) {}
+    FunctionClarification(const std::vector<std::string>& _args, const bool _defined,
+                          const Parsing::Declaration::StorageClass _storage)
+        : args(_args), defined(_defined), storage(_storage) {}
 };
 
 class VariableResolution : public Parsing::ASTTraverser {
@@ -45,10 +47,11 @@ public:
 
 bool isInvalidInFunctionBody(const Parsing::FunDecl& function, bool inFunction);
 bool hasDuplicateParameters(const std::vector<std::string>& names);
-bool allowedVarDecl(const ScopeStack& variableStack, const Parsing::VarDecl& varDecl);
+bool allowedVarDecl(const ScopeStack& variableStack, const Parsing::VarDecl& varDecl, bool inFunction);
+bool allowedVarDeclGlobal(const ScopeStack& variableStack, const Parsing::VarDecl& varDecl);
 bool notDeclared(const ScopeStack& variableStack, const Parsing::VarExpr& varExpr);
 bool matchesExistingDeclaration(const Parsing::FunDecl& funDecl,
-                            const std::unordered_map<std::string, FunctionClarification>& functions);
+                                const std::unordered_map<std::string, FunctionClarification>& functions);
 bool isFunctionDeclarationValid(const Parsing::FunDecl& funDecl,
                                 const std::unordered_map<std::string, FunctionClarification>& functions,
                                 const ScopeStack& variableStack,

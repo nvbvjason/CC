@@ -26,7 +26,7 @@ struct Declaration {
     };
     enum class StorageClass : u8 {
         AutoLocalScope,             // no specifier at local scope (e.g., int x; in a function)
-        AutoGlobalScope,            // no specifier at global scope (e.g., int a; at file scope)
+        GlobalScopeDeclaration,     // no specifier at global scope (e.g., int a; at file scope)
         StaticGlobal,               // global to file (e.g., static int x;)
         StaticLocal,                // local scope persistent (e.g., static int x; in a function)
         ExternFunction,             // normal function rules (e.g., extern void foo();)
