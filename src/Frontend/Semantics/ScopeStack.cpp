@@ -24,8 +24,40 @@ void ScopeStack::addDecl(const std::string& name,
                          const Parsing::Declaration::StorageClass storageClass)
 {
     assert(!m_stack.empty() && "VariableStack underflow addDecl()");
-    m_stack.back().emplace(name, Variable(value, type, storageClass));
+     m_stack.back()[name] = Variable(value, type, storageClass);
 }
+
+void ScopeStack::addExternGlobal(const std::string& name)
+{
+    assert(!m_stack.empty() && "VariableStack underflow addDecl()");
+    m_stack.front().emplace(name, Variable(name, Variable::Type::Int, StorageClass::ExternLocal));
+}
+
+std::tuple<Variable, bool> ScopeStack::showIden(const std::string& name) const
+{
+    for (i64 i = m_stack.size() - 1; 0 < i; --i) {
+        const auto it = m_stack[i].find(name);
+        if (it == m_stack[i].end())
+            continue;
+        return {it->second, true};
+    }
+    return {Variable("", Variable::Type::Function, StorageClass::AutoLocalScope), false};
+}
+
+std::tuple<Variable, bool> ScopeStack::showIdenInnermost(const std::string& name) const
+{
+    if (const auto it = m_stack.back().find(name); it != m_stack.back().end())
+        return {it->second, true};
+    return {Variable("", Variable::Type::Function, StorageClass::AutoLocalScope), false};
+}
+
+std::tuple<Variable, bool> ScopeStack::showIdenGlobal(const std::string& name) const
+{
+    if (const auto it = m_stack.front().find(name); it != m_stack.front().end())
+        return {it->second, true};
+    return {Variable("", Variable::Type::Function, StorageClass::AutoLocalScope), false};
+}
+
 
 bool ScopeStack::tryDeclareGlobal(const std::string& name,
                                   const Variable::Type type,
@@ -56,10 +88,6 @@ bool ScopeStack::tryDeclare(const std::string& name,
         const auto it = m_stack[i].find(name);
         if (it == m_stack[i].end())
             continue;
-        if ((it->second.storage != storageClass ||
-             it->second.type != type) &&
-            i == m_stack.size() - 1)
-            return false;
         return true;
     }
     return true;
@@ -79,6 +107,8 @@ std::tuple<std::string, bool> ScopeStack::tryCall(const std::string& callName,
             return {"", false};
         if (it->second.type != type)
             continue;
+        if (it->second.storage == StorageClass::ExternLocal && i == 0)
+            return {"", false};
         return {it->second.name, true};
     }
     return {"", false};

@@ -29,16 +29,16 @@ public:
 
 inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
 {
-    return declForInit.decl->storageClass != StorageClass::AutoLocalScope;
+    return declForInit.decl->storage != StorageClass::AutoLocalScope;
 }
 
 inline bool TypeResolution::mustBeConstantInitialised(const Parsing::VarDecl& varDecl, const bool isConst)
 {
-    return !isConst && (varDecl.storageClass == StorageClass::StaticGlobalInitialized ||
-                        varDecl.storageClass == StorageClass::GlobalDefinition ||
-                        varDecl.storageClass == StorageClass::StaticLocal ||
-                        varDecl.storageClass == StorageClass::GlobalScopeDeclaration ||
-                        varDecl.storageClass == StorageClass::ExternGlobalInitialized);
+    return !isConst && (varDecl.storage == StorageClass::StaticGlobalInitialized ||
+                        varDecl.storage == StorageClass::GlobalDefinition ||
+                        varDecl.storage == StorageClass::StaticLocal ||
+                        varDecl.storage == StorageClass::GlobalScopeDeclaration ||
+                        varDecl.storage == StorageClass::ExternGlobalInitialized);
 }
 } // Semantics
 

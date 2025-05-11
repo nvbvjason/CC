@@ -9,6 +9,8 @@
 
 #include <string>
 
+#include "ASTParser.hpp"
+
 namespace Semantics {
 struct FunctionClarification {
     std::vector<std::string> args;
@@ -57,9 +59,10 @@ bool validateFunctionDeclaration(const Parsing::FunDecl& funDecl,
                                 const std::unordered_map<std::string, FunctionClarification>& functions,
                                 const ScopeStack& variableStack,
                                 bool inFunction);
-bool conflictingIdenInScope(const Parsing::FunDecl& funDecl,
-                                const ScopeStack& scopeStack,
-                                bool inFunction);
+bool conflictingIdenInScope(const Parsing::FunDecl& funDecl, const ScopeStack& scopeStack);
+bool conflictingIdenGlobal(const Parsing::FunDecl& funDecl, const ScopeStack& scopeStack);
+bool allowedInnermost(const ScopeStack& scopeStack,
+                      const Parsing::VarDecl& varDecl);
 
 bool isFunctionCallValid(const std::unordered_map<std::string, FunctionClarification>& functions,
                         const ScopeStack& scopeStack,
@@ -70,6 +73,8 @@ bool functionNotFound(
 
 bool shouldSkipVarDecl(const Parsing::VarDecl& varDecl, const ScopeStack& variableStack, bool inFunction);
 bool shouldSkipFunDecl(const Parsing::FunDecl& funDecl, const ScopeStack& variableStack, bool inFunction);
+
+bool internalLinkage(Parsing::Declaration::StorageClass storageClass);
 
 inline std::string makeTemporary(const std::string& name)
 {

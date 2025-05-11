@@ -30,6 +30,7 @@ struct Declaration {
         StaticGlobalTentative,      // global to file (e.g., static int x;)
         StaticGlobalInitialized,    // global to file (e.g., static int x = 5;)
         StaticLocal,                // local scope persistent (e.g., static int x; in a function)
+        StaticLocalFunction,        // ILLEGAL
         ExternFunction,             // normal function rules (e.g., extern void foo();)
         ExternLocal,                // block scope shadowing (e.g., extern int a; in a block)
         ExternGlobal,               // without definition (e.g., extern int a;)
@@ -37,7 +38,7 @@ struct Declaration {
         GlobalDefinition,           // global at file scope int a = 5;
     };
     Kind kind;
-    StorageClass storageClass;
+    StorageClass storage;
 
     Declaration() = delete;
     virtual ~Declaration() = default;
@@ -45,7 +46,7 @@ struct Declaration {
     virtual void accept(ConstASTVisitor& visitor) const = 0;
 protected:
     explicit Declaration(const Kind kind, const StorageClass storageClass)
-        : kind(kind), storageClass(storageClass) {}
+        : kind(kind), storage(storageClass) {}
 };
 
 struct VarDecl final : Declaration {

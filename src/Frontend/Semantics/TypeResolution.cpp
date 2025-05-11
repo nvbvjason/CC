@@ -13,7 +13,7 @@ bool TypeResolution::validate(const Parsing::Program& program)
 void TypeResolution::visit(const Parsing::FunDecl& funDecl)
 {
     if (!m_storageClassMap.contains(funDecl.name))
-        m_storageClassMap[funDecl.name] = funDecl.storageClass;
+        m_storageClassMap[funDecl.name] = funDecl.storage;
     m_atFileScope = false;
     ConstASTTraverser::visit(funDecl);
     m_atFileScope = true;
@@ -28,7 +28,7 @@ void TypeResolution::visit(const Parsing::DeclForInit& declForInit)
 
 void TypeResolution::visit(const Parsing::VarDecl& varDecl)
 {
-    if (varDecl.storageClass == StorageClass::ExternLocal &&
+    if (varDecl.storage == StorageClass::ExternLocal &&
         varDecl.init != nullptr) {
         m_valid = false;
         return;

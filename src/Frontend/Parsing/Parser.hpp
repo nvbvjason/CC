@@ -113,7 +113,7 @@ private:
 };
 
 Declaration::StorageClass getVarStorageClass(Lexing::Token::Type tokenType, bool inBlock, bool hasDefinition);
-Declaration::StorageClass getFunctionStorageClass(Lexing::Token::Type tokenType, bool hasDefinition);
+Declaration::StorageClass getFunctionStorageClass(Lexing::Token::Type tokenType, bool inFunction, bool hasDefinition);
 
 inline bool Parser::continuePrecedenceClimbing(const i32 minPrecedence, TokenType nextToken)
 {

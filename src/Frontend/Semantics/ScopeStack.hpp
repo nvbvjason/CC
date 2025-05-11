@@ -18,6 +18,7 @@ struct Variable {
     std::string name;
     StorageClass storage;
     Type type;
+    Variable() = default;
     Variable(std::string n, const Type t, const StorageClass storageClassType)
         : name(std::move(n)), storage(storageClassType), type(t) {}
 };
@@ -37,6 +38,10 @@ public:
                  const std::string& value,
                  Variable::Type type,
                  Parsing::Declaration::StorageClass storageClass);
+    void addExternGlobal(const std::string& name);
+    [[nodiscard]] std::tuple<Variable, bool> showIden(const std::string& name) const;
+    [[nodiscard]] std::tuple<Variable, bool> showIdenInnermost(const std::string& name) const;
+    [[nodiscard]] std::tuple<Variable, bool> showIdenGlobal(const std::string& name) const;
     [[nodiscard]] bool tryDeclareGlobal(const std::string& name,
                                         Variable::Type type,
                                         Parsing::Declaration::StorageClass storageClass) const;

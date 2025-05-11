@@ -24,7 +24,7 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
     if (shouldSkipFunDecl(funDecl, m_scopeStack, inFunction())) {
         m_functions.emplace(
             funDecl.name,
-            FunctionClarification(funDecl.params, funDecl.body != nullptr, funDecl.storageClass)
+            FunctionClarification(funDecl.params, funDecl.body != nullptr, funDecl.storage)
             );
         m_scopeStack.addDecl(funDecl.name, funDecl.name,
                              Variable::Type::Function, StorageClass::ExternFunction);
@@ -52,12 +52,22 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
         m_valid = false;
         return;
     }
-    const std::string newUniqueName = makeTemporary(varDecl.name);
     if (!shouldSkipVarDecl(varDecl, m_scopeStack, inFunction())) {
-        m_scopeStack.addDecl(varDecl.name, newUniqueName,
-                             Variable::Type::Int, varDecl.storageClass);
+        std::string newName = varDecl.name;
+        if (!(varDecl.storage == StorageClass::ExternGlobal ||
+              varDecl.storage == StorageClass::GlobalScopeDeclaration ||
+              varDecl.storage == StorageClass::ExternLocal ||
+              varDecl.storage == StorageClass::GlobalDefinition ||
+              varDecl.storage == StorageClass::StaticGlobalInitialized ||
+              varDecl.storage == StorageClass::StaticGlobalTentative)) {
+            newName = makeTemporary(varDecl.name);
+        }
+        if (varDecl.storage == StorageClass::ExternLocal)
+            m_scopeStack.addExternGlobal(varDecl.name);
+        m_scopeStack.addDecl(varDecl.name, newName,
+                             Variable::Type::Int, varDecl.storage);
+        varDecl.name = newName;
     }
-    varDecl.name = newUniqueName;
     ASTTraverser::visit(varDecl);
 }
 
@@ -87,23 +97,37 @@ bool validateFunctionDeclaration(const Parsing::FunDecl& funDecl,
                                 const ScopeStack& scopeStack,
                                 const bool inFunction)
 {
+    if (inFunction && funDecl.storage == Parsing::Declaration::StorageClass::StaticLocalFunction)
+        return false;
     if (isInvalidInFunctionBody(funDecl, inFunction))
         return false;
     if (hasDuplicateParameters(funDecl.params))
         return false;
     if (!matchesExistingDeclaration(funDecl, functions))
         return false;
-    if (conflictingIdenInScope(funDecl, scopeStack, inFunction))
+    if (inFunction && conflictingIdenInScope(funDecl, scopeStack))
+        return false;
+    if (conflictingIdenGlobal(funDecl, scopeStack))
         return false;
     return true;
 }
 
 bool conflictingIdenInScope(const Parsing::FunDecl& funDecl,
-                                const ScopeStack& scopeStack,
-                                const bool inFunction)
+                            const ScopeStack& scopeStack)
 {
-    return inFunction && scopeStack.existInInnerMost(funDecl.name, funDecl.storageClass);
+    return scopeStack.existInInnerMost(funDecl.name, funDecl.storage);
 }
+
+bool conflictingIdenGlobal(const Parsing::FunDecl& funDecl, const ScopeStack& scopeStack)
+{
+    auto [varIden, found] = scopeStack.showIdenGlobal(funDecl.name);
+    if (!found)
+        return false;
+    if (varIden.type != Variable::Type::Function)
+        return true;
+    return false;
+}
+
 
 bool matchesExistingDeclaration(const Parsing::FunDecl& funDecl,
                                 const std::unordered_map<std::string, FunctionClarification>& functions)
@@ -115,7 +139,7 @@ bool matchesExistingDeclaration(const Parsing::FunDecl& funDecl,
     if (it->second.defined && funDecl.body != nullptr)
         return false;
     if (it->second.storage == StorageClass::ExternFunction &&
-        funDecl.storageClass == StorageClass::StaticGlobalInitialized)
+        funDecl.storage == StorageClass::StaticGlobalInitialized)
         return false;
     return it->second.args.size() == funDecl.params.size();
 }
@@ -145,20 +169,53 @@ bool allowedVarDecl(const ScopeStack& variableStack,
         return false;
     if (!inFunction && allowedVarDeclGlobal(variableStack, varDecl))
         return true;
-    if (varDecl.storageClass == Parsing::Declaration::StorageClass::ExternLocal)
+    if (allowedInnermost(variableStack, varDecl))
         return true;
-    return !variableStack.existInInnerMost(varDecl.name, varDecl.storageClass);
+    return false;
+}
+
+bool allowedInnermost(const ScopeStack& scopeStack,
+                      const Parsing::VarDecl& varDecl)
+{
+    auto [varGlobal, globalFound] = scopeStack.showIdenGlobal(varDecl.name);
+    if (globalFound && varGlobal.type == Variable::Type::Function &&
+        varDecl.storage == Parsing::Declaration::StorageClass::ExternLocal)
+        return false;
+    auto [varInner, found] = scopeStack.showIdenInnermost(varDecl.name);
+    if (!found)
+        return true;
+    if (varInner.storage == Parsing::Declaration::StorageClass::ExternLocal &&
+        varDecl.storage == Parsing::Declaration::StorageClass::ExternLocal)
+        return true;
+    return false;
 }
 
 bool allowedVarDeclGlobal(const ScopeStack& variableStack, const Parsing::VarDecl& varDecl)
 {
-    return variableStack.tryDeclareGlobal(varDecl.name, Variable::Type::Int, varDecl.storageClass);
+    using StorageClass = Parsing::Declaration::StorageClass;
+    if (varDecl.storage == StorageClass::ExternGlobal)
+        return true;
+    auto [idenVar, found] = variableStack.showIdenInnermost(varDecl.name);
+    if (!found)
+        return true;
+    if (idenVar.type == Variable::Type::Function)
+        return false;
+    if (idenVar.storage == StorageClass::StaticGlobalTentative &&
+        varDecl.storage == StorageClass::GlobalDefinition)
+        return false;
+    if (idenVar.storage == StorageClass::ExternLocal &&
+        varDecl.storage == StorageClass::StaticGlobalInitialized)
+        return false;
+    if (idenVar.storage == StorageClass::GlobalDefinition &&
+        varDecl.storage == StorageClass::GlobalDefinition)
+        return false;
+    return true;
 }
 
 bool notDeclared(const ScopeStack& variableStack, const Parsing::VarExpr& varExpr)
 {
-    auto [name, err] = variableStack.tryCall(varExpr.name, Variable::Type::Int);
-    return !err;
+    auto [name, found] = variableStack.tryCall(varExpr.name, Variable::Type::Int);
+    return !found;
 }
 
 bool isFunctionCallValid(const std::unordered_map<std::string, FunctionClarification>& functions,
@@ -176,7 +233,13 @@ bool isFunctionCallValid(const std::unordered_map<std::string, FunctionClarifica
 
 bool shouldSkipVarDecl(const Parsing::VarDecl& varDecl, const ScopeStack& variableStack, bool inFunction)
 {
-
+    using StorageClass = Parsing::Declaration::StorageClass;
+    auto [idenVar, found] = variableStack.showIden(varDecl.name);
+    if (!found)
+        return false;
+    if (varDecl.storage == StorageClass::ExternGlobal ||
+        varDecl.storage == StorageClass::GlobalScopeDeclaration)
+        return true;
     return false;
 }
 
@@ -185,12 +248,20 @@ bool shouldSkipFunDecl(const Parsing::FunDecl& funDecl, const ScopeStack& variab
     return true;
 }
 
-
 bool functionNotFound(
     const std::unordered_map<std::string, FunctionClarification>& functions,
     const std::unordered_map<std::string, FunctionClarification>::const_iterator& functionsIt)
 {
     return functionsIt == functions.end();
+}
+
+bool internalLinkage(Parsing::Declaration::StorageClass storageClass)
+{
+    using StorageClass = Parsing::Declaration::StorageClass;
+    if (storageClass == StorageClass::StaticGlobalInitialized ||
+        storageClass == StorageClass::StaticGlobalTentative)
+        return true;
+    return false;
 }
 
 } // Semantics

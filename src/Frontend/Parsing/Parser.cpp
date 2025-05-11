@@ -76,7 +76,7 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(TokenType type,
     else
         if (!expect(TokenType::Semicolon))
             return nullptr;
-    Storage storage = getFunctionStorageClass(storageToken, block != nullptr);
+    Storage storage = getFunctionStorageClass(storageToken, !m_atFileScope, block != nullptr);
     auto result = std::make_unique<FunDecl>(storage, iden);
     if (block != nullptr)
         result->body = std::move(block);
@@ -571,16 +571,21 @@ Declaration::StorageClass getVarStorageClass(const Lexing::Token::Type tokenType
     std::unreachable();
 }
 
-Declaration::StorageClass getFunctionStorageClass(const Lexing::Token::Type tokenType, const bool hasDefinition)
+Declaration::StorageClass getFunctionStorageClass(const Lexing::Token::Type tokenType,
+                                                  const bool inFunction,
+                                                  const bool hasDefinition)
 {
     using TokenType = Lexing::Token::Type;
     using StorageClass = Declaration::StorageClass;
     if (tokenType == TokenType::NotAToken || tokenType == TokenType::Extern)
         return StorageClass::ExternFunction;
-    if (tokenType == TokenType::Static)
+    if (tokenType == TokenType::Static) {
         if (hasDefinition)
             return StorageClass::StaticGlobalInitialized;
-        return StorageClass::StaticGlobalTentative;
+        if (inFunction)
+            return StorageClass::StaticLocalFunction;
+    }
+    return StorageClass::StaticGlobalTentative;
     assert("getVarStorageClass invalid TokenType");
 }
 

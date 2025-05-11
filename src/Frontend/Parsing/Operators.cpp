@@ -1,4 +1,4 @@
 #include "Operators.hpp"
 
-namespace Parsing {
+namespace Parsing::Operators {
 } // Parsing

@@ -100,14 +100,14 @@ void ASTPrinter::visit(const Program& program)
 void ASTPrinter::visit(const VarDecl& varDecl)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("VarDecl " + varDecl.name + ' ' + storageClass(varDecl.storageClass));
+    addLine("VarDecl " + varDecl.name + ' ' + storageClass(varDecl.storage));
     ConstASTTraverser::visit(varDecl);
 }
 
 void ASTPrinter::visit(const FunDecl& funDecl)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storageClass));
+    addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storage));
     ConstASTTraverser::visit(funDecl);
 }
 
@@ -298,7 +298,7 @@ void ASTPrinter::visit(const NullStmt& nullStmt)
 void ASTPrinter::visit(const FunCallExpr& functionCallExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("Function Call");
+    addLine("Function Call: " + functionCallExpr.identifier);
     ConstASTTraverser::visit(functionCallExpr);
 }
 

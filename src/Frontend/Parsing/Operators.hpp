@@ -276,7 +276,6 @@ constexpr i32 getPrecedenceLevel(const AssignmentExpr::Operator oper)
 {
     return 14;
 }
-
 } // namespace Parsing::Operators
 
 #endif // CC_PARSING_OPERATORS_HPP

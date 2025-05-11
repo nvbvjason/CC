@@ -29,7 +29,7 @@ void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 
 std::unique_ptr<Function> function(const Parsing::FunDecl& parsingFunction)
 {
-    auto functionTacky = std::make_unique<Function>(parsingFunction.name, isGlobal(parsingFunction.storageClass));
+    auto functionTacky = std::make_unique<Function>(parsingFunction.name, isGlobal(parsingFunction.storage));
     blockIr(*parsingFunction.body, functionTacky->insts);
     return functionTacky;
 }
