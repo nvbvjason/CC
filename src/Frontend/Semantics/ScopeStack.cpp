@@ -24,8 +24,6 @@ void ScopeStack::addDecl(const std::string& name,
                          const Parsing::Declaration::StorageClass storageClass)
 {
     assert(!m_stack.empty() && "VariableStack underflow addDecl()");
-    auto it = m_stack.back().find(name);
-    if (it->second.storage == St)
     m_stack.back().emplace(name, Variable(value, type, storageClass));
 }
 
@@ -41,6 +39,9 @@ bool ScopeStack::tryDeclareGlobal(const std::string& name,
     auto it = m_stack.back().find(name);
     if (it == m_stack.back().end())
         return true;
+    if (storageClass == StorageClass::GlobalDefinition &&
+        it->second.storage == StorageClass::GlobalDefinition)
+        return false;
     return false;
 }
 
@@ -51,7 +52,7 @@ bool ScopeStack::tryDeclare(const std::string& name,
     assert(!m_stack.empty() && "VariableStack underflow isDeclared()");
     if (m_args.contains(name))
         return false;
-    for (i64 i = m_stack.size() - 1; 0 <= i; --i) {
+    for (i64 i = m_stack.size() - 1; 0 < i; --i) {
         const auto it = m_stack[i].find(name);
         if (it == m_stack[i].end())
             continue;
@@ -105,8 +106,8 @@ bool ScopeStack::existInInnerMost(const std::string& name,
     const auto it = m_stack.back().find(name);
     if (it == m_stack.back().end())
         return false;
-    if (it->second.storage == StorageClass::ExternLocal &&
-        storageClass == StorageClass::ExternLocal)
+    if (it->second.storage == StorageClass::ExternFunction &&
+        storageClass == StorageClass::ExternFunction)
         return false;
     return true;
 }

@@ -16,7 +16,7 @@ struct FunctionClarification {
     bool defined;
     FunctionClarification(const std::vector<std::string>& _args, const bool _defined,
                           const Parsing::Declaration::StorageClass _storage)
-        : args(_args), defined(_defined), storage(_storage) {}
+        : args(_args), storage(_storage), defined(_defined) {}
 };
 
 class VariableResolution : public Parsing::ASTTraverser {
@@ -29,7 +29,6 @@ class VariableResolution : public Parsing::ASTTraverser {
     ScopeStack m_scopeStack;
     std::unordered_map<std::string, FunctionClarification> m_functions;
     bool m_valid = true;
-    bool m_inFunction = false;
 public:
     VariableResolution() = default;
     [[nodiscard]] bool resolve(Parsing::Program& program);
@@ -43,6 +42,8 @@ public:
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
     void visit(Parsing::FunCallExpr& funCallExpr) override;
+
+    bool inFunction() const { return 1 < m_scopeStack.size();}
 };
 
 bool isInvalidInFunctionBody(const Parsing::FunDecl& function, bool inFunction);
@@ -52,11 +53,11 @@ bool allowedVarDeclGlobal(const ScopeStack& variableStack, const Parsing::VarDec
 bool notDeclared(const ScopeStack& variableStack, const Parsing::VarExpr& varExpr);
 bool matchesExistingDeclaration(const Parsing::FunDecl& funDecl,
                                 const std::unordered_map<std::string, FunctionClarification>& functions);
-bool isFunctionDeclarationValid(const Parsing::FunDecl& funDecl,
+bool validateFunctionDeclaration(const Parsing::FunDecl& funDecl,
                                 const std::unordered_map<std::string, FunctionClarification>& functions,
                                 const ScopeStack& variableStack,
                                 bool inFunction);
-bool idenAlreadyDeclaredInScope(const Parsing::FunDecl& funDecl,
+bool conflictingIdenInScope(const Parsing::FunDecl& funDecl,
                                 const ScopeStack& scopeStack,
                                 bool inFunction);
 
@@ -66,6 +67,9 @@ bool isFunctionCallValid(const std::unordered_map<std::string, FunctionClarifica
 bool functionNotFound(
     const std::unordered_map<std::string, FunctionClarification>& functions,
     const std::unordered_map<std::string, FunctionClarification>::const_iterator& functionsIt);
+
+bool shouldSkipVarDecl(const Parsing::VarDecl& varDecl, const ScopeStack& variableStack, bool inFunction);
+bool shouldSkipFunDecl(const Parsing::FunDecl& funDecl, const ScopeStack& variableStack, bool inFunction);
 
 inline std::string makeTemporary(const std::string& name)
 {

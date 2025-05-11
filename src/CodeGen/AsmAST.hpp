@@ -12,6 +12,7 @@
 /*
 
 program = Program(function_definition)
+top_level = Function(identifier name,
 function_definition = Function(identifier name, instruciton* instructions)
 instruction = Mov(operand src, operand dst)
             | Unary(unary_operator, operand)

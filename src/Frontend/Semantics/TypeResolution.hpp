@@ -34,7 +34,7 @@ inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit&
 
 inline bool TypeResolution::mustBeConstantInitialised(const Parsing::VarDecl& varDecl, const bool isConst)
 {
-    return !isConst && (varDecl.storageClass == StorageClass::StaticGlobal ||
+    return !isConst && (varDecl.storageClass == StorageClass::StaticGlobalInitialized ||
                         varDecl.storageClass == StorageClass::GlobalDefinition ||
                         varDecl.storageClass == StorageClass::StaticLocal ||
                         varDecl.storageClass == StorageClass::GlobalScopeDeclaration ||

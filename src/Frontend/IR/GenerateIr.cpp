@@ -1,9 +1,8 @@
+#include "ASTParser.hpp"
 #include "GenerateIr.hpp"
 
 #include <cassert>
 #include <stdexcept>
-
-#include "ASTParser.hpp"
 
 namespace Ir {
 
@@ -18,7 +17,7 @@ static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Opera
 
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 {
-    for (const auto& func : parsingProgram->declarations) {
+    for (const auto& decl : parsingProgram->declarations) {
         // if (func->body == nullptr)
         //     continue;
         // auto functionTacky = function(*func);
@@ -590,7 +589,8 @@ static bool isGlobal(Parsing::Declaration::StorageClass storage)
         case StorageClass::ExternGlobal:
         case StorageClass::ExternGlobalInitialized:
         case StorageClass::GlobalDefinition:
-        case StorageClass::StaticGlobal:
+        case StorageClass::StaticGlobalInitialized:
+        case StorageClass::StaticGlobalTentative:
             return true;
         case StorageClass::AutoLocalScope:
         case StorageClass::StaticLocal:

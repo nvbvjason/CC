@@ -17,20 +17,20 @@ void VariableResolution::visit(Parsing::Program& program)
 
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
-    if (!isFunctionDeclarationValid(funDecl, m_functions, m_scopeStack, m_inFunction)) {
+    if (!validateFunctionDeclaration(funDecl, m_functions, m_scopeStack, inFunction())) {
         m_valid = false;
         return;
     }
-    m_functions.emplace(
-        funDecl.name,
-        FunctionClarification(funDecl.params, funDecl.body != nullptr, funDecl.storageClass)
-        );
-    m_scopeStack.addDecl(funDecl.name, funDecl.name,
-                         Variable::Type::Function, StorageClass::ExternFunction);
+    if (shouldSkipFunDecl(funDecl, m_scopeStack, inFunction())) {
+        m_functions.emplace(
+            funDecl.name,
+            FunctionClarification(funDecl.params, funDecl.body != nullptr, funDecl.storageClass)
+            );
+        m_scopeStack.addDecl(funDecl.name, funDecl.name,
+                             Variable::Type::Function, StorageClass::ExternFunction);
+    }
     m_scopeStack.addArgs(funDecl.params);
-    m_inFunction = true;
     ASTTraverser::visit(funDecl);
-    m_inFunction = false;
     m_scopeStack.clearArgs();
 }
 
@@ -48,13 +48,15 @@ void VariableResolution::visit(Parsing::ForStmt& forStmt)
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    if (!allowedVarDecl(m_scopeStack, varDecl, m_inFunction)) {
+    if (!allowedVarDecl(m_scopeStack, varDecl, inFunction())) {
         m_valid = false;
         return;
     }
     const std::string newUniqueName = makeTemporary(varDecl.name);
-    m_scopeStack.addDecl(varDecl.name, newUniqueName,
-                         Variable::Type::Int, varDecl.storageClass);
+    if (!shouldSkipVarDecl(varDecl, m_scopeStack, inFunction())) {
+        m_scopeStack.addDecl(varDecl.name, newUniqueName,
+                             Variable::Type::Int, varDecl.storageClass);
+    }
     varDecl.name = newUniqueName;
     ASTTraverser::visit(varDecl);
 }
@@ -80,7 +82,7 @@ void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
     ASTTraverser::visit(funCallExpr);
 }
 
-bool isFunctionDeclarationValid(const Parsing::FunDecl& funDecl,
+bool validateFunctionDeclaration(const Parsing::FunDecl& funDecl,
                                 const std::unordered_map<std::string, FunctionClarification>& functions,
                                 const ScopeStack& scopeStack,
                                 const bool inFunction)
@@ -91,14 +93,12 @@ bool isFunctionDeclarationValid(const Parsing::FunDecl& funDecl,
         return false;
     if (!matchesExistingDeclaration(funDecl, functions))
         return false;
-    if (idenAlreadyDeclaredInScope(funDecl, scopeStack, inFunction))
-        return false;
-    if (funDecl.storageClass == Parsing::Declaration::StorageClass::StaticGlobal && inFunction)
+    if (conflictingIdenInScope(funDecl, scopeStack, inFunction))
         return false;
     return true;
 }
 
-bool idenAlreadyDeclaredInScope(const Parsing::FunDecl& funDecl,
+bool conflictingIdenInScope(const Parsing::FunDecl& funDecl,
                                 const ScopeStack& scopeStack,
                                 const bool inFunction)
 {
@@ -115,7 +115,7 @@ bool matchesExistingDeclaration(const Parsing::FunDecl& funDecl,
     if (it->second.defined && funDecl.body != nullptr)
         return false;
     if (it->second.storage == StorageClass::ExternFunction &&
-        funDecl.storageClass == StorageClass::StaticGlobal)
+        funDecl.storageClass == StorageClass::StaticGlobalInitialized)
         return false;
     return it->second.args.size() == funDecl.params.size();
 }
@@ -145,12 +145,14 @@ bool allowedVarDecl(const ScopeStack& variableStack,
         return false;
     if (!inFunction && allowedVarDeclGlobal(variableStack, varDecl))
         return true;
+    if (varDecl.storageClass == Parsing::Declaration::StorageClass::ExternLocal)
+        return true;
     return !variableStack.existInInnerMost(varDecl.name, varDecl.storageClass);
 }
 
 bool allowedVarDeclGlobal(const ScopeStack& variableStack, const Parsing::VarDecl& varDecl)
 {
-    return variableStack.tryDeclare(varDecl.name, Variable::Type::Int, varDecl.storageClass);
+    return variableStack.tryDeclareGlobal(varDecl.name, Variable::Type::Int, varDecl.storageClass);
 }
 
 bool notDeclared(const ScopeStack& variableStack, const Parsing::VarExpr& varExpr)
@@ -171,6 +173,18 @@ bool isFunctionCallValid(const std::unordered_map<std::string, FunctionClarifica
         return false;
     return it->second.args.size() == funCallExpr.args.size();
 }
+
+bool shouldSkipVarDecl(const Parsing::VarDecl& varDecl, const ScopeStack& variableStack, bool inFunction)
+{
+
+    return false;
+}
+
+bool shouldSkipFunDecl(const Parsing::FunDecl& funDecl, const ScopeStack& variableStack, bool inFunction)
+{
+    return true;
+}
+
 
 bool functionNotFound(
     const std::unordered_map<std::string, FunctionClarification>& functions,

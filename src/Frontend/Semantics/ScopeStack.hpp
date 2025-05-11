@@ -3,8 +3,6 @@
 #ifndef CC_SEMANTICS_VARIABLE_STACK_HPP
 #define CC_SEMANTICS_VARIABLE_STACK_HPP
 
-#include "ShortTypes.hpp"
-
 #include "ASTParser.hpp"
 #include <string>
 #include <unordered_map>
@@ -12,22 +10,19 @@
 #include <utility>
 #include <vector>
 
-namespace Semantics {
-
 struct Variable {
-    enum class Type : u8 {
-        Function,
-        Int
+    using StorageClass = Parsing::Declaration::StorageClass;
+    enum class Type {
+        Function, Int
     };
     std::string name;
+    StorageClass storage;
     Type type;
-    Parsing::Declaration::StorageClass storage;
-    Variable(std::string  name, Type type, Parsing::Declaration::StorageClass storage)
-        : name(std::move(name)), type(type), storage(storage) {}
-
-    Variable() = delete;
+    Variable(std::string n, const Type t, const StorageClass storageClassType)
+        : name(std::move(n)), storage(storageClassType), type(t) {}
 };
 
+namespace Semantics {
 class ScopeStack {
     using StorageClass = Parsing::Declaration::StorageClass;
     std::vector<std::unordered_map<std::string, Variable>> m_stack;
@@ -53,6 +48,8 @@ public:
     [[nodiscard]] bool inArgs(const std::string& name) const noexcept;
     [[nodiscard]] bool existInInnerMost(const std::string& name,
                                         StorageClass storageClass) const;
+
+    [[nodiscard]] size_t size() const noexcept { return m_stack.size(); }
 };
 
 } // Semantics
