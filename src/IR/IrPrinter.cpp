@@ -7,9 +7,22 @@ namespace Ir {
 std::string IrPrinter::print(const Program& program)
 {
     addLine("Program:");
-    for (const auto& function : program.functions)
-        print(*function);
+    for (const auto& topLevel : program.topLevels) {
+        if (topLevel->type == TopLevel::Type::Function) {
+            const auto function = dynamic_cast<Function*>(topLevel.get());
+            print(*function);
+        }
+        if (topLevel->type == TopLevel::Type::StaticVariable) {
+            const auto variable = dynamic_cast<StaticVariable*>(topLevel.get());
+            print(*variable);
+        }
+    }
     return m_oss.str();
+}
+
+void IrPrinter::print(const StaticVariable& variable)
+{
+    addLine("Variable: " + variable.name);
 }
 
 void IrPrinter::print(const Function& function)
@@ -24,7 +37,6 @@ void IrPrinter::print(const Function& function)
     for (const auto& inst : function.insts)
         print(*inst);
 }
-
 
 std::string IrPrinter::print(const Value& value)
 {

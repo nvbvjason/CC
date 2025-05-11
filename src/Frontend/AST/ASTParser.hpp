@@ -22,7 +22,7 @@ struct Program {
 
 struct Declaration {
     enum class Kind : u8 {
-        VariableDeclaration, FunctionDecl
+        VarDecl, FuncDecl
     };
     enum class StorageClass : u8 {
         AutoLocalScope,             // no specifier at local scope (e.g., int x; in a function)
@@ -53,7 +53,7 @@ struct VarDecl final : Declaration {
     std::string name;
     std::unique_ptr<Expr> init = nullptr;
     explicit  VarDecl(const StorageClass storageClass, std::string name)
-        : Declaration(Kind::VariableDeclaration, storageClass), name(std::move(name)) {}
+        : Declaration(Kind::VarDecl, storageClass), name(std::move(name)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -67,7 +67,7 @@ struct FunDecl final : Declaration {
     std::unique_ptr<Block> body = nullptr;
 
     explicit FunDecl(const StorageClass storageClass, std::string name)
-        : Declaration(Kind::FunctionDecl, storageClass), name(std::move(name)) {}
+        : Declaration(Kind::FuncDecl, storageClass), name(std::move(name)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

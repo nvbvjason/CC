@@ -1,9 +1,9 @@
 #include "ScopeStack.hpp"
 #include "ShortTypes.hpp"
+//#include "Frontend/Parsing/Operators.hpp"
 
 #include <cassert>
 
-#include "Frontend/Parsing/Operators.hpp"
 
 namespace Semantics {
 

@@ -144,7 +144,7 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
         auto decl = declarationParse();
         if (decl == nullptr)
             return {nullptr, true};
-        if (decl->kind == Declaration::Kind::FunctionDecl)
+        if (decl->kind == Declaration::Kind::FuncDecl)
             return {nullptr, true};
         auto varDecl = static_cast<VarDecl*>(decl.release());
         return {std::make_unique<DeclForInit>(std::unique_ptr<VarDecl>(varDecl)), false};

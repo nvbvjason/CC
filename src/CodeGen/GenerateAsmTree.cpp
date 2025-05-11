@@ -9,8 +9,8 @@ namespace CodeGen {
 
 void program(const Ir::Program &program, Program &programCodegen)
 {
-    for (const auto& functionIR : program.functions)
-        programCodegen.functions.push_back(function(functionIR.get()));
+    // for (const auto& functionIR : program.functions)
+    //     programCodegen.functions.push_back(function(functionIR.get()));
 }
 
 std::unique_ptr<Function> function(const Ir::Function *function)

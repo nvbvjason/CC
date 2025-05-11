@@ -4,8 +4,9 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace Ir {
+#include "CodeGen/AsmAST.hpp"
 
+namespace Ir {
 static Identifier makeTemporaryName();
 static bool isPostfixOp(Parsing::UnaryExpr::Operator oper);
 static bool isPrefixOp(Parsing::UnaryExpr::Operator oper);
@@ -18,16 +19,43 @@ static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Opera
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
 {
     for (const auto& decl : parsingProgram->declarations) {
-        // if (func->body == nullptr)
-        //     continue;
-        // auto functionTacky = function(*func);
-        // for (const std::string& arg : func->params)
-        //     functionTacky->args.push_back(Identifier(arg));
-        // tackyProgram.functions.push_back(std::move(functionTacky));
+        auto topLevel = topLevelIr(*decl);
+        if (topLevel == nullptr)
+            continue;
+        tackyProgram.topLevels.push_back(std::move(topLevel));
     }
 }
 
-std::unique_ptr<Function> function(const Parsing::FunDecl& parsingFunction)
+std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl)
+{
+    assert(&decl);
+    using Kind = Parsing::Declaration::Kind;
+    switch (decl.kind) {
+        case Kind::FuncDecl: {
+            const auto funcDecl = dynamic_cast<const Parsing::FunDecl*>(&decl);
+            if (funcDecl->body == nullptr)
+                return nullptr;
+            return functionIr(*funcDecl);
+        }
+        case Kind::VarDecl: {
+            const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&decl);
+            if (varDecl->init == nullptr)
+                return nullptr;
+            return staticVariableIr(*varDecl);
+        }
+        assert("topLevelIr");
+    }
+}
+
+std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl)
+{
+    std::vector<std::unique_ptr<Instruction>> temp;
+    auto value = instIr(*varDecl.init, temp);
+    auto variable = std::make_unique<StaticVariable>(varDecl.name, value, isGlobal(varDecl.storage));
+    return variable;
+}
+
+std::unique_ptr<TopLevel> functionIr(const Parsing::FunDecl& parsingFunction)
 {
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, isGlobal(parsingFunction.storage));
     blockIr(*parsingFunction.body, functionTacky->insts);
@@ -37,22 +65,22 @@ std::unique_ptr<Function> function(const Parsing::FunDecl& parsingFunction)
 void blockIr(const Parsing::Block& block, std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     for (const std::unique_ptr<Parsing::BlockItem>& item : block.body)
-        blockItem(*item, instructions);
+        blockItemIr(*item, instructions);
 }
 
-void blockItem(const Parsing::BlockItem& blockItem,
+void blockItemIr(const Parsing::BlockItem& blockItem,
                std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     using Kind = Parsing::BlockItem::Kind;
     switch (blockItem.kind) {
         case Kind::Declaration: {
             const auto decl = dynamic_cast<const Parsing::DeclBlockItem*>(&blockItem);
-            declaration(*decl->decl, instructions);
+            declarationIr(*decl->decl, instructions);
             break;
         }
         case Kind::Statement: {
             const auto stmtBlockItem = dynamic_cast<const Parsing::StmtBlockItem*>(&blockItem);
-            statement(*stmtBlockItem->stmt, instructions);
+            stmtIr(*stmtBlockItem->stmt, instructions);
             break;
         }
         default:
@@ -60,30 +88,30 @@ void blockItem(const Parsing::BlockItem& blockItem,
     }
 }
 
-void forInitialization(const Parsing::ForInit& forInit,
-                       std::vector<std::unique_ptr<Instruction>>& insts)
+void forInitIr(const Parsing::ForInit& forInit,
+               std::vector<std::unique_ptr<Instruction>>& insts)
 {
     if (forInit.kind == Parsing::ForInit::Kind::Declaration) {
         auto decl = dynamic_cast<const Parsing::DeclForInit*>(&forInit);
-        declaration(*decl->decl, insts);
+        declarationIr(*decl->decl, insts);
         return;
     }
     if (forInit.kind == Parsing::ForInit::Kind::Expression) {
         auto expr = dynamic_cast<const Parsing::ExprForInit*>(&forInit);
         if (expr->expression)
-            inst(*expr->expression, insts);
+            instIr(*expr->expression, insts);
         return;
     }
 }
 
-void declaration(const Parsing::Declaration& declaration,
-                 std::vector<std::unique_ptr<Instruction>>& insts)
+void declarationIr(const Parsing::Declaration& declaration,
+                   std::vector<std::unique_ptr<Instruction>>& insts)
 {
-    if (declaration.kind == Parsing::Declaration::Kind::VariableDeclaration) {
+    if (declaration.kind == Parsing::Declaration::Kind::VarDecl) {
         const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&declaration);
         if (varDecl->init == nullptr)
             return;
-        auto value = inst(*varDecl->init, insts);
+        auto value = instIr(*varDecl->init, insts);
         auto temporary = std::make_shared<ValueVar>(makeTemporaryName());
         insts.push_back(std::make_unique<CopyInst>(value, temporary));
         const Identifier iden(varDecl->name);
@@ -92,22 +120,22 @@ void declaration(const Parsing::Declaration& declaration,
     }
 }
 
-void statement(const Parsing::Stmt& stmt,
-               std::vector<std::unique_ptr<Instruction>>& insts)
+void stmtIr(const Parsing::Stmt& stmt,
+            std::vector<std::unique_ptr<Instruction>>& insts)
 {
     using Kind = Parsing::Stmt::Kind;
     switch (stmt.kind) {
         case Kind::If: {
             const auto parseIffStmt = dynamic_cast<const Parsing::IfStmt*>(&stmt);
             if (parseIffStmt->elseStmt == nullptr)
-                ifStatement(*parseIffStmt, insts);
+                ifStmtIr(*parseIffStmt, insts);
             else
-                ifElseStatement(*parseIffStmt, insts);
+                ifElseStmtIr(*parseIffStmt, insts);
             break;
         }
         case Kind::Return: {
             const auto returnStmt = dynamic_cast<const Parsing::ReturnStmt*>(&stmt);
-            auto value = inst(*returnStmt->expr, insts);
+            auto value = instIr(*returnStmt->expr, insts);
             if (value == nullptr)
                 break;
             insts.push_back(std::make_unique<ReturnInst>(value));
@@ -115,62 +143,62 @@ void statement(const Parsing::Stmt& stmt,
         }
         case Kind::Expression: {
             const auto stmtExpr = dynamic_cast<const Parsing::ExprStmt*>(&stmt);
-            inst(*stmtExpr->expr, insts);
+            instIr(*stmtExpr->expr, insts);
             break;
         }
         case Kind::Goto: {
             const auto gotoStmt = dynamic_cast<const Parsing::GotoStmt*>(&stmt);
-            gotoStatement(*gotoStmt, insts);
+            gotoStmtIr(*gotoStmt, insts);
             break;
         }
         case Kind::Compound: {
             const auto compoundStmtPtr = dynamic_cast<const Parsing::CompoundStmt*>(&stmt);
-            compoundStatement(*compoundStmtPtr, insts);
+            compoundStmtIr(*compoundStmtPtr, insts);
             break;
         }
         case Kind::Break: {
             const auto breakStmtPtr = dynamic_cast<const Parsing::BreakStmt*>(&stmt);
-            breakStatement(*breakStmtPtr, insts);
+            breakStmtIr(*breakStmtPtr, insts);
             break;
         }
         case Kind::Continue: {
             const auto continueStmtPtr = dynamic_cast<const Parsing::ContinueStmt*>(&stmt);
-            continueStatement(*continueStmtPtr, insts);
+            continueStmtIr(*continueStmtPtr, insts);
             break;
         }
         case Kind::Label: {
             const auto labelStmtPtr = dynamic_cast<const Parsing::LabelStmt*>(&stmt);
-            labelStatement(*labelStmtPtr, insts);
+            labelStmtIr(*labelStmtPtr, insts);
             break;
         }
         case Kind::Case: {
             const auto caseStmtPtr = dynamic_cast<const Parsing::CaseStmt*>(&stmt);
-            caseStatement(*caseStmtPtr, insts);
+            caseStmtIr(*caseStmtPtr, insts);
             break;
         }
         case Kind::Default: {
             const auto defaultStmtPtr = dynamic_cast<const Parsing::DefaultStmt*>(&stmt);
-            defaultStatement(*defaultStmtPtr, insts);
+            defaultStmtIr(*defaultStmtPtr, insts);
             break;
         }
         case Kind::DoWhile: {
             const auto doWhileStmtPtr = dynamic_cast<const Parsing::DoWhileStmt*>(&stmt);
-            doWhileStatement(*doWhileStmtPtr, insts);
+            doWhileStmtIr(*doWhileStmtPtr, insts);
             break;
         }
         case Kind::While: {
             const auto whileStmtPtr = dynamic_cast<const Parsing::WhileStmt*>(&stmt);
-            whileStatement(*whileStmtPtr, insts);
+            whileStmtIr(*whileStmtPtr, insts);
             break;
         }
         case Kind::For: {
             const auto forStmtPtr = dynamic_cast<const Parsing::ForStmt*>(&stmt);
-            forStatement(*forStmtPtr, insts);
+            forStmtIr(*forStmtPtr, insts);
             break;
         }
         case Kind::Switch: {
             const auto switchStmtPtr = dynamic_cast<const Parsing::SwitchStmt*>(&stmt);
-            switchStatement(*switchStmtPtr, insts);
+            switchStmtIr(*switchStmtPtr, insts);
             break;
         }
         case Kind::Null:
@@ -180,99 +208,99 @@ void statement(const Parsing::Stmt& stmt,
     }
 }
 
-void ifStatement(const Parsing::IfStmt& parseIfStmt,
-            std::vector<std::unique_ptr<Instruction>>& insts)
+void ifStmtIr(const Parsing::IfStmt& parseIfStmt,
+              std::vector<std::unique_ptr<Instruction>>& insts)
 {
-    auto condition = inst(*parseIfStmt.condition, insts);
+    auto condition = instIr(*parseIfStmt.condition, insts);
     Identifier endLabelIden = makeTemporaryName();
     insts.push_back(std::make_unique<JumpIfZeroInst>(condition, endLabelIden));
-    statement(*parseIfStmt.thenStmt, insts);
+    stmtIr(*parseIfStmt.thenStmt, insts);
     insts.push_back(std::make_unique<LabelInst>(endLabelIden));
 }
 
-void ifElseStatement(const Parsing::IfStmt& parseIfStmt,
-                std::vector<std::unique_ptr<Instruction>>& insts)
+void ifElseStmtIr(const Parsing::IfStmt& parseIfStmt,
+                  std::vector<std::unique_ptr<Instruction>>& insts)
 {
-    auto condition = inst(*parseIfStmt.condition, insts);
+    auto condition = instIr(*parseIfStmt.condition, insts);
     Identifier elseStmtLabel = makeTemporaryName();
     insts.push_back(std::make_unique<JumpIfZeroInst>(condition, elseStmtLabel));
-    statement(*parseIfStmt.thenStmt, insts);
+    stmtIr(*parseIfStmt.thenStmt, insts);
     Identifier endLabelIden = makeTemporaryName();
     insts.push_back(std::make_unique<JumpInst>(endLabelIden));
     insts.push_back(std::make_unique<LabelInst>(elseStmtLabel));
-    statement(*parseIfStmt.elseStmt, insts);
+    stmtIr(*parseIfStmt.elseStmt, insts);
     insts.push_back(std::make_unique<LabelInst>(endLabelIden));
 }
 
-void gotoStatement(const Parsing::GotoStmt& stmt,
-                   std::vector<std::unique_ptr<Instruction>>& insts)
+void gotoStmtIr(const Parsing::GotoStmt& stmt,
+                std::vector<std::unique_ptr<Instruction>>& insts)
 {
     insts.push_back(
         std::make_unique<JumpInst>(Identifier(stmt.identifier + ".label"))
         );
 }
 
-void compoundStatement(const Parsing::CompoundStmt& stmt,
-                       std::vector<std::unique_ptr<Instruction>>& insts)
+void compoundStmtIr(const Parsing::CompoundStmt& stmt,
+                    std::vector<std::unique_ptr<Instruction>>& insts)
 {
     blockIr(*stmt.block, insts);
 }
 
-void breakStatement(const Parsing::BreakStmt& stmt,
-                    std::vector<std::unique_ptr<Instruction>>& insts)
+void breakStmtIr(const Parsing::BreakStmt& stmt,
+                 std::vector<std::unique_ptr<Instruction>>& insts)
 {
     insts.push_back(
         std::make_unique<JumpInst>(Identifier(stmt.identifier + "break"))
         );
 }
 
-void continueStatement(const Parsing::ContinueStmt& stmt,
-                       std::vector<std::unique_ptr<Instruction>>& insts)
+void continueStmtIr(const Parsing::ContinueStmt& stmt,
+                    std::vector<std::unique_ptr<Instruction>>& insts)
 {
     insts.push_back(
         std::make_unique<JumpInst>(Identifier(stmt.identifier + "continue"))
         );
 }
 
-void labelStatement(const Parsing::LabelStmt& labelStmt,
-                       std::vector<std::unique_ptr<Instruction>>& insts)
+void labelStmtIr(const Parsing::LabelStmt& labelStmt,
+                 std::vector<std::unique_ptr<Instruction>>& insts)
 {
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(labelStmt.identifier + ".label"))
         );
-    statement(*labelStmt.stmt, insts);
+    stmtIr(*labelStmt.stmt, insts);
 }
 
-void caseStatement(const Parsing::CaseStmt& caseStmt,
-                   std::vector<std::unique_ptr<Instruction>>& insts)
+void caseStmtIr(const Parsing::CaseStmt& caseStmt,
+                std::vector<std::unique_ptr<Instruction>>& insts)
 {
     const auto constExpr = dynamic_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(caseStmt.identifier + std::to_string(constExpr->value)))
     );
-    statement(*caseStmt.body, insts);
+    stmtIr(*caseStmt.body, insts);
 }
 
-void defaultStatement(const Parsing::DefaultStmt& defaultStmt,
-                      std::vector<std::unique_ptr<Instruction>>& insts)
+void defaultStmtIr(const Parsing::DefaultStmt& defaultStmt,
+                   std::vector<std::unique_ptr<Instruction>>& insts)
 {
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(defaultStmt.identifier + "default"))
     );
-    statement(*defaultStmt.body, insts);
+    stmtIr(*defaultStmt.body, insts);
 }
 
-void doWhileStatement(const Parsing::DoWhileStmt& doWhileStmt,
-                 std::vector<std::unique_ptr<Instruction>>& insts)
+void doWhileStmtIr(const Parsing::DoWhileStmt& doWhileStmt,
+                   std::vector<std::unique_ptr<Instruction>>& insts)
 {
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(doWhileStmt.identifier + "start"))
     );
-    statement(*doWhileStmt.body, insts);
+    stmtIr(*doWhileStmt.body, insts);
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(doWhileStmt.identifier + "continue"))
     );
-    auto condition = inst(*doWhileStmt.condition, insts);
+    auto condition = instIr(*doWhileStmt.condition, insts);
     insts.push_back(
         std::make_unique<JumpIfNotZeroInst>(condition, Identifier(doWhileStmt.identifier + "start"))
     );
@@ -281,17 +309,17 @@ void doWhileStatement(const Parsing::DoWhileStmt& doWhileStmt,
     );
 }
 
-void whileStatement(const Parsing::WhileStmt& whileStmt,
-               std::vector<std::unique_ptr<Instruction>>& insts)
+void whileStmtIr(const Parsing::WhileStmt& whileStmt,
+                 std::vector<std::unique_ptr<Instruction>>& insts)
 {
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(whileStmt.identifier + "continue"))
     );
-    auto condition = inst(*whileStmt.condition, insts);
+    auto condition = instIr(*whileStmt.condition, insts);
     insts.push_back(
         std::make_unique<JumpIfZeroInst>(condition, Identifier(whileStmt.identifier + "break"))
     );
-    statement(*whileStmt.body, insts);
+    stmtIr(*whileStmt.body, insts);
     insts.push_back(
         std::make_unique<JumpInst>(Identifier(whileStmt.identifier + "continue"))
     );
@@ -300,26 +328,26 @@ void whileStatement(const Parsing::WhileStmt& whileStmt,
     );
 }
 
-void forStatement(const Parsing::ForStmt& forStmt,
-                  std::vector<std::unique_ptr<Instruction>>& insts)
+void forStmtIr(const Parsing::ForStmt& forStmt,
+               std::vector<std::unique_ptr<Instruction>>& insts)
 {
     if (forStmt.init)
-        forInitialization(*forStmt.init, insts);
+        forInitIr(*forStmt.init, insts);
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(forStmt.identifier + "start"))
     );
     if (forStmt.condition) {
-        auto condition = inst(*forStmt.condition, insts);
+        auto condition = instIr(*forStmt.condition, insts);
         insts.push_back(
             std::make_unique<JumpIfZeroInst>(condition, Identifier(forStmt.identifier + "break"))
         );
     }
-    statement(*forStmt.body, insts);
+    stmtIr(*forStmt.body, insts);
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(forStmt.identifier + "continue"))
     );
     if (forStmt.post)
-        inst(*forStmt.post, insts);
+        instIr(*forStmt.post, insts);
     insts.push_back(
         std::make_unique<JumpInst>(Identifier(forStmt.identifier + "start"))
     );
@@ -328,10 +356,10 @@ void forStatement(const Parsing::ForStmt& forStmt,
     );
 }
 
-void switchStatement(const Parsing::SwitchStmt& stmt,
-                     std::vector<std::unique_ptr<Instruction>>& insts)
+void switchStmtIr(const Parsing::SwitchStmt& stmt,
+                  std::vector<std::unique_ptr<Instruction>>& insts)
 {
-    auto realValue = inst(*stmt.condition, insts);
+    auto realValue = instIr(*stmt.condition, insts);
     for (const auto& caseStmt : stmt.cases) {
         const auto constExpr = dynamic_cast<const Parsing::ConstExpr*>(caseStmt.get());
         const auto destination = std::make_shared<ValueVar>(makeTemporaryName());
@@ -353,31 +381,31 @@ void switchStatement(const Parsing::SwitchStmt& stmt,
     else
         insts.push_back(
             std::make_unique<JumpInst>(Identifier(stmt.identifier + "break")));
-    statement(*stmt.body, insts);
+    stmtIr(*stmt.body, insts);
     insts.push_back(
         std::make_unique<LabelInst>(Identifier(stmt.identifier + "break"))
     );
 }
 
-std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
-                            std::vector<std::unique_ptr<Instruction>>& instructions)
+std::shared_ptr<Value> instIr(const Parsing::Expr& parsingExpr,
+                              std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     using ExprKind = Parsing::Expr::Kind;
     switch (parsingExpr.kind) {
         case ExprKind::Var:
-            return varInst(parsingExpr);
+            return varInstIr(parsingExpr);
         case ExprKind::Constant:
-            return constInst(parsingExpr);
+            return constInstIr(parsingExpr);
         case ExprKind::Unary:
-            return unaryInst(parsingExpr, instructions);
+            return unaryInstIr(parsingExpr, instructions);
         case ExprKind::Binary:
-            return binaryInst(parsingExpr, instructions);
+            return binaryInstIr(parsingExpr, instructions);
         case ExprKind::Assignment:
-            return assignInst(parsingExpr, instructions);
+            return assignInstIr(parsingExpr, instructions);
         case ExprKind::Conditional:
-            return conditionalInst(parsingExpr, instructions);
+            return conditionalInstIr(parsingExpr, instructions);
         case ExprKind::FunctionCall:
-            return funcCallInst(parsingExpr, instructions);
+            return funcCallInstIr(parsingExpr, instructions);
         default:
             assert("Unexpected expression type ir generateInst");
             std::unreachable();
@@ -389,7 +417,7 @@ std::shared_ptr<Value> unaryPostfixInst(const Parsing::UnaryExpr& unaryExpr,
 {
     auto originalForReturn = std::make_shared<ValueVar>(makeTemporaryName());
     auto tempNew = std::make_shared<ValueVar>(makeTemporaryName());
-    auto original = inst(*unaryExpr.operand, instructions);
+    auto original = instIr(*unaryExpr.operand, instructions);
     instructions.push_back(std::make_unique<CopyInst>(original, originalForReturn));
     auto operation = std::make_shared<ValueConst>(1);
     instructions.push_back(std::make_unique<BinaryInst>(
@@ -400,9 +428,9 @@ std::shared_ptr<Value> unaryPostfixInst(const Parsing::UnaryExpr& unaryExpr,
 }
 
 std::shared_ptr<Value> unaryPrefixInst(const Parsing::UnaryExpr& unaryExpr,
-                                        std::vector<std::unique_ptr<Instruction>>& instructions)
+                                       std::vector<std::unique_ptr<Instruction>>& instructions)
 {
-    auto original = inst(*unaryExpr.operand, instructions);
+    auto original = instIr(*unaryExpr.operand, instructions);
     auto temp = std::make_shared<ValueVar>(Identifier(makeTemporaryName()));
     instructions.push_back(std::make_unique<BinaryInst>(
         getPostPrefixOperation(unaryExpr.op), original, std::make_shared<ValueConst>(1), temp)
@@ -411,8 +439,8 @@ std::shared_ptr<Value> unaryPrefixInst(const Parsing::UnaryExpr& unaryExpr,
     return temp;
 }
 
-std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
-                                 std::vector<std::unique_ptr<Instruction>>& instructions)
+std::shared_ptr<Value> unaryInstIr(const Parsing::Expr& parsingExpr,
+                                   std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto unaryParsingPtr = dynamic_cast<const Parsing::UnaryExpr*>(&parsingExpr);
     if (isPostfixOp(unaryParsingPtr->op))
@@ -420,15 +448,15 @@ std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
     if (isPrefixOp(unaryParsingPtr->op))
         return unaryPrefixInst(*unaryParsingPtr, instructions);
     if (unaryParsingPtr->op == Parsing::UnaryExpr::Operator::Plus)
-        return inst(*unaryParsingPtr->operand, instructions);
+        return instIr(*unaryParsingPtr->operand, instructions);
     UnaryInst::Operation operation = convertUnaryOperation(unaryParsingPtr->op);
-    auto source = inst(*unaryParsingPtr->operand, instructions);
+    auto source = instIr(*unaryParsingPtr->operand, instructions);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
     instructions.push_back(std::make_unique<UnaryInst>(operation, source, destination));
     return destination;
 }
 
-std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr)
+std::shared_ptr<Value> varInstIr(const Parsing::Expr& parsingExpr)
 {
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(&parsingExpr);
     const Identifier iden(varExpr->name);
@@ -436,17 +464,17 @@ std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr)
     return var;
 }
 
-std::shared_ptr<Value> binaryInst(const Parsing::Expr& parsingExpr,
-                                  std::vector<std::unique_ptr<Instruction>>& instructions)
+std::shared_ptr<Value> binaryInstIr(const Parsing::Expr& parsingExpr,
+                                    std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto binaryParsing = dynamic_cast<const Parsing::BinaryExpr*>(&parsingExpr);
     BinaryInst::Operation operation = convertBinaryOperation(binaryParsing->op);
     if (operation == BinaryInst::Operation::And)
-        return binaryAndInst(*binaryParsing, instructions);
+        return binaryAndInstIr(*binaryParsing, instructions);
     if (operation == BinaryInst::Operation::Or)
-        return binaryOrInst(*binaryParsing, instructions);
-    auto source1 = inst(*binaryParsing->lhs, instructions);
-    auto source2 = inst(*binaryParsing->rhs, instructions);
+        return binaryOrInstIr(*binaryParsing, instructions);
+    auto source1 = instIr(*binaryParsing->lhs, instructions);
+    auto source2 = instIr(*binaryParsing->rhs, instructions);
 
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
 
@@ -454,48 +482,48 @@ std::shared_ptr<Value> binaryInst(const Parsing::Expr& parsingExpr,
     return destination;
 }
 
-std::shared_ptr<Value> assignInst(const Parsing::Expr& binaryExpr,
-                                  std::vector<std::unique_ptr<Instruction>>& instructions)
+std::shared_ptr<Value> assignInstIr(const Parsing::Expr& binaryExpr,
+                                    std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto assignExpr = dynamic_cast<const Parsing::AssignmentExpr*>(&binaryExpr);
     if (assignExpr->op != Parsing::AssignmentExpr::Operator::Assign)
-        return compoundAssignInst(*assignExpr, instructions);
-    return simpleAssignInst(*assignExpr, instructions);
+        return compoundAssignInstIr(*assignExpr, instructions);
+    return simpleAssignInstIr(*assignExpr, instructions);
 }
 
-std::shared_ptr<Value> simpleAssignInst(const Parsing::AssignmentExpr& assignExpr,
-                                        std::vector<std::unique_ptr<Instruction>>& instructions)
+std::shared_ptr<Value> simpleAssignInstIr(const Parsing::AssignmentExpr& assignExpr,
+                                          std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr.lhs.get());
     const Identifier iden(varExpr->name);
     auto destination = std::make_shared<ValueVar>(iden);
-    auto result = inst(*assignExpr.rhs, instructions);
+    auto result = instIr(*assignExpr.rhs, instructions);
     instructions.push_back(std::make_unique<CopyInst>(result, destination));
     return destination;
 }
 
-std::shared_ptr<Value> compoundAssignInst(const Parsing::AssignmentExpr& assignExpr,
-                                          std::vector<std::unique_ptr<Instruction>>& instructions)
+std::shared_ptr<Value> compoundAssignInstIr(const Parsing::AssignmentExpr& assignExpr,
+                                            std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr.lhs.get());
     const Identifier iden(varExpr->name);
     auto lhs = std::make_shared<ValueVar>(iden);
     BinaryInst::Operation operation = convertAssiOperation(assignExpr.op);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName());
-    auto rhs = inst(*assignExpr.rhs, instructions);
+    auto rhs = instIr(*assignExpr.rhs, instructions);
     instructions.push_back(std::make_unique<BinaryInst>(operation, lhs, rhs, destination));
     instructions.push_back(std::make_unique<CopyInst>(destination, lhs));
     return lhs;
 }
 
-std::shared_ptr<Value> binaryAndInst(const Parsing::BinaryExpr& parsingExpr,
-                                     std::vector<std::unique_ptr<Instruction>>& instructions)
+std::shared_ptr<Value> binaryAndInstIr(const Parsing::BinaryExpr& parsingExpr,
+                                       std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     auto result = std::make_shared<ValueVar>(makeTemporaryName());
-    auto lhs = inst(*parsingExpr.lhs, instructions);
+    auto lhs = instIr(*parsingExpr.lhs, instructions);
     Identifier falseLabelIden = makeTemporaryName();
     instructions.push_back(std::make_unique<JumpIfZeroInst>(lhs, falseLabelIden));
-    auto rhs = inst(*parsingExpr.rhs, instructions);
+    auto rhs = instIr(*parsingExpr.rhs, instructions);
     instructions.push_back(std::make_unique<JumpIfZeroInst>(rhs, falseLabelIden));
     auto oneVal = std::make_shared<ValueConst>(1);
     instructions.push_back(std::make_unique<CopyInst>(oneVal, result));
@@ -508,14 +536,14 @@ std::shared_ptr<Value> binaryAndInst(const Parsing::BinaryExpr& parsingExpr,
     return result;
 }
 
-std::shared_ptr<Value> binaryOrInst(const Parsing::BinaryExpr& binaryExpr,
-                                    std::vector<std::unique_ptr<Instruction>>& instructions)
+std::shared_ptr<Value> binaryOrInstIr(const Parsing::BinaryExpr& binaryExpr,
+                                      std::vector<std::unique_ptr<Instruction>>& instructions)
 {
     auto result = std::make_shared<ValueVar>(makeTemporaryName());
-    auto lhs = inst(*binaryExpr.lhs, instructions);
+    auto lhs = instIr(*binaryExpr.lhs, instructions);
     Identifier trueLabelIden = makeTemporaryName();
     instructions.push_back(std::make_unique<JumpIfNotZeroInst>(lhs, trueLabelIden));
-    auto rhs = inst(*binaryExpr.rhs, instructions);
+    auto rhs = instIr(*binaryExpr.rhs, instructions);
     instructions.push_back(std::make_unique<JumpIfNotZeroInst>(rhs, trueLabelIden));
     auto zeroVal = std::make_shared<ValueConst>(0);
     instructions.push_back(std::make_unique<CopyInst>(zeroVal, result));
@@ -528,15 +556,15 @@ std::shared_ptr<Value> binaryOrInst(const Parsing::BinaryExpr& binaryExpr,
     return result;
 }
 
-std::shared_ptr<Value> constInst(const Parsing::Expr& parsingExpr)
+std::shared_ptr<Value> constInstIr(const Parsing::Expr& parsingExpr)
 {
     const auto constant = dynamic_cast<const Parsing::ConstExpr*>(&parsingExpr);
     auto result = std::make_unique<ValueConst>(constant->value);
     return result;
 }
 
-std::shared_ptr<Value> conditionalInst(const Parsing::Expr& stmt,
-                                       std::vector<std::unique_ptr<Instruction>>& insts)
+std::shared_ptr<Value> conditionalInstIr(const Parsing::Expr& stmt,
+                                         std::vector<std::unique_ptr<Instruction>>& insts)
 {
     auto result = std::make_shared<ValueVar>(makeTemporaryName());
 
@@ -544,29 +572,29 @@ std::shared_ptr<Value> conditionalInst(const Parsing::Expr& stmt,
     Identifier falseLabelName = makeTemporaryName();
 
     const auto conditionalExpr = dynamic_cast<const Parsing::ConditionalExpr*>(&stmt);
-    auto condition = inst(*conditionalExpr->condition, insts);
+    auto condition = instIr(*conditionalExpr->condition, insts);
 
     insts.push_back(std::make_unique<JumpIfZeroInst>(condition, falseLabelName));
 
-    auto trueValue = inst(*conditionalExpr->first, insts);
+    auto trueValue = instIr(*conditionalExpr->first, insts);
     insts.push_back(std::make_unique<CopyInst>(trueValue, result));
     insts.push_back(std::make_unique<JumpInst>(endLabelIden));
 
     insts.push_back(std::make_unique<LabelInst>(falseLabelName));
-    auto right = inst(*conditionalExpr->second, insts);
+    auto right = instIr(*conditionalExpr->second, insts);
     insts.push_back(std::make_unique<CopyInst>(right, result));
 
     insts.push_back(std::make_unique<LabelInst>(endLabelIden));
     return result;
 }
 
-std::shared_ptr<Value> funcCallInst(const Parsing::Expr& stmt,
-                                    std::vector<std::unique_ptr<Instruction> >& insts)
+std::shared_ptr<Value> funcCallInstIr(const Parsing::Expr& stmt,
+                                      std::vector<std::unique_ptr<Instruction> >& insts)
 {
     const auto parseFunction = dynamic_cast<const Parsing::FunCallExpr*>(&stmt);
     std::vector<std::shared_ptr<Value>> arguments;
     for (const auto& expr : parseFunction->args)
-        arguments.push_back(inst(*expr, insts));
+        arguments.push_back(instIr(*expr, insts));
     auto dst = std::make_shared<ValueVar>(makeTemporaryName());
     insts.push_back(std::make_unique<FunCallInst>(
         Identifier(parseFunction->identifier), std::move(arguments), dst

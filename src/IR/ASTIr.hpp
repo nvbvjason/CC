@@ -36,6 +36,7 @@ binary_operator = Add | Subtract | Multiplay | Divide | Remainder |
 namespace Ir {
 
 struct Program;
+struct TopLevel;
 struct Function;
 struct Instruction;
 struct Value;
@@ -46,7 +47,7 @@ struct Identifier {
 };
 
 struct Program {
-    std::vector<std::unique_ptr<Function>> functions;
+    std::vector<std::unique_ptr<TopLevel>> topLevels;
 };
 
 struct TopLevel {
@@ -76,10 +77,13 @@ struct Function : public TopLevel {
 
 struct StaticVariable : public TopLevel {
     std::string name;
-    i32 value;
+    std::shared_ptr<Value> value;
     bool isGlobal;
-    explicit StaticVariable(std::string identifier, const bool isGlobal)
-        : TopLevel(Type::StaticVariable), name(std::move(identifier)), isGlobal(isGlobal) {}
+    explicit StaticVariable(std::string identifier,
+                            const std::shared_ptr<Value>& value,
+                            const bool isGlobal)
+        : TopLevel(Type::StaticVariable), name
+                (std::move(identifier)), value(value), isGlobal(isGlobal) {}
 
     StaticVariable() = delete;
 };

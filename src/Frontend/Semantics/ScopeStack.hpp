@@ -4,6 +4,7 @@
 #define CC_SEMANTICS_VARIABLE_STACK_HPP
 
 #include "ASTParser.hpp"
+
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -13,11 +14,11 @@
 struct Variable {
     using StorageClass = Parsing::Declaration::StorageClass;
     enum class Type {
-        Function, Int
+        Function, Int, Invalid
     };
     std::string name;
     StorageClass storage;
-    Type type;
+    Type type = Type::Invalid;
     Variable() = default;
     Variable(std::string n, const Type t, const StorageClass storageClassType)
         : name(std::move(n)), storage(storageClassType), type(t) {}
