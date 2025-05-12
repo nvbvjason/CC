@@ -41,6 +41,8 @@ std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl)
             const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&decl);
             if (varDecl->init == nullptr)
                 return nullptr;
+            if (varDecl->storage != Parsing::Declaration::StorageClass::StaticGlobalInitialized)
+                return nullptr;;
             return staticVariableIr(*varDecl);
         }
         assert("topLevelIr");
@@ -59,6 +61,8 @@ std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl)
 std::unique_ptr<TopLevel> functionIr(const Parsing::FunDecl& parsingFunction)
 {
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, isGlobal(parsingFunction.storage));
+    for (const auto& param : parsingFunction.params)
+        functionTacky->args.push_back(Identifier(param));
     blockIr(*parsingFunction.body, functionTacky->insts);
     return functionTacky;
 }
@@ -630,16 +634,14 @@ static bool isGlobal(Parsing::Declaration::StorageClass storage)
     }
 }
 
-
 UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
 {
+    using Operator = Parsing::UnaryExpr::Operator;
+    using OperationIr = UnaryInst::Operation;
     switch (unaryOperation) {
-        case Parsing::UnaryExpr::Operator::Complement:
-            return UnaryInst::Operation::Complement;
-        case Parsing::UnaryExpr::Operator::Negate:
-            return UnaryInst::Operation::Negate;
-        case Parsing::UnaryExpr::Operator::Not:
-            return UnaryInst::Operation::Not;
+        case Operator::Complement:  return OperationIr::Complement;
+        case Operator::Negate:      return OperationIr::Negate;
+        case Operator::Not:         return OperationIr::Not;
         default:
             throw std::invalid_argument("Invalid unary operation");
     }

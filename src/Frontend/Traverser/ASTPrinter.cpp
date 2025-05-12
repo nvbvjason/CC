@@ -108,6 +108,10 @@ void ASTPrinter::visit(const FunDecl& funDecl)
 {
     IndentGuard guard(m_indentLevel);
     addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storage));
+    std::string args = "args:";
+    for (const std::string arg : funDecl.params)
+        args += " " + arg + " ";
+    addLine(args);
     ConstASTTraverser::visit(funDecl);
 }
 
