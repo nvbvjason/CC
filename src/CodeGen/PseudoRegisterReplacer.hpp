@@ -34,9 +34,13 @@ public:
     void visit(LabelInst&) override {}
 private:
     void replaceIfPseudo(std::shared_ptr<Operand>& operand);
-
-public:
+    bool isStatic(const std::string& iden);
 };
+
+inline bool PseudoRegisterReplacer::isStatic(const std::string& iden)
+{
+    return iden.contains(".s.");
+}
 
 } // CodeGen
 

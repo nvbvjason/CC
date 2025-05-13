@@ -21,12 +21,30 @@ std::string asmProgram(const Program& program)
 
 void asmFunction(std::string& result, const Function& functionNode)
 {
-    result += ".globl    " + functionNode.name + '\n';
+    if (functionNode.isGlobal)
+        result += asmFormatInstruction(".globl", functionNode.name);
+    result += asmFormatInstruction(".text");
     result += asmFormatLabel(functionNode.name);
     result += asmFormatInstruction("pushq", "%rbp");
     result += asmFormatInstruction("movq","%rsp, %rbp");
     for (const std::unique_ptr<Inst>& inst : functionNode.instructions)
         asmInstruction(result, inst);
+}
+
+void asmStaticVariable(std::string& result, const StaticVariable& staticVariableNode)
+{
+    if (staticVariableNode.isGlobal)
+        result += asmFormatInstruction(".globl", staticVariableNode.name);
+    if (staticVariableNode.init == 0)
+        result += asmFormatInstruction(".data");
+    else
+        result += asmFormatInstruction(".bss");
+    result += asmFormatInstruction(alignDirective());
+    result += asmFormatLabel(staticVariableNode.name);
+    if (staticVariableNode.init == 0)
+        result += asmFormatInstruction(".zero 4");
+    else
+        result += asmFormatInstruction(".long " + std::to_string(staticVariableNode.init));
 }
 
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction)
@@ -133,6 +151,10 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
             const auto stackOperand = dynamic_cast<StackOperand*>(operand.get());
             return std::to_string(stackOperand->value) + "(%rbp)";
         }
+        case Operand::Kind::Data: {
+            const auto dataOperand = dynamic_cast<DataOperand*>(operand.get());
+            return dataOperand->identifier + "(%rip)";
+        }
         default:
             return "not set asmOperand";
     }
@@ -197,6 +219,11 @@ std::string asmBinaryOperator(BinaryInst::Operator oper)
         default:
             return "not set asmBinaryOperator";
     }
+}
+
+std::string alignDirective()
+{
+    return ".align 4";
 }
 
 std::string asmFormatLabel(const std::string& name)

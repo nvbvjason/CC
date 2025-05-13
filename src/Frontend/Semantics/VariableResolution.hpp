@@ -30,6 +30,7 @@ class VariableResolution : public Parsing::ASTTraverser {
     using StorageClass = Parsing::Declaration::StorageClass;
     ScopeStack m_scopeStack;
     std::unordered_map<std::string, FunctionClarification> m_functions;
+    i32 m_counter = 0;
     bool m_valid = true;
 public:
     VariableResolution() = default;
@@ -45,7 +46,11 @@ public:
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
     void visit(Parsing::FunCallExpr& funCallExpr) override;
 
+private:
     bool inFunction() const { return 1 < m_scopeStack.size();}
+    inline std::string makeStatic(const std::string& name);
+    inline std::string makeTemporary(const std::string& name);
+    inline std::string makeStaticTemporary(const std::string& name);
 };
 
 bool isInvalidInFunctionBody(const Parsing::FunDecl& function, bool inFunction);
@@ -76,9 +81,18 @@ bool shouldSkipFunDecl(const Parsing::FunDecl& funDecl, const ScopeStack& variab
 
 bool internalLinkage(Parsing::Declaration::StorageClass storageClass);
 
-inline std::string makeTemporary(const std::string& name)
+inline std::string VariableResolution::makeStatic(const std::string& name)
 {
-    static i32 m_counter = 0;
+    return name + ".s.";
+}
+
+inline std::string VariableResolution::makeStaticTemporary(const std::string& name)
+{
+    return name + ".s." + std::to_string(m_counter++);
+}
+
+inline std::string VariableResolution::makeTemporary(const std::string& name)
+{
     return name + '.' + std::to_string(m_counter++);
 }
 

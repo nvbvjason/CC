@@ -152,8 +152,6 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
     std::unique_ptr<Expr> expr = exprParse(0);
     if (!expect(TokenType::Semicolon))
         return {nullptr, true};
-    if (expr == nullptr)
-        return {nullptr, false};
     return {std::make_unique<ExprForInit>(std::move(expr)), false};
 }
 

@@ -9,7 +9,10 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
             stackPtr -= 4;
             pseudoMap[pseudo->identifier] = stackPtr;
         }
-        operand = std::make_shared<StackOperand>(pseudoMap.at(pseudo->identifier));
+        if (isStatic(pseudo->identifier))
+            operand = std::make_shared<DataOperand>(pseudo->identifier);
+        else
+            operand = std::make_shared<StackOperand>(pseudoMap.at(pseudo->identifier));
     }
 }
 

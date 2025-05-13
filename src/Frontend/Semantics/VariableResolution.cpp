@@ -57,11 +57,13 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
         if (!(varDecl.storage == StorageClass::ExternGlobal ||
               varDecl.storage == StorageClass::GlobalScopeDeclaration ||
               varDecl.storage == StorageClass::ExternLocal ||
-              varDecl.storage == StorageClass::GlobalDefinition ||
-              varDecl.storage == StorageClass::StaticGlobalInitialized ||
-              varDecl.storage == StorageClass::StaticGlobalTentative)) {
+              varDecl.storage == StorageClass::GlobalDefinition)) {
             newName = makeTemporary(varDecl.name);
         }
+        if (varDecl.storage == StorageClass::StaticGlobalInitialized ||
+            varDecl.storage == StorageClass::StaticGlobalTentative ||
+            varDecl.storage == StorageClass::StaticLocal)
+            newName = makeStatic(varDecl.name);
         if (varDecl.storage == StorageClass::ExternLocal)
             m_scopeStack.addExternGlobal(varDecl.name);
         m_scopeStack.addDecl(varDecl.name, newName,

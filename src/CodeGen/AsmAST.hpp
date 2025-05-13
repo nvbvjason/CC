@@ -330,9 +330,9 @@ struct StackOperand final : Operand {
 };
 
 struct DataOperand final : Operand {
-    i32 value;
-    explicit DataOperand(const i32 value)
-        : Operand(Kind::Data), value(value) {}
+    std::string identifier;
+    explicit DataOperand(std::string iden)
+        : Operand(Kind::Data), identifier(std::move(iden)) {}
 
     DataOperand() = delete;
 };
