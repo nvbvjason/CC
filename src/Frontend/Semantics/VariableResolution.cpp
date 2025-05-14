@@ -1,5 +1,7 @@
 #include "VariableResolution.hpp"
 
+#include <utility>
+
 #include "ASTParser.hpp"
 
 namespace Semantics {
@@ -16,14 +18,23 @@ bool VariableResolution::resolve(Parsing::Program& program)
     return m_valid;
 }
 
+void VariableResolution::visit(Parsing::Block& block)
+{
+    const std::unordered_set<std::string> declaredInScope = resolveScopeDecls(m_variables);
+    ASTTraverser::visit(block);
+    addCurrentScope(m_variables, declaredInScope);
+}
+
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    if (m_variables.contains(varDecl.name)) {
+    const auto it = m_variables.find(varDecl.name);
+    if (it != m_variables.end() && it->second.fromCurrentScope) {
         m_valid = false;
         return;
     }
     const std::string uniqueName = makeTemporaryName(varDecl.name);
-    m_variables.emplace(varDecl.name, uniqueName);
+    m_variables.emplace_hint(it, varDecl.name, MapEntry(uniqueName, true));
+    varDecl.name = uniqueName;
     ASTTraverser::visit(varDecl);
 }
 
@@ -43,9 +54,35 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         m_valid = false;
         return;
     }
-    varExpr.name = it->second;
+    varExpr.name = it->second.name;
     ASTTraverser::visit(varExpr);
 }
+
+std::unordered_set<std::string> resolveScopeDecls(std::unordered_map<std::string, MapEntry> &map)
+{
+    std::unordered_set<std::string> declaredInScope;
+    for (auto& pair : map) {
+        if (pair.second.fromCurrentScope) {
+            declaredInScope.insert(pair.first);
+            pair.second.fromCurrentScope = false;
+        }
+    }
+    return declaredInScope;
+}
+
+void addCurrentScope(std::unordered_map<std::string, MapEntry> &map, const std::unordered_set<std::string> &scope)
+{
+    for (auto it = map.begin(); it != map.end(); ) {
+        if (it->second.fromCurrentScope) {
+            it = map.erase(it);
+            continue;
+        }
+        if (scope.contains(it->first))
+            it->second.fromCurrentScope = true;
+        ++it;
+    }
+}
+
 
 std::string VariableResolution::makeTemporaryName(const std::string& name)
 {
