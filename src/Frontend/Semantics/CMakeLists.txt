@@ -10,6 +10,10 @@ add_library(Semantics
         ScopeStack.hpp
         TypeResolution.cpp
         TypeResolution.hpp
+        RemoveRedundantDecls.cpp
+        RemoveRedundantDecls.hpp
+        VariableResolutionNextTry.cpp
+        VariableResolutionNextTry.hpp
 )
 
 target_include_directories(Semantics PUBLIC

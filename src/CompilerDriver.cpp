@@ -151,7 +151,7 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 {
     const std::vector<std::string> validArguments = {"",  "--printAst","--help", "-h", "--version",
         "--lex", "--parse", "--tacky", "--codegen", "--printTacky", "--validate",
-        "--assemble", "--printAsm", "-c"};
+        "--assemble", "--printAsm", "-c", "--printAstAfter"};
     return std::ranges::any_of(validArguments, [&](const std::string &arg) {
         return arg == argument;
     });

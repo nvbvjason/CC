@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "RemoveRedundantDecls.hpp"
 #include "TypeResolution.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
@@ -44,6 +45,12 @@ std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> FrontendDriver::run() const
         return {nullptr, err};
     if (m_arg == "--validate")
         return {nullptr, ErrorCode::OK};
+    Semantics::RemoveRedundantDecls removeRedundantDecls;
+    removeRedundantDecls.go(program);
+    if (m_arg == "--printAstAfter") {
+        printParsingAst(&program);
+        return {nullptr, ErrorCode::OK};
+    }
     std::unique_ptr<Ir::Program> irProgram = std::make_unique<Ir::Program>(ir(&program));
     return {std::move(irProgram), ErrorCode::OK};
 }
@@ -112,7 +119,7 @@ Ir::Program ir(const Parsing::Program* parsingProgram)
 
 static std::string preProcess(const std::filesystem::path& file)
 {
-    const std::filesystem::path inputFile(file);
+    const std::filesystem::path& inputFile(file);
     const std::filesystem::path generatedFilesDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";
     const std::filesystem::path generatedFile = generatedFilesDir / (inputFile.stem().string() + ".i");
     std::string command = "gcc -E -P ";

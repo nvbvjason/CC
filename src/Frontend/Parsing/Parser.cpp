@@ -73,9 +73,8 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(TokenType type,
         if (block == nullptr)
             return nullptr;
     }
-    else
-        if (!expect(TokenType::Semicolon))
-            return nullptr;
+    else if (!expect(TokenType::Semicolon))
+        return nullptr;
     Storage storage = getFunctionStorageClass(storageToken, !m_atFileScope, block != nullptr);
     auto result = std::make_unique<FunDecl>(storage, iden);
     if (block != nullptr)
@@ -88,7 +87,7 @@ std::unique_ptr<std::vector<std::string>> Parser::paramsListParse()
 {
     if (expect(TokenType::Void))
         return std::make_unique<std::vector<std::string>>();
-    std::unique_ptr<std::vector<std::string>> params = std::make_unique<std::vector<std::string>>();
+    auto params = std::make_unique<std::vector<std::string>>();
     if (!expect(TokenType::IntKeyword))
         return nullptr;
     Lexing::Token lexeme = advance();
@@ -158,32 +157,19 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
 std::unique_ptr<Stmt> Parser::stmtParse()
 {
     switch (peek().m_type) {
-        case TokenType::Return:
-            return returnStmtParse();
-        case TokenType::Semicolon:
-            return nullStmtParse();
-        case TokenType::If:
-            return ifStmtParse();
-        case TokenType::Goto:
-            return gotoStmtParse();
-        case TokenType::OpenBrace:
-            return std::make_unique<CompoundStmt>(blockParse());
-        case TokenType::Break:
-            return breakStmtParse();
-        case TokenType::Continue:
-            return continueStmtParse();
-        case TokenType::While:
-            return whileStmtParse();
-        case TokenType::Do:
-            return doWhileStmtParse();
-        case TokenType::For:
-            return forStmtParse();
-        case TokenType::Switch:
-            return switchStmtParse();
-        case TokenType::Case:
-            return caseStmtParse();
-        case TokenType::Default:
-            return defaultStmtParse();
+        case TokenType::Return:         return returnStmtParse();
+        case TokenType::Semicolon:      return nullStmtParse();
+        case TokenType::If:             return ifStmtParse();
+        case TokenType::Goto:           return gotoStmtParse();
+        case TokenType::OpenBrace:      return std::make_unique<CompoundStmt>(blockParse());
+        case TokenType::Break:          return breakStmtParse();
+        case TokenType::Continue:       return continueStmtParse();
+        case TokenType::While:          return whileStmtParse();
+        case TokenType::Do:             return doWhileStmtParse();
+        case TokenType::For:            return forStmtParse();
+        case TokenType::Switch:         return switchStmtParse();
+        case TokenType::Case:           return caseStmtParse();
+        case TokenType::Default:        return defaultStmtParse();
         default:
             if (peekNextTokenType() == TokenType::Colon)
                 return labelStmtParse();

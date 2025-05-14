@@ -11,7 +11,7 @@ namespace Ir {
 void program(const Parsing::Program* parsingProgram, Program& tackyProgram);
 std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
 std::unique_ptr<TopLevel> functionIr(const Parsing::FunDecl& parsingFunction);
-std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& parsingFunction);
+std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl);
 void blockIr(const Parsing::Block& block, std::vector<std::unique_ptr<Instruction>>& instructions);
 void blockItemIr(const Parsing::BlockItem& blockItem,
                std::vector<std::unique_ptr<Instruction>>& instructions);
