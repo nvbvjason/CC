@@ -5,7 +5,7 @@
 #include "ErrorCodes.hpp"
 #include "ASTPrinter.hpp"
 #include "GenerateIr.hpp"
-#include "LabelsUnique.hpp"
+#include "GotoLabelsUnique.hpp"
 #include "Lexer.hpp"
 #include "LvalueVerification.hpp"
 #include "Parser.hpp"
@@ -73,7 +73,7 @@ ErrorCode validateSemantics(Parsing::Program& programNode)
     Semantics::LvalueVerification lvalueVerification;
     if (!lvalueVerification.resolve(programNode))
         return ErrorCode::LValueVerification;
-    Semantics::LabelsUnique labelsUnique;
+    Semantics::GotoLabelsUnique labelsUnique;
     if (!labelsUnique.programValidate(programNode))
         return ErrorCode::LabelsUnique;
     Semantics::LoopLabeling loopLabeling;

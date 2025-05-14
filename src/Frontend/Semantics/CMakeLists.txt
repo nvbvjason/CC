@@ -2,18 +2,14 @@ add_library(Semantics
         ValidateReturn.cpp
         VariableResolution.cpp
         LvalueVerification.cpp
-        LabelsUnique.cpp
-        LabelsUnique.hpp
+        GotoLabelsUnique.cpp
+        GotoLabelsUnique.hpp
         LoopLabeling.cpp
         LoopLabeling.hpp
-        ScopeStack.cpp
-        ScopeStack.hpp
         TypeResolution.cpp
         TypeResolution.hpp
         RemoveRedundantDecls.cpp
         RemoveRedundantDecls.hpp
-        VariableResolutionNextTry.cpp
-        VariableResolutionNextTry.hpp
 )
 
 target_include_directories(Semantics PUBLIC

@@ -3,7 +3,7 @@
 #include "Frontend/Lexing/Lexer.hpp"
 #include "Frontend/Parsing/Parser.hpp"
 #include "../src/Frontend/Semantics/VariableResolution.hpp"
-#include "LabelsUnique.hpp"
+#include "GotoLabelsUnique.hpp"
 #include "FrontendDriver.hpp"
 
 #include <filesystem>
