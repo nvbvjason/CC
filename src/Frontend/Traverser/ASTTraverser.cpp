@@ -15,6 +15,7 @@ void ASTTraverser::visit(VarDecl& varDecl)
         varDecl.init->accept(*this);
 }
 
+// Declaration
 void ASTTraverser::visit(FunDecl& funDecl)
 {
     if (funDecl.body)
@@ -27,6 +28,7 @@ void ASTTraverser::visit(Block& block)
         blockItem->accept(*this);
 }
 
+// BlockItem
 void ASTTraverser::visit(StmtBlockItem& stmtBlockItem)
 {
     stmtBlockItem.stmt->accept(*this);
@@ -37,6 +39,7 @@ void ASTTraverser::visit(DeclBlockItem& declBlockItem)
     declBlockItem.decl->accept(*this);
 }
 
+// ForInit
 void ASTTraverser::visit(DeclForInit& declForInit)
 {
     declForInit.decl->accept(*this);
@@ -44,18 +47,11 @@ void ASTTraverser::visit(DeclForInit& declForInit)
 
 void ASTTraverser::visit(ExprForInit& exprForInit)
 {
-    if (exprForInit.expression)
+    if (exprForInit.expression != nullptr)
         exprForInit.expression->accept(*this);
 }
 
-void ASTTraverser::visit(IfStmt& ifStmt)
-{
-    ifStmt.condition->accept(*this);
-    ifStmt.thenStmt->accept(*this);
-    if (ifStmt.elseStmt)
-        ifStmt.elseStmt->accept(*this);
-}
-
+// Statements
 void ASTTraverser::visit(ReturnStmt& returnStmt)
 {
     returnStmt.expr->accept(*this);
@@ -64,6 +60,14 @@ void ASTTraverser::visit(ReturnStmt& returnStmt)
 void ASTTraverser::visit(ExprStmt& exprStmt)
 {
     exprStmt.expr->accept(*this);
+}
+
+void ASTTraverser::visit(IfStmt& ifStmt)
+{
+    ifStmt.condition->accept(*this);
+    ifStmt.thenStmt->accept(*this);
+    if (ifStmt.elseStmt)
+        ifStmt.elseStmt->accept(*this);
 }
 
 void ASTTraverser::visit(CompoundStmt& compoundStmt)
@@ -78,6 +82,7 @@ void ASTTraverser::visit(LabelStmt& labelStmt)
 
 void ASTTraverser::visit(CaseStmt& caseStmt)
 {
+    caseStmt.condition->accept(*this);
     caseStmt.body->accept(*this);
 }
 
@@ -115,6 +120,7 @@ void ASTTraverser::visit(SwitchStmt& switchStmt)
     switchStmt.body->accept(*this);
 }
 
+// Expression
 void ASTTraverser::visit(UnaryExpr& unaryExpr)
 {
     unaryExpr.operand->accept(*this);

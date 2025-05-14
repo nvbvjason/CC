@@ -82,6 +82,7 @@ void ConstASTTraverser::visit(const LabelStmt& labelStmt)
 
 void ConstASTTraverser::visit(const CaseStmt& caseStmt)
 {
+    caseStmt.condition->accept(*this);
     caseStmt.body->accept(*this);
 }
 

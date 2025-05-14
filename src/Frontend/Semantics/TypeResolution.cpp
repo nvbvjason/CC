@@ -14,6 +14,10 @@ void TypeResolution::visit(const Parsing::FunDecl& funDecl)
 {
     if (!m_storageClassMap.contains(funDecl.name))
         m_storageClassMap[funDecl.name] = funDecl.storage;
+    if (!m_atFileScope && funDecl.body != nullptr) {
+        m_valid = false;
+        return;
+    }
     m_atFileScope = false;
     ConstASTTraverser::visit(funDecl);
     m_atFileScope = true;

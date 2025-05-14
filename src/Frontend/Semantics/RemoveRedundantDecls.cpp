@@ -28,7 +28,6 @@ void Semantics::RemoveRedundantDecls::handleVarDecl(const std::unique_ptr<Parsin
 {
     const auto varDecl = static_cast<Parsing::VarDecl*>(decl.get());
     auto it = varInternalLinkage.find(varDecl->name);
-
 }
 
 void Semantics::RemoveRedundantDecls::go(Parsing::Program& prog)

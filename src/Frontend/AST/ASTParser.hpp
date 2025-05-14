@@ -476,10 +476,10 @@ struct ConditionalExpr final : Expr {
 };
 
 struct FunCallExpr final : Expr {
-    std::string identifier;
+    std::string name;
     std::vector<std::unique_ptr<Expr>> args;
     FunCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args)
-        : Expr(Kind::FunctionCall), identifier(std::move(identifier)), args(std::move(args)) {}
+        : Expr(Kind::FunctionCall), name(std::move(identifier)), args(std::move(args)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

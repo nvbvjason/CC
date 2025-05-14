@@ -602,7 +602,7 @@ std::shared_ptr<Value> funcCallInstIr(const Parsing::Expr& stmt,
         arguments.push_back(instIr(*expr, insts));
     auto dst = std::make_shared<ValueVar>(makeTemporaryName());
     insts.push_back(std::make_unique<FunCallInst>(
-        Identifier(parseFunction->identifier), std::move(arguments), dst
+        Identifier(parseFunction->name), std::move(arguments), dst
         ));
     return dst;
 }
