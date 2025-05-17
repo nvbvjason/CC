@@ -4,497 +4,252 @@
 
 namespace {
 using Type = Lexing::Token::Type;
+using Type::OpenParen; using Type::CloseParen;
+using Type::OpenBrace; using Type::CloseBrace;
+using Type::Return;
+using Type::Integer;
+using Type::Semicolon;
+using Type::If;
+using Type::Else;
+using Type::Goto;
+using Type::Identifier;
+using Type::Break;
+using Type::Continue;
+using Type::Colon;
+using Type::Case;
+using Type::Default;
+using Type::While;
+using Type::Do;
+using Type::For;
+using Type::Switch;
 }
 
-TEST(ParserStmtTests, ReturnStmtSuccess)
+TEST_F(ParserStmtTest, ReturnStmtVariations)
 {
-    const std::vector tokenTypes{Type::Return, Type::Integer, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.returnStmtParse());
+    const std::vector<TestCase> cases = {
+        {"ValidReturn", true,
+            {Return, Integer, Semicolon}},
+        {"MissingReturn", false,
+            {Integer, Semicolon}},
+        {"MissingExpr", false,
+            {Return, Semicolon}},
+        {"MissingSemicolon", false,
+            {Return, Integer}}
+    };
+    RunTestCases("ReturnStmt", &Parsing::Parser::returnStmtParse, cases);
 }
 
-TEST(ParserStmtTests, ReturnStmtMissingReturn)
+TEST_F(ParserStmtTest, ExprStmtVariations)
 {
-    const std::vector tokenTypes{Type::Integer, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.returnStmtParse());
+    const std::vector<TestCase> cases = {
+        {"ValidExpr", true,
+            {Integer, Semicolon}},
+        {"MissingExpr", false,
+            {Semicolon}},
+        {"MissingSemicolon", false,
+            {Integer}},
+    };
+    RunTestCases("ExprStmt", &Parsing::Parser::exprStmtParse, cases);
 }
 
-TEST(ParserStmtTests, ReturnStmtMissingExpr)
+TEST_F(ParserStmtTest, IfStmtVariations)
 {
-    const std::vector tokenTypes{Type::Return, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.returnStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid If", true,
+            {If, OpenParen, Integer, CloseParen, Semicolon}},
+        {"Wrong Bracketing Symbols", false,
+            {If, OpenBrace, Integer, CloseBrace, Semicolon}},
+        {"Missing If", false,
+            {OpenParen, Integer, CloseParen, Semicolon}},
+        {"Missing OpenParen", false,
+        {If, Integer, CloseParen, Semicolon}},
+        {"Missing Expr", false,
+        {If, OpenParen, CloseParen, Semicolon}},
+        {"Missing CloseParen", false,
+        {If, OpenParen, Integer, Semicolon}},
+        {"Missing Body", false,
+        {If, OpenParen, Integer, CloseParen}},
+        {"If Else Success", true,
+        {If, OpenParen, Integer, CloseParen, Semicolon, Else, Semicolon}},
+        {"If Else Missing Body", false,
+        {If, OpenParen, Integer, CloseParen, Semicolon, Else}},
+    };
+    RunTestCases("IfStmt", &Parsing::Parser::ifStmtParse, cases);
 }
 
-TEST(ParserStmtTests, ReturnStmtMissingSemicolon)
+TEST_F(ParserStmtTest, GotoStmtVariations)
 {
-    const std::vector tokenTypes{Type::Return, Type::Integer};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.returnStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid Goto", true,
+            {Goto, Identifier, Semicolon}},
+        {"Missing Goto", false,
+            {Identifier, Semicolon}},
+        {"Missing Identifier", false,
+            {Goto, Semicolon}},
+        {"Missing Semicolon", false,
+        {Goto, Identifier}},
+    };
+    RunTestCases("Goto Stmt", &Parsing::Parser::gotoStmtParse, cases);
 }
 
-TEST(ParserStmtTests, ExprStmtSuccess)
+TEST_F(ParserStmtTest, BreakStmtVariations)
 {
-    const std::vector tokenTypes{Type::Integer, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.exprStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid Break", true,
+            {Break, Semicolon}},
+        {"Missing Break", false,
+            {Semicolon}},
+        {"Missing Semicolon", false,
+            {Break}},
+    };
+    RunTestCases("Break Stmt", &Parsing::Parser::breakStmtParse, cases);
 }
 
-TEST(ParserStmtTests, ExprStmtMissingSemicolon)
+TEST_F(ParserStmtTest, ContinueStmtVariations)
 {
-    const std::vector tokenTypes{Type::Integer};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.exprStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid Continue", true,
+            {Continue, Semicolon}},
+        {"Missing Continue", false,
+            {Semicolon}},
+        {"Missing Semicolon", false,
+            {Continue}},
+    };
+    RunTestCases("Continue Stmt", &Parsing::Parser::continueStmtParse, cases);
 }
 
-TEST(ParserStmtTests, IfStmtWrongBracketingSymbols)
+TEST_F(ParserStmtTest, LabelStmtVariations)
 {
-    const std::vector tokenTypes{Type::If, Type::OpenBrace, Type::Integer, Type::CloseBrace, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.ifStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid Label", true,
+            {Identifier, Colon, Semicolon}},
+        {"Missing Identifier", false,
+        {Colon, Semicolon}},
+        {"Missing Colon", false,
+            {Identifier, Semicolon}},
+        {"Missing Body", false,
+        {Identifier, Colon}},
+    };
+    RunTestCases("Label Stmt", &Parsing::Parser::labelStmtParse, cases);
 }
 
-TEST(ParserStmtTests, IfStmtMissingIf)
+TEST_F(ParserStmtTest, CaseStmtVariations)
 {
-    const std::vector tokenTypes{Type::OpenParen, Type::Integer, Type::CloseParen, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.ifStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid Case", true,
+            {Case, Integer, Colon, Semicolon}},
+        {"Missing Case", false,
+            {Integer, Colon, Semicolon}},
+        {"Missing Condition", false,
+        {Case, Colon, Semicolon}},
+        {"Missing Colon", false,
+        {Case, Integer, Semicolon}},
+        {"Missing Body", false,
+        {Case, Integer, Colon}},
+    };
+    RunTestCases("Case Stmt", &Parsing::Parser::caseStmtParse, cases);
 }
 
-TEST(ParserStmtTests, IfStmtMissingOpenParen)
+TEST_F(ParserStmtTest, DefaultStmtVariations)
 {
-    const std::vector tokenTypes{Type::If, Type::Integer, Type::CloseParen, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.ifStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid Default", true,
+            {Default, Colon, Semicolon}},
+        {"Missing Default", false,
+        {Colon, Semicolon}},
+        {"Missing Colon", false,
+        {Default, Semicolon}}
+    };
+    RunTestCases("Default Stmt", &Parsing::Parser::defaultStmtParse, cases);
 }
 
-TEST(ParserStmtTests, IfStmtMissingExpr)
+TEST_F(ParserStmtTest, WhileStmtVariations)
 {
-    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::CloseParen, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.ifStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid While", true,
+        {While, OpenParen, Integer, CloseParen, Semicolon}},
+        {"Missing While", false,
+        {OpenParen, Integer, CloseParen, Semicolon}},
+        {"Missing Open Paren", false,
+    {While, Integer, CloseParen, Semicolon}},
+        {"Missing Condition", false,
+        {While, OpenParen, CloseParen, Semicolon}},
+        {"Missing Close Paren", false,
+        {While, OpenParen, Integer, Semicolon}},
+        {"Missing Missing Body", false,
+        {While, OpenParen, Integer, CloseParen}},
+    };
+    RunTestCases("While Stmt", &Parsing::Parser::whileStmtParse, cases);
 }
 
-TEST(ParserStmtTests, IfStmtMissingCloseParen)
+TEST_F(ParserStmtTest, DoWhileStmtVariations)
 {
-    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.ifStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid Do While", true,
+{Do, Semicolon, While, OpenParen, Integer, CloseParen, Semicolon}},
+        {"Missing Do While", false,
+        {Semicolon, While, OpenParen, Integer, CloseParen, Semicolon}},
+        {"Missing Body", false,
+    {Do, While, OpenParen, Integer, CloseParen, Semicolon}},
+        {"Missing While", false,
+        {Do, Semicolon, OpenParen, Integer, CloseParen, Semicolon}},
+        {"Missing Close Paren", false,
+        {Do, Semicolon, While, OpenParen, Integer, Semicolon}},
+        {"Missing Missing Semicolon at end", false,
+        {Do, Semicolon, While, OpenParen, Integer, CloseParen}},
+    };
+    RunTestCases("Do While Stmt", &Parsing::Parser::doWhileStmtParse, cases);
 }
 
-TEST(ParserStmtTests, IfStmtMissingBody)
+TEST_F(ParserStmtTest, ForStmtVariations)
 {
-    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::CloseParen};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.ifStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid For", true,
+{For, OpenParen, Semicolon, Semicolon, CloseParen, Semicolon}},
+        {"Wrong Bracketing Symbols", false,
+        {For, OpenBrace, Semicolon, Semicolon, CloseBrace, Semicolon}},
+        {"Missing For", false,
+        {OpenParen, Semicolon, Semicolon, CloseParen, Semicolon}},
+        {"Missing Open Paren", false,
+    {For, Semicolon, Semicolon, CloseParen, Semicolon}},
+        {"Missing Semicolon in for", false,
+        {For, OpenParen, Semicolon, CloseParen, Semicolon}},
+        {"Missing Close Paren", false,
+        {For, OpenParen, Semicolon, Semicolon, Semicolon}},
+        {"Missing Missing Body", false,
+        {For, OpenParen, Semicolon, Semicolon, CloseParen}},
+    };
+    RunTestCases("For Stmt", &Parsing::Parser::forStmtParse, cases);
 }
 
-TEST(ParserStmtTests, IfElseStmtSuccess)
+TEST_F(ParserStmtTest, SwitchStmtVariations)
 {
-    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::CloseParen, Type::Semicolon,
-                                       Type::Else, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.ifStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid Switch", true,
+{Switch, OpenParen, Integer, CloseParen, Semicolon}},
+        {"Wrong Bracketing Symbols", false,
+        {Switch, OpenBrace, Integer, CloseBrace, Semicolon}},
+        {"Missing Switch", false,
+        {OpenParen, Integer, CloseParen, Semicolon}},
+        {"Missing Open Paren", false,
+    {Switch, Integer, CloseParen, Semicolon}},
+        {"Missing Condition", false,
+        {Switch, OpenParen, CloseParen, Semicolon}},
+        {"Missing Close Paren", false,
+        {Switch, OpenParen, Integer, Semicolon}},
+        {"Missing Missing Body", false,
+        {Switch, OpenParen, Integer, CloseParen}},
+    };
+    RunTestCases("Switch Stmt", &Parsing::Parser::switchStmtParse, cases);
 }
 
-TEST(ParserStmtTests, IfElseStmtMissingBody)
+TEST_F(ParserStmtTest, NullStmtVariations)
 {
-    const std::vector tokenTypes{Type::If, Type::OpenParen, Type::Integer, Type::CloseParen, Type::Semicolon,
-                                       Type::Else};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.ifStmtParse());
-}
-
-TEST(ParserStmtTests, GotoStmtSuccess)
-{
-    const std::vector tokenTypes{Type::Goto, Type::Identifier, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.gotoStmtParse());
-}
-
-TEST(ParserStmtTests, GotoStmtMissingGoto)
-{
-    const std::vector tokenTypes{Type::Identifier, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.gotoStmtParse());
-}
-
-TEST(ParserStmtTests, GotoStmtMissingIdentifier)
-{
-    const std::vector tokenTypes{Type::Goto, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.gotoStmtParse());
-}
-
-TEST(ParserStmtTests, GotoStmtMissingSemicolon)
-{
-    const std::vector tokenTypes{Type::Goto, Type::Identifier};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.gotoStmtParse());
-}
-
-TEST(ParserStmtTests, BreakStmtSuccess)
-{
-    const std::vector tokenTypes{Type::Break, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.breakStmtParse());
-}
-
-TEST(ParserStmtTests, BreakStmtMissingBreak)
-{
-    const std::vector tokenTypes{Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.breakStmtParse());
-}
-
-TEST(ParserStmtTests, BreakStmtMissingSemicolon)
-{
-    const std::vector tokenTypes{Type::Break};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.breakStmtParse());
-}
-
-TEST(ParserStmtTests, ContinueStmtSuccess)
-{
-    const std::vector tokenTypes{Type::Continue, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.continueStmtParse());
-}
-
-TEST(ParserStmtTests, ContinueStmtMissingContinue)
-{
-    const std::vector tokenTypes{Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.continueStmtParse());
-}
-
-TEST(ParserStmtTests, ContinueStmtMissingSemicolon)
-{
-    const std::vector tokenTypes{Type::Continue};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.continueStmtParse());
-}
-
-TEST(ParserStmtTests, LabelStmtSuccess)
-{
-    const std::vector tokenTypes{Type::Identifier, Type::Colon, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.labelStmtParse());
-}
-
-TEST(ParserStmtTests, LabelStmtMissingIdentifier)
-{
-    const std::vector tokenTypes{Type::Colon, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.labelStmtParse());
-}
-
-TEST(ParserStmtTests, LabelStmtMissingColon)
-{
-    const std::vector tokenTypes{Type::Identifier, Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.labelStmtParse());
-}
-
-TEST(ParserStmtTests, LabelStmtMissingBody)
-{
-    const std::vector tokenTypes{Type::Identifier, Type::Colon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.labelStmtParse());
-}
-
-TEST(ParserTests, CaseStmtSuccess)
-{
-    const std::vector tokenTypes{Type::Case, Type::Integer, Type::Colon,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.caseStmtParse());
-}
-
-TEST(ParserStmtTests, CaseStmtMissingCase)
-{
-    const std::vector tokenTypes{Type::Integer, Type::Colon,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.caseStmtParse());
-}
-
-TEST(ParserStmtTests, CaseStmtMissingColon)
-{
-    const std::vector tokenTypes{Type::Case, Type::Integer,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.caseStmtParse());
-}
-
-TEST(ParserStmtTests, CaseStmtMissingBody)
-{
-    const std::vector tokenTypes{Type::Integer, Type::Colon,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.caseStmtParse());
-}
-
-TEST(ParserStmtTests, DefaultStmtSuccess)
-{
-    const std::vector tokenTypes{Type::Default, Type::Colon,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.defaultStmtParse());
-}
-
-TEST(ParserStmtTests, DefaultStmtMissingDefault)
-{
-    const std::vector tokenTypes{Type::Colon,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.defaultStmtParse());
-}
-
-TEST(ParserStmtTests, DefaultStmtMissingColon)
-{
-    const std::vector tokenTypes{Type::Default,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.defaultStmtParse());
-}
-
-TEST(ParserStmtTests, DefaultStmtMissingBody)
-{
-    const std::vector tokenTypes{Type::Default, Type::Colon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.defaultStmtParse());
-}
-
-TEST(ParserStmtTests, WhileStmtSuccess)
-{
-    const std::vector tokenTypes{Type::While, Type::OpenParen, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.whileStmtParse());
-}
-
-TEST(ParserStmtTests, WhileStmtMissingWhile)
-{
-    const std::vector tokenTypes{Type::OpenParen, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.whileStmtParse());
-}
-
-TEST(ParserStmtTests, WhileStmtMissingOpenParen)
-{
-    const std::vector tokenTypes{Type::OpenParen, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.whileStmtParse());
-}
-
-TEST(ParserStmtTests, WhileStmtMissingCloseParen)
-{
-    const std::vector tokenTypes{Type::While,
-        Type::OpenParen, Type::Integer,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.whileStmtParse());
-}
-
-TEST(ParserStmtTests, WhileStmtMissingBody)
-{
-    const std::vector tokenTypes{Type::While,
-        Type::OpenParen, Type::Integer};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.whileStmtParse());
-}
-
-TEST(ParserStmtTests, doWhileStmtSuccess)
-{
-    const std::vector tokenTypes{Type::Do,
-        Type::Semicolon, Type::While, Type::OpenParen, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.doWhileStmtParse());
-}
-
-TEST(ParserStmtTests, doWhileStmtMissingDo)
-{
-    const std::vector tokenTypes{
-        Type::Semicolon, Type::While, Type::OpenParen, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.doWhileStmtParse());
-}
-
-TEST(ParserStmtTests, doWhileStmtMissingBody)
-{
-    const std::vector tokenTypes{Type::Do,
-        Type::CloseParen, Type::OpenParen, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.doWhileStmtParse());
-}
-
-TEST(ParserStmtTests, doWhileStmtMissingWhile)
-{
-    const std::vector tokenTypes{Type::Do,
-        Type::Semicolon, Type::OpenParen, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.doWhileStmtParse());
-}
-
-TEST(ParserStmtTests, doWhileStmtMissingOpenParen)
-{
-    const std::vector tokenTypes{Type::Do,
-        Type::Semicolon, Type::While, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.doWhileStmtParse());
-}
-
-TEST(ParserStmtTests, doWhileStmtMissingSemicolon)
-{
-    const std::vector tokenTypes{Type::Do,
-        Type::Semicolon, Type::While, Type::OpenParen, Type::Integer, Type::CloseParen};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.doWhileStmtParse());
-}
-
-TEST(ParserStmtTests, doWhileStmtMissingCloseParen)
-{
-    const std::vector tokenTypes{Type::Do,
-        Type::Semicolon, Type::While, Type::OpenParen, Type::Integer,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.doWhileStmtParse());
-}
-
-TEST(ParserStmtTests, forStmtSuccess)
-{
-    const std::vector tokenTypes{Type::For,
-        Type::OpenParen, Type::Semicolon, Type::Semicolon, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.forStmtParse());
-}
-
-TEST(ParserStmtTests, forStmtWrongBracketing)
-{
-    const std::vector tokenTypes{Type::For,
-        Type::OpenBrace, Type::Semicolon, Type::Semicolon, Type::CloseBrace,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.forStmtParse());
-}
-
-TEST(ParserStmtTests, forStmtMissingFor)
-{
-    const std::vector tokenTypes{
-        Type::OpenBrace, Type::Semicolon, Type::Semicolon, Type::CloseBrace,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.forStmtParse());
-}
-
-TEST(ParserStmtTests, forStmtMissingSemicolon)
-{
-    const std::vector tokenTypes{Type::For,
-        Type::OpenParen, Type::Semicolon, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.forStmtParse());
-}
-
-TEST(ParserStmtTests, forStmtMissingCloseParen)
-{
-    const std::vector tokenTypes{Type::For,
-        Type::OpenParen, Type::Semicolon, Type::Semicolon,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.forStmtParse());
-}
-
-TEST(ParserStmtTests, forStmtMissingBody)
-{
-    const std::vector tokenTypes{Type::For,
-        Type::OpenParen, Type::Semicolon, Type::Semicolon, Type::CloseParen};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.forStmtParse());
-}
-
-TEST(ParserStmtTests, switchStmtSuccess)
-{
-    const std::vector tokenTypes{Type::Switch,
-        Type::OpenParen, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_NE(nullptr, parser.switchStmtParse());
-}
-
-TEST(ParserStmtTests, switchStmtWrongBracketing)
-{
-    const std::vector tokenTypes{Type::Switch,
-        Type::OpenBrace, Type::Integer, Type::OpenBrace,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.switchStmtParse());
-}
-
-TEST(ParserStmtTests, switchStmtMissingSwitch)
-{
-    const std::vector tokenTypes{
-        Type::OpenParen, Type::Integer, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.switchStmtParse());
-}
-
-TEST(ParserStmtTests, switchStmtMissingOpenParen)
-{
-    const std::vector tokenTypes{Type::Switch,
-        Type::OpenBrace, Type::Integer,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.switchStmtParse());
-}
-
-TEST(ParserStmtTests, switchStmtMissingCondition)
-{
-    const std::vector tokenTypes{Type::Switch,
-        Type::OpenParen, Type::CloseParen,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.switchStmtParse());
-}
-
-TEST(ParserStmtTests, switchStmtMissingCloseParen)
-{
-    const std::vector tokenTypes{Type::Switch,
-        Type::OpenParen, Type::Integer,
-        Type::Semicolon};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.switchStmtParse());
-}
-
-TEST(ParserStmtTests, switchStmtMissingBody)
-{
-    const std::vector tokenTypes{Type::Switch,
-        Type::OpenParen, Type::Integer, Type::CloseParen};
-    Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(nullptr, parser.switchStmtParse());
-}
-
-TEST(ParserStmtTests, NullStmtSuccess)
-{
-    const std::vector tokens{Type::Semicolon};
-    Parsing::Parser parser = createParser(tokens);
-    EXPECT_NE(nullptr, parser.nullStmtParse());
-}
-
-TEST(ParserStmtTests, NullStmtFailure)
-{
-    const std::vector tokens{Type::OpenBrace};
-    Parsing::Parser parser = createParser(tokens);
-    EXPECT_EQ(nullptr, parser.nullStmtParse());
+    const std::vector<TestCase> cases = {
+        {"Valid Null", true,
+{Semicolon}},
+        {"Missing Semicolon", false,
+        {}},
+    };
+    RunTestCases("Null Stmt", &Parsing::Parser::nullStmtParse, cases);
 }
