@@ -77,3 +77,11 @@ void SymbolTable::removeScope()
 {
     m_entries.pop_back();
 }
+
+bool SymbolTable::isFunc(const std::string& name) const
+{
+    const auto it = m_entries.front().find(name);
+    if (it == m_entries.front().end())
+        return false;
+    return it->second.type == SymbolType::Func;
+}

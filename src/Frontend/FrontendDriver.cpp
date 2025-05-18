@@ -80,9 +80,9 @@ ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTa
     Semantics::LoopLabeling loopLabeling;
     if (!loopLabeling.programValidate(programNode))
         return ErrorCode::LoopLabeling;
-    // Semantics::TypeResolution typeResolution;
-    // if (!typeResolution.validate(programNode))
-    //     return ErrorCode::TypeResolution;
+    Semantics::TypeResolution typeResolution;
+    if (!typeResolution.validate(programNode))
+        return ErrorCode::TypeResolution;
     return ErrorCode::OK;
 }
 

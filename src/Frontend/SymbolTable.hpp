@@ -72,8 +72,10 @@ public:
     void addScope();
     void removeScope();
 
+    [[nodiscard]] i32 argSize(const std::string& funcName) const { return m_funcs.at(funcName); }
     [[nodiscard]] bool isInArgs(const std::string& name) const { return std::ranges::find(m_args, name) != m_args.end(); }
-    [[nodiscard]] bool inFunction() const { return 1 < m_entries.size(); }
+    [[nodiscard]] bool inFunc() const { return 1 < m_entries.size(); }
+    [[nodiscard]] bool isFunc(const std::string& name) const;
 };
 
 #endif // CC_FRONTEND_SYMBOL_TABLE_HPP

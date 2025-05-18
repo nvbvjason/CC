@@ -11,14 +11,15 @@ bool LvalueVerification::resolve(Parsing::Program& program)
 
 void LvalueVerification::visit(const Parsing::UnaryExpr& unaryExpr)
 {
+    using ExprKind = Parsing::Expr::Kind;
     using Operator = Parsing::UnaryExpr::Operator;
     if (unaryExpr.op != Operator::PostFixDecrement && unaryExpr.op != Operator::PostFixIncrement &&
         unaryExpr.op != Operator::PrefixDecrement && unaryExpr.op != Operator::PrefixIncrement)
         return;
-    if (unaryExpr.operand->kind == Parsing::Expr::Kind::Assignment ||
-        unaryExpr.operand->kind == Parsing::Expr::Kind::Binary ||
-        unaryExpr.operand->kind == Parsing::Expr::Kind::FunctionCall ||
-        unaryExpr.operand->kind == Parsing::Expr::Kind::Constant) {
+    if (unaryExpr.operand->kind == ExprKind::Assignment ||
+        unaryExpr.operand->kind == ExprKind::Binary ||
+        unaryExpr.operand->kind == ExprKind::FunctionCall ||
+        unaryExpr.operand->kind == ExprKind::Constant) {
         m_valid = false;
         return;
     }

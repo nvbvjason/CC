@@ -111,7 +111,7 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolT
     if (duplicatesInArgs(funDecl.params))
         return false;
     const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funDecl.name);
-    if (symbolTable.inFunction() && funDecl.body != nullptr)
+    if (symbolTable.inFunc() && funDecl.body != nullptr)
         return false;
     if (!returnedEntry.contains)
         return true;
