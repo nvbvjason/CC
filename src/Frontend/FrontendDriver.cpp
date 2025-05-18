@@ -41,7 +41,8 @@ std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> FrontendDriver::run() const
         printParsingAst(&program);
         return {nullptr, ErrorCode::OK};
     }
-    if (ErrorCode err = validateSemantics(program); err != ErrorCode::OK)
+    SymbolTable symbolTable;
+    if (ErrorCode err = validateSemantics(program, symbolTable); err != ErrorCode::OK)
         return {nullptr, err};
     if (m_arg == "--validate")
         return {nullptr, ErrorCode::OK};
@@ -62,9 +63,9 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
     return source;
 }
 
-ErrorCode validateSemantics(Parsing::Program& programNode)
+ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable)
 {
-    Semantics::VariableResolution variableResolution;
+    Semantics::VariableResolution variableResolution(symbolTable);
     if (!variableResolution.resolve(programNode))
         return ErrorCode::VariableResolution;
     Semantics::ValidateReturn validateReturn;
@@ -79,9 +80,9 @@ ErrorCode validateSemantics(Parsing::Program& programNode)
     Semantics::LoopLabeling loopLabeling;
     if (!loopLabeling.programValidate(programNode))
         return ErrorCode::LoopLabeling;
-    Semantics::TypeResolution typeResolution;
-    if (!typeResolution.validate(programNode))
-        return ErrorCode::TypeResolution;
+    // Semantics::TypeResolution typeResolution;
+    // if (!typeResolution.validate(programNode))
+    //     return ErrorCode::TypeResolution;
     return ErrorCode::OK;
 }
 

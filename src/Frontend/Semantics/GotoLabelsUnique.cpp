@@ -28,6 +28,7 @@ void GotoLabelsUnique::visit(Parsing::GotoStmt& gotoStmt)
 {
     gotoStmt.identifier += '.' + m_funName;
     m_goto.insert(gotoStmt.identifier);
+    ASTTraverser::visit(gotoStmt);
 }
 
 void GotoLabelsUnique::visit(Parsing::LabelStmt& labelStmt)

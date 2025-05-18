@@ -6,10 +6,10 @@
 #include "ASTIr.hpp"
 #include "ErrorCodes.hpp"
 #include "ASTParser.hpp"
+#include "SymbolTable.hpp"
 
 #include <filesystem>
 #include <string>
-
 
 class FrontendDriver {
     std::string m_arg;
@@ -23,6 +23,6 @@ public:
     [[nodiscard]] std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> run() const;
 };
 
-ErrorCode validateSemantics(Parsing::Program& programNode);
+ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable);
 
 #endif // CC_FRONTEND_DRIVER_HPP

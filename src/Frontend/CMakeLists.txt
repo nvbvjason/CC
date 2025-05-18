@@ -7,6 +7,8 @@ add_subdirectory(Traverser)
 
 add_library(Frontend
         FrontendDriver.cpp
+        SymbolTable.cpp
+        SymbolTable.hpp
 )
 
 # Link subdirectory libraries

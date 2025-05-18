@@ -20,4 +20,4 @@ target_include_directories(Semantics PUBLIC
 )
 
 # Semantics depends on AST
-target_link_libraries(Semantics PUBLIC AST)
+target_link_libraries(Semantics PUBLIC AST Frontend)

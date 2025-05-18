@@ -16,4 +16,7 @@ using u64 = uint64_t;
 using f32 = float;
 using f64 = double;
 
+static_assert(sizeof(i8) == 1,  "Non-8-bit char platform?");
+static_assert(sizeof(u8) == 1,  "Non-8-bit char platform?");
+
 #endif // SHORT_TYPES_HPP

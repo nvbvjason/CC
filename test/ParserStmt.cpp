@@ -3,25 +3,7 @@
 #include <gtest/gtest.h>
 
 namespace {
-using Type = Lexing::Token::Type;
-using Type::OpenParen; using Type::CloseParen;
-using Type::OpenBrace; using Type::CloseBrace;
-using Type::Return;
-using Type::Integer;
-using Type::Semicolon;
-using Type::If;
-using Type::Else;
-using Type::Goto;
-using Type::Identifier;
-using Type::Break;
-using Type::Continue;
-using Type::Colon;
-using Type::Case;
-using Type::Default;
-using Type::While;
-using Type::Do;
-using Type::For;
-using Type::Switch;
+using enum Lexing::Token::Type;
 }
 
 TEST_F(ParserStmtTest, ReturnStmtVariations)
@@ -157,6 +139,8 @@ TEST_F(ParserStmtTest, DefaultStmtVariations)
             {Default, Colon, Semicolon}},
         {"Missing Default", false,
         {Colon, Semicolon}},
+        {"Missing Default", false,
+        {Default, Colon}},
         {"Missing Colon", false,
         {Default, Semicolon}}
     };
@@ -190,9 +174,11 @@ TEST_F(ParserStmtTest, DoWhileStmtVariations)
         {"Missing Do While", false,
         {Semicolon, While, OpenParen, Integer, CloseParen, Semicolon}},
         {"Missing Body", false,
-    {Do, While, OpenParen, Integer, CloseParen, Semicolon}},
+    {Do, Integer, While, OpenParen, Integer, CloseParen, Semicolon}},
         {"Missing While", false,
         {Do, Semicolon, OpenParen, Integer, CloseParen, Semicolon}},
+    {"Missing Open Paren", false,
+    {Do, Semicolon, While, Integer, CloseParen, Semicolon}},
         {"Missing Close Paren", false,
         {Do, Semicolon, While, OpenParen, Integer, Semicolon}},
         {"Missing Missing Semicolon at end", false,
