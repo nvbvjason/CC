@@ -5,11 +5,10 @@
 
 #include "ASTTraverser.hpp"
 #include "ShortTypes.hpp"
-
-#include <string>
-
 #include "ASTParser.hpp"
 #include "Frontend/SymbolTable.hpp"
+
+#include <string>
 
 namespace Semantics {
 
@@ -34,6 +33,7 @@ private:
 
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable);
 bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolTable);
+bool duplicatesInArgs(const std::vector<std::string>& args);
 
 } // Semantics
 #endif // CC_SEMANTICS_VARIABLE_SOLUTION_HPP

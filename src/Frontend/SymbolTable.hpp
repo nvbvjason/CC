@@ -14,11 +14,20 @@ class SymbolTable {
 public:
     struct ReturnedFuncEntry {
         i32 argSize;
-        bool wrongType;
         bool contains;
+        bool wrongType;
+        bool fromCurrentScope;
         bool hasLinkage;
-        ReturnedFuncEntry(const i32 argSize, const bool wrongType, const bool contains, const bool hasLinkage)
-            : argSize(argSize), wrongType(wrongType), contains(contains), hasLinkage(hasLinkage) {}
+        ReturnedFuncEntry(const i32 argSize,
+                          const bool contains,
+                          const bool wrongType,
+                          const bool fromCurrentScope,
+                          const bool hasLinkage)
+            : argSize(argSize),
+              contains(contains),
+              wrongType(wrongType),
+              fromCurrentScope(fromCurrentScope),
+              hasLinkage(hasLinkage) {}
     };
     struct ReturnedVarEntry {
         bool contains;
@@ -63,6 +72,7 @@ public:
     void addScope();
     void removeScope();
 
+    [[nodiscard]] bool isInArgs(const std::string& name) const { return std::ranges::find(m_args, name) != m_args.end(); }
     [[nodiscard]] bool inFunction() const { return 1 < m_entries.size(); }
 };
 

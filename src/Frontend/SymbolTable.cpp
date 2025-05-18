@@ -19,15 +19,14 @@ bool SymbolTable::contains(const std::string& uniqueName) const
 
 SymbolTable::ReturnedVarEntry SymbolTable::lookupVar(const std::string& uniqueName) const
 {
-    const bool inArgs = std::ranges::find(m_args, uniqueName) != m_args.end();
+    const bool inArgs = isInArgs(uniqueName);
     for (i64 i = m_entries.size() - 1; 0 <= i; --i) {
         const auto it = m_entries[i].find(uniqueName);
         if (it == m_entries[i].end())
             continue;
         const bool wrongType = it->second.type != SymbolType::Var;
-        if (i == m_entries.size() - 1)
-            return {true, inArgs, wrongType, true, it->second.hasLinkage};
-        return {true, inArgs, wrongType, false, it->second.hasLinkage};
+        const bool fromCurrentScope = i == m_entries.size() - 1;
+        return {true, inArgs, wrongType, fromCurrentScope, it->second.hasLinkage};
     }
     return {false, inArgs, false, false, false};
 }
@@ -39,14 +38,13 @@ SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& unique
         if (it == m_entries[i].end())
             continue;
         const bool wrongType = it->second.type != SymbolType::Func;
-        i32 args = -1;
+        const bool fromCurrentScope = i == m_entries.size() - 1;
+        i32 args = 0;
         if (m_funcs.contains(uniqueName))
             args = m_funcs.at(uniqueName);
-        if (i == m_entries.size() - 1)
-            return {args, wrongType, true, it->second.hasLinkage};
-        return {args, wrongType, true, it->second.hasLinkage};
+        return {args, true, wrongType, fromCurrentScope, it->second.hasLinkage};
     }
-    return {false, false, false, false};
+    return {false, false, false, false, false};
 }
 
 void SymbolTable::setArgs(const std::vector<std::string>& args)

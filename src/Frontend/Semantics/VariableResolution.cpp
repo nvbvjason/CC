@@ -1,5 +1,7 @@
 #include "VariableResolution.hpp"
 
+#include <unordered_set>
+
 #include "ASTParser.hpp"
 
 namespace Semantics {
@@ -58,7 +60,7 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    if (!symbolTable.contains(varExpr.name)) {
+    if (!symbolTable.contains(varExpr.name) && !symbolTable.isInArgs(varExpr.name)) {
         m_valid = false;
         return;
     }
@@ -79,6 +81,17 @@ std::string VariableResolution::makeTemporaryName(const std::string& name)
     return name + '.' + std::to_string(m_nameCounter++) + ".tmp";
 }
 
+bool duplicatesInArgs(const std::vector<std::string>& args)
+{
+    std::unordered_set<std::string> duplicates;
+    for (const std::string& arg : args) {
+        if (duplicates.contains(arg))
+            return true;
+        duplicates.insert(arg);
+    }
+    return false;
+}
+
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable)
 {
     const SymbolTable::ReturnedVarEntry returnedEntry = symbolTable.lookupVar(varDecl.name);
@@ -88,21 +101,23 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
         return true;
     if (returnedEntry.fromCurrentScope)
         return false;
-    if (returnedEntry.wrongType)
+    if (returnedEntry.wrongType && returnedEntry.fromCurrentScope)
         return false;
     return true;
 }
 
 bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolTable)
 {
+    if (duplicatesInArgs(funDecl.params))
+        return false;
     const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funDecl.name);
     if (symbolTable.inFunction() && funDecl.body != nullptr)
         return false;
     if (!returnedEntry.contains)
         return true;
-    if (returnedEntry.argSize != funDecl.params.size() && returnedEntry.hasLinkage)
+    if (returnedEntry.argSize != funDecl.params.size())
         return false;
-    if (returnedEntry.wrongType)
+    if (returnedEntry.wrongType && returnedEntry.fromCurrentScope)
         return false;
     return true;
 }
