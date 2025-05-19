@@ -37,21 +37,19 @@ ErrorCode CompilerDriver::wrappedRun()
     if (validateCommandLineArguments(argument, value1))
         return value1;
     cleanUp();
-    const std::string inputFile = args.back();
+    const std::string inputFile = m_args.back();
     std::vector<Lexing::Token> tokens;
     FrontendDriver frontend(argument, inputFile);
     auto [irProgram, err] = frontend.run();
     if (err != ErrorCode::OK)
         return err;
-    if (irProgram == nullptr)
-        return ErrorCode::OK;
     if (argument == "--tacky")
         return ErrorCode::OK;
     if (argument == "--printTacky") {
-        printIr(*irProgram);
+        printIr(irProgram);
         return ErrorCode::OK;
     }
-    CodeGen::Program codegenProgram = codegen(*irProgram);
+    CodeGen::Program codegenProgram = codegen(irProgram);
     if (argument == "--codegen")
         return ErrorCode::OK;
     if (argument == "--printAsm") {
@@ -75,7 +73,6 @@ void CompilerDriver::writeAssmFile(const std::string& inputFile, const std::stri
     std::string stem = std::filesystem::path(inputFile).stem().string();
     const std::string inputFolder = std::filesystem::path(inputFile).parent_path().string();
     m_outputFileName = std::format("{}/{}.s", inputFolder, stem);
-    // m_outputFileName = std::format(PROJECT_ROOT_DIR"/generated_files/{}.s", stem);
     std::ofstream ofs(m_outputFileName);
     ofs << output;
     ofs.close();
@@ -83,18 +80,18 @@ void CompilerDriver::writeAssmFile(const std::string& inputFile, const std::stri
 
 bool CompilerDriver::validateCommandLineArguments(std::string& argument, ErrorCode& value1) const
 {
-    if (args.size() < 2 || 3 < args.size()) {
+    if (m_args.size() < 2 || 3 < m_args.size()) {
         std::cerr << "Usage: <input_file> possible-argument" << '\n';
         value1 = ErrorCode::NoInputFile;
         return true;
     }
-    if (const std::filesystem::path m_inputFile(args.back()); !fileExists(m_inputFile)) {
+    if (const std::filesystem::path m_inputFile(m_args.back()); !fileExists(m_inputFile)) {
         std::cerr << "File " << m_inputFile.string() << " not found" << '\n';
         value1 = ErrorCode::FileNotFound;
         return true;
     }
-    if (args.size() == 3)
-        argument = args[1];
+    if (m_args.size() == 3)
+        argument = m_args[1];
     if (!isCommandLineArgumentValid(argument)) {
         std::cerr << "Invalid argument: " << argument << '\n';
         value1 = ErrorCode::InvalidCommandlineArgs;
@@ -160,11 +157,11 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 void assemble(const std::string& asmFile, const std::string& outputFile)
 {
     const std::string command = "gcc " + asmFile + " -o " + outputFile;
-    system(command.c_str());
+    std::system(command.c_str());
 }
 
 void makeLib(const std::string& asmFile, const std::string& outputFile)
 {
     const std::string command = "gcc -c " + asmFile + " -o " + outputFile + ".o";
-    system(command.c_str());
+    std::system(command.c_str());
 }

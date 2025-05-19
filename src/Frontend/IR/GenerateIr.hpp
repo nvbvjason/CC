@@ -8,7 +8,7 @@
 
 namespace Ir {
 
-void program(const Parsing::Program* parsingProgram, Program& tackyProgram);
+void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
 std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
 std::unique_ptr<TopLevel> functionIr(const Parsing::FunDecl& parsingFunction);
 std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl);

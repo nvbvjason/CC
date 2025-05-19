@@ -19,43 +19,45 @@
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
-static void printParsingAst(const Parsing::Program* program);
-static Ir::Program ir(const Parsing::Program* parsingProgram);
+static void printParsingAst(const Parsing::Program& program);
+static Ir::Program ir(const Parsing::Program& parsingProgram);
 static std::string preProcess(const std::filesystem::path& file);
 static std::string getSourceCode(const std::filesystem::path& inputFile);
 
-std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> FrontendDriver::run() const
+std::tuple<Ir::Program, ErrorCode> FrontendDriver::run() const
 {
     std::vector<Lexing::Token> tokens;
     if (lex(tokens, m_inputFile) != 0)
-        return {nullptr, ErrorCode::Lexer};
+        return {Ir::Program(), ErrorCode::Lexer};
     if (m_arg == "--lex")
-        return {nullptr, ErrorCode::OK};
+        return {Ir::Program(), ErrorCode::OK};
     Parsing::Program program;
     if (!parse(tokens, program))
-        return {nullptr, ErrorCode::Parser};
+        return {Ir::Program(), ErrorCode::Parser};
     if (m_arg == "--parse")
-        return {nullptr, ErrorCode::OK};
+        return {Ir::Program(), ErrorCode::OK};
     if (m_arg == "--printAst") {
-        printParsingAst(&program);
-        return {nullptr, ErrorCode::OK};
+        printParsingAst(program);
+        return {Ir::Program(), ErrorCode::OK};
     }
     SymbolTable symbolTable;
     if (ErrorCode err = validateSemantics(program, symbolTable); err != ErrorCode::OK)
-        return {nullptr, err};
+        return {Ir::Program(), err};
     if (m_arg == "--validate")
-        return {nullptr, ErrorCode::OK};
+        return {Ir::Program(), ErrorCode::OK};
     if (m_arg == "--printAstAfter") {
-        printParsingAst(&program);
-        return {nullptr, ErrorCode::OK};
+        printParsingAst(program);
+        return {Ir::Program(), ErrorCode::OK};
     }
-    std::unique_ptr<Ir::Program> irProgram = std::make_unique<Ir::Program>(ir(&program));
+    Ir::Program irProgram = ir(program);
     return {std::move(irProgram), ErrorCode::OK};
 }
 
 std::string getSourceCode(const std::filesystem::path& inputFile)
 {
     std::ifstream file(inputFile);
+    if (!file.is_open())
+        return {};
     std::string source((std::istreambuf_iterator(file)), std::istreambuf_iterator<char>());
     return source;
 }
@@ -83,10 +85,10 @@ ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTa
     return ErrorCode::OK;
 }
 
-void printParsingAst(const Parsing::Program* program)
+void printParsingAst(const Parsing::Program& program)
 {
     Parsing::ASTPrinter printer;
-    program->accept(printer);
+    program.accept(printer);
     std::cout << printer.getString();
 }
 
@@ -107,7 +109,7 @@ bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNo
     return true;
 }
 
-Ir::Program ir(const Parsing::Program* parsingProgram)
+Ir::Program ir(const Parsing::Program& parsingProgram)
 {
     Ir::Program irProgram;
     Ir::program(parsingProgram, irProgram);
@@ -124,6 +126,7 @@ static std::string preProcess(const std::filesystem::path& file)
     command += inputFile.string();
     command += " -o ";
     command += generatedFile.string();
-    system(command.c_str());
+    if (std::system(command.c_str()) != 0)
+        return {};
     return getSourceCode(generatedFile.string());
 }

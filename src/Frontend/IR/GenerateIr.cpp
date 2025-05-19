@@ -16,9 +16,9 @@ static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator u
 static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation);
 static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Operator binaryOperation);
 
-void program(const Parsing::Program* parsingProgram, Program& tackyProgram)
+void program(const Parsing::Program& parsingProgram, Program& tackyProgram)
 {
-    for (const auto& decl : parsingProgram->declarations) {
+    for (const auto& decl : parsingProgram.declarations) {
         auto topLevel = topLevelIr(*decl);
         if (topLevel == nullptr)
             continue;
