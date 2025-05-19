@@ -1,5 +1,7 @@
-#include "SymbolTable.hpp"
 #include "ASTIr.hpp"
+
+#include "SymbolTable.hpp"
+#include <cassert>
 
 SymbolTable::SymbolTable()
 {
@@ -45,6 +47,18 @@ SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& unique
         return {args, true, wrongType, fromCurrentScope, it->second.hasLinkage};
     }
     return {false, false, false, false, false};
+}
+
+std::string SymbolTable::getUniqueName(const std::string& unique) const
+{
+    for (i64 i = m_entries.size() - 1; 0 <= i; --i) {
+        const auto it = m_entries[i].find(unique);
+        if (it == m_entries[i].end())
+            continue;
+        return it->second.uniqueName;
+    }
+    assert(false && "Should never happen in SymbolTable::getUniqueName");
+    std::unreachable();
 }
 
 void SymbolTable::setArgs(const std::vector<std::string>& args)

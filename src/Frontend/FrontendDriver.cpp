@@ -11,12 +11,11 @@
 #include "Parser.hpp"
 #include "LoopLabeling.hpp"
 #include "ValidateReturn.hpp"
+#include "TypeResolution.hpp"
 
 #include <fstream>
 #include <iostream>
 
-#include "RemoveRedundantDecls.hpp"
-#include "TypeResolution.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
@@ -46,8 +45,6 @@ std::tuple<std::unique_ptr<Ir::Program>, ErrorCode> FrontendDriver::run() const
         return {nullptr, err};
     if (m_arg == "--validate")
         return {nullptr, ErrorCode::OK};
-    Semantics::RemoveRedundantDecls removeRedundantDecls;
-    removeRedundantDecls.go(program);
     if (m_arg == "--printAstAfter") {
         printParsingAst(&program);
         return {nullptr, ErrorCode::OK};

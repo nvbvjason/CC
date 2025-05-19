@@ -8,8 +8,6 @@ add_library(Semantics
         LoopLabeling.hpp
         TypeResolution.cpp
         TypeResolution.hpp
-        RemoveRedundantDecls.cpp
-        RemoveRedundantDecls.hpp
 )
 
 target_include_directories(Semantics PUBLIC

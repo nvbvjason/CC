@@ -65,6 +65,7 @@ public:
     [[nodiscard]] bool contains(const std::string& uniqueName) const;
     [[nodiscard]] ReturnedVarEntry lookupVar(const std::string& uniqueName) const;
     [[nodiscard]] ReturnedFuncEntry lookupFunc(const std::string& uniqueName) const;
+    std::string getUniqueName(const std::string& unique) const;
     void setArgs(const std::vector<std::string>& args);
     void clearArgs();
     void addVarEntry(const std::string& name, const std::string& uniqueName, bool hasLinkage);

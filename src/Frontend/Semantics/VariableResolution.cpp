@@ -55,6 +55,7 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
     }
     const std::string uniqueName = makeTemporaryName(varDecl.name);
     symbolTable.addVarEntry(varDecl.name, uniqueName, false);
+    varDecl.name = uniqueName;
     ASTTraverser::visit(varDecl);
 }
 
@@ -64,6 +65,8 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         m_valid = false;
         return;
     }
+    if (!symbolTable.isInArgs(varExpr.name))
+        varExpr.name = symbolTable.getUniqueName(varExpr.name);
     ASTTraverser::visit(varExpr);
 }
 
