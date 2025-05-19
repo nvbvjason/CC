@@ -23,20 +23,19 @@ static void cleanUp();
 
 i32 CompilerDriver::run()
 {
+    cleanUp();
     ErrorCode code = wrappedRun();
     if (code == ErrorCode::OK)
         return 0;
-    std::cerr << to_string(code) << '\n';
+    std::cerr << to_string(code) << '\n' << std::flush;
     return static_cast<i32>(code);
 }
 
 ErrorCode CompilerDriver::wrappedRun()
 {
     std::string argument;
-    ErrorCode value1;
-    if (validateCommandLineArguments(argument, value1))
-        return value1;
-    cleanUp();
+    if (ErrorCode errorCode = validateAndSetArg(argument); errorCode != ErrorCode::OK)
+        return errorCode;
     const std::string inputFile = m_args.back();
     std::vector<Lexing::Token> tokens;
     FrontendDriver frontend(argument, inputFile);
@@ -58,7 +57,8 @@ ErrorCode CompilerDriver::wrappedRun()
         return ErrorCode::OK;
     }
     std::string output = CodeGen::asmProgram(codegenProgram);
-    writeAssmFile(inputFile, output, argument);
+    if (ErrorCode errorCode = writeAssmFile(inputFile, output, argument); errorCode != ErrorCode::OK)
+        return errorCode;
     if (argument == "--assemble")
         return ErrorCode::OK;
     if (argument == "-c")
@@ -68,36 +68,38 @@ ErrorCode CompilerDriver::wrappedRun()
     return ErrorCode::OK;
 }
 
-void CompilerDriver::writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument)
+ErrorCode CompilerDriver::writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument)
 {
     std::string stem = std::filesystem::path(inputFile).stem().string();
     const std::string inputFolder = std::filesystem::path(inputFile).parent_path().string();
     m_outputFileName = std::format("{}/{}.s", inputFolder, stem);
     std::ofstream ofs(m_outputFileName);
+    if (!ofs) {
+        std::cerr << "Error: Could not open output file " << m_outputFileName << '\n';
+        return ErrorCode::AsmFileWrite;
+    }
     ofs << output;
     ofs.close();
+    return ErrorCode::OK;
 }
 
-bool CompilerDriver::validateCommandLineArguments(std::string& argument, ErrorCode& value1) const
+ErrorCode CompilerDriver::validateAndSetArg(std::string& argument) const
 {
     if (m_args.size() < 2 || 3 < m_args.size()) {
         std::cerr << "Usage: <input_file> possible-argument" << '\n';
-        value1 = ErrorCode::NoInputFile;
-        return true;
+        return ErrorCode::NoInputFile;
     }
     if (const std::filesystem::path m_inputFile(m_args.back()); !fileExists(m_inputFile)) {
         std::cerr << "File " << m_inputFile.string() << " not found" << '\n';
-        value1 = ErrorCode::FileNotFound;
-        return true;
+        return ErrorCode::FileNotFound;
     }
     if (m_args.size() == 3)
         argument = m_args[1];
     if (!isCommandLineArgumentValid(argument)) {
         std::cerr << "Invalid argument: " << argument << '\n';
-        value1 = ErrorCode::InvalidCommandlineArgs;
-        return true;
+        return ErrorCode::InvalidCommandlineArgs;
     }
-    return false;
+    return ErrorCode::OK;
 }
 
 void cleanUp()
@@ -140,18 +142,15 @@ CodeGen::Program codegen(const Ir::Program& irProgram)
 
 static bool fileExists(const std::filesystem::path& name)
 {
-    const std::ifstream ifs(name.c_str());
-    return ifs.good();
+    return std::filesystem::exists(name);
 }
 
 static bool isCommandLineArgumentValid(const std::string &argument)
 {
-    const std::vector<std::string> validArguments = {"",  "--printAst","--help", "-h", "--version",
+    constexpr std::array validArguments = {"",  "--printAst","--help", "-h", "--version",
         "--lex", "--parse", "--tacky", "--codegen", "--printTacky", "--validate",
         "--assemble", "--printAsm", "-c", "--printAstAfter"};
-    return std::ranges::any_of(validArguments, [&](const std::string &arg) {
-        return arg == argument;
-    });
+    return std::ranges::contains(validArguments, argument);
 }
 
 void assemble(const std::string& asmFile, const std::string& outputFile)

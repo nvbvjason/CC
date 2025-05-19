@@ -18,6 +18,7 @@ enum class ErrorCode {
     LoopLabeling,
     Switch,
     Codegen,
+    AsmFileWrite,
     ERROR_UNKNOWN
 };
 
@@ -39,7 +40,8 @@ inline std::string to_string(ErrorCode code)
         case ErrorCode::LoopLabeling:               return "Error Loop labeling";
         case ErrorCode::Switch:                     return "Error Switch";
         case ErrorCode::Codegen:                    return "Error Codegen";
-        case ErrorCode::TypeResolution:              return "Error TypeResolution";
+        case ErrorCode::TypeResolution:             return "Error TypeResolution";
+        case ErrorCode::AsmFileWrite:               return "Error Assembly File Write";
         default:                                    return "Error Unknown";
     }
 }

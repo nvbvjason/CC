@@ -20,11 +20,11 @@ public:
     CompilerDriver(const int argc, char *argv[])
         : m_args(std::vector<std::string>(argv, argv + argc)) {}
 
-    bool validateCommandLineArguments(std::string& argument, ErrorCode& value1) const;
-    [[nodiscard]] ErrorCode wrappedRun();
+    ErrorCode validateAndSetArg(std::string& argument) const;
     [[nodiscard]] i32 run();
 private:
-    void writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument);
+    [[nodiscard]] ErrorCode wrappedRun();
+    ErrorCode writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument);
 };
 
 std::string getSourceCode(const std::string& inputFile);
