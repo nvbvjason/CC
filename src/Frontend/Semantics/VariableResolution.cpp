@@ -60,7 +60,7 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    if (!symbolTable.contains(varExpr.name) && !symbolTable.isInArgs(varExpr.name)) {
+    if (!isValidVarExpr(varExpr, symbolTable)) {
         m_valid = false;
         return;
     }
@@ -69,7 +69,7 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
 
 void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
 {
-    if (!symbolTable.contains(funCallExpr.name)) {
+    if (!isValidFuncCall(funCallExpr, symbolTable)) {
         m_valid = false;
         return;
     }
@@ -90,6 +90,28 @@ bool duplicatesInArgs(const std::vector<std::string>& args)
         duplicates.insert(arg);
     }
     return false;
+}
+
+bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable)
+{
+    const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funCallExpr.name);
+    if (!returnedEntry.contains)
+        return false;
+    if (returnedEntry.wrongType)
+        return false;
+    return true;
+}
+
+bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable)
+{
+    if (symbolTable.isInArgs(varExpr.name))
+        return true;
+    const SymbolTable::ReturnedVarEntry returnedEntry = symbolTable.lookupVar(varExpr.name);
+    if (!returnedEntry.contains)
+        return false;
+    if (returnedEntry.wrongType)
+        return false;
+    return true;
 }
 
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable)
