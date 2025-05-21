@@ -10,41 +10,81 @@
 #include <vector>
 #include <unordered_map>
 
+
 class SymbolTable {
 public:
-    struct ReturnedFuncEntry {
+    enum class ReturnFlag : u32 {
+        None             = 1 << 0,
+        Contains         = 1 << 1,
+        CorrectType      = 1 << 2,
+        FromCurrentScope = 1 << 3,
+        HasLinkage       = 1 << 4,
+        IsGlobal         = 1 << 5,
+        Defined          = 1 << 6,
+        Tentative        = 1 << 7,
+        HasInitializer   = 1 << 8,
+        InArgs           = 1 << 9,
+    };
+template <typename Derived>
+struct FlagBase {
+    ReturnFlag flags = ReturnFlag::None;
+    void set(ReturnFlag flag) noexcept
+    {
+        flags = static_cast<ReturnFlag>(static_cast<u32>(flags) | static_cast<u32>(flag));
+    }
+    [[nodiscard]] bool isSet(ReturnFlag flag) const noexcept
+    {
+        return (static_cast<u32>(flags) & static_cast<u32>(flag)) != 0;
+    }
+    void clear(ReturnFlag flag) noexcept
+    {
+        flags = static_cast<ReturnFlag>(static_cast<u32>(flags) & ~static_cast<u32>(flag));
+    }
+    [[nodiscard]] bool allSet(ReturnFlag mask) const noexcept
+    {
+        return (static_cast<u32>(flags) & static_cast<u32>(mask)) == static_cast<u32>(mask);
+    }
+};
+    struct ReturnedFuncEntry : FlagBase<ReturnedFuncEntry>  {
         i32 argSize;
-        bool contains;
-        bool wrongType;
-        bool fromCurrentScope;
-        bool hasLinkage;
         ReturnedFuncEntry(const i32 argSize,
                           const bool contains,
-                          const bool wrongType,
+                          const bool correctType,
                           const bool fromCurrentScope,
-                          const bool hasLinkage)
-            : argSize(argSize),
-              contains(contains),
-              wrongType(wrongType),
-              fromCurrentScope(fromCurrentScope),
-              hasLinkage(hasLinkage) {}
+                          const bool hasLinkage,
+                          const bool isGlobal)
+            : argSize(argSize)
+        {
+            if (contains)
+                set(ReturnFlag::Contains);
+            if (correctType)
+                set(ReturnFlag::CorrectType);
+            if (fromCurrentScope)
+                set(ReturnFlag::FromCurrentScope);
+            if (hasLinkage)
+                set(ReturnFlag::HasLinkage);
+            if (isGlobal)
+                set(ReturnFlag::IsGlobal);
+        }
     };
-    struct ReturnedVarEntry {
-        bool contains;
-        bool inArgs;
-        bool wrongType;
-        bool fromCurrentScope;
-        bool hasLinkage;
+    struct ReturnedVarEntry : FlagBase<ReturnedVarEntry>  {
         ReturnedVarEntry(const bool contains,
                          const bool inArgs,
-                         const bool wrongType,
+                         const bool correctType,
                          const bool fromCurrentScope,
                          const bool hasLinkage)
-            : contains(contains),
-              inArgs(inArgs),
-              wrongType(wrongType),
-              fromCurrentScope(fromCurrentScope),
-              hasLinkage(hasLinkage) {}
+        {
+            if (contains)
+                set(ReturnFlag::Contains);
+            if (correctType)
+                set(ReturnFlag::CorrectType);
+            if (inArgs)
+                set(ReturnFlag::InArgs);
+            if (fromCurrentScope)
+                set(ReturnFlag::FromCurrentScope);
+            if (hasLinkage)
+                set(ReturnFlag::HasLinkage);
+        }
     };
 private:
     enum class SymbolType {

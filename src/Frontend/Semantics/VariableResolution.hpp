@@ -13,6 +13,7 @@
 namespace Semantics {
 
 class VariableResolution : public Parsing::ASTTraverser {
+    using Storage = Parsing::Declaration::StorageClass;
     SymbolTable& symbolTable;
     i32 m_nameCounter = 0;
     bool m_valid = true;

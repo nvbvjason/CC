@@ -53,9 +53,14 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
         m_valid = false;
         return;
     }
-    const std::string uniqueName = makeTemporaryName(varDecl.name);
-    symbolTable.addVarEntry(varDecl.name, uniqueName, false);
-    varDecl.name = uniqueName;
+    if (!symbolTable.inFunc() || varDecl.storage == Storage::ExternLocal) {
+        symbolTable.addVarEntry(varDecl.name, varDecl.name, true);
+    }
+    else {
+        const std::string uniqueName = makeTemporaryName(varDecl.name);
+        symbolTable.addVarEntry(varDecl.name, uniqueName, false);
+        varDecl.name = uniqueName;
+    }
     ASTTraverser::visit(varDecl);
 }
 
@@ -97,52 +102,62 @@ bool duplicatesInArgs(const std::vector<std::string>& args)
 
 bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable)
 {
+    using Flag = SymbolTable::ReturnFlag;
     const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funCallExpr.name);
-    if (!returnedEntry.contains)
+    if (!returnedEntry.isSet(Flag::Contains))
         return false;
-    if (returnedEntry.wrongType)
+    if (!returnedEntry.isSet(Flag::CorrectType))
         return false;
     return true;
 }
 
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable)
 {
+    using Flag = SymbolTable::ReturnFlag;
     if (symbolTable.isInArgs(varExpr.name))
         return true;
     const SymbolTable::ReturnedVarEntry returnedEntry = symbolTable.lookupVar(varExpr.name);
-    if (!returnedEntry.contains)
+    if (!returnedEntry.isSet(Flag::Contains))
         return false;
-    if (returnedEntry.wrongType)
+    if (!returnedEntry.isSet(Flag::CorrectType))
         return false;
     return true;
 }
 
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable)
 {
-    const SymbolTable::ReturnedVarEntry returnedEntry = symbolTable.lookupVar(varDecl.name);
-    if (returnedEntry.inArgs)
+    using Flag = SymbolTable::ReturnFlag;
+    using Storage = Parsing::Declaration::StorageClass;
+    const SymbolTable::ReturnedVarEntry prevEntry = symbolTable.lookupVar(varDecl.name);
+    if (prevEntry.isSet(Flag::InArgs))
         return false;
-    if (!returnedEntry.contains)
+    if (!prevEntry.isSet(Flag::Contains))
         return true;
-    if (returnedEntry.fromCurrentScope)
-        return false;
-    if (returnedEntry.wrongType && returnedEntry.fromCurrentScope)
+    if (prevEntry.isSet(Flag::FromCurrentScope)) {
+        if (!prevEntry.isSet(Flag::HasLinkage) || varDecl.storage != Storage::ExternLocal)
+            return false;
+    }
+    if (prevEntry.isSet(Flag::CorrectType) && prevEntry.isSet(Flag::FromCurrentScope))
         return false;
     return true;
 }
 
 bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolTable)
 {
+    using Flag = SymbolTable::ReturnFlag;
+    using Storage = Parsing::Declaration::StorageClass;
+    if (funDecl.storage == Storage::StaticLocalFunction)
+        return false;
     if (duplicatesInArgs(funDecl.params))
         return false;
-    const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funDecl.name);
     if (symbolTable.inFunc() && funDecl.body != nullptr)
         return false;
-    if (!returnedEntry.contains)
+    const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funDecl.name);
+    if (!returnedEntry.isSet(Flag::Contains))
         return true;
     if (returnedEntry.argSize != funDecl.params.size())
         return false;
-    if (returnedEntry.wrongType && returnedEntry.fromCurrentScope)
+    if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::FromCurrentScope))
         return false;
     return true;
 }

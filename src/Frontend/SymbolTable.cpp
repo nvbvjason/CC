@@ -1,6 +1,6 @@
 #include "ASTIr.hpp"
-
 #include "SymbolTable.hpp"
+
 #include <cassert>
 
 SymbolTable::SymbolTable()
@@ -26,9 +26,9 @@ SymbolTable::ReturnedVarEntry SymbolTable::lookupVar(const std::string& uniqueNa
         const auto it = m_entries[i].find(uniqueName);
         if (it == m_entries[i].end())
             continue;
-        const bool wrongType = it->second.type != SymbolType::Var;
+        const bool correctType = it->second.type == SymbolType::Var;
         const bool fromCurrentScope = i == m_entries.size() - 1;
-        return {true, inArgs, wrongType, fromCurrentScope, it->second.hasLinkage};
+        return {true, inArgs, correctType, fromCurrentScope, it->second.hasLinkage};
     }
     return {false, inArgs, false, false, false};
 }
@@ -39,14 +39,15 @@ SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& unique
         const auto it = m_entries[i].find(uniqueName);
         if (it == m_entries[i].end())
             continue;
-        const bool wrongType = it->second.type != SymbolType::Func;
+        const bool correctType = it->second.type == SymbolType::Func;
         const bool fromCurrentScope = i == m_entries.size() - 1;
-        i32 args = 0;
+        //const bool isGlobal =
+        i32 argsSize = 0;
         if (m_funcs.contains(uniqueName))
-            args = m_funcs.at(uniqueName);
-        return {args, true, wrongType, fromCurrentScope, it->second.hasLinkage};
+            argsSize = m_funcs.at(uniqueName);
+        return {argsSize, true, correctType, fromCurrentScope, it->second.hasLinkage, true};
     }
-    return {false, false, false, false, false};
+    return {false, false, false, false, false, false};
 }
 
 std::string SymbolTable::getUniqueName(const std::string& unique) const
@@ -57,7 +58,7 @@ std::string SymbolTable::getUniqueName(const std::string& unique) const
             continue;
         return it->second.uniqueName;
     }
-    assert(false && "Should never happen in SymbolTable::getUniqueName");
+    assert(false && "Should always get called after contains never happen in SymbolTable::getUniqueName");
     std::unreachable();
 }
 

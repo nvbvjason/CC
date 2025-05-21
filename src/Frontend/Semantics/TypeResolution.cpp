@@ -62,7 +62,7 @@ void TypeResolution::visit(const Parsing::VarDecl& varDecl)
         varDecl.init != nullptr) {
         m_valid = false;
         return;
-        }
+    }
     m_isConst = true;
     ConstASTTraverser::visit(varDecl);
     if (mustBeConstantInitialised(varDecl, m_isConst))
