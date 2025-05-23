@@ -8,10 +8,10 @@ SymbolTable::SymbolTable()
     addScope();
 }
 
-bool SymbolTable::contains(const std::string& uniqueName) const
+bool SymbolTable::contains(const std::string& name) const
 {
     for (i64 i = m_entries.size() - 1; 0 <= i; --i) {
-        const auto it = m_entries[i].find(uniqueName);
+        const auto it = m_entries[i].find(name);
         if (it == m_entries[i].end())
             continue;
         return true;
@@ -28,9 +28,11 @@ SymbolTable::ReturnedVarEntry SymbolTable::lookupVar(const std::string& uniqueNa
             continue;
         const bool correctType = it->second.type == SymbolType::Var;
         const bool fromCurrentScope = i == m_entries.size() - 1;
-        return {true, inArgs, correctType, fromCurrentScope, it->second.hasLinkage};
+        const bool hasLinkage = it->second.isSet(State::HasLinkage);
+        const bool isGlobal = it->second.isSet(State::IsGlobal);
+        return {true, inArgs, correctType, fromCurrentScope, hasLinkage, isGlobal};
     }
-    return {false, inArgs, false, false, false};
+    return {false, inArgs, false, false, false, false};
 }
 
 SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& uniqueName) const
@@ -41,11 +43,12 @@ SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& unique
             continue;
         const bool correctType = it->second.type == SymbolType::Func;
         const bool fromCurrentScope = i == m_entries.size() - 1;
-        //const bool isGlobal =
+        const bool hasLinkage = it->second.isSet(State::HasLinkage);
+        const bool isGlobal = it->second.isSet(State::IsGlobal);
         i32 argsSize = 0;
         if (m_funcs.contains(uniqueName))
             argsSize = m_funcs.at(uniqueName);
-        return {argsSize, true, correctType, fromCurrentScope, it->second.hasLinkage, true};
+        return {argsSize, true, correctType, fromCurrentScope, hasLinkage, isGlobal};
     }
     return {false, false, false, false, false, false};
 }
@@ -72,14 +75,20 @@ void SymbolTable::clearArgs()
     m_args.clear();
 }
 
-void SymbolTable::addVarEntry(const std::string& name, const std::string& uniqueName, const bool hasLinkage)
+void SymbolTable::addVarEntry(const std::string& name,
+                              const std::string& uniqueName,
+                              const bool hasLinkage,
+                              const bool isGlobal)
 {
-    m_entries.back().insert(std::make_pair(name, Entry(uniqueName, SymbolType::Var, hasLinkage)));
+    m_entries.back().insert(std::make_pair(name, Entry(uniqueName, SymbolType::Var, hasLinkage, isGlobal)));
 }
 
-void SymbolTable::addFuncEntry(const std::string& name, const i32 argsSize, const bool hasLinkage)
+void SymbolTable::addFuncEntry(const std::string& name,
+                               const i32 argsSize,
+                               const bool hasLinkage,
+                               const bool isGlobal)
 {
-    m_entries.back().insert(std::make_pair(name, Entry(name, SymbolType::Func, hasLinkage)));
+    m_entries.back().insert(std::make_pair(name, Entry(name, SymbolType::Func, hasLinkage, isGlobal)));
     m_funcs.insert(std::make_pair(name, argsSize));
 }
 

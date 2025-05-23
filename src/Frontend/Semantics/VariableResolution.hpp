@@ -36,7 +36,10 @@ bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable&
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable);
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable);
 bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolTable);
+
 bool duplicatesInArgs(const std::vector<std::string>& args);
+bool isGlobalFunc(const Parsing::FunDecl& funDecl);
+bool isGlobalVar(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable);
 
 } // Semantics
 #endif // CC_SEMANTICS_VARIABLE_SOLUTION_HPP

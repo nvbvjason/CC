@@ -13,7 +13,7 @@
 
 class SymbolTable {
 public:
-    enum class ReturnFlag : u32 {
+    enum class State : u32 {
         None             = 1 << 0,
         Contains         = 1 << 1,
         CorrectType      = 1 << 2,
@@ -25,26 +25,26 @@ public:
         HasInitializer   = 1 << 8,
         InArgs           = 1 << 9,
     };
-template <typename Derived>
-struct FlagBase {
-    ReturnFlag flags = ReturnFlag::None;
-    void set(ReturnFlag flag) noexcept
-    {
-        flags = static_cast<ReturnFlag>(static_cast<u32>(flags) | static_cast<u32>(flag));
-    }
-    [[nodiscard]] bool isSet(ReturnFlag flag) const noexcept
-    {
-        return (static_cast<u32>(flags) & static_cast<u32>(flag)) != 0;
-    }
-    void clear(ReturnFlag flag) noexcept
-    {
-        flags = static_cast<ReturnFlag>(static_cast<u32>(flags) & ~static_cast<u32>(flag));
-    }
-    [[nodiscard]] bool allSet(ReturnFlag mask) const noexcept
-    {
-        return (static_cast<u32>(flags) & static_cast<u32>(mask)) == static_cast<u32>(mask);
-    }
-};
+    template <typename Derived>
+    struct FlagBase {
+        State flags = State::None;
+        void set(State flag) noexcept
+        {
+            flags = static_cast<State>(static_cast<u32>(flags) | static_cast<u32>(flag));
+        }
+        [[nodiscard]] bool isSet(State flag) const noexcept
+        {
+            return (static_cast<u32>(flags) & static_cast<u32>(flag)) != 0;
+        }
+        void clear(State flag) noexcept
+        {
+            flags = static_cast<State>(static_cast<u32>(flags) & ~static_cast<u32>(flag));
+        }
+        [[nodiscard]] bool allSet(State mask) const noexcept
+        {
+            return (static_cast<u32>(flags) & static_cast<u32>(mask)) == static_cast<u32>(mask);
+        }
+    };
     struct ReturnedFuncEntry : FlagBase<ReturnedFuncEntry>  {
         i32 argSize;
         ReturnedFuncEntry(const i32 argSize,
@@ -56,15 +56,15 @@ struct FlagBase {
             : argSize(argSize)
         {
             if (contains)
-                set(ReturnFlag::Contains);
+                set(State::Contains);
             if (correctType)
-                set(ReturnFlag::CorrectType);
+                set(State::CorrectType);
             if (fromCurrentScope)
-                set(ReturnFlag::FromCurrentScope);
+                set(State::FromCurrentScope);
             if (hasLinkage)
-                set(ReturnFlag::HasLinkage);
+                set(State::HasLinkage);
             if (isGlobal)
-                set(ReturnFlag::IsGlobal);
+                set(State::IsGlobal);
         }
     };
     struct ReturnedVarEntry : FlagBase<ReturnedVarEntry>  {
@@ -72,44 +72,53 @@ struct FlagBase {
                          const bool inArgs,
                          const bool correctType,
                          const bool fromCurrentScope,
-                         const bool hasLinkage)
+                         const bool hasLinkage,
+                         const bool isGlobal)
         {
             if (contains)
-                set(ReturnFlag::Contains);
+                set(State::Contains);
             if (correctType)
-                set(ReturnFlag::CorrectType);
+                set(State::CorrectType);
             if (inArgs)
-                set(ReturnFlag::InArgs);
+                set(State::InArgs);
             if (fromCurrentScope)
-                set(ReturnFlag::FromCurrentScope);
+                set(State::FromCurrentScope);
             if (hasLinkage)
-                set(ReturnFlag::HasLinkage);
+                set(State::HasLinkage);
+            if (isGlobal)
+                set(State::IsGlobal);
         }
     };
 private:
-    enum class SymbolType {
+    enum class SymbolType  {
         Var, Func
     };
-    struct Entry {
+    struct Entry : FlagBase<Entry>  {
         std::string uniqueName;
+        State returnFlag;
         SymbolType type;
-        bool hasLinkage;
-        Entry(std::string uniqueName, SymbolType type, const bool hasLinkage)
-            :uniqueName(std::move(uniqueName)), type(type), hasLinkage(hasLinkage) {}
+        Entry(std::string uniqueName, const SymbolType type, const bool hasLinkage, const bool isGlobal)
+            :uniqueName(std::move(uniqueName)), type(type)
+        {
+            if (hasLinkage)
+                set(State::HasLinkage);
+            if (isGlobal)
+                set(State::IsGlobal);
+        }
     };
     std::vector<std::unordered_map<std::string, Entry>> m_entries;
     std::unordered_map<std::string, i32> m_funcs;
     std::vector<std::string> m_args;
 public:
     SymbolTable();
-    [[nodiscard]] bool contains(const std::string& uniqueName) const;
+    [[nodiscard]] bool contains(const std::string& name) const;
     [[nodiscard]] ReturnedVarEntry lookupVar(const std::string& uniqueName) const;
     [[nodiscard]] ReturnedFuncEntry lookupFunc(const std::string& uniqueName) const;
     std::string getUniqueName(const std::string& unique) const;
     void setArgs(const std::vector<std::string>& args);
     void clearArgs();
-    void addVarEntry(const std::string& name, const std::string& uniqueName, bool hasLinkage);
-    void addFuncEntry(const std::string& name, i32 argsSize, bool hasLinkage);
+    void addVarEntry(const std::string& name, const std::string& uniqueName, bool hasLinkage, bool isGlobal);
+    void addFuncEntry(const std::string& name, i32 argsSize, bool hasLinkage, bool isGlobal);
     void addScope();
     void removeScope();
 

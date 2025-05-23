@@ -26,7 +26,7 @@ instruction = Return(val)
             | FunCall(identifier fun_name, val* args, val dst)
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate | Not
-binary_operator = Add | Subtract | Multiplay | Divide | Remainder |
+binary_operator = Add | Subtract | Multiply | Divide | Remainder |
                   BitwiseOr | BitwiseAnd | BitwiseXor |
                   Leftshift | Rightshift |
                   And | Or | Equal | NotEqual |
@@ -48,6 +48,7 @@ struct Identifier {
 
 struct Program {
     std::vector<std::unique_ptr<TopLevel>> topLevels;
+    ~Program();
 };
 
 struct TopLevel {
@@ -64,7 +65,7 @@ protected:
         : type(t) {}
 };
 
-struct Function : public TopLevel {
+struct Function : TopLevel {
     std::string name;
     std::vector<Identifier> args;
     std::vector<std::unique_ptr<Instruction>> insts;
@@ -72,10 +73,12 @@ struct Function : public TopLevel {
     Function(std::string identifier, const bool isGlobal)
         : TopLevel(Type::Function), name(std::move(identifier)), isGlobal(isGlobal) {}
 
+    ~Function() override;
+
     Function() = delete;
 };
 
-struct StaticVariable : public TopLevel {
+struct StaticVariable : TopLevel {
     std::string name;
     std::shared_ptr<Value> value;
     const bool isGlobal;
@@ -84,6 +87,8 @@ struct StaticVariable : public TopLevel {
                             const bool isGlobal)
         : TopLevel(Type::StaticVariable), name
                 (std::move(identifier)), value(value), isGlobal(isGlobal) {}
+
+    ~StaticVariable() override;
 
     StaticVariable() = delete;
 };
@@ -107,6 +112,8 @@ struct ReturnInst final : Instruction {
     std::shared_ptr<Value> returnValue;
     explicit ReturnInst(std::shared_ptr<Value> v)
         : Instruction(Type::Return), returnValue(std::move(v)) {}
+
+    ~ReturnInst() override;
 };
 
 struct UnaryInst final : Instruction {
@@ -118,6 +125,8 @@ struct UnaryInst final : Instruction {
     std::shared_ptr<Value> destination;
     UnaryInst(const Operation op, std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
         : Instruction(Type::Unary), operation(op), source(std::move(src)), destination(std::move(dst)) {}
+
+    ~UnaryInst() override;
 
     UnaryInst() = delete;
 };
@@ -140,6 +149,8 @@ struct BinaryInst final : Instruction {
                const std::shared_ptr<Value>& dst)
         : Instruction(Type::Binary), operation(op), source1(src1), source2(src2), destination(dst) {}
 
+    ~BinaryInst() override;
+
     BinaryInst() = delete;
 };
 
@@ -149,6 +160,8 @@ struct CopyInst final : Instruction {
     CopyInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
         : Instruction(Type::Copy), source(std::move(src)), destination(std::move(dst)) {}
 
+    ~CopyInst() override;
+
     CopyInst() = delete;
 };
 
@@ -156,6 +169,8 @@ struct JumpInst final : Instruction {
     Identifier target;
     explicit JumpInst(Identifier target)
         : Instruction(Type::Jump), target(std::move(target)) {}
+
+    ~JumpInst() override;
 
     JumpInst() = delete;
 };
@@ -166,6 +181,8 @@ struct JumpIfZeroInst final : Instruction {
     JumpIfZeroInst(std::shared_ptr<Value> condition, Identifier target)
         : Instruction(Type::JumpIfZero), condition(std::move(condition)), target(std::move(target)) {}
 
+    ~JumpIfZeroInst() override;
+
     JumpIfZeroInst() = delete;
 };
 
@@ -175,6 +192,8 @@ struct JumpIfNotZeroInst final : Instruction {
     JumpIfNotZeroInst(std::shared_ptr<Value> condition, Identifier target)
         : Instruction(Type::JumpIfNotZero), condition(std::move(condition)), target(std::move(target)) {}
 
+    ~JumpIfNotZeroInst() override;
+
     JumpIfNotZeroInst() = delete;
 };
 
@@ -182,6 +201,8 @@ struct LabelInst final : Instruction {
     Identifier target;
     explicit LabelInst(Identifier target)
         : Instruction(Type::Label), target(std::move(target)) {}
+
+    ~LabelInst() override;
 
     LabelInst() = delete;
 };
@@ -192,6 +213,8 @@ struct FunCallInst final : Instruction {
     std::shared_ptr<Value> destination;
     FunCallInst(Identifier funName, std::vector<std::shared_ptr<Value>> args, std::shared_ptr<Value> dst)
         : Instruction(Type::FunCall), funName(std::move(funName)), args(std::move(args)), destination(std::move(dst)) {}
+
+    ~FunCallInst() override;
 
     FunCallInst() = delete;
 };
@@ -213,6 +236,8 @@ struct ValueVar final : Value {
     explicit ValueVar(Identifier v)
         : Value(Type::Variable), value(std::move(v)) {}
 
+    ~ValueVar() override;
+
     ValueVar() = delete;
 };
 
@@ -220,6 +245,8 @@ struct ValueConst final : Value {
     i32 value;
     explicit ValueConst(const i32 v)
         : Value(Type::Constant), value(v) {}
+
+    ~ValueConst() override;
 
     ValueConst() = delete;
 };

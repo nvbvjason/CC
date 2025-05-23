@@ -1,8 +1,12 @@
 #include "VariableResolution.hpp"
+#include "ASTParser.hpp"
 
 #include <unordered_set>
 
-#include "ASTParser.hpp"
+namespace {
+using Flag = SymbolTable::State;
+using Storage = Parsing::Declaration::StorageClass;
+}
 
 namespace Semantics {
 
@@ -25,7 +29,8 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
         m_valid = false;
         return;
     }
-    symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), true);
+    const bool isGlobal = isGlobalFunc(funDecl);
+    symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), true, isGlobal);
     symbolTable.addScope();
     symbolTable.setArgs(funDecl.params);
     ASTTraverser::visit(funDecl);
@@ -53,12 +58,13 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
         m_valid = false;
         return;
     }
+    const bool isGlobal = isGlobalVar(varDecl, symbolTable);
     if (!symbolTable.inFunc() || varDecl.storage == Storage::ExternLocal) {
-        symbolTable.addVarEntry(varDecl.name, varDecl.name, true);
+        symbolTable.addVarEntry(varDecl.name, varDecl.name, true, isGlobal);
     }
     else {
         const std::string uniqueName = makeTemporaryName(varDecl.name);
-        symbolTable.addVarEntry(varDecl.name, uniqueName, false);
+        symbolTable.addVarEntry(varDecl.name, uniqueName, false, isGlobal);
         varDecl.name = uniqueName;
     }
     ASTTraverser::visit(varDecl);
@@ -102,7 +108,6 @@ bool duplicatesInArgs(const std::vector<std::string>& args)
 
 bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable)
 {
-    using Flag = SymbolTable::ReturnFlag;
     const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funCallExpr.name);
     if (!returnedEntry.isSet(Flag::Contains))
         return false;
@@ -113,7 +118,6 @@ bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable&
 
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable)
 {
-    using Flag = SymbolTable::ReturnFlag;
     if (symbolTable.isInArgs(varExpr.name))
         return true;
     const SymbolTable::ReturnedVarEntry returnedEntry = symbolTable.lookupVar(varExpr.name);
@@ -126,8 +130,6 @@ bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTa
 
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable)
 {
-    using Flag = SymbolTable::ReturnFlag;
-    using Storage = Parsing::Declaration::StorageClass;
     const SymbolTable::ReturnedVarEntry prevEntry = symbolTable.lookupVar(varDecl.name);
     if (prevEntry.isSet(Flag::InArgs))
         return false;
@@ -144,8 +146,6 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
 
 bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolTable)
 {
-    using Flag = SymbolTable::ReturnFlag;
-    using Storage = Parsing::Declaration::StorageClass;
     if (funDecl.storage == Storage::StaticLocalFunction)
         return false;
     if (duplicatesInArgs(funDecl.params))
@@ -159,7 +159,21 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolT
         return false;
     if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::FromCurrentScope))
         return false;
+    if (returnedEntry.isSet(Flag::IsGlobal) != isGlobalFunc(funDecl))
+        return false;
     return true;
+}
+
+bool isGlobalFunc(const Parsing::FunDecl& funDecl)
+{
+    return funDecl.storage != Storage::StaticGlobalInitialized
+        && funDecl.storage != Storage::StaticGlobalTentative;
+}
+
+bool isGlobalVar(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable)
+{
+    return varDecl.storage != Storage::StaticGlobalInitialized
+        && varDecl.storage != Storage::StaticGlobalTentative;
 }
 
 } // Semantics
