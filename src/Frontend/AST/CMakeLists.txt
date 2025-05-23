@@ -3,6 +3,8 @@ add_library(AST
         ASTParser.cpp
         ../Traverser/ASTPrinter.cpp
         ASTVisitor.cpp
+        ASTExpr.cpp
+        ASTExpr.hpp
 )
 
 target_include_directories(AST PUBLIC
