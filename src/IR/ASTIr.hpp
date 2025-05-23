@@ -35,62 +35,40 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder |
 
 namespace Ir {
 
-struct Program;
-struct TopLevel;
-struct Function;
-struct Instruction;
-struct Value;
-struct Identifier;
-
 struct Identifier {
     std::string value;
 };
 
-struct Program {
-    std::vector<std::unique_ptr<TopLevel>> topLevels;
-    ~Program();
-};
-
-struct TopLevel {
+struct Value {
     enum class Type {
-        Function, StaticVariable
+        Variable, Constant
     };
     Type type;
-
-    TopLevel() = delete;
-
-    virtual ~TopLevel() = default;
+    Value() = delete;
+    virtual ~Value() = default;
 protected:
-    explicit TopLevel(const Type t)
+    explicit Value(const Type t)
         : type(t) {}
 };
 
-struct Function : TopLevel {
-    std::string name;
-    std::vector<Identifier> args;
-    std::vector<std::unique_ptr<Instruction>> insts;
-    const bool isGlobal;
-    Function(std::string identifier, const bool isGlobal)
-        : TopLevel(Type::Function), name(std::move(identifier)), isGlobal(isGlobal) {}
+struct ValueVar final : Value {
+    Identifier value;
+    explicit ValueVar(Identifier v)
+        : Value(Type::Variable), value(std::move(v)) {}
 
-    ~Function() override;
+    ~ValueVar() override;
 
-    Function() = delete;
+    ValueVar() = delete;
 };
 
-struct StaticVariable : TopLevel {
-    std::string name;
-    std::shared_ptr<Value> value;
-    const bool isGlobal;
-    explicit StaticVariable(std::string identifier,
-                            const std::shared_ptr<Value>& value,
-                            const bool isGlobal)
-        : TopLevel(Type::StaticVariable), name
-                (std::move(identifier)), value(value), isGlobal(isGlobal) {}
+struct ValueConst final : Value {
+    i32 value;
+    explicit ValueConst(const i32 v)
+        : Value(Type::Constant), value(v) {}
 
-    ~StaticVariable() override;
+    ~ValueConst() override;
 
-    StaticVariable() = delete;
+    ValueConst() = delete;
 };
 
 struct Instruction {
@@ -219,36 +197,58 @@ struct FunCallInst final : Instruction {
     FunCallInst() = delete;
 };
 
-struct Value {
+struct TopLevel {
     enum class Type {
-        Variable, Constant
+        Function, StaticVariable
     };
     Type type;
-    Value() = delete;
-    virtual ~Value() = default;
+
+    TopLevel() = delete;
+
+    virtual ~TopLevel() = default;
 protected:
-    explicit Value(const Type t)
+    explicit TopLevel(const Type t)
         : type(t) {}
 };
 
-struct ValueVar final : Value {
-    Identifier value;
-    explicit ValueVar(Identifier v)
-        : Value(Type::Variable), value(std::move(v)) {}
+struct Function : TopLevel {
+    std::string name;
+    std::vector<Identifier> args;
+    std::vector<std::unique_ptr<Instruction>> insts;
+    const bool isGlobal;
+    Function(std::string identifier, const bool isGlobal)
+        : TopLevel(Type::Function), name(std::move(identifier)), isGlobal(isGlobal) {}
 
-    ~ValueVar() override;
+    ~Function() override;
 
-    ValueVar() = delete;
+    Function() = delete;
 };
 
-struct ValueConst final : Value {
-    i32 value;
-    explicit ValueConst(const i32 v)
-        : Value(Type::Constant), value(v) {}
+struct StaticVariable : TopLevel {
+    std::string name;
+    std::shared_ptr<Value> value;
+    const bool isGlobal;
+    explicit StaticVariable(std::string identifier,
+                            const std::shared_ptr<Value>& value,
+                            const bool isGlobal)
+        : TopLevel(Type::StaticVariable), name
+                (std::move(identifier)), value(value), isGlobal(isGlobal) {}
 
-    ~ValueConst() override;
+    ~StaticVariable() override;
 
-    ValueConst() = delete;
+    StaticVariable() = delete;
+};
+
+struct Program {
+    std::vector<std::unique_ptr<TopLevel>> topLevels;
+    Program() = default;
+
+    Program(Program&&) = default;
+    Program& operator=(Program&&) = default;
+    ~Program();
+
+    Program(const Program&) = delete;
+    Program& operator=(const Program&) = delete;
 };
 
 } // IR

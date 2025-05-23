@@ -631,6 +631,8 @@ static bool isGlobal(Parsing::Declaration::StorageClass storage)
         case StorageClass::StaticLocal:
         case StorageClass::ExternLocal:
             return false;
+        default:
+            std::unreachable();
     }
 }
 

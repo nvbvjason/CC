@@ -3,8 +3,8 @@
 #ifndef CC_PARSING_OPERATORS_HPP
 #define CC_PARSING_OPERATORS_HPP
 
-#include "ASTParser.hpp"
 #include "Token.hpp"
+#include "ASTParser.hpp"
 
 #include <cassert>
 

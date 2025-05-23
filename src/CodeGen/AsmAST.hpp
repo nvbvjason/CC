@@ -45,57 +45,70 @@ reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11
 
 namespace CodeGen {
 
-struct Program;
-struct TopLevel;
-struct Function;
-struct Inst;
-struct Operand;
-
 struct InstVisitor;
-
-struct Program {
-    std::vector<std::unique_ptr<TopLevel>> topLevels;
-};
-
-struct TopLevel {
-    enum class Type {
-        Function, StaticVariable
-    };
-    Type type;
-
-    TopLevel() = delete;
-
-    virtual ~TopLevel() = default;
-protected:
-    explicit TopLevel(const Type t)
-        : type(t) {}
-};
-
-struct Function : TopLevel {
-    std::string name;
-    std::vector<std::unique_ptr<Inst>> instructions;
-    i64 stackAlloc = 0;
-    const bool isGlobal;
-    Function(std::string name, bool isGlobal)
-        : TopLevel(Type::Function), name(std::move(name)), isGlobal(isGlobal) {}
-
-    Function() = delete;
-};
-
-struct StaticVariable : TopLevel {
-    std::string name;
-    i32 init;
-    const bool isGlobal;
-    StaticVariable(std::string name, bool isGlobal, i32 init)
-        : TopLevel(Type::StaticVariable), name(std::move(name)), init(init), isGlobal(isGlobal) {}
-
-    StaticVariable() = delete;
-};
 
 struct Identifier {
     std::string value;
     explicit Identifier(std::string value)
         : value(std::move(value)) {}
+};
+
+struct Operand {
+    enum class Kind {
+        Imm, Register, Pseudo, Stack, Data
+    };
+    Kind kind;
+
+    virtual ~Operand() = default;
+
+    Operand() = delete;
+protected:
+    explicit Operand(const Kind k)
+        : kind(k) {}
+};
+
+struct ImmOperand final : Operand {
+    i32 value;
+    explicit ImmOperand(const i32 value)
+        : Operand(Kind::Imm), value(value) {}
+
+    ImmOperand() = delete;
+};
+
+struct RegisterOperand final : Operand {
+    enum class Type : u8 {
+        AX, CX, DX, DI, SI, R8, R9, R10, R11
+    };
+    Type type;
+    u8 size;
+    explicit RegisterOperand(const Type k, const u8 size)
+        : Operand(Operand::Kind::Register), type(k), size(size) {}
+
+    RegisterOperand() = delete;
+};
+
+struct PseudoOperand final : Operand {
+    std::string identifier;
+    explicit PseudoOperand(std::string identifier)
+        : Operand(Kind::Pseudo), identifier(std::move(identifier)) {}
+
+    PseudoOperand() = delete;
+};
+
+struct StackOperand final : Operand {
+    i32 value;
+    explicit StackOperand(const i32 value)
+        : Operand(Kind::Stack), value(value) {}
+
+    StackOperand() = delete;
+};
+
+struct DataOperand final : Operand {
+    std::string identifier;
+    explicit DataOperand(std::string iden)
+        : Operand(Kind::Data), identifier(std::move(iden)) {}
+
+    DataOperand() = delete;
 };
 
 struct Inst {
@@ -279,62 +292,43 @@ struct ReturnInst final : Inst {
     void accept(InstVisitor& visitor) override;
 };
 
-struct Operand {
-    enum class Kind {
-        Imm, Register, Pseudo, Stack, Data
-    };
-    Kind kind;
-
-    virtual ~Operand() = default;
-
-    Operand() = delete;
-protected:
-    explicit Operand(const Kind k)
-        : kind(k) {}
-};
-
-struct ImmOperand final : Operand {
-    i32 value;
-    explicit ImmOperand(const i32 value)
-        : Operand(Kind::Imm), value(value) {}
-
-    ImmOperand() = delete;
-};
-
-struct RegisterOperand final : Operand {
-    enum class Type : u8 {
-        AX, CX, DX, DI, SI, R8, R9, R10, R11
+struct TopLevel {
+    enum class Type {
+        Function, StaticVariable
     };
     Type type;
-    u8 size;
-    explicit RegisterOperand(const Type k, const u8 size)
-        : Operand(Operand::Kind::Register), type(k), size(size) {}
 
-    RegisterOperand() = delete;
+    TopLevel() = delete;
+
+    virtual ~TopLevel() = default;
+protected:
+    explicit TopLevel(const Type t)
+        : type(t) {}
 };
 
-struct PseudoOperand final : Operand {
-    std::string identifier;
-    explicit PseudoOperand(std::string identifier)
-        : Operand(Kind::Pseudo), identifier(std::move(identifier)) {}
+struct Function : TopLevel {
+    std::string name;
+    std::vector<std::unique_ptr<Inst>> instructions;
+    i64 stackAlloc = 0;
+    const bool isGlobal;
+    Function(std::string name, bool isGlobal)
+        : TopLevel(Type::Function), name(std::move(name)), isGlobal(isGlobal) {}
 
-    PseudoOperand() = delete;
+    Function() = delete;
 };
 
-struct StackOperand final : Operand {
-    i32 value;
-    explicit StackOperand(const i32 value)
-        : Operand(Kind::Stack), value(value) {}
+struct StaticVariable : TopLevel {
+    std::string name;
+    i32 init;
+    const bool isGlobal;
+    StaticVariable(std::string name, bool isGlobal, i32 init)
+        : TopLevel(Type::StaticVariable), name(std::move(name)), init(init), isGlobal(isGlobal) {}
 
-    StackOperand() = delete;
+    StaticVariable() = delete;
 };
 
-struct DataOperand final : Operand {
-    std::string identifier;
-    explicit DataOperand(std::string iden)
-        : Operand(Kind::Data), identifier(std::move(iden)) {}
-
-    DataOperand() = delete;
+struct Program {
+    std::vector<std::unique_ptr<TopLevel>> topLevels;
 };
 
 struct InstVisitor {

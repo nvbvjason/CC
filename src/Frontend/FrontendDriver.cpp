@@ -28,26 +28,26 @@ std::tuple<Ir::Program, ErrorCode> FrontendDriver::run() const
 {
     std::vector<Lexing::Token> tokens;
     if (lex(tokens, m_inputFile) != 0)
-        return {Ir::Program(), ErrorCode::Lexer};
+        return {std::move(Ir::Program()), ErrorCode::Lexer};
     if (m_arg == "--lex")
         return {Ir::Program(), ErrorCode::OK};
     Parsing::Program program;
     if (!parse(tokens, program))
-        return {Ir::Program(), ErrorCode::Parser};
+        return {std::move(Ir::Program()), ErrorCode::Parser};
     if (m_arg == "--parse")
-        return {Ir::Program(), ErrorCode::OK};
+        return {std::move(Ir::Program()), ErrorCode::OK};
     if (m_arg == "--printAst") {
         printParsingAst(program);
-        return {Ir::Program(), ErrorCode::OK};
+        return {std::move(Ir::Program()), ErrorCode::OK};
     }
     SymbolTable symbolTable;
     if (ErrorCode err = validateSemantics(program, symbolTable); err != ErrorCode::OK)
-        return {Ir::Program(), err};
+        return {std::move(Ir::Program()), err};
     if (m_arg == "--validate")
-        return {Ir::Program(), ErrorCode::OK};
+        return {std::move(Ir::Program()), ErrorCode::OK};
     if (m_arg == "--printAstAfter") {
         printParsingAst(program);
-        return {Ir::Program(), ErrorCode::OK};
+        return {std::move(Ir::Program()), ErrorCode::OK};
     }
     Ir::Program irProgram = ir(program);
     return {std::move(irProgram), ErrorCode::OK};
