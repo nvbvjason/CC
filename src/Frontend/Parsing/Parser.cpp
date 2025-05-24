@@ -535,7 +535,7 @@ Declaration::StorageClass getVarStorageClass(const Lexing::Token::Type tokenType
             return StorageClass::AutoLocalScope;
         if (hasDefinition)
             return StorageClass::GlobalDefinition;
-        return StorageClass::GlobalScopeDeclaration;
+        return StorageClass::GlobalDeclaration;
     }
     if (tokenType == TokenType::Static) {
         if (inBlock)

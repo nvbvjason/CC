@@ -41,7 +41,7 @@ inline bool TypeResolution::mustBeConstantInitialised(const Parsing::VarDecl& va
     return !isConst && (varDecl.storage == StorageClass::StaticGlobalInitialized ||
                         varDecl.storage == StorageClass::GlobalDefinition ||
                         varDecl.storage == StorageClass::StaticLocal ||
-                        varDecl.storage == StorageClass::GlobalScopeDeclaration ||
+                        varDecl.storage == StorageClass::GlobalDeclaration ||
                         varDecl.storage == StorageClass::ExternGlobalInitialized);
 }
 

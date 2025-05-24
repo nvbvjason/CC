@@ -32,14 +32,19 @@ private:
     std::string makeTemporaryName(const std::string &name);
 };
 
+bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable, SymbolTable::ReturnedVarEntry prevEntry);
+bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry& prevEntry);
+
+bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolTable);
+
 bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable);
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable);
-bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable);
-bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolTable);
 
 bool duplicatesInArgs(const std::vector<std::string>& args);
 bool isGlobalFunc(const Parsing::FunDecl& funDecl);
 bool isGlobalVar(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable);
+
+SymbolTable::State getInitState(const Parsing::VarDecl& varDecl);
 
 } // Semantics
 #endif // CC_SEMANTICS_VARIABLE_SOLUTION_HPP

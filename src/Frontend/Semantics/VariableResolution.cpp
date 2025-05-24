@@ -29,8 +29,9 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
         m_valid = false;
         return;
     }
-    const bool isGlobal = isGlobalFunc(funDecl);
-    symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), true, isGlobal);
+    const bool global = isGlobalFunc(funDecl);
+    const bool defined = funDecl.body != nullptr;
+    symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), true, global, defined);
     symbolTable.addScope();
     symbolTable.setArgs(funDecl.params);
     ASTTraverser::visit(funDecl);
@@ -54,17 +55,22 @@ void VariableResolution::visit(Parsing::ForStmt& forStmt)
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    if (!isValidVarDecl(varDecl, symbolTable)) {
+    SymbolTable::ReturnedVarEntry prevEntry = symbolTable.lookupVar(varDecl.name);
+    if (!isValidVarDecl(varDecl, symbolTable, prevEntry)) {
         m_valid = false;
         return;
     }
-    const bool isGlobal = isGlobalVar(varDecl, symbolTable);
+    const bool global = isGlobalVar(varDecl, symbolTable);
+    const bool defined = varDecl.init != nullptr;
+
     if (!symbolTable.inFunc() || varDecl.storage == Storage::ExternLocal) {
-        symbolTable.addVarEntry(varDecl.name, varDecl.name, true, isGlobal);
+        symbolTable.addVarEntry(
+            varDecl.name, varDecl.name, true, global, defined, prevEntry.getInit()
+            );
     }
     else {
         const std::string uniqueName = makeTemporaryName(varDecl.name);
-        symbolTable.addVarEntry(varDecl.name, uniqueName, false, isGlobal);
+        symbolTable.addVarEntry(varDecl.name, uniqueName, false, global, defined, prevEntry.getInit());
         varDecl.name = uniqueName;
     }
     ASTTraverser::visit(varDecl);
@@ -128,18 +134,26 @@ bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTa
     return true;
 }
 
-bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable)
+bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable,
+                    const SymbolTable::ReturnedVarEntry prevEntry)
 {
-    const SymbolTable::ReturnedVarEntry prevEntry = symbolTable.lookupVar(varDecl.name);
     if (prevEntry.isSet(Flag::InArgs))
         return false;
     if (!prevEntry.isSet(Flag::Contains))
         return true;
-    if (prevEntry.isSet(Flag::FromCurrentScope)) {
-        if (!prevEntry.isSet(Flag::HasLinkage) || varDecl.storage != Storage::ExternLocal)
-            return false;
-    }
+    if (!symbolTable.inFunc())
+        return isValidVarDeclGlobal(varDecl, prevEntry);
+    if (prevEntry.isSet(Flag::FromCurrentScope)
+        && (!prevEntry.isSet(Flag::HasLinkage) || varDecl.storage != Storage::ExternLocal))
+        return false;
     if (prevEntry.isSet(Flag::CorrectType) && prevEntry.isSet(Flag::FromCurrentScope))
+        return false;
+    return true;
+}
+
+bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry& prevEntry)
+{
+    if (!prevEntry.isSet(Flag::CorrectType))
         return false;
     return true;
 }
@@ -157,9 +171,11 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolT
         return true;
     if (returnedEntry.argSize != funDecl.params.size())
         return false;
+    if (returnedEntry.isSet(Flag::Defined) && funDecl.body != nullptr)
+        return false;
     if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::FromCurrentScope))
         return false;
-    if (returnedEntry.isSet(Flag::IsGlobal) != isGlobalFunc(funDecl))
+    if (returnedEntry.isSet(Flag::Global) && !isGlobalFunc(funDecl))
         return false;
     return true;
 }
@@ -174,6 +190,18 @@ bool isGlobalVar(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable
 {
     return varDecl.storage != Storage::StaticGlobalInitialized
         && varDecl.storage != Storage::StaticGlobalTentative;
+}
+
+SymbolTable::State getInitState(const Parsing::VarDecl& varDecl)
+{
+    if (varDecl.storage == Storage::StaticGlobalInitialized ||
+        varDecl.storage == Storage::GlobalDefinition ||
+        varDecl.storage == Storage::ExternGlobalInitialized)
+        return SymbolTable::State::Init_HasInitializer;
+    if (varDecl.storage == Storage::StaticGlobalTentative ||
+        varDecl.storage == Storage::GlobalDeclaration)
+        return SymbolTable::State::Init_Tentative;
+    return SymbolTable::State::Init_NoInitializer;
 }
 
 } // Semantics

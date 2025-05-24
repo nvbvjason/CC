@@ -24,10 +24,6 @@ void TypeResolution::visit(const Parsing::FunDecl& funDecl)
         m_valid = false;
         return;
     }
-    if (m_definedFunctions.contains(funDecl.name)) {
-        m_valid = false;
-        return;
-    }
     if (funDecl.body != nullptr)
         m_definedFunctions.insert(funDecl.name);
     m_atFileScope = false;

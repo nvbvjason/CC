@@ -10,20 +10,22 @@
 #include <vector>
 #include <unordered_map>
 
-
 class SymbolTable {
 public:
-    enum class State : u32 {
-        None             = 1 << 0,
-        Contains         = 1 << 1,
-        CorrectType      = 1 << 2,
-        FromCurrentScope = 1 << 3,
-        HasLinkage       = 1 << 4,
-        IsGlobal         = 1 << 5,
-        Defined          = 1 << 6,
-        Tentative        = 1 << 7,
-        HasInitializer   = 1 << 8,
-        InArgs           = 1 << 9,
+    enum class State : u16 {
+        None                = 1 << 0,
+        Contains            = 1 << 1,
+        CorrectType         = 1 << 2,
+        FromCurrentScope    = 1 << 3,
+        HasLinkage          = 1 << 4,
+        Global              = 1 << 5,
+        Defined             = 1 << 6,
+        InArgs              = 1 << 7,
+
+        Init_Mask           = 0b11 << 14,
+        Init_HasInitializer = 0b01 << 14,
+        Init_Tentative      = 0b10 << 14,
+        Init_NoInitializer  = 0b11 << 14,
     };
     template <typename Derived>
     struct FlagBase {
@@ -36,13 +38,26 @@ public:
         {
             return (static_cast<u32>(flags) & static_cast<u32>(flag)) != 0;
         }
+        [[nodiscard]] bool isInitSet(State flag) const noexcept
+        {
+            return (static_cast<u32>(flags) & static_cast<u32>(State::Init_Mask)) == static_cast<u32>(flag);
+        }
         void clear(State flag) noexcept
         {
             flags = static_cast<State>(static_cast<u32>(flags) & ~static_cast<u32>(flag));
         }
-        [[nodiscard]] bool allSet(State mask) const noexcept
+        void clearAll() noexcept
         {
-            return (static_cast<u32>(flags) & static_cast<u32>(mask)) == static_cast<u32>(mask);
+            flags = State::None;
+        }
+        void setInit(State flag)
+        {
+            flags = static_cast<State>(static_cast<u32>(flags) & ~static_cast<u32>(State::Init_Mask)
+                | (static_cast<u32>(flag) & static_cast<u32>(State::Init_Mask)));
+        }
+        [[nodiscard]] State getInit() const
+        {
+            return static_cast<State>(static_cast<u32>(flags) & static_cast<u32>(State::Init_Mask));
         }
     };
     struct ReturnedFuncEntry : FlagBase<ReturnedFuncEntry>  {
@@ -52,7 +67,8 @@ public:
                           const bool correctType,
                           const bool fromCurrentScope,
                           const bool hasLinkage,
-                          const bool isGlobal)
+                          const bool isGlobal,
+                          const bool defined)
             : argSize(argSize)
         {
             if (contains)
@@ -64,7 +80,9 @@ public:
             if (hasLinkage)
                 set(State::HasLinkage);
             if (isGlobal)
-                set(State::IsGlobal);
+                set(State::Global);
+            if (defined)
+                set(State::Defined);
         }
     };
     struct ReturnedVarEntry : FlagBase<ReturnedVarEntry>  {
@@ -73,7 +91,8 @@ public:
                          const bool correctType,
                          const bool fromCurrentScope,
                          const bool hasLinkage,
-                         const bool isGlobal)
+                         const bool isGlobal,
+                         const State initState)
         {
             if (contains)
                 set(State::Contains);
@@ -86,7 +105,8 @@ public:
             if (hasLinkage)
                 set(State::HasLinkage);
             if (isGlobal)
-                set(State::IsGlobal);
+                set(State::Global);
+            setInit(initState);
         }
     };
 private:
@@ -97,13 +117,28 @@ private:
         std::string uniqueName;
         State returnFlag;
         SymbolType type;
-        Entry(std::string uniqueName, const SymbolType type, const bool hasLinkage, const bool isGlobal)
+        Entry(std::string uniqueName,
+              const SymbolType type,
+              const bool hasLinkage,
+              const bool isGlobal,
+              const bool defined)
             :uniqueName(std::move(uniqueName)), type(type)
         {
             if (hasLinkage)
                 set(State::HasLinkage);
             if (isGlobal)
-                set(State::IsGlobal);
+                set(State::Global);
+            if (defined)
+                set(State::Defined);
+        }
+        Entry(std::string uniqueName,
+              const SymbolType type,
+              const bool hasLinkage,
+              const bool isGlobal,
+              const bool defined,
+              const State initState) : Entry(std::move(uniqueName), type, hasLinkage, isGlobal, defined)
+        {
+            set(initState);
         }
     };
     std::vector<std::unordered_map<std::string, Entry>> m_entries;
@@ -117,8 +152,11 @@ public:
     std::string getUniqueName(const std::string& unique) const;
     void setArgs(const std::vector<std::string>& args);
     void clearArgs();
-    void addVarEntry(const std::string& name, const std::string& uniqueName, bool hasLinkage, bool isGlobal);
-    void addFuncEntry(const std::string& name, i32 argsSize, bool hasLinkage, bool isGlobal);
+    void addVarEntry(const std::string& name,
+                     const std::string& uniqueName,
+                     bool hasLinkage, bool isGlobal, bool defined,
+                     State initState);
+    void addFuncEntry(const std::string& name, i32 argsSize, bool hasLinkage, bool global, bool defined);
     void addScope();
     void removeScope();
 

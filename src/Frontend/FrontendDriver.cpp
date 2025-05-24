@@ -16,7 +16,6 @@
 #include <fstream>
 #include <iostream>
 
-
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
