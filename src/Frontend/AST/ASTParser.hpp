@@ -44,7 +44,7 @@ struct Declaration {
         ExternLocal,                // block scope shadowing (e.g., extern int a; in a block)
         ExternGlobal,               // without definition (e.g., extern int a;)
         ExternGlobalInitialized,    // useless keyword WARNING (e.g., extern int a = 5;)
-        GlobalDeclaration,     // no specifier at global scope (e.g., int a; at file scope)
+        GlobalDeclaration,          // no specifier at global scope (e.g., int a; at file scope)
         GlobalDefinition,           // global at file scope int a = 5;
     };
     Kind kind;

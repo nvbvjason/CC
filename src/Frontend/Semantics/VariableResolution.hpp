@@ -14,12 +14,18 @@ namespace Semantics {
 
 class VariableResolution : public Parsing::ASTTraverser {
     using Storage = Parsing::Declaration::StorageClass;
-    SymbolTable& symbolTable;
+    struct ScopeGuard {
+        SymbolTable& table;
+        explicit ScopeGuard(SymbolTable& t)
+            : table(t) { table.addScope(); }
+        ~ScopeGuard() { table.removeScope(); }
+    };
+    SymbolTable& m_symbolTable;
     i32 m_nameCounter = 0;
     bool m_valid = true;
 public:
     explicit VariableResolution(SymbolTable& symbolTable)
-        : symbolTable(symbolTable) {}
+        : m_symbolTable(symbolTable) {}
     bool resolve(Parsing::Program& program);
     void visit(Parsing::FunDecl& funDecl) override;
     void visit(Parsing::CompoundStmt& compoundStmt) override;
@@ -35,14 +41,16 @@ private:
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable, SymbolTable::ReturnedVarEntry prevEntry);
 bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry& prevEntry);
 
-bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolTable);
+bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
+                     const SymbolTable& symbolTable,
+                     const SymbolTable::ReturnedFuncEntry& returnedEntry);
 
 bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable);
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable);
 
 bool duplicatesInArgs(const std::vector<std::string>& args);
 bool isGlobalFunc(const Parsing::FunDecl& funDecl);
-bool isGlobalVar(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable);
+bool isGlobalVar(const Parsing::VarDecl& varDecl);
 
 SymbolTable::State getInitState(const Parsing::VarDecl& varDecl);
 

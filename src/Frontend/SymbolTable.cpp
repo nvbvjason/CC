@@ -28,12 +28,13 @@ SymbolTable::ReturnedVarEntry SymbolTable::lookupVar(const std::string& uniqueNa
             continue;
         const bool correctType = it->second.type == SymbolType::Var;
         const bool fromCurrentScope = i == m_entries.size() - 1;
-        const bool hasLinkage = it->second.isSet(State::HasLinkage);
-        const bool isGlobal = it->second.isSet(State::Global);
+        const bool linkage = it->second.isSet(State::HasLinkage);
+        const bool global = it->second.isSet(State::Global);
+        const bool defined = it->second.isSet(State::Defined);
         const State initState = it->second.getInit();
-        return {true, inArgs, correctType, fromCurrentScope, hasLinkage, isGlobal, initState};
+        return {true, inArgs, correctType, fromCurrentScope, linkage, global, defined, initState};
     }
-    return {false, inArgs, false, false, false, false, State::None};
+    return {false, inArgs, false, false, false, false, false, State::None};
 }
 
 SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& uniqueName) const

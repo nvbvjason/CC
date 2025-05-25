@@ -25,52 +25,76 @@ bool VariableResolution::resolve(Parsing::Program& program)
 
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
-    if (!isValidFuncDecl(funDecl, symbolTable)) {
+    const SymbolTable::ReturnedFuncEntry returnedEntry = m_symbolTable.lookupFunc(funDecl.name);
+    if (!isValidFuncDecl(funDecl, m_symbolTable, returnedEntry)) {
         m_valid = false;
         return;
     }
-    const bool global = isGlobalFunc(funDecl);
+    bool global = isGlobalFunc(funDecl);
+    if (returnedEntry.isSet(Flag::Contains) && returnedEntry.isSet(Flag::Global))
+        global = true;
     const bool defined = funDecl.body != nullptr;
-    symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), true, global, defined);
-    symbolTable.addScope();
-    symbolTable.setArgs(funDecl.params);
+    m_symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), true, global, defined);
+    ScopeGuard scopeGuard(m_symbolTable);
+    m_symbolTable.setArgs(funDecl.params);
     ASTTraverser::visit(funDecl);
-    symbolTable.clearArgs();
-    symbolTable.removeScope();
+    m_symbolTable.clearArgs();
+}
+
+bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
+                     const SymbolTable& symbolTable,
+                     const SymbolTable::ReturnedFuncEntry& returnedEntry)
+{
+    if (funDecl.storage == Storage::StaticLocalFunction)
+        return false;
+    if (duplicatesInArgs(funDecl.params))
+        return false;
+    if (symbolTable.inFunc() && funDecl.body != nullptr)
+        return false;
+    if (!returnedEntry.isSet(Flag::Contains))
+        return true;
+    if (returnedEntry.argSize != funDecl.params.size())
+        return false;
+    if (returnedEntry.isSet(Flag::Defined) && funDecl.body != nullptr)
+        return false;
+    if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::FromCurrentScope))
+        return false;
+    if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::Global))
+        return false;
+    if (returnedEntry.isSet(Flag::Global) && !isGlobalFunc(funDecl))
+        return false;
+    return true;
 }
 
 void VariableResolution::visit(Parsing::CompoundStmt& compoundStmt)
 {
-    symbolTable.addScope();
+    ScopeGuard scopeGuard(m_symbolTable);
     ASTTraverser::visit(compoundStmt);
-    symbolTable.removeScope();
 }
 
 void VariableResolution::visit(Parsing::ForStmt& forStmt)
 {
-    symbolTable.addScope();
+    ScopeGuard scopeGuard(m_symbolTable);
     ASTTraverser::visit(forStmt);
-    symbolTable.removeScope();
 }
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    SymbolTable::ReturnedVarEntry prevEntry = symbolTable.lookupVar(varDecl.name);
-    if (!isValidVarDecl(varDecl, symbolTable, prevEntry)) {
+    SymbolTable::ReturnedVarEntry prevEntry = m_symbolTable.lookupVar(varDecl.name);
+    if (!isValidVarDecl(varDecl, m_symbolTable, prevEntry)) {
         m_valid = false;
         return;
     }
-    const bool global = isGlobalVar(varDecl, symbolTable);
+    const bool global = isGlobalVar(varDecl);
     const bool defined = varDecl.init != nullptr;
-
-    if (!symbolTable.inFunc() || varDecl.storage == Storage::ExternLocal) {
-        symbolTable.addVarEntry(
+    if (!m_symbolTable.inFunc() || varDecl.storage == Storage::ExternLocal) {
+        m_symbolTable.addVarEntry(
             varDecl.name, varDecl.name, true, global, defined, prevEntry.getInit()
             );
     }
     else {
         const std::string uniqueName = makeTemporaryName(varDecl.name);
-        symbolTable.addVarEntry(varDecl.name, uniqueName, false, global, defined, prevEntry.getInit());
+        m_symbolTable.addVarEntry(varDecl.name, uniqueName, false, global, defined, prevEntry.getInit());
         varDecl.name = uniqueName;
     }
     ASTTraverser::visit(varDecl);
@@ -78,18 +102,18 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    if (!isValidVarExpr(varExpr, symbolTable)) {
+    if (!isValidVarExpr(varExpr, m_symbolTable)) {
         m_valid = false;
         return;
     }
-    if (!symbolTable.isInArgs(varExpr.name))
-        varExpr.name = symbolTable.getUniqueName(varExpr.name);
+    if (!m_symbolTable.isInArgs(varExpr.name))
+        varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
     ASTTraverser::visit(varExpr);
 }
 
 void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
 {
-    if (!isValidFuncCall(funCallExpr, symbolTable)) {
+    if (!isValidFuncCall(funCallExpr, m_symbolTable)) {
         m_valid = false;
         return;
     }
@@ -146,7 +170,8 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
     if (prevEntry.isSet(Flag::FromCurrentScope)
         && (!prevEntry.isSet(Flag::HasLinkage) || varDecl.storage != Storage::ExternLocal))
         return false;
-    if (prevEntry.isSet(Flag::CorrectType) && prevEntry.isSet(Flag::FromCurrentScope))
+    if (prevEntry.isSet(Flag::CorrectType) && prevEntry.isSet(Flag::FromCurrentScope) &&
+            varDecl.storage != Storage::ExternLocal)
         return false;
     return true;
 }
@@ -155,27 +180,9 @@ bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::Re
 {
     if (!prevEntry.isSet(Flag::CorrectType))
         return false;
-    return true;
-}
-
-bool isValidFuncDecl(const Parsing::FunDecl& funDecl, const SymbolTable& symbolTable)
-{
-    if (funDecl.storage == Storage::StaticLocalFunction)
+    if (varDecl.init != nullptr && prevEntry.isSet(Flag::Defined))
         return false;
-    if (duplicatesInArgs(funDecl.params))
-        return false;
-    if (symbolTable.inFunc() && funDecl.body != nullptr)
-        return false;
-    const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funDecl.name);
-    if (!returnedEntry.isSet(Flag::Contains))
-        return true;
-    if (returnedEntry.argSize != funDecl.params.size())
-        return false;
-    if (returnedEntry.isSet(Flag::Defined) && funDecl.body != nullptr)
-        return false;
-    if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::FromCurrentScope))
-        return false;
-    if (returnedEntry.isSet(Flag::Global) && !isGlobalFunc(funDecl))
+    if (isGlobalVar(varDecl) && !prevEntry.isSet(Flag::HasLinkage))
         return false;
     return true;
 }
@@ -186,10 +193,11 @@ bool isGlobalFunc(const Parsing::FunDecl& funDecl)
         && funDecl.storage != Storage::StaticGlobalTentative;
 }
 
-bool isGlobalVar(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable)
+bool isGlobalVar(const Parsing::VarDecl& varDecl)
 {
     return varDecl.storage != Storage::StaticGlobalInitialized
-        && varDecl.storage != Storage::StaticGlobalTentative;
+        && varDecl.storage != Storage::StaticGlobalTentative
+        && varDecl.storage != Storage::AutoLocalScope;
 }
 
 SymbolTable::State getInitState(const Parsing::VarDecl& varDecl)

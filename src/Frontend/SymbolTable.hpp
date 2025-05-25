@@ -13,14 +13,14 @@
 class SymbolTable {
 public:
     enum class State : u16 {
-        None                = 1 << 0,
-        Contains            = 1 << 1,
-        CorrectType         = 1 << 2,
-        FromCurrentScope    = 1 << 3,
-        HasLinkage          = 1 << 4,
-        Global              = 1 << 5,
-        Defined             = 1 << 6,
-        InArgs              = 1 << 7,
+        None                = 0,
+        Contains            = 1 << 0,
+        CorrectType         = 1 << 1,
+        FromCurrentScope    = 1 << 2,
+        HasLinkage          = 1 << 3,
+        Global              = 1 << 4,
+        Defined             = 1 << 5,
+        InArgs              = 1 << 6,
 
         Init_Mask           = 0b11 << 14,
         Init_HasInitializer = 0b01 << 14,
@@ -92,6 +92,7 @@ public:
                          const bool fromCurrentScope,
                          const bool hasLinkage,
                          const bool isGlobal,
+                         const bool defined,
                          const State initState)
         {
             if (contains)
@@ -106,6 +107,8 @@ public:
                 set(State::HasLinkage);
             if (isGlobal)
                 set(State::Global);
+            if (defined)
+                set(State::Defined);
             setInit(initState);
         }
     };

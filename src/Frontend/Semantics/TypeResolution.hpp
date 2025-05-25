@@ -18,7 +18,7 @@ class TypeResolution : public Parsing::ConstASTTraverser {
     std::unordered_map<std::string, size_t> m_functionArgCounts;
     std::unordered_set<std::string> m_definedFunctions;
     bool m_valid = true;
-    bool m_isConst;
+    bool m_isConst = true;
     bool m_atFileScope = true;
 public:
     bool validate(const Parsing::Program& program);
