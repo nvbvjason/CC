@@ -27,7 +27,6 @@ public:
     void visit(const Parsing::FunCallExpr& funCallExpr) override;
     void visit(const Parsing::VarDecl& varDecl) override;
     void visit(const Parsing::VarExpr& varExpr) override;
-    static bool mustBeConstantInitialised(const Parsing::VarDecl& varDecl, bool isConst);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 };
 
@@ -36,14 +35,12 @@ inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit&
     return declForInit.decl->storage != StorageClass::None;
 }
 
-// inline bool TypeResolution::mustBeConstantInitialised(const Parsing::VarDecl& varDecl, const bool isConst)
-// {
-//     return !isConst && (varDecl.storage == StorageClass::StaticGlobalInitialized ||
-//                         varDecl.storage == StorageClass::GlobalDefinition ||
-//                         varDecl.storage == StorageClass::StaticLocal ||
-//                         varDecl.storage == StorageClass::GlobalDeclaration ||
-//                         varDecl.storage == StorageClass::ExternGlobalInitialized);
-// }
+inline bool illegalNonConstInitialization(const Parsing::VarDecl& varDecl,
+                                          const bool isConst,
+                                          const bool global)
+{
+    return !isConst && (global || varDecl.storage ==  Parsing::Declaration::StorageClass::Static);
+}
 
 } // Semantics
 

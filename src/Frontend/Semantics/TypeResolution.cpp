@@ -61,8 +61,8 @@ void TypeResolution::visit(const Parsing::VarDecl& varDecl)
     }
     m_isConst = true;
     ConstASTTraverser::visit(varDecl);
-    // if (mustBeConstantInitialised(varDecl, m_isConst))
-    //     m_valid = false;
+    if (illegalNonConstInitialization(varDecl, m_isConst, m_atFileScope))
+        m_valid = false;
 }
 
 void TypeResolution::visit(const Parsing::VarExpr& varExpr)
