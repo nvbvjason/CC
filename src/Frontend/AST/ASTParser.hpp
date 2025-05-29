@@ -35,20 +35,12 @@ struct Declaration {
         VarDecl, FuncDecl
     };
     enum class StorageClass : u8 {
-        AutoLocalScope,             // no specifier at local scope (e.g., int x; in a function)
-        StaticGlobalTentative,      // global to file (e.g., static int x;)
-        StaticGlobalInitialized,    // global to file (e.g., static int x = 5;)
-        StaticLocal,                // local scope persistent (e.g., static int x; in a function)
-        StaticLocalFunction,        // ILLEGAL
-        ExternFunction,             // normal function rules (e.g., extern void foo();)
-        ExternLocal,                // block scope shadowing (e.g., extern int a; in a block)
-        ExternGlobal,               // without definition (e.g., extern int a;)
-        ExternGlobalInitialized,    // useless keyword WARNING (e.g., extern int a = 5;)
-        GlobalDeclaration,          // no specifier at global scope (e.g., int a; at file scope)
-        GlobalDefinition,           // global at file scope int a = 5;
+        None,
+        Extern,
+        Static
     };
     Kind kind;
-    StorageClass storage;
+    StorageClass storage = StorageClass::None;
 
     virtual ~Declaration() = default;
 

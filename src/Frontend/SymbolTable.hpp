@@ -17,17 +17,18 @@ public:
         Contains            = 1 << 0,
         CorrectType         = 1 << 1,
         FromCurrentScope    = 1 << 2,
-        HasLinkage          = 1 << 3,
-        Global              = 1 << 4,
-        Defined             = 1 << 5,
-        InArgs              = 1 << 6,
+        InternalLinkage     = 1 << 3,
+        ExternalLinkage     = 1 << 4,
+        Global              = 1 << 5,
+        Defined             = 1 << 6,
+        InArgs              = 1 << 7,
 
         Init_Mask           = 0b11 << 14,
         Init_HasInitializer = 0b01 << 14,
         Init_Tentative      = 0b10 << 14,
         Init_NoInitializer  = 0b11 << 14,
     };
-    template <typename Derived>
+    template <typename>
     struct FlagBase {
         State flags = State::None;
         void set(State flag) noexcept
@@ -66,7 +67,8 @@ public:
                           const bool contains,
                           const bool correctType,
                           const bool fromCurrentScope,
-                          const bool hasLinkage,
+                          const bool internal,
+                          const bool external,
                           const bool isGlobal,
                           const bool defined)
             : argSize(argSize)
@@ -77,8 +79,10 @@ public:
                 set(State::CorrectType);
             if (fromCurrentScope)
                 set(State::FromCurrentScope);
-            if (hasLinkage)
-                set(State::HasLinkage);
+            if (internal)
+                set(State::InternalLinkage);
+            if (external)
+                set(State::ExternalLinkage);
             if (isGlobal)
                 set(State::Global);
             if (defined)
@@ -90,8 +94,9 @@ public:
                          const bool inArgs,
                          const bool correctType,
                          const bool fromCurrentScope,
-                         const bool hasLinkage,
-                         const bool isGlobal,
+                         const bool internal,
+                         const bool external,
+                         const bool global,
                          const bool defined,
                          const State initState)
         {
@@ -103,9 +108,11 @@ public:
                 set(State::InArgs);
             if (fromCurrentScope)
                 set(State::FromCurrentScope);
-            if (hasLinkage)
-                set(State::HasLinkage);
-            if (isGlobal)
+            if (internal)
+                set(State::InternalLinkage);
+            if (external)
+                set(State::ExternalLinkage);
+            if (global)
                 set(State::Global);
             if (defined)
                 set(State::Defined);
@@ -118,28 +125,32 @@ private:
     };
     struct Entry : FlagBase<Entry>  {
         std::string uniqueName;
-        State returnFlag;
+        State returnFlag = State::None;
         SymbolType type;
         Entry(std::string uniqueName,
               const SymbolType type,
-              const bool hasLinkage,
-              const bool isGlobal,
+              const bool internal,
+              const bool external,
+              const bool global,
               const bool defined)
             :uniqueName(std::move(uniqueName)), type(type)
         {
-            if (hasLinkage)
-                set(State::HasLinkage);
-            if (isGlobal)
+            if (internal)
+                set(State::InternalLinkage);
+            if (external)
+                set(State::ExternalLinkage);
+            if (global)
                 set(State::Global);
             if (defined)
                 set(State::Defined);
         }
         Entry(std::string uniqueName,
               const SymbolType type,
-              const bool hasLinkage,
-              const bool isGlobal,
+              const bool internal,
+              const bool external,
+              const bool global,
               const bool defined,
-              const State initState) : Entry(std::move(uniqueName), type, hasLinkage, isGlobal, defined)
+              const State initState) : Entry(std::move(uniqueName), type, internal, external, global, defined)
         {
             set(initState);
         }
@@ -157,9 +168,9 @@ public:
     void clearArgs();
     void addVarEntry(const std::string& name,
                      const std::string& uniqueName,
-                     bool hasLinkage, bool isGlobal, bool defined,
+                     bool internal, bool external, bool global, bool defined,
                      State initState);
-    void addFuncEntry(const std::string& name, i32 argsSize, bool hasLinkage, bool global, bool defined);
+    void addFuncEntry(const std::string& name, i32 argsSize, bool internal, bool external, bool global, bool defined);
     void addScope();
     void removeScope();
 

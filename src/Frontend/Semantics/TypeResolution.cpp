@@ -54,15 +54,15 @@ void TypeResolution::visit(const Parsing::FunCallExpr& funCallExpr)
 
 void TypeResolution::visit(const Parsing::VarDecl& varDecl)
 {
-    if (varDecl.storage == StorageClass::ExternLocal &&
+    if (varDecl.storage == StorageClass::Extern &&
         varDecl.init != nullptr) {
         m_valid = false;
         return;
     }
     m_isConst = true;
     ConstASTTraverser::visit(varDecl);
-    if (mustBeConstantInitialised(varDecl, m_isConst))
-        m_valid = false;
+    // if (mustBeConstantInitialised(varDecl, m_isConst))
+    //     m_valid = false;
 }
 
 void TypeResolution::visit(const Parsing::VarExpr& varExpr)

@@ -49,8 +49,23 @@ bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable&
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable);
 
 bool duplicatesInArgs(const std::vector<std::string>& args);
-bool isGlobalFunc(const Parsing::FunDecl& funDecl);
-bool isGlobalVar(const Parsing::VarDecl& varDecl);
+inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry prevEntry)
+{
+    using Flag = SymbolTable::State;
+    using Storage = Parsing::Declaration::StorageClass;
+    return prevEntry.isSet(Flag::FromCurrentScope)
+        && (!prevEntry.isSet(Flag::ExternalLinkage) || varDecl.storage != Storage::Extern);
+}
+inline bool hasInternalLinkageVar(const Parsing::VarDecl& varDecl)
+{
+    using Storage = Parsing::Declaration::StorageClass;
+    return varDecl.storage == Storage::Static;
+}
+inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl)
+{
+    using Storage = Parsing::Declaration::StorageClass;
+    return varDecl.storage == Storage::Extern;
+}
 
 SymbolTable::State getInitState(const Parsing::VarDecl& varDecl);
 

@@ -41,8 +41,6 @@ std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl)
             const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&decl);
             if (varDecl->init == nullptr)
                 return nullptr;
-            if (varDecl->storage != Parsing::Declaration::StorageClass::StaticGlobalInitialized)
-                return nullptr;;
             return staticVariableIr(*varDecl);
         }
         assert("topLevelIr");
@@ -620,18 +618,19 @@ static bool isGlobal(const Parsing::Declaration::StorageClass storage)
 {
     using StorageClass = Parsing::Declaration::StorageClass;
     switch (storage) {
-        case StorageClass::GlobalDeclaration:
-        case StorageClass::ExternFunction:
-        case StorageClass::ExternGlobal:
-        case StorageClass::ExternGlobalInitialized:
-        case StorageClass::GlobalDefinition:
-        case StorageClass::StaticGlobalInitialized:
-        case StorageClass::StaticGlobalTentative:
-            return true;
-        case StorageClass::AutoLocalScope:
-        case StorageClass::StaticLocal:
-        case StorageClass::ExternLocal:
-            return false;
+        // case StorageClass::GlobalDeclaration:
+        // case StorageClass::ExternFunction:
+        // case StorageClass::ExternGlobal:
+        // case StorageClass::ExternGlobalInitialized:
+        // case StorageClass::GlobalDefinition:
+        // case StorageClass::StaticGlobalInitialized:
+        // case StorageClass::StaticGlobalTentative:
+        //     return true;
+        // case StorageClass::AutoLocalScope:
+        // case StorageClass::StaticLocal:
+        // case StorageClass::ExternLocal:
+        //     return false;
+        return true;
         default:
             std::unreachable();
     }

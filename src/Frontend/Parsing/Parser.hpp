@@ -65,11 +65,9 @@ public:
         : c_tokens(c_tokens) {}
     bool programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
-    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(TokenType type,
-                                                        TokenType storageToken,
+    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(Storage storage,
                                                         const std::string& iden);
-    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(TokenType type,
-                                                        TokenType storage,
+    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(Storage storage,
                                                         const std::string& iden);
     [[nodiscard]] std::unique_ptr<std::vector<std::string>> paramsListParse();
 
@@ -112,9 +110,7 @@ private:
     [[nodiscard]] bool expect(TokenType type);
 };
 
-Declaration::StorageClass getVarStorageClass(Lexing::Token::Type tokenType, bool inBlock, bool hasDefinition);
-Declaration::StorageClass getFunctionStorageClass(Lexing::Token::Type tokenType, bool inFunction, bool hasDefinition);
-
+Declaration::StorageClass getStorageClass(Lexing::Token::Type tokenType);
 inline bool Parser::continuePrecedenceClimbing(const i32 minPrecedence, TokenType nextToken)
 {
     return (Operators::isBinaryOperator(nextToken)

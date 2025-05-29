@@ -30,11 +30,13 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
         m_valid = false;
         return;
     }
-    bool global = isGlobalFunc(funDecl);
+    bool global = !m_symbolTable.inFunc();
     if (returnedEntry.isSet(Flag::Contains) && returnedEntry.isSet(Flag::Global))
         global = true;
     const bool defined = funDecl.body != nullptr;
-    m_symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), true, global, defined);
+    const bool internal = funDecl.storage == Storage::Static;
+    const bool external = !internal;
+    m_symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), internal, external, global, defined);
     ScopeGuard scopeGuard(m_symbolTable);
     m_symbolTable.setArgs(funDecl.params);
     ASTTraverser::visit(funDecl);
@@ -45,7 +47,7 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
                      const SymbolTable& symbolTable,
                      const SymbolTable::ReturnedFuncEntry& returnedEntry)
 {
-    if (funDecl.storage == Storage::StaticLocalFunction)
+    if (funDecl.storage == Storage::Static && symbolTable.inFunc())
         return false;
     if (duplicatesInArgs(funDecl.params))
         return false;
@@ -61,9 +63,20 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
         return false;
     if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::Global))
         return false;
-    if (returnedEntry.isSet(Flag::Global) && !isGlobalFunc(funDecl))
+    if (returnedEntry.isSet(Flag::ExternalLinkage) && funDecl.storage == Storage::Static)
         return false;
     return true;
+}
+
+bool duplicatesInArgs(const std::vector<std::string>& args)
+{
+    std::unordered_set<std::string> duplicates;
+    for (const std::string& arg : args) {
+        if (duplicates.contains(arg))
+            return true;
+        duplicates.insert(arg);
+    }
+    return false;
 }
 
 void VariableResolution::visit(Parsing::CompoundStmt& compoundStmt)
@@ -80,24 +93,59 @@ void VariableResolution::visit(Parsing::ForStmt& forStmt)
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    SymbolTable::ReturnedVarEntry prevEntry = m_symbolTable.lookupVar(varDecl.name);
+    const SymbolTable::ReturnedVarEntry prevEntry = m_symbolTable.lookupVar(varDecl.name);
     if (!isValidVarDecl(varDecl, m_symbolTable, prevEntry)) {
         m_valid = false;
         return;
     }
-    const bool global = isGlobalVar(varDecl);
+    const bool global = !m_symbolTable.inFunc();
     const bool defined = varDecl.init != nullptr;
-    if (!m_symbolTable.inFunc() || varDecl.storage == Storage::ExternLocal) {
+    const bool internal = hasInternalLinkageVar(varDecl);
+    const bool external = hasExternalLinkageVar(varDecl);
+    if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
         m_symbolTable.addVarEntry(
-            varDecl.name, varDecl.name, true, global, defined, prevEntry.getInit()
+            varDecl.name, varDecl.name, internal, external, global, defined, prevEntry.getInit()
             );
     }
     else {
         const std::string uniqueName = makeTemporaryName(varDecl.name);
-        m_symbolTable.addVarEntry(varDecl.name, uniqueName, false, global, defined, prevEntry.getInit());
+        m_symbolTable.addVarEntry(varDecl.name, uniqueName, internal, external, global, defined, prevEntry.getInit());
         varDecl.name = uniqueName;
     }
     ASTTraverser::visit(varDecl);
+}
+
+
+bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable,
+                    const SymbolTable::ReturnedVarEntry prevEntry)
+{
+    if (prevEntry.isSet(Flag::InArgs))
+        return false;
+    if (!prevEntry.isSet(Flag::Contains))
+        return true;
+    if (!symbolTable.inFunc())
+        return isValidVarDeclGlobal(varDecl, prevEntry);
+    if (isIllegalVarRedecl(varDecl, prevEntry))
+        return false;
+    if (varDecl.storage == Storage::Extern && prevEntry.isSet(Flag::ExternalLinkage) && !prevEntry.isSet(Flag::CorrectType))
+        return false;
+    if (prevEntry.isSet(Flag::CorrectType) && prevEntry.isSet(Flag::FromCurrentScope) &&
+            varDecl.storage != Storage::Extern)
+        return false;
+    return true;
+}
+
+bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry& prevEntry)
+{
+    if (!prevEntry.isSet(Flag::CorrectType))
+        return false;
+    if (varDecl.init != nullptr && prevEntry.isSet(Flag::Defined))
+        return false;
+    if (hasInternalLinkageVar(varDecl) && !prevEntry.isSet(Flag::InternalLinkage))
+        return false;
+    if (varDecl.storage == Storage::None && prevEntry.isSet(Flag::InternalLinkage))
+        return false;
+    return true;
 }
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
@@ -109,41 +157,6 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
     if (!m_symbolTable.isInArgs(varExpr.name))
         varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
     ASTTraverser::visit(varExpr);
-}
-
-void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
-{
-    if (!isValidFuncCall(funCallExpr, m_symbolTable)) {
-        m_valid = false;
-        return;
-    }
-    ASTTraverser::visit(funCallExpr);
-}
-
-std::string VariableResolution::makeTemporaryName(const std::string& name)
-{
-    return name + '.' + std::to_string(m_nameCounter++) + ".tmp";
-}
-
-bool duplicatesInArgs(const std::vector<std::string>& args)
-{
-    std::unordered_set<std::string> duplicates;
-    for (const std::string& arg : args) {
-        if (duplicates.contains(arg))
-            return true;
-        duplicates.insert(arg);
-    }
-    return false;
-}
-
-bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable)
-{
-    const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funCallExpr.name);
-    if (!returnedEntry.isSet(Flag::Contains))
-        return false;
-    if (!returnedEntry.isSet(Flag::CorrectType))
-        return false;
-    return true;
 }
 
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable)
@@ -158,58 +171,40 @@ bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTa
     return true;
 }
 
-bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable,
-                    const SymbolTable::ReturnedVarEntry prevEntry)
+void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
 {
-    if (prevEntry.isSet(Flag::InArgs))
+    if (!isValidFuncCall(funCallExpr, m_symbolTable)) {
+        m_valid = false;
+        return;
+    }
+    ASTTraverser::visit(funCallExpr);
+}
+
+bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable)
+{
+    const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funCallExpr.name);
+    if (!returnedEntry.isSet(Flag::Contains))
         return false;
-    if (!prevEntry.isSet(Flag::Contains))
-        return true;
-    if (!symbolTable.inFunc())
-        return isValidVarDeclGlobal(varDecl, prevEntry);
-    if (prevEntry.isSet(Flag::FromCurrentScope)
-        && (!prevEntry.isSet(Flag::HasLinkage) || varDecl.storage != Storage::ExternLocal))
-        return false;
-    if (prevEntry.isSet(Flag::CorrectType) && prevEntry.isSet(Flag::FromCurrentScope) &&
-            varDecl.storage != Storage::ExternLocal)
+    if (!returnedEntry.isSet(Flag::CorrectType))
         return false;
     return true;
 }
 
-bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry& prevEntry)
+std::string VariableResolution::makeTemporaryName(const std::string& name)
 {
-    if (!prevEntry.isSet(Flag::CorrectType))
-        return false;
-    if (varDecl.init != nullptr && prevEntry.isSet(Flag::Defined))
-        return false;
-    if (isGlobalVar(varDecl) && !prevEntry.isSet(Flag::HasLinkage))
-        return false;
-    return true;
+    return name + '.' + std::to_string(m_nameCounter++) + ".tmp";
 }
 
-bool isGlobalFunc(const Parsing::FunDecl& funDecl)
-{
-    return funDecl.storage != Storage::StaticGlobalInitialized
-        && funDecl.storage != Storage::StaticGlobalTentative;
-}
-
-bool isGlobalVar(const Parsing::VarDecl& varDecl)
-{
-    return varDecl.storage != Storage::StaticGlobalInitialized
-        && varDecl.storage != Storage::StaticGlobalTentative
-        && varDecl.storage != Storage::AutoLocalScope;
-}
-
-SymbolTable::State getInitState(const Parsing::VarDecl& varDecl)
-{
-    if (varDecl.storage == Storage::StaticGlobalInitialized ||
-        varDecl.storage == Storage::GlobalDefinition ||
-        varDecl.storage == Storage::ExternGlobalInitialized)
-        return SymbolTable::State::Init_HasInitializer;
-    if (varDecl.storage == Storage::StaticGlobalTentative ||
-        varDecl.storage == Storage::GlobalDeclaration)
-        return SymbolTable::State::Init_Tentative;
-    return SymbolTable::State::Init_NoInitializer;
-}
+// SymbolTable::State getInitState(const Parsing::VarDecl& varDecl)
+// {
+//     if (varDecl.storage == Storage::StaticGlobalInitialized ||
+//         varDecl.storage == Storage::GlobalDefinition ||
+//         varDecl.storage == Storage::ExternGlobalInitialized)
+//         return SymbolTable::State::Init_HasInitializer;
+//     if (varDecl.storage == Storage::StaticGlobalTentative ||
+//         varDecl.storage == Storage::GlobalDeclaration)
+//         return SymbolTable::State::Init_Tentative;
+//     return SymbolTable::State::Init_NoInitializer;
+// }
 
 } // Semantics
