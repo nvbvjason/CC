@@ -13,15 +13,18 @@
 namespace Semantics {
 
 class TypeResolution : public Parsing::ConstASTTraverser {
-    using StorageClass = Parsing::Declaration::StorageClass;
-    std::unordered_map<std::string, Parsing::Declaration::StorageClass> m_storageClassMap;
+    using Storage = Parsing::Declaration::StorageClass;
+    std::unordered_map<std::string, Parsing::Declaration::StorageClass> m_storageClassesFuncs;
     std::unordered_map<std::string, size_t> m_functionArgCounts;
     std::unordered_set<std::string> m_definedFunctions;
+    std::unordered_set<std::string> m_localExternVars;
+    std::unordered_set<std::string> m_globalStaticVars;
     bool m_valid = true;
     bool m_isConst = true;
-    bool m_atFileScope = true;
+    bool m_global = true;
 public:
     bool validate(const Parsing::Program& program);
+    bool hasConflictingFuncLinkage(const Parsing::FunDecl& funDecl);
     void visit(const Parsing::FunDecl& funDecl) override;
     void visit(const Parsing::DeclForInit& declForInit) override;
     void visit(const Parsing::FunCallExpr& funCallExpr) override;
@@ -32,7 +35,7 @@ public:
 
 inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
 {
-    return declForInit.decl->storage != StorageClass::None;
+    return declForInit.decl->storage != Storage::None;
 }
 
 inline bool illegalNonConstInitialization(const Parsing::VarDecl& varDecl,
