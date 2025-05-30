@@ -111,7 +111,8 @@ bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNo
 Ir::Program ir(const Parsing::Program& parsingProgram)
 {
     Ir::Program irProgram;
-    Ir::program(parsingProgram, irProgram);
+    Ir::GenerateIr generateIr;
+    generateIr.program(parsingProgram, irProgram);
     return irProgram;
 }
 
