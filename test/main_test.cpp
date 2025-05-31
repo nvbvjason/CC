@@ -587,6 +587,26 @@ TEST(Chapter10_File_Scope_Decls_and_Storageclass, invalid_labels)
     }
 }
 
+TEST(Chapter11_Long_Integers, validLexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_11/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter11_Long_Integers, inValidLexingValid)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_11/invalid_lex";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_NE(0, getLexerErrors(path)) << path.path().string();
+    }
+}
+
 void cleanUp()
 {
     for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))

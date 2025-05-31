@@ -48,7 +48,7 @@ TEST(LexerTests, GetTokens) {
         {1, 14, Lexing::Token::Type::CloseParen, ")"},
         {1, 16, Lexing::Token::Type::OpenBrace, "{"},
         {3, 5, Lexing::Token::Type::Return, "return"},
-        {3, 12, Lexing::Token::Type::Integer, "100"},
+        {3, 12, Lexing::Token::Type::IntegerLiteral, "100"},
         {3, 15, Lexing::Token::Type::Semicolon, ";"},
         {4, 1, Lexing::Token::Type::CloseBrace, "}"},
         {4, 2, Lexing::Token::Type::EndOfFile, ""}
@@ -313,6 +313,21 @@ TEST(LexerTests, Comma)
 TEST(LexerTests, Colon)
 {
     TestSingleTokenLexing(":", TokenType::Colon);
+}
+
+TEST(LexerTests, IntegerLiteral)
+{
+    TestSingleTokenLexing("34875", TokenType::IntegerLiteral);
+}
+
+TEST(LexerTests, LongLiteralUpperCase)
+{
+    TestSingleTokenLexing("2309L", TokenType::LongLiteral);
+}
+
+TEST(LexerTests, LongLiteralLowerCase)
+{
+    TestSingleTokenLexing("2309l", TokenType::LongLiteral);
 }
 
 TEST(LexerTests, InvalidInput) {

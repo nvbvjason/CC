@@ -51,7 +51,7 @@ TEST(TokenTest, AllTypeNamesAreCorrect) {
 
         // Identifiers & Literals
         {Type::Identifier,          "Identifier"},
-        {Type::Integer,             "Integer"},
+        {Type::IntegerLiteral,             "Integer"},
 
         // Assignment
         {Type::Equal,               "Assign"},

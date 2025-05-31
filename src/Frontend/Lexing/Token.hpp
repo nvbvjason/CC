@@ -55,7 +55,8 @@ struct Token {
 
         // Identifiers & Literals
         Identifier,                      // User-defined names
-        Integer,                         // Numeric literals
+        IntegerLiteral,                  // Integer literals
+        LongLiteral,                     // Long Literal
 
         // Assignment
         Equal,                           // =
@@ -78,6 +79,7 @@ struct Token {
         Return,                          // 'return'
         Void,                            // 'void'
         IntKeyword,                      // 'int'
+        LongKeyword,                     // 'long'
         If,                              // if
         Else,                            // else
         Do,                              // do
@@ -97,7 +99,7 @@ struct Token {
         NotAToken,                       // maybe bad design
         Invalid                          // Invalid token
     };
-    std::variant<i32> m_data = 0;
+    std::variant<i32, i64> m_data = 0;
     i32 m_line;
     u16 m_column;
     Type m_type;

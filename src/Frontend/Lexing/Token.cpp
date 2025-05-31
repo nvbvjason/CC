@@ -47,7 +47,8 @@ std::string Token::getTypeName() const
 
         // Identifiers & Literals
         case Type::Identifier:          return "Identifier";
-        case Type::Integer:             return "Integer";
+        case Type::IntegerLiteral:      return "Integer";
+        case Type::LongLiteral:         return "Long";
 
         // Assignment
         case Type::Equal:               return "Assign";
@@ -70,6 +71,7 @@ std::string Token::getTypeName() const
         case Type::Return:              return "Return";
         case Type::Void:                return "Void";
         case Type::IntKeyword:          return "Int";
+        case Type::LongKeyword:         return "Long";
         case Type::If:                  return "If";
         case Type::Else:                return "Else";
         case Type::Do:                  return "Do";

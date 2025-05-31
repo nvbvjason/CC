@@ -449,7 +449,7 @@ std::unique_ptr<Expr> Parser::exprPostfix()
 std::unique_ptr<Expr> Parser::factorParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
-        case TokenType::Integer: {
+        case TokenType::IntegerLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(lexeme.getValue());
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;

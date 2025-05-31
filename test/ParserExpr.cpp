@@ -9,14 +9,14 @@ namespace {
 
 TEST(ParserExprTests, UnarySuccess)
 {
-    const std::vector tokenTypes{Type::Plus, Type::Integer};
+    const std::vector tokenTypes{Type::Plus, Type::IntegerLiteral};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.unaryExprParse());
 }
 
 TEST(ParserExprTests, UnaryCorrectType)
 {
-    const std::vector tokenTypes{Type::Plus, Type::Integer};
+    const std::vector tokenTypes{Type::Plus, Type::IntegerLiteral};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(Kind::Unary, parser.unaryExprParse()->kind);
 }
@@ -30,35 +30,35 @@ TEST(ParserExprTests, UnaryFailure)
 
 TEST(ParserExprTests, PostfixIncrementSuccess)
 {
-    const std::vector tokenTypes{Type::Integer, Type::Increment};
+    const std::vector tokenTypes{Type::IntegerLiteral, Type::Increment};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(Kind::Unary, parser.exprPostfix()->kind);
 }
 
 TEST(ParserExprTests, PostfixDecrementSuccess)
 {
-    const std::vector tokenTypes{Type::Integer, Type::Decrement};
+    const std::vector tokenTypes{Type::IntegerLiteral, Type::Decrement};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(Kind::Unary, parser.exprPostfix()->kind);
 }
 
 TEST(ParserExprTests, PostfixIntegerLiteranl)
 {
-    const std::vector tokenTypes{Type::Integer};
+    const std::vector tokenTypes{Type::IntegerLiteral};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(Kind::Constant, parser.exprPostfix()->kind);
 }
 
 TEST(ParserExprTests, FactorIntgerLiteralSuccess)
 {
-    const std::vector tokenTypes{Type::Integer};
+    const std::vector tokenTypes{Type::IntegerLiteral};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.factorParse());
 }
 
 TEST(ParserExprTests, FactorIntgerLiteralCorrectType)
 {
-    const std::vector tokenTypes{Type::Integer};
+    const std::vector tokenTypes{Type::IntegerLiteral};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_EQ(Kind::Constant, parser.factorParse()->kind);
 }
@@ -93,7 +93,7 @@ TEST(ParserExprTests, FactorIdentifierFunCallCorrectType)
 
 TEST(ParserExprTests, FactorBracedSuccess)
 {
-    const std::vector tokenTypes{Type::OpenParen ,Type::Integer, Type::CloseParen};
+    const std::vector tokenTypes{Type::OpenParen ,Type::IntegerLiteral, Type::CloseParen};
     Parsing::Parser parser = createParser(tokenTypes);
     EXPECT_NE(nullptr, parser.factorParse());
 }

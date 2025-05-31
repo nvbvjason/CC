@@ -10,13 +10,13 @@ TEST_F(ParserStmtTest, ReturnStmtVariations)
 {
     const std::vector<TestCase> cases = {
         {"ValidReturn", true,
-            {Return, Integer, Semicolon}},
+            {Return, IntegerLiteral, Semicolon}},
         {"MissingReturn", false,
-            {Integer, Semicolon}},
+            {IntegerLiteral, Semicolon}},
         {"MissingExpr", false,
             {Return, Semicolon}},
         {"MissingSemicolon", false,
-            {Return, Integer}}
+            {Return, IntegerLiteral}}
     };
     RunTestCases("ReturnStmt", &Parsing::Parser::returnStmtParse, cases);
 }
@@ -25,11 +25,11 @@ TEST_F(ParserStmtTest, ExprStmtVariations)
 {
     const std::vector<TestCase> cases = {
         {"ValidExpr", true,
-            {Integer, Semicolon}},
+            {IntegerLiteral, Semicolon}},
         {"MissingExpr", false,
             {Semicolon}},
         {"MissingSemicolon", false,
-            {Integer}},
+            {IntegerLiteral}},
     };
     RunTestCases("ExprStmt", &Parsing::Parser::exprStmtParse, cases);
 }
@@ -38,23 +38,23 @@ TEST_F(ParserStmtTest, IfStmtVariations)
 {
     const std::vector<TestCase> cases = {
         {"Valid If", true,
-            {If, OpenParen, Integer, CloseParen, Semicolon}},
+            {If, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Wrong Bracketing Symbols", false,
-            {If, OpenBrace, Integer, CloseBrace, Semicolon}},
+            {If, OpenBrace, IntegerLiteral, CloseBrace, Semicolon}},
         {"Missing If", false,
-            {OpenParen, Integer, CloseParen, Semicolon}},
+            {OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing OpenParen", false,
-        {If, Integer, CloseParen, Semicolon}},
+        {If, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing Expr", false,
         {If, OpenParen, CloseParen, Semicolon}},
         {"Missing CloseParen", false,
-        {If, OpenParen, Integer, Semicolon}},
+        {If, OpenParen, IntegerLiteral, Semicolon}},
         {"Missing Body", false,
-        {If, OpenParen, Integer, CloseParen}},
+        {If, OpenParen, IntegerLiteral, CloseParen}},
         {"If Else Success", true,
-        {If, OpenParen, Integer, CloseParen, Semicolon, Else, Semicolon}},
+        {If, OpenParen, IntegerLiteral, CloseParen, Semicolon, Else, Semicolon}},
         {"If Else Missing Body", false,
-        {If, OpenParen, Integer, CloseParen, Semicolon, Else}},
+        {If, OpenParen, IntegerLiteral, CloseParen, Semicolon, Else}},
     };
     RunTestCases("IfStmt", &Parsing::Parser::ifStmtParse, cases);
 }
@@ -119,15 +119,15 @@ TEST_F(ParserStmtTest, CaseStmtVariations)
 {
     const std::vector<TestCase> cases = {
         {"Valid Case", true,
-            {Case, Integer, Colon, Semicolon}},
+            {Case, IntegerLiteral, Colon, Semicolon}},
         {"Missing Case", false,
-            {Integer, Colon, Semicolon}},
+            {IntegerLiteral, Colon, Semicolon}},
         {"Missing Condition", false,
         {Case, Colon, Semicolon}},
         {"Missing Colon", false,
-        {Case, Integer, Semicolon}},
+        {Case, IntegerLiteral, Semicolon}},
         {"Missing Body", false,
-        {Case, Integer, Colon}},
+        {Case, IntegerLiteral, Colon}},
     };
     RunTestCases("Case Stmt", &Parsing::Parser::caseStmtParse, cases);
 }
@@ -151,17 +151,17 @@ TEST_F(ParserStmtTest, WhileStmtVariations)
 {
     const std::vector<TestCase> cases = {
         {"Valid While", true,
-        {While, OpenParen, Integer, CloseParen, Semicolon}},
+        {While, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing While", false,
-        {OpenParen, Integer, CloseParen, Semicolon}},
+        {OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing Open Paren", false,
-    {While, Integer, CloseParen, Semicolon}},
+    {While, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing Condition", false,
         {While, OpenParen, CloseParen, Semicolon}},
         {"Missing Close Paren", false,
-        {While, OpenParen, Integer, Semicolon}},
+        {While, OpenParen, IntegerLiteral, Semicolon}},
         {"Missing Missing Body", false,
-        {While, OpenParen, Integer, CloseParen}},
+        {While, OpenParen, IntegerLiteral, CloseParen}},
     };
     RunTestCases("While Stmt", &Parsing::Parser::whileStmtParse, cases);
 }
@@ -170,19 +170,19 @@ TEST_F(ParserStmtTest, DoWhileStmtVariations)
 {
     const std::vector<TestCase> cases = {
         {"Valid Do While", true,
-{Do, Semicolon, While, OpenParen, Integer, CloseParen, Semicolon}},
+{Do, Semicolon, While, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing Do While", false,
-        {Semicolon, While, OpenParen, Integer, CloseParen, Semicolon}},
+        {Semicolon, While, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing Body", false,
-    {Do, Integer, While, OpenParen, Integer, CloseParen, Semicolon}},
+    {Do, IntegerLiteral, While, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing While", false,
-        {Do, Semicolon, OpenParen, Integer, CloseParen, Semicolon}},
+        {Do, Semicolon, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
     {"Missing Open Paren", false,
-    {Do, Semicolon, While, Integer, CloseParen, Semicolon}},
+    {Do, Semicolon, While, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing Close Paren", false,
-        {Do, Semicolon, While, OpenParen, Integer, Semicolon}},
+        {Do, Semicolon, While, OpenParen, IntegerLiteral, Semicolon}},
         {"Missing Missing Semicolon at end", false,
-        {Do, Semicolon, While, OpenParen, Integer, CloseParen}},
+        {Do, Semicolon, While, OpenParen, IntegerLiteral, CloseParen}},
     };
     RunTestCases("Do While Stmt", &Parsing::Parser::doWhileStmtParse, cases);
 }
@@ -212,19 +212,19 @@ TEST_F(ParserStmtTest, SwitchStmtVariations)
 {
     const std::vector<TestCase> cases = {
         {"Valid Switch", true,
-{Switch, OpenParen, Integer, CloseParen, Semicolon}},
+{Switch, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Wrong Bracketing Symbols", false,
-        {Switch, OpenBrace, Integer, CloseBrace, Semicolon}},
+        {Switch, OpenBrace, IntegerLiteral, CloseBrace, Semicolon}},
         {"Missing Switch", false,
-        {OpenParen, Integer, CloseParen, Semicolon}},
+        {OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing Open Paren", false,
-    {Switch, Integer, CloseParen, Semicolon}},
+    {Switch, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing Condition", false,
         {Switch, OpenParen, CloseParen, Semicolon}},
         {"Missing Close Paren", false,
-        {Switch, OpenParen, Integer, Semicolon}},
+        {Switch, OpenParen, IntegerLiteral, Semicolon}},
         {"Missing Missing Body", false,
-        {Switch, OpenParen, Integer, CloseParen}},
+        {Switch, OpenParen, IntegerLiteral, CloseParen}},
     };
     RunTestCases("Switch Stmt", &Parsing::Parser::switchStmtParse, cases);
 }

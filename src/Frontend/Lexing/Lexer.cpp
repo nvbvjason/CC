@@ -246,9 +246,30 @@ void Lexer::integer()
 {
     while (isdigit(peek()))
         advance();
-    const char next = peek();
-    if (!isalpha(next) || next == '_')
-        addToken(Token::Type::Integer);
+    char next = peek();
+    if (next == 'L' || next == 'l') {
+        const i32 stopNums = m_current;
+        while (!isAtEnd() && (next == 'L' || next == 'l')) {
+            advance();
+            next = peek();
+        }
+        if (stopNums + 1 != m_current)
+            addToken(Token::Type::Invalid);
+        else
+            addToken(Token::Type::LongLiteral);
+        return;
+    }
+    if (!isalpha(next) || next == '_') {
+        const i32 ahead = m_current - m_start;
+        std::string text = c_source.substr(m_start, ahead);
+        try {
+            int num = std::stoi(text);
+            addToken(Token::Type::IntegerLiteral);
+        }
+        catch (const std::out_of_range&) {
+            addToken(Token::Type::LongLiteral);
+        }
+    }
     else
         addToken(Token::Type::Invalid);
 }
@@ -272,8 +293,10 @@ void Lexer::addToken(const Token::Type type)
     const i32 ahead = m_current - m_start;
     std::string text = c_source.substr(m_start, ahead);
     m_tokens.emplace_back(m_line, m_column - ahead, type, text);
-    if (type == Token::Type::Integer)
+    if (type == Token::Type::IntegerLiteral)
         m_tokens.back().m_data = std::stoi(text);
+    if (type == Token::Type::LongLiteral)
+        m_tokens.back().m_data = std::stoll(text);
 }
 
 }
