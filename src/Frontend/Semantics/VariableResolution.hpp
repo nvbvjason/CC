@@ -66,8 +66,5 @@ inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl)
     using Storage = Parsing::Declaration::StorageClass;
     return varDecl.storage == Storage::Extern;
 }
-
-SymbolTable::State getInitState(const Parsing::VarDecl& varDecl);
-
 } // Semantics
 #endif // CC_SEMANTICS_VARIABLE_SOLUTION_HPP

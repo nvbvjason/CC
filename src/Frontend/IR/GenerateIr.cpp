@@ -48,6 +48,8 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
     const auto entry = m_symbolTable.lookupVar(varDecl.name);
     if (varDecl.init == nullptr && entry.isSet(SymbolTable::State::Defined))
         return nullptr;
+    if (!entry.isSet(SymbolTable::State::Defined) && varDecl.storage == Storage::Extern)
+        return nullptr;
     if (m_writtenGlobals.contains(varDecl.name))
         return nullptr;
     m_writtenGlobals.insert(varDecl.name);

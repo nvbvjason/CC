@@ -23,15 +23,6 @@ bool VariableResolution::resolve(Parsing::Program& program)
     return m_valid;
 }
 
-std::vector<std::string> buildArgs(const std::vector<std::string>& args)
-{
-    std::vector<std::string> result;
-    result.reserve(args.size());
-    for (const auto& arg : args) {
-        result.push_back(arg + ".arg");
-    }
-}
-
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
     const SymbolTable::ReturnedFuncEntry prevEntry = m_symbolTable.lookupFunc(funDecl.name);
@@ -163,7 +154,10 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         m_valid = false;
         return;
     }
-    if (!returnedEntry.isSet(Flag::InArgs))
+    // UGGLY HACK
+    if (returnedEntry.isSet(Flag::ExternalLinkage) && !returnedEntry.isSet(Flag::Global))
+        varExpr.name += ".external";
+    else if (!returnedEntry.isSet(Flag::InArgs))
         varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
     ASTTraverser::visit(varExpr);
 }
@@ -202,17 +196,5 @@ std::string VariableResolution::makeTemporaryName(const std::string& name)
 {
     return name + '.' + std::to_string(m_nameCounter++) + ".tmp";
 }
-
-// SymbolTable::State getInitState(const Parsing::VarDecl& varDecl)
-// {
-//     if (varDecl.storage == Storage::StaticGlobalInitialized ||
-//         varDecl.storage == Storage::GlobalDefinition ||
-//         varDecl.storage == Storage::ExternGlobalInitialized)
-//         return SymbolTable::State::Init_HasInitializer;
-//     if (varDecl.storage == Storage::StaticGlobalTentative ||
-//         varDecl.storage == Storage::GlobalDeclaration)
-//         return SymbolTable::State::Init_Tentative;
-//     return SymbolTable::State::Init_NoInitializer;
-// }
 
 } // Semantics
