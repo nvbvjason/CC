@@ -20,8 +20,9 @@ void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyP
         std::unique_ptr<TopLevel> topLevel = topLevelIr(*decl);
         if (topLevel == nullptr)
             continue;
-        tackyProgram.topLevels.push_back(std::move(topLevel));
+        m_topLevels.push_back(std::move(topLevel));
     }
+    tackyProgram.topLevels = std::move(m_topLevels);
 }
 
 std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& decl)
@@ -36,8 +37,6 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
         }
         case Kind::VarDecl: {
             const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&decl);
-            if (varDecl->init == nullptr)
-                return nullptr;
             return staticVariableIr(*varDecl);
         }
     }
@@ -46,8 +45,14 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
 
 std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& varDecl)
 {
+    const auto entry = m_symbolTable.lookupVar(varDecl.name);
+    if (varDecl.init == nullptr && entry.isSet(SymbolTable::State::Defined))
+        return nullptr;
+    if (m_writtenGlobals.contains(varDecl.name))
+        return nullptr;
+    m_writtenGlobals.insert(varDecl.name);
     std::shared_ptr<Value> value;
-    if (m_symbolTable.lookupVar(varDecl.name).isSet(SymbolTable::State::ExternalLinkage))
+    if (!entry.isSet(SymbolTable::State::Defined))
         value = std::make_shared<ValueConst>(0);
     else
         value = generateInst(*varDecl.init);
@@ -57,8 +62,9 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDecl& parsingFunction)
 {
-    auto functionTacky = std::make_unique<Function>(parsingFunction.name, parsingFunction.storage != Storage::Static);
-    m_global = true;
+    bool global = !m_symbolTable.lookupFunc(parsingFunction.name).isSet(SymbolTable::State::InternalLinkage);
+    auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);
+    m_global = true;;
     m_instructions = std::move(functionTacky->insts);
     for (const auto& param : parsingFunction.params)
         functionTacky->args.push_back(Identifier(param));
@@ -113,13 +119,29 @@ void GenerateIr::generateDeclaration(const Parsing::Declaration& declaration)
         const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&declaration);
         if (varDecl->init == nullptr)
             return;
-        auto value = generateInst(*varDecl->init);
+        if (varDecl->storage == Storage::Static)
+            return generateDeclarationStaticLocal(*varDecl);
+        std::shared_ptr<Value> value = generateInst(*varDecl->init);
         auto temporary = std::make_shared<ValueVar>(makeTemporaryName());
         m_instructions.push_back(std::make_unique<CopyInst>(value, temporary));
         const Identifier iden(varDecl->name);
         auto var = std::make_shared<ValueVar>(iden);
         m_instructions.push_back(std::make_unique<CopyInst>(temporary, var));
     }
+}
+
+void GenerateIr::generateDeclarationStaticLocal(const Parsing::VarDecl& varDecl)
+{
+    std::shared_ptr<Value> value;
+    const bool defined = varDecl.init != nullptr;
+    if (!defined)
+        value = std::make_shared<ValueConst>(0);
+    else
+        value = generateInst(*varDecl.init);
+    auto variable = std::make_unique<StaticVariable>(
+        varDecl.name, value, false);
+    m_topLevels.push_back(std::move(variable));
+     m_symbolTable.addVarEntry(varDecl.name, varDecl.name, true, false, false, defined);
 }
 
 void GenerateIr::generateStmt(const Parsing::Stmt& stmt)

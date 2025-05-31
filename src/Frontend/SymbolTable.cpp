@@ -32,10 +32,9 @@ SymbolTable::ReturnedVarEntry SymbolTable::lookupVar(const std::string& uniqueNa
         const bool external = it->second.isSet(State::ExternalLinkage);
         const bool global = it->second.isSet(State::Global);
         const bool defined = it->second.isSet(State::Defined);
-        const State initState = it->second.getInit();
-        return {true, inArgs, correctType, fromCurrentScope, internal, external, global, defined, initState};
+        return {true, inArgs, correctType, fromCurrentScope, internal, external, global, defined};
     }
-    return {false, inArgs, false, false, false, false, false, false, State::None};
+    return {false, inArgs, false, false, false, false, false, false};
 }
 
 SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& uniqueName) const
@@ -85,12 +84,12 @@ void SymbolTable::addVarEntry(const std::string& name,
                               const bool internal,
                               const bool external,
                               const bool global,
-                              const bool defined,
-                              const State initState)
+                              const bool defined)
 {
-    m_entries.back().insert(
-        std::make_pair(name,
-            Entry(uniqueName, SymbolType::Var, internal, external, global, defined, initState)));
+
+    m_entries.back().insert_or_assign(name,Entry(
+        uniqueName, SymbolType::Var, internal, external, global, defined)
+        );
 }
 
 void SymbolTable::addFuncEntry(const std::string& name,

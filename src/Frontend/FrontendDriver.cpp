@@ -19,7 +19,7 @@
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
-static Ir::Program ir(const Parsing::Program& parsingProgram, const SymbolTable& symbolTable);
+static Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable);
 static std::string preProcess(const std::filesystem::path& file);
 static std::string getSourceCode(const std::filesystem::path& inputFile);
 
@@ -107,7 +107,7 @@ bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNo
     return true;
 }
 
-Ir::Program ir(const Parsing::Program& parsingProgram, const SymbolTable& symbolTable)
+Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable)
 {
     Ir::Program irProgram;
     Ir::GenerateIr generateIr(symbolTable);

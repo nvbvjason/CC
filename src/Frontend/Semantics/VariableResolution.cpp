@@ -23,19 +23,28 @@ bool VariableResolution::resolve(Parsing::Program& program)
     return m_valid;
 }
 
+std::vector<std::string> buildArgs(const std::vector<std::string>& args)
+{
+    std::vector<std::string> result;
+    result.reserve(args.size());
+    for (const auto& arg : args) {
+        result.push_back(arg + ".arg");
+    }
+}
+
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
-    const SymbolTable::ReturnedFuncEntry returnedEntry = m_symbolTable.lookupFunc(funDecl.name);
-    if (!isValidFuncDecl(funDecl, m_symbolTable, returnedEntry)) {
+    const SymbolTable::ReturnedFuncEntry prevEntry = m_symbolTable.lookupFunc(funDecl.name);
+    if (!isValidFuncDecl(funDecl, m_symbolTable, prevEntry)) {
         m_valid = false;
         return;
     }
     bool global = !m_symbolTable.inFunc();
-    if (returnedEntry.isSet(Flag::Contains) && returnedEntry.isSet(Flag::Global))
+    if (prevEntry.isSet(Flag::Contains) && prevEntry.isSet(Flag::Global))
         global = true;
     const bool defined = funDecl.body != nullptr;
-    const bool internal = funDecl.storage == Storage::Static;
-    const bool external = !internal;
+    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || funDecl.storage == Storage::Static;
+    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && funDecl.storage != Storage::Static;
     m_symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), internal, external, global, defined);
     ScopeGuard scopeGuard(m_symbolTable);
     m_symbolTable.setArgs(funDecl.params);
@@ -99,17 +108,16 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
         return;
     }
     const bool global = !m_symbolTable.inFunc();
-    const bool defined = varDecl.init != nullptr;
-    const bool internal = hasInternalLinkageVar(varDecl);
-    const bool external = hasExternalLinkageVar(varDecl);
+    const bool defined = prevEntry.isSet(Flag::Defined) || varDecl.init != nullptr;
+    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || hasInternalLinkageVar(varDecl);
+    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && hasExternalLinkageVar(varDecl);
     if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
         m_symbolTable.addVarEntry(
-            varDecl.name, varDecl.name, internal, external, global, defined, prevEntry.getInit()
-            );
+            varDecl.name, varDecl.name, internal, external, global, defined);
     }
     else {
         const std::string uniqueName = makeTemporaryName(varDecl.name);
-        m_symbolTable.addVarEntry(varDecl.name, uniqueName, internal, external, global, defined, prevEntry.getInit());
+        m_symbolTable.addVarEntry(varDecl.name, uniqueName, internal, external, global, defined);
         varDecl.name = uniqueName;
     }
     ASTTraverser::visit(varDecl);

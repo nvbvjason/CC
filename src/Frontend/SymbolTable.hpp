@@ -22,11 +22,6 @@ public:
         Global              = 1 << 5,
         Defined             = 1 << 6,
         InArgs              = 1 << 7,
-
-        Init_Mask           = 0b11 << 14,
-        Init_HasInitializer = 0b01 << 14,
-        Init_Tentative      = 0b10 << 14,
-        Init_NoInitializer  = 0b11 << 14,
     };
     template <typename>
     struct FlagBase {
@@ -39,10 +34,6 @@ public:
         {
             return (static_cast<u32>(flags) & static_cast<u32>(flag)) != 0;
         }
-        [[nodiscard]] bool isInitSet(State flag) const noexcept
-        {
-            return (static_cast<u32>(flags) & static_cast<u32>(State::Init_Mask)) == static_cast<u32>(flag);
-        }
         void clear(State flag) noexcept
         {
             flags = static_cast<State>(static_cast<u32>(flags) & ~static_cast<u32>(flag));
@@ -50,15 +41,6 @@ public:
         void clearAll() noexcept
         {
             flags = State::None;
-        }
-        void setInit(State flag)
-        {
-            flags = static_cast<State>(static_cast<u32>(flags) & ~static_cast<u32>(State::Init_Mask)
-                | (static_cast<u32>(flag) & static_cast<u32>(State::Init_Mask)));
-        }
-        [[nodiscard]] State getInit() const
-        {
-            return static_cast<State>(static_cast<u32>(flags) & static_cast<u32>(State::Init_Mask));
         }
     };
     struct ReturnedFuncEntry : FlagBase<ReturnedFuncEntry>  {
@@ -97,8 +79,7 @@ public:
                          const bool internal,
                          const bool external,
                          const bool global,
-                         const bool defined,
-                         const State initState)
+                         const bool defined)
         {
             if (contains)
                 set(State::Contains);
@@ -116,7 +97,6 @@ public:
                 set(State::Global);
             if (defined)
                 set(State::Defined);
-            setInit(initState);
         }
     };
 private:
@@ -144,16 +124,6 @@ private:
             if (defined)
                 set(State::Defined);
         }
-        Entry(std::string uniqueName,
-              const SymbolType type,
-              const bool internal,
-              const bool external,
-              const bool global,
-              const bool defined,
-              const State initState) : Entry(std::move(uniqueName), type, internal, external, global, defined)
-        {
-            set(initState);
-        }
     };
     std::vector<std::unordered_map<std::string, Entry>> m_entries;
     std::unordered_map<std::string, i32> m_funcs;
@@ -168,8 +138,7 @@ public:
     void clearArgs();
     void addVarEntry(const std::string& name,
                      const std::string& uniqueName,
-                     bool internal, bool external, bool global, bool defined,
-                     State initState);
+                     bool internal, bool external, bool global, bool defined);
     void addFuncEntry(const std::string& name, i32 argsSize, bool internal, bool external, bool global, bool defined);
     void addScope();
     void removeScope();

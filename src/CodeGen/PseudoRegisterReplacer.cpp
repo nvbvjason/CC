@@ -6,7 +6,7 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
     if (operand->kind == Operand::Kind::Pseudo && operand) {
         const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
         const auto entry = c_symbolTable.lookupVar(pseudo->identifier);
-        if (entry.isSet(SymbolTable::State::Global)) {
+        if (entry.isSet(SymbolTable::State::CorrectType)) {
             operand = std::make_shared<DataOperand>(pseudo->identifier);
             return;
         }

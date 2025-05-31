@@ -7,15 +7,19 @@
 #include "ASTParser.hpp"
 #include "Frontend/SymbolTable.hpp"
 
+#include <unordered_set>
+
 namespace Ir {
 class GenerateIr {
     using Storage = Parsing::Declaration::StorageClass;
 
     bool m_global = true;
     std::vector<std::unique_ptr<Instruction>> m_instructions;
-    const SymbolTable& m_symbolTable;
+    SymbolTable& m_symbolTable;
+    std::unordered_set<std::string> m_writtenGlobals;
+    std::vector<std::unique_ptr<TopLevel>> m_topLevels;
 public:
-    explicit GenerateIr(const SymbolTable& symbolTable)
+    explicit GenerateIr(SymbolTable& symbolTable)
         : m_symbolTable(symbolTable) {}
     void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
     std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
@@ -24,6 +28,7 @@ public:
     void generateBlock(const Parsing::Block& block);
     void generateBlockItem(const Parsing::BlockItem& blockItem);
     void generateDeclaration(const Parsing::Declaration& decl);
+    void generateDeclarationStaticLocal(const Parsing::VarDecl& varDecl);
     void generateForInit(const Parsing::ForInit& forInit);
     void generateStmt(const Parsing::Stmt& stmts);
     void generateIfStmt(const Parsing::IfStmt& stmt);
