@@ -16,8 +16,8 @@ static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Opera
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
 {
-    for (const auto& decl : parsingProgram.declarations) {
-        auto topLevel = topLevelIr(*decl);
+    for (const std::unique_ptr<Parsing::Declaration>& decl : parsingProgram.declarations) {
+        std::unique_ptr<TopLevel> topLevel = topLevelIr(*decl);
         if (topLevel == nullptr)
             continue;
         tackyProgram.topLevels.push_back(std::move(topLevel));
@@ -26,7 +26,6 @@ void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyP
 
 std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& decl)
 {
-    assert(&decl);
     using Kind = Parsing::Declaration::Kind;
     switch (decl.kind) {
         case Kind::FuncDecl: {
@@ -47,14 +46,17 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
 
 std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& varDecl)
 {
-    auto value = generateInst(*varDecl.init);
-    auto variable = std::make_unique<StaticVariable>(varDecl.name, value, m_global);
+    std::shared_ptr<Value> value;
+    if (m_symbolTable.lookupVar(varDecl.name).isSet(SymbolTable::State::ExternalLinkage))
+        value = std::make_shared<ValueConst>(0);
+    else
+        value = generateInst(*varDecl.init);
+    auto variable = std::make_unique<StaticVariable>(varDecl.name, value, varDecl.storage != Storage::Static);
     return variable;
 }
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDecl& parsingFunction)
 {
-    using Storage = Parsing::Declaration::StorageClass;
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, parsingFunction.storage != Storage::Static);
     m_global = true;
     m_instructions = std::move(functionTacky->insts);

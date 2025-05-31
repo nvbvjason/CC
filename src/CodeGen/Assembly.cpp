@@ -10,13 +10,33 @@ std::string asmProgram(const Program& program)
 {
     std::string result;
     for (const std::unique_ptr<TopLevel>& topLevel : program.topLevels) {
-        if (topLevel->type == TopLevel::Type::StaticVariable)
+        if (topLevel->type == TopLevel::Type::StaticVariable) {
+            const auto var = static_cast<const StaticVariable*>(topLevel.get());
+            asmGlobalVar(result, *var);
             continue;
+        }
         const auto function = dynamic_cast<Function*>(topLevel.get());
         asmFunction(result, *function);
     }
     result += ".section .note.GNU-stack,\"\",@progbits\n";
     return result;
+}
+
+void asmGlobalVar(std::string& result, const StaticVariable& variable)
+{
+    if (variable.global)
+        result += asmFormatInstruction(".globl", variable.name);
+    if (variable.init == 0)
+        result += asmFormatInstruction(".bss");
+    else
+        result += asmFormatInstruction(".data");
+    result += asmFormatInstruction(".align","4");
+    result += asmFormatLabel(variable.name);
+    if (variable.init == 0)
+        result += asmFormatInstruction(".zero", "4");
+    else
+        result += asmFormatInstruction(".long", std::to_string(variable.init));
+    result += '\n';
 }
 
 void asmFunction(std::string& result, const Function& functionNode)
@@ -29,11 +49,12 @@ void asmFunction(std::string& result, const Function& functionNode)
     result += asmFormatInstruction("movq","%rsp, %rbp");
     for (const std::unique_ptr<Inst>& inst : functionNode.instructions)
         asmInstruction(result, inst);
+    result += '\n';
 }
 
 void asmStaticVariable(std::string& result, const StaticVariable& staticVariableNode)
 {
-    if (staticVariableNode.isGlobal)
+    if (staticVariableNode.global)
         result += asmFormatInstruction(".globl", staticVariableNode.name);
     if (staticVariableNode.init == 0)
         result += asmFormatInstruction(".data");

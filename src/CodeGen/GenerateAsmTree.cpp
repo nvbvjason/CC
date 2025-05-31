@@ -63,8 +63,8 @@ std::unique_ptr<TopLevel> generateFunction(const Ir::Function& function)
 std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable)
 {
     return std::make_unique<StaticVariable>(staticVariable.name,
-                                            getStaticVariableInitial(staticVariable),
-                                            staticVariable.isGlobal);
+                                            staticVariable.global,
+                                            getStaticVariableInitial(staticVariable));
 }
 
 void transformInst(const std::unique_ptr<Function>& functionCodeGen, const std::unique_ptr<Ir::Instruction>& inst)
@@ -309,7 +309,7 @@ void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::Fu
         );
 }
 
-i32 getStackPadding(size_t numArgs)
+i32 getStackPadding(const size_t numArgs)
 {
     if (numArgs <= 6)
         return 0;
@@ -422,9 +422,9 @@ i32 getStaticVariableInitial(const Ir::StaticVariable& staticVariable)
     return valueConst->value;
 }
 
-i32 replacingPseudoRegisters(Function& function)
+i32 replacingPseudoRegisters(Function& function, const SymbolTable& symbolTable)
 {
-    PseudoRegisterReplacer pseudoRegisterReplacer;
+    PseudoRegisterReplacer pseudoRegisterReplacer(symbolTable);
     for (auto& inst : function.instructions)
         inst->accept(pseudoRegisterReplacer);
     return pseudoRegisterReplacer.stackPointer();

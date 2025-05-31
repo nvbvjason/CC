@@ -9,6 +9,7 @@ namespace CodeGen {
 
 std::string asmProgram(const Program& program);
 void asmFunction(std::string& result, const Function& functionNode);
+void asmGlobalVar(std::string& result, const StaticVariable& variable);
 void asmStaticVariable(std::string& result, const StaticVariable& staticVariableNode);
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction);
 std::string asmOperand(const std::shared_ptr<Operand>& operand);

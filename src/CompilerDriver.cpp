@@ -14,7 +14,7 @@
 #include <format>
 
 static void printIr(const Ir::Program& irProgram);
-static CodeGen::Program codegen(const Ir::Program& irProgram);
+static CodeGen::Program codegen(const Ir::Program& irProgram, const SymbolTable& symbolTable);
 static bool fileExists(const std::filesystem::path& name);
 static bool isCommandLineArgumentValid(const std::string& argument);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
@@ -38,7 +38,8 @@ ErrorCode CompilerDriver::wrappedRun()
         return errorCode;
     const std::string inputFile = m_args.back();
     std::vector<Lexing::Token> tokens;
-    FrontendDriver frontend(argument, inputFile);
+    SymbolTable symbolTable;
+    FrontendDriver frontend(argument, inputFile, symbolTable);
     auto [irProgram, err] = frontend.run();
     if (err != ErrorCode::OK)
         return err;
@@ -48,7 +49,7 @@ ErrorCode CompilerDriver::wrappedRun()
         printIr(irProgram);
         return ErrorCode::OK;
     }
-    CodeGen::Program codegenProgram = codegen(irProgram);
+    CodeGen::Program codegenProgram = codegen(irProgram, symbolTable);
     if (argument == "--codegen")
         return ErrorCode::OK;
     if (argument == "--printAsm") {
@@ -126,7 +127,7 @@ void printIr(const Ir::Program& irProgram)
     std::cout << printer.print(irProgram);
 }
 
-CodeGen::Program codegen(const Ir::Program& irProgram)
+CodeGen::Program codegen(const Ir::Program& irProgram, const SymbolTable& symbolTable)
 {
     CodeGen::Program codegenProgram;
     CodeGen::generateProgram(irProgram, codegenProgram);
@@ -134,7 +135,7 @@ CodeGen::Program codegen(const Ir::Program& irProgram)
         if (topLevel->type == CodeGen::TopLevel::Type::StaticVariable)
             continue;
         auto function = dynamic_cast<CodeGen::Function*>(topLevel.get());
-        const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function);
+        const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function, symbolTable);
         CodeGen::fixUpInstructions(*function, stackAlloc);
     }
     return codegenProgram;

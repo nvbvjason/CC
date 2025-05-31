@@ -320,9 +320,9 @@ struct Function : TopLevel {
 struct StaticVariable : TopLevel {
     std::string name;
     i32 init;
-    const bool isGlobal;
+    const bool global;
     StaticVariable(std::string name, bool isGlobal, i32 init)
-        : TopLevel(Type::StaticVariable), name(std::move(name)), init(init), isGlobal(isGlobal) {}
+        : TopLevel(Type::StaticVariable), name(std::move(name)), init(init), global(isGlobal) {}
 
     StaticVariable() = delete;
 };

@@ -150,20 +150,20 @@ bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::Re
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    if (!isValidVarExpr(varExpr, m_symbolTable)) {
+    const SymbolTable::ReturnedVarEntry returnedEntry = m_symbolTable.lookupVar(varExpr.name);
+    if (!isValidVarExpr(varExpr, returnedEntry)) {
         m_valid = false;
         return;
     }
-    if (!m_symbolTable.isInArgs(varExpr.name))
+    if (!returnedEntry.isSet(Flag::InArgs))
         varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
     ASTTraverser::visit(varExpr);
 }
 
-bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable)
+bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::ReturnedVarEntry returnedEntry)
 {
-    if (symbolTable.isInArgs(varExpr.name))
+    if (returnedEntry.isSet(Flag::InArgs))
         return true;
-    const SymbolTable::ReturnedVarEntry returnedEntry = symbolTable.lookupVar(varExpr.name);
     if (!returnedEntry.isSet(Flag::Contains))
         return false;
     if (!returnedEntry.isSet(Flag::CorrectType))

@@ -3,16 +3,18 @@
 namespace CodeGen {
 void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
 {
-    if (operand->kind == Operand::Kind::Pseudo) {
+    if (operand->kind == Operand::Kind::Pseudo && operand) {
         const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
-        if (!pseudoMap.contains(pseudo->identifier)) {
-            stackPtr -= 4;
-            pseudoMap[pseudo->identifier] = stackPtr;
-        }
-        if (isStatic(pseudo->identifier))
+        const auto entry = c_symbolTable.lookupVar(pseudo->identifier);
+        if (entry.isSet(SymbolTable::State::Global)) {
             operand = std::make_shared<DataOperand>(pseudo->identifier);
-        else
-            operand = std::make_shared<StackOperand>(pseudoMap.at(pseudo->identifier));
+            return;
+        }
+        if (!m_pseudoMap.contains(pseudo->identifier)) {
+            m_stackPtr -= 4;
+            m_pseudoMap[pseudo->identifier] = m_stackPtr;
+        }
+        operand = std::make_shared<StackOperand>(m_pseudoMap.at(pseudo->identifier));
     }
 }
 

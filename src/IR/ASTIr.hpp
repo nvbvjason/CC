@@ -227,12 +227,12 @@ struct Function : TopLevel {
 struct StaticVariable : TopLevel {
     std::string name;
     std::shared_ptr<Value> value;
-    const bool isGlobal;
+    const bool global;
     explicit StaticVariable(std::string identifier,
                             const std::shared_ptr<Value>& value,
                             const bool isGlobal)
         : TopLevel(Type::StaticVariable), name
-                (std::move(identifier)), value(value), isGlobal(isGlobal) {}
+                (std::move(identifier)), value(value), global(isGlobal) {}
 
     ~StaticVariable() override;
 

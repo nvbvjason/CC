@@ -4,6 +4,7 @@
 #define CC_CONCRETE_TREE_HPP
 
 #include "AsmAST.hpp"
+#include "Frontend/SymbolTable.hpp"
 #include "IR/ASTIr.hpp"
 
 /*
@@ -86,7 +87,7 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 
 [[nodiscard]] i32 getStaticVariableInitial(const Ir::StaticVariable& staticVariable);
 
-[[nodiscard]] i32 replacingPseudoRegisters(Function& function);
+[[nodiscard]] i32 replacingPseudoRegisters(Function& function, const SymbolTable& symbolTable);
 void fixUpInstructions(Function& function, i32 stackAlloc);
 
 }

@@ -24,11 +24,12 @@ void IrPrinter::print(const StaticVariable& variable)
 {
     IndentGuard guard(m_indentLevel);
     addLine("Variable: " + variable.name);
-    if (variable.isGlobal)
+    IndentGuard innerGuard(m_indentLevel);
+    if (variable.global)
         addLine("is Global");
     else
         addLine("is not Global");
-    print(*variable.value);
+    addLine(print(*variable.value));
 }
 
 void IrPrinter::print(const Function& function)

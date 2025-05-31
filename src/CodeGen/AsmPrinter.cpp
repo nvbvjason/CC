@@ -20,9 +20,11 @@ void AsmPrinter::add(const TopLevel& topLevel)
     IndentGuard indent(m_indentLevel);
     switch (topLevel.type) {
         case Type::Function:
-            add(static_cast<const Function&>(topLevel)); break;
+            add(static_cast<const Function&>(topLevel));
+            break;
         case Type::StaticVariable:
-            add(static_cast<const StaticVariable&>(topLevel)); break;
+            add(static_cast<const StaticVariable&>(topLevel));
+            break;
         default:
             addLine("Unknown Instruction");
     }
@@ -31,7 +33,7 @@ void AsmPrinter::add(const TopLevel& topLevel)
 void AsmPrinter::add(const StaticVariable& staticVariable)
 {
     std::string global;
-    if (staticVariable.isGlobal)
+    if (staticVariable.global)
         global = "is global";
     else
         global = "is not global";

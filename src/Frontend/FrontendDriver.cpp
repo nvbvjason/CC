@@ -19,7 +19,7 @@
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
-static Ir::Program ir(const Parsing::Program& parsingProgram);
+static Ir::Program ir(const Parsing::Program& parsingProgram, const SymbolTable& symbolTable);
 static std::string preProcess(const std::filesystem::path& file);
 static std::string getSourceCode(const std::filesystem::path& inputFile);
 
@@ -39,8 +39,7 @@ std::tuple<Ir::Program, ErrorCode> FrontendDriver::run() const
         printParsingAst(program);
         return {std::move(Ir::Program()), ErrorCode::OK};
     }
-    SymbolTable symbolTable;
-    if (ErrorCode err = validateSemantics(program, symbolTable); err != ErrorCode::OK)
+    if (ErrorCode err = validateSemantics(program, m_symbolTable); err != ErrorCode::OK)
         return {std::move(Ir::Program()), err};
     if (m_arg == "--validate")
         return {std::move(Ir::Program()), ErrorCode::OK};
@@ -48,7 +47,7 @@ std::tuple<Ir::Program, ErrorCode> FrontendDriver::run() const
         printParsingAst(program);
         return {std::move(Ir::Program()), ErrorCode::OK};
     }
-    Ir::Program irProgram = ir(program);
+    Ir::Program irProgram = ir(program, m_symbolTable);
     return {std::move(irProgram), ErrorCode::OK};
 }
 
@@ -108,10 +107,10 @@ bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNo
     return true;
 }
 
-Ir::Program ir(const Parsing::Program& parsingProgram)
+Ir::Program ir(const Parsing::Program& parsingProgram, const SymbolTable& symbolTable)
 {
     Ir::Program irProgram;
-    Ir::GenerateIr generateIr;
+    Ir::GenerateIr generateIr(symbolTable);
     generateIr.program(parsingProgram, irProgram);
     return irProgram;
 }

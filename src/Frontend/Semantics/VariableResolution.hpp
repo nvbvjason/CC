@@ -46,7 +46,7 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
                      const SymbolTable::ReturnedFuncEntry& returnedEntry);
 
 bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable);
-bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable& symbolTable);
+bool isValidVarExpr(const Parsing::VarExpr& varExpr, SymbolTable::ReturnedVarEntry returnedEntry);
 
 bool duplicatesInArgs(const std::vector<std::string>& args);
 inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry prevEntry)

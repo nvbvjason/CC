@@ -5,12 +5,18 @@
 
 #include "ASTIr.hpp"
 #include "ASTParser.hpp"
+#include "Frontend/SymbolTable.hpp"
 
 namespace Ir {
 class GenerateIr {
+    using Storage = Parsing::Declaration::StorageClass;
+
     bool m_global = true;
     std::vector<std::unique_ptr<Instruction>> m_instructions;
+    const SymbolTable& m_symbolTable;
 public:
+    explicit GenerateIr(const SymbolTable& symbolTable)
+        : m_symbolTable(symbolTable) {}
     void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
     std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
     std::unique_ptr<TopLevel> functionIr(const Parsing::FunDecl& parsingFunction);

@@ -14,11 +14,12 @@
 class FrontendDriver {
     std::string m_arg;
     std::filesystem::path m_inputFile;
+    SymbolTable& m_symbolTable;
 public:
     FrontendDriver() = delete;
     FrontendDriver(const FrontendDriver& other) = delete;
-    explicit FrontendDriver(std::string arg, std::filesystem::path inputFile)
-        : m_arg(std::move(arg)), m_inputFile(std::move(inputFile)) {}
+    FrontendDriver(std::string arg, std::filesystem::path inputFile, SymbolTable& symbolTable)
+        : m_arg(std::move(arg)), m_inputFile(std::move(inputFile)), m_symbolTable(symbolTable) {}
 
     [[nodiscard]] std::tuple<Ir::Program, ErrorCode> run() const;
 };

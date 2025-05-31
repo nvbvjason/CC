@@ -61,7 +61,7 @@ void FixUpInstructions::binaryShift(BinaryInst& binaryInst)
 }
 
 void FixUpInstructions::binaryMul(BinaryInst& binaryInst)
-    {
+{
     auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R11, 4);
     auto first = std::make_unique<MoveInst>(binaryInst.rhs, regR11);
     auto second = std::make_unique<BinaryInst>(binaryInst.oper, binaryInst.lhs, regR11);
@@ -70,7 +70,7 @@ void FixUpInstructions::binaryMul(BinaryInst& binaryInst)
 }
 
 void FixUpInstructions::binaryOthers(BinaryInst& binaryInst)
-    {
+{
     auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Type::R10, 4);
     auto first = std::make_unique<MoveInst>(binaryInst.lhs, regR10);
     auto second = std::make_unique<BinaryInst>(binaryInst.oper, regR10, binaryInst.rhs);

@@ -1,7 +1,6 @@
 #include "ASTIr.hpp"
 
 namespace Ir {
-
 Program::~Program() = default;
 
 Function::~Function() = default;
