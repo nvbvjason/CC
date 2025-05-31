@@ -1,14 +1,14 @@
-#include "LabelsUnique.hpp"
+#include "GotoLabelsUnique.hpp"
 #include "ASTParser.hpp"
 
 namespace Semantics {
-bool LabelsUnique::programValidate(Parsing::Program& program)
+bool GotoLabelsUnique::programValidate(Parsing::Program& program)
 {
     program.accept(*this);
     return m_valid;
 }
 
-void LabelsUnique::visit(Parsing::FunDecl& funDecl)
+void GotoLabelsUnique::visit(Parsing::FunDecl& funDecl)
 {
     if (funDecl.body == nullptr)
         return;
@@ -24,13 +24,14 @@ void LabelsUnique::visit(Parsing::FunDecl& funDecl)
             m_valid = false;
 }
 
-void LabelsUnique::visit(Parsing::GotoStmt& gotoStmt)
+void GotoLabelsUnique::visit(Parsing::GotoStmt& gotoStmt)
 {
     gotoStmt.identifier += '.' + m_funName;
     m_goto.insert(gotoStmt.identifier);
+    ASTTraverser::visit(gotoStmt);
 }
 
-void LabelsUnique::visit(Parsing::LabelStmt& labelStmt)
+void GotoLabelsUnique::visit(Parsing::LabelStmt& labelStmt)
 {
     labelStmt.identifier += '.' + m_funName;
     ++m_labels[labelStmt.identifier];

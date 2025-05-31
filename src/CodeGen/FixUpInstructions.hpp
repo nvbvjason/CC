@@ -60,14 +60,20 @@ inline bool FixUpInstructions::isBinaryShift(const BinaryInst& binaryInst)
 
 inline bool FixUpInstructions::areBothOnTheStack(MoveInst& moveInst)
 {
-    return moveInst.src->kind == Operand::Kind::Stack &&
-           moveInst.dst->kind == Operand::Kind::Stack;
+    using Kind = Operand::Kind;
+    return moveInst.src->kind == Kind::Data ||
+           moveInst.dst->kind == Kind::Stack &&
+           moveInst.src->kind == Kind::Stack ||
+           moveInst.dst->kind == Kind::Data;
 }
 
 inline bool FixUpInstructions::areBothOnTheStack(CmpInst& cmpInst)
 {
-    return cmpInst.lhs->kind == Operand::Kind::Stack &&
-           cmpInst.rhs->kind == Operand::Kind::Stack;
+    using Kind = Operand::Kind;
+    return cmpInst.lhs->kind == Kind::Data ||
+           cmpInst.rhs->kind == Kind::Stack &&
+           cmpInst.lhs->kind == Kind::Stack ||
+           cmpInst.rhs->kind == Kind::Data;
 }
 
 } // namespace CodeGen

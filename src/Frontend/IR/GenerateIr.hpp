@@ -5,68 +5,60 @@
 
 #include "ASTIr.hpp"
 #include "ASTParser.hpp"
+#include "Frontend/SymbolTable.hpp"
+
+#include <unordered_set>
 
 namespace Ir {
+class GenerateIr {
+    using Storage = Parsing::Declaration::StorageClass;
 
-void program(const Parsing::Program* parsingProgram, Program& tackyProgram);
-std::unique_ptr<Function> function(const Parsing::FunDecl& parsingFunction);
-void blockIr(const Parsing::Block& block, std::vector<std::unique_ptr<Instruction>>& instructions);
-void blockItem(const Parsing::BlockItem& blockItem,
-               std::vector<std::unique_ptr<Instruction>>& instructions);
-void declaration(const Parsing::Declaration& decl,
-                 std::vector<std::unique_ptr<Instruction>>& insts);
-void forInitialization(const Parsing::ForInit& forInit,
-                       std::vector<std::unique_ptr<Instruction>>& insts);
-void statement(const Parsing::Stmt& stmt,
-               std::vector<std::unique_ptr<Instruction>>& insts);
-void ifStatement(const Parsing::IfStmt& stmt,
-                 std::vector<std::unique_ptr<Instruction>>& insts);
-void ifElseStatement(const Parsing::IfStmt& stmt,
-                     std::vector<std::unique_ptr<Instruction>>& insts);
-void gotoStatement(const Parsing::GotoStmt& stmt,
-                   std::vector<std::unique_ptr<Instruction>>& insts);
-void compoundStatement(const Parsing::CompoundStmt& stmt,
-                       std::vector<std::unique_ptr<Instruction>>& insts);
-void breakStatement(const Parsing::BreakStmt& stmt,
-                    std::vector<std::unique_ptr<Instruction>>& insts);
-void continueStatement(const Parsing::ContinueStmt& stmt,
-                       std::vector<std::unique_ptr<Instruction>>& insts);
-void labelStatement(const Parsing::LabelStmt& stmt,
-                    std::vector<std::unique_ptr<Instruction>>& insts);
-void caseStatement(const Parsing::CaseStmt& caseStmt,
-                   std::vector<std::unique_ptr<Instruction>>& insts);
-void defaultStatement(const Parsing::DefaultStmt& defaultStmt,
-                      std::vector<std::unique_ptr<Instruction>>& insts);
-void doWhileStatement(const Parsing::DoWhileStmt& stmt,
-                      std::vector<std::unique_ptr<Instruction>>& insts);
-void whileStatement(const Parsing::WhileStmt& stmt,
-                    std::vector<std::unique_ptr<Instruction>>& insts);
-void forStatement(const Parsing::ForStmt& stmt,
-                  std::vector<std::unique_ptr<Instruction>>& insts);
-void switchStatement(const Parsing::SwitchStmt& stmt,
-                     std::vector<std::unique_ptr<Instruction>>& insts);
-std::shared_ptr<Value> inst(const Parsing::Expr& parsingExpr,
-                            std::vector<std::unique_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> unaryInst(const Parsing::Expr& parsingExpr,
-                                 std::vector<std::unique_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> binaryInst(const Parsing::Expr& parsingExpr,
-                                  std::vector<std::unique_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> binaryAndInst(const Parsing::BinaryExpr& parsingExpr,
-                                     std::vector<std::unique_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> binaryOrInst(const Parsing::BinaryExpr& binaryExpr,
-                                    std::vector<std::unique_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> assignInst(const Parsing::Expr& binaryExpr,
-                                  std::vector<std::unique_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> simpleAssignInst(const Parsing::AssignmentExpr& assignExpr,
-                                        std::vector<std::unique_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> compoundAssignInst(const Parsing::AssignmentExpr& assignExpr,
-                                          std::vector<std::unique_ptr<Instruction>>& instructions);
-std::shared_ptr<Value> conditionalInst(const Parsing::Expr& stmt,
-                                       std::vector<std::unique_ptr<Instruction>>& insts);
-std::shared_ptr<Value> funcCallInst(const Parsing::Expr& stmt,
-                                          std::vector<std::unique_ptr<Instruction> >& insts);
-std::shared_ptr<Value> constInst(const Parsing::Expr& parsingExpr);
-std::shared_ptr<Value> varInst(const Parsing::Expr& parsingExpr);
+    bool m_global = true;
+    std::vector<std::unique_ptr<Instruction>> m_instructions;
+    SymbolTable& m_symbolTable;
+    std::unordered_set<std::string> m_writtenGlobals;
+    std::vector<std::unique_ptr<TopLevel>> m_topLevels;
+public:
+    explicit GenerateIr(SymbolTable& symbolTable)
+        : m_symbolTable(symbolTable) {}
+    void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
+    std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
+    std::unique_ptr<TopLevel> functionIr(const Parsing::FunDecl& parsingFunction);
+    std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl);
+    void generateBlock(const Parsing::Block& block);
+    void generateBlockItem(const Parsing::BlockItem& blockItem);
+    void generateDeclaration(const Parsing::Declaration& decl);
+    void generateDeclarationStaticLocal(const Parsing::VarDecl& varDecl);
+    void generateForInit(const Parsing::ForInit& forInit);
+    void generateStmt(const Parsing::Stmt& stmts);
+    void generateIfStmt(const Parsing::IfStmt& stmt);
+    void generateIfElseStmt(const Parsing::IfStmt& stmt);
+    void generateGotoStmt(const Parsing::GotoStmt& stmt);
+    void generateCompoundStmt(const Parsing::CompoundStmt& stmt);
+    void generateBreakStmt(const Parsing::BreakStmt& stmt);
+    void generateContinueStmt(const Parsing::ContinueStmt& stmt);
+    void generateLabelStmt(const Parsing::LabelStmt& stmt);
+    void generateCaseStmt(const Parsing::CaseStmt& caseStmt);
+    void generateDefaultStmt(const Parsing::DefaultStmt& defaultStmt);
+    void generateDoWhileStmt(const Parsing::DoWhileStmt& stmt);
+    void generateWhileStmt(const Parsing::WhileStmt& stmt);
+    void generateForStmt(const Parsing::ForStmt& stmt);
+    void generateSwitchStmt(const Parsing::SwitchStmt& stmt);
+    std::shared_ptr<Value> generateInst(const Parsing::Expr& parsingExpr);
+    std::shared_ptr<Value> generateUnaryInst(const Parsing::Expr& parsingExpr);
+    std::shared_ptr<Value> generateUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr);
+    std::shared_ptr<Value> generateUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr);
+    std::shared_ptr<Value> generateBinaryInst(const Parsing::Expr& parsingExpr);
+    std::shared_ptr<Value> generateBinaryAndInst(const Parsing::BinaryExpr& parsingExpr);
+    std::shared_ptr<Value> generateBinaryOrInst(const Parsing::BinaryExpr& binaryExpr);
+    std::shared_ptr<Value> generateAssignInst(const Parsing::Expr& binaryExpr);
+    std::shared_ptr<Value> generateSimpleAssignInst(const Parsing::AssignmentExpr& assignExpr);
+    std::shared_ptr<Value> generateCompoundAssignInst(const Parsing::AssignmentExpr& assignExpr);
+    std::shared_ptr<Value> generateConditionalInst(const Parsing::Expr& stmt);
+    std::shared_ptr<Value> generateFuncCallInst(const Parsing::Expr& stmt);
+    static std::shared_ptr<Value> generateConstInst(const Parsing::Expr& parsingExpr);
+    static std::shared_ptr<Value> generateVarInst(const Parsing::Expr& parsingExpr);
+};
 
 } // IR
 

@@ -24,7 +24,9 @@ class AsmPrinter {
     static constexpr i32 c_indentMult = 4;
 public:
     std::string printProgram(const Program& program);
+    void add(const TopLevel& topLevel);
     void add(const Function& function);
+    void add(const StaticVariable& staticVariable);
     void add(const Inst& inst);
     void add(const MoveInst& moveInst);
     void add(const UnaryInst& unaryInst);

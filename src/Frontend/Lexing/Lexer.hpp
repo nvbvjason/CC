@@ -34,6 +34,8 @@ class Lexer {
         { "switch", Token::Type::Switch },
         { "case", Token::Type::Case },
         { "default", Token::Type::Default },
+        { "static", Token::Type::Static },
+        { "extern", Token::Type::Extern },
     };
 public:
     explicit Lexer(const std::string& input)

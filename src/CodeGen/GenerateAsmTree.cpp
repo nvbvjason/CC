@@ -3,42 +3,68 @@
 #include "AsmAST.hpp"
 #include "FixUpInstructions.hpp"
 
+#include <cassert>
 #include <stdexcept>
 
 namespace CodeGen {
 
-void program(const Ir::Program &program, Program &programCodegen)
+void generateProgram(const Ir::Program &program, Program &programCodegen)
 {
-    for (const auto& functionIR : program.functions)
-        programCodegen.functions.push_back(function(functionIR.get()));
+    for (const auto& toplevelIr : program.topLevels)
+        programCodegen.topLevels.push_back(std::move(generateTopLevel(*toplevelIr)));
 }
 
-std::unique_ptr<Function> function(const Ir::Function *function)
+std::unique_ptr<TopLevel> generateTopLevel(const Ir::TopLevel& topLevel)
+{
+    using Type = Ir::TopLevel::Type;
+    switch (topLevel.type) {
+        case Type::Function: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto function = static_cast<const Ir::Function*>(&topLevel);
+            return generateFunction(*function);
+        }
+        case Type::StaticVariable: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto staticVariable = static_cast<const Ir::StaticVariable*>(&topLevel);
+            return generateStaticVariable(*staticVariable);
+        }
+        assert("generateTopLevel idk type");
+    }
+    std::unreachable();
+}
+
+std::unique_ptr<TopLevel> generateFunction(const Ir::Function& function)
 {
     using RegType = RegisterOperand::Type;
     static const std::vector<RegType> registerTypes = {RegType::DI, RegType::SI, RegType::DX,
                                                        RegType::CX, RegType::R8, RegType::R9};
-    auto functionCodeGen = std::make_unique<Function>();
-    functionCodeGen->name = function->name;
+    auto functionCodeGen = std::make_unique<Function>(function.name, function.isGlobal);
     i32 regIndex = 0;
-    for (; regIndex < function->args.size() && regIndex < registerTypes.size(); ++regIndex) {
+    for (; regIndex < function.args.size() && regIndex < registerTypes.size(); ++regIndex) {
         auto src = std::make_shared<RegisterOperand>(registerTypes[regIndex], 4);
-        auto arg = std::make_shared<Ir::ValueVar>(function->args[regIndex]);
+        auto arg = std::make_shared<Ir::ValueVar>(function.args[regIndex]);
         std::shared_ptr<Operand> dst = operand(arg);
         functionCodeGen->instructions.push_back(
             std::make_unique<MoveInst>(src, dst)
             );
     }
     i32 stackPtr = 2;
-    for (; regIndex < function->args.size(); ++regIndex, ++stackPtr) {
+    for (; regIndex < function.args.size(); ++regIndex, ++stackPtr) {
         auto stack = std::make_shared<StackOperand>(8 * stackPtr);
-        auto arg = std::make_shared<Ir::ValueVar>(function->args[regIndex]);
+        auto arg = std::make_shared<Ir::ValueVar>(function.args[regIndex]);
         std::shared_ptr<Operand> dst = operand(arg);
         functionCodeGen->instructions.push_back(std::make_unique<MoveInst>(stack, dst));
     }
-    for (const std::unique_ptr<Ir::Instruction>& inst : function->insts)
+    for (const std::unique_ptr<Ir::Instruction>& inst : function.insts)
         transformInst(functionCodeGen, inst);
     return functionCodeGen;
+}
+
+std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable)
+{
+    return std::make_unique<StaticVariable>(staticVariable.name,
+                                            staticVariable.global,
+                                            getStaticVariableInitial(staticVariable));
 }
 
 void transformInst(const std::unique_ptr<Function>& functionCodeGen, const std::unique_ptr<Ir::Instruction>& inst)
@@ -283,7 +309,7 @@ void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::Fu
         );
 }
 
-i32 getStackPadding(size_t numArgs)
+i32 getStackPadding(const size_t numArgs)
 {
     if (numArgs <= 6)
         return 0;
@@ -388,9 +414,17 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
     }
 }
 
-i32 replacingPseudoRegisters(Function& function)
+i32 getStaticVariableInitial(const Ir::StaticVariable& staticVariable)
 {
-    PseudoRegisterReplacer pseudoRegisterReplacer;
+    assert(staticVariable.value->type == Ir::Value::Type::Constant &&
+            "StaticVariable must be const initialized");
+    const auto valueConst = static_cast<Ir::ValueConst*>(staticVariable.value.get());
+    return valueConst->value;
+}
+
+i32 replacingPseudoRegisters(Function& function, const SymbolTable& symbolTable)
+{
+    PseudoRegisterReplacer pseudoRegisterReplacer(symbolTable);
     for (auto& inst : function.instructions)
         inst->accept(pseudoRegisterReplacer);
     return pseudoRegisterReplacer.stackPointer();

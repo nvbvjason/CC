@@ -7,14 +7,18 @@
 
 #include <unordered_map>
 
+#include "Frontend/SymbolTable.hpp"
+
 namespace CodeGen {
 
 class PseudoRegisterReplacer final : public InstVisitor {
-    std::unordered_map<std::string, i32> pseudoMap;
-    i32 stackPtr = 0;
+    std::unordered_map<std::string, i32> m_pseudoMap;
+    i32 m_stackPtr = 0;
+    const SymbolTable &c_symbolTable;
 public:
-
-    [[nodiscard]] i32 stackPointer() const { return stackPtr; }
+    explicit PseudoRegisterReplacer(const SymbolTable &symbolTable)
+        : c_symbolTable(symbolTable) {}
+    [[nodiscard]] i32 stackPointer() const { return m_stackPtr; }
 
     void visit(MoveInst& move) override;
     void visit(UnaryInst& unary) override;
@@ -34,9 +38,13 @@ public:
     void visit(LabelInst&) override {}
 private:
     void replaceIfPseudo(std::shared_ptr<Operand>& operand);
-
-public:
+    bool isStatic(const std::string& iden);
 };
+
+inline bool PseudoRegisterReplacer::isStatic(const std::string& iden)
+{
+    return iden.contains(".s.");
+}
 
 } // CodeGen
 

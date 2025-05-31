@@ -7,25 +7,24 @@
 
 #include <filesystem>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "ErrorCodes.hpp"
 
 class CompilerDriver {
-    std::vector<std::string> args;
+    std::vector<std::string> m_args;
     std::string m_outputFileName;
 public:
     CompilerDriver() = delete;
     CompilerDriver(const CompilerDriver& other) = delete;
     CompilerDriver(const int argc, char *argv[])
-        : args(std::vector<std::string>(argv, argv + argc)) {}
+        : m_args(std::vector<std::string>(argv, argv + argc)) {}
 
-    bool validateCommandLineArguments(std::string& argument, ErrorCode& value1) const;
-    [[nodiscard]] ErrorCode wrappedRun();
+    ErrorCode validateAndSetArg(std::string& argument) const;
     [[nodiscard]] i32 run();
 private:
-    void writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument);
+    [[nodiscard]] ErrorCode wrappedRun();
+    ErrorCode writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument);
 };
 
 std::string getSourceCode(const std::string& inputFile);

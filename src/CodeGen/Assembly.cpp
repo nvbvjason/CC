@@ -9,20 +9,63 @@ namespace CodeGen {
 std::string asmProgram(const Program& program)
 {
     std::string result;
-    for (const std::unique_ptr<Function>& function : program.functions)
-        asmFunction(result, function);
+    for (const std::unique_ptr<TopLevel>& topLevel : program.topLevels) {
+        if (topLevel->type == TopLevel::Type::StaticVariable) {
+            const auto var = static_cast<const StaticVariable*>(topLevel.get());
+            asmGlobalVar(result, *var);
+            continue;
+        }
+        const auto function = dynamic_cast<Function*>(topLevel.get());
+        asmFunction(result, *function);
+    }
     result += ".section .note.GNU-stack,\"\",@progbits\n";
     return result;
 }
 
-void asmFunction(std::string& result, const std::unique_ptr<Function>& functionNode)
+void asmGlobalVar(std::string& result, const StaticVariable& variable)
 {
-    result += ".globl    " + functionNode->name + '\n';
-    result += asmFormatLabel(functionNode->name);
+    if (variable.global)
+        result += asmFormatInstruction(".globl", variable.name);
+    if (variable.init == 0)
+        result += asmFormatInstruction(".bss");
+    else
+        result += asmFormatInstruction(".data");
+    result += asmFormatInstruction(".align","4");
+    result += asmFormatLabel(variable.name);
+    if (variable.init == 0)
+        result += asmFormatInstruction(".zero", "4");
+    else
+        result += asmFormatInstruction(".long", std::to_string(variable.init));
+    result += '\n';
+}
+
+void asmFunction(std::string& result, const Function& functionNode)
+{
+    if (functionNode.isGlobal)
+        result += asmFormatInstruction(".globl", functionNode.name);
+    result += asmFormatInstruction(".text");
+    result += asmFormatLabel(functionNode.name);
     result += asmFormatInstruction("pushq", "%rbp");
     result += asmFormatInstruction("movq","%rsp, %rbp");
-    for (const std::unique_ptr<Inst>& inst : functionNode->instructions)
+    for (const std::unique_ptr<Inst>& inst : functionNode.instructions)
         asmInstruction(result, inst);
+    result += '\n';
+}
+
+void asmStaticVariable(std::string& result, const StaticVariable& staticVariableNode)
+{
+    if (staticVariableNode.global)
+        result += asmFormatInstruction(".globl", staticVariableNode.name);
+    if (staticVariableNode.init == 0)
+        result += asmFormatInstruction(".data");
+    else
+        result += asmFormatInstruction(".bss");
+    result += asmFormatInstruction(alignDirective());
+    result += asmFormatLabel(staticVariableNode.name);
+    if (staticVariableNode.init == 0)
+        result += asmFormatInstruction(".zero 4");
+    else
+        result += asmFormatInstruction(".long " + std::to_string(staticVariableNode.init));
 }
 
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction)
@@ -129,6 +172,10 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
             const auto stackOperand = dynamic_cast<StackOperand*>(operand.get());
             return std::to_string(stackOperand->value) + "(%rbp)";
         }
+        case Operand::Kind::Data: {
+            const auto dataOperand = dynamic_cast<DataOperand*>(operand.get());
+            return dataOperand->identifier + "(%rip)";
+        }
         default:
             return "not set asmOperand";
     }
@@ -193,6 +240,11 @@ std::string asmBinaryOperator(BinaryInst::Operator oper)
         default:
             return "not set asmBinaryOperator";
     }
+}
+
+std::string alignDirective()
+{
+    return ".align 4";
 }
 
 std::string asmFormatLabel(const std::string& name)

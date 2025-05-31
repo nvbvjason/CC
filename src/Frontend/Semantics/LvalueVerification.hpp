@@ -10,14 +10,13 @@ namespace Semantics {
 
 class LvalueVerification : public Parsing::ConstASTTraverser {
     bool m_valid = true;
-    Parsing::Program& m_program;
 public:
-    explicit LvalueVerification(Parsing::Program& program)
-        : m_program(program) {}
+    LvalueVerification() = default;
 
-    bool resolve();
+    bool resolve(Parsing::Program& program);
 
     void visit(const Parsing::UnaryExpr& unaryExpr) override;
+    void visit(const Parsing::AssignmentExpr& assignmentExpr) override;
 };
 
 } // Semantics

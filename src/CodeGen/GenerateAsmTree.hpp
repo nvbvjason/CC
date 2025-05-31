@@ -4,6 +4,7 @@
 #define CC_CONCRETE_TREE_HPP
 
 #include "AsmAST.hpp"
+#include "Frontend/SymbolTable.hpp"
 #include "IR/ASTIr.hpp"
 
 /*
@@ -48,8 +49,10 @@ Var(identifier)         Pseudo(identifier)
 
 namespace CodeGen {
 
-void program(const Ir::Program &program, Program &programCodegen);
-std::unique_ptr<Function> function(const Ir::Function *function);
+void generateProgram(const Ir::Program &program, Program &programCodegen);
+std::unique_ptr<TopLevel> generateTopLevel(const Ir::TopLevel& topLevel);
+std::unique_ptr<TopLevel> generateFunction(const Ir::Function& function);
+std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable);
 void transformInst(const std::unique_ptr<Function>& functionCodeGen, const std::unique_ptr<Ir::Instruction>& inst);
 void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
 void generateUnaryNotInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
@@ -82,7 +85,9 @@ BinaryInst::CondCode condCode(Ir::BinaryInst::Operation type);
 
 std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 
-[[nodiscard]] i32 replacingPseudoRegisters(Function& function);
+[[nodiscard]] i32 getStaticVariableInitial(const Ir::StaticVariable& staticVariable);
+
+[[nodiscard]] i32 replacingPseudoRegisters(Function& function, const SymbolTable& symbolTable);
 void fixUpInstructions(Function& function, i32 stackAlloc);
 
 }

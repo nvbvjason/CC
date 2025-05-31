@@ -81,14 +81,18 @@ std::string Token::getTypeName() const
         case Type::Switch:              return "Switch";
         case Type::Case:                return "Case";
         case Type::Default:             return "Default";
+        case Type::Static:              return "Static";
+        case Type::Extern:              return "extern";
 
         // Special Tokens
         case Type::EndOfFile:           return "End Of File";
+        case Type::NotAToken:           return "Not a Token";
         case Type::Invalid:             return "Invalid";
 
         default:                        return "Unknown Token";
     }
 }
+
 std::ostream& operator<<(std::ostream& os, const Token& token)
 {
     os << "line: " << token.line() << " column: " << token.column() << " type: " << token.getTypeName() << " lexeme: " << token.m_lexeme;

@@ -7,15 +7,39 @@ namespace Ir {
 std::string IrPrinter::print(const Program& program)
 {
     addLine("Program:");
-    for (const auto& function : program.functions)
-        print(*function);
+    for (const auto& topLevel : program.topLevels) {
+        if (topLevel->type == TopLevel::Type::Function) {
+            const auto function = dynamic_cast<Function*>(topLevel.get());
+            print(*function);
+        }
+        if (topLevel->type == TopLevel::Type::StaticVariable) {
+            const auto variable = dynamic_cast<StaticVariable*>(topLevel.get());
+            print(*variable);
+        }
+    }
     return m_oss.str();
+}
+
+void IrPrinter::print(const StaticVariable& variable)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("Variable: " + variable.name);
+    IndentGuard innerGuard(m_indentLevel);
+    if (variable.global)
+        addLine("is Global");
+    else
+        addLine("is not Global");
+    addLine(print(*variable.value));
 }
 
 void IrPrinter::print(const Function& function)
 {
     IndentGuard guard(m_indentLevel);
     addLine("Function " + function.name);
+    if (function.isGlobal)
+        addLine("is Global");
+    else
+        addLine("is not Global");
     IndentGuard guard2(m_indentLevel);
     std::string args;
     for (const auto& arg : function.args)
@@ -24,7 +48,6 @@ void IrPrinter::print(const Function& function)
     for (const auto& inst : function.insts)
         print(*inst);
 }
-
 
 std::string IrPrinter::print(const Value& value)
 {

@@ -5,18 +5,20 @@
 
 enum class ErrorCode {
     OK = 0,
-    NoInputFile = 1,
-    FileNotFound = 2,
-    InvalidCommandlineArgs = 3,
-    Lexer = 4,
-    Parser = 5,
-    LValueVerification = 6,
-    ValidateReturn = 7,
-    VariableResolution = 8,
-    LabelsUnique = 9,
-    LoopLabeling = 10,
-    Switch = 11,
-    Codegen = 12,
+    NoInputFile,
+    FileNotFound,
+    InvalidCommandlineArgs,
+    Lexer,
+    Parser,
+    LValueVerification,
+    ValidateReturn,
+    VariableResolution,
+    TypeResolution,
+    LabelsUnique,
+    LoopLabeling,
+    Switch,
+    Codegen,
+    AsmFileWrite,
     ERROR_UNKNOWN
 };
 
@@ -36,6 +38,10 @@ inline std::string to_string(ErrorCode code)
         case ErrorCode::VariableResolution:         return "Error Variable resolution";
         case ErrorCode::LabelsUnique:               return "Error Labels unique";
         case ErrorCode::LoopLabeling:               return "Error Loop labeling";
+        case ErrorCode::Switch:                     return "Error Switch";
+        case ErrorCode::Codegen:                    return "Error Codegen";
+        case ErrorCode::TypeResolution:             return "Error TypeResolution";
+        case ErrorCode::AsmFileWrite:               return "Error Assembly File Write";
         default:                                    return "Error Unknown";
     }
 }

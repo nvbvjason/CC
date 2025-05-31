@@ -11,7 +11,7 @@
 
 
 namespace Parsing {
-class ASTPrinter : public ConstASTVisitor {
+class ASTPrinter : public ConstASTTraverser {
     class IndentGuard {
     public:
         IndentGuard(int& level) : m_level(level) { ++m_level; }
@@ -20,7 +20,8 @@ class ASTPrinter : public ConstASTVisitor {
         int& m_level;
     };
     std::ostringstream oss;
-    i32 m_indetLevel = 0;
+    i32 m_indentLevel = 0;
+    i32 m_indentMultiplier = 3;
 public:
     std::string getString() const;
 

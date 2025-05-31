@@ -3,8 +3,8 @@
 #ifndef CC_PARSING_OPERATORS_HPP
 #define CC_PARSING_OPERATORS_HPP
 
-#include "ASTParser.hpp"
 #include "Token.hpp"
+#include "ASTParser.hpp"
 
 #include <cassert>
 
@@ -17,6 +17,9 @@ using TokenType = Lexing::Token::Type;
 [[nodiscard]] constexpr bool isBinaryOperator(TokenType type);
 [[nodiscard]] constexpr bool isUnaryOperator(TokenType type);
 [[nodiscard]] constexpr bool isAssignmentOperator(TokenType type);
+[[nodiscard]] constexpr bool isStorageSpecifier(TokenType type);
+[[nodiscard]] constexpr bool isSpecifier(TokenType type);
+[[nodiscard]] constexpr bool isType(TokenType type);
 
 // https://en.cppreference.com/w/c/language/operator_precedence
 [[nodiscard]] constexpr i32 precedence(TokenType type);
@@ -26,17 +29,14 @@ using TokenType = Lexing::Token::Type;
 
 constexpr UnaryExpr::Operator unaryOperator(const TokenType type)
 {
+    using Operator = UnaryExpr::Operator;
     switch (type) {
-        case TokenType::Minus:
-            return UnaryExpr::Operator::Negate;
-        case TokenType::Tilde:
-            return UnaryExpr::Operator::Complement;
-        case TokenType::ExclamationMark:
-            return UnaryExpr::Operator::Not;
-        case TokenType::Increment:
-            return UnaryExpr::Operator::PrefixIncrement;
-        case TokenType::Decrement:
-            return UnaryExpr::Operator::PrefixDecrement;
+        case TokenType::Plus:               return Operator::Plus;
+        case TokenType::Minus:              return Operator::Negate;
+        case TokenType::Tilde:              return Operator::Complement;
+        case TokenType::ExclamationMark:    return Operator::Not;
+        case TokenType::Increment:          return Operator::PrefixIncrement;
+        case TokenType::Decrement:          return Operator::PrefixDecrement;
         default:
             assert(false && "Invalid unary operator unaryOperator");
             std::unreachable();
@@ -131,6 +131,7 @@ constexpr bool isUnaryOperator(const TokenType type)
 {
     switch (type) {
         case TokenType::Minus:
+        case TokenType::Plus:
         case TokenType::Tilde:
         case TokenType::ExclamationMark:
         case TokenType::Increment:
@@ -238,11 +239,43 @@ constexpr i32 getPrecedenceLevel(const BinaryExpr::Operator oper)
     }
 }
 
+constexpr bool isSpecifier(const TokenType type)
+{
+    switch (type) {
+        case TokenType::Static:
+        case TokenType::Extern:
+        case TokenType::IntKeyword:
+            return true;
+        default:
+            return false;
+    }
+}
+
+constexpr bool isStorageSpecifier(const TokenType type)
+{
+    switch (type) {
+        case TokenType::Static:
+        case TokenType::Extern:
+            return true;
+        default:
+            return false;
+    }
+}
+
+constexpr bool isType(const TokenType type)
+{
+    switch (type) {
+        case TokenType::IntKeyword:
+            return true;
+        default:
+            return false;
+    }
+}
+
 constexpr i32 getPrecedenceLevel(const AssignmentExpr::Operator oper)
 {
     return 14;
 }
-
 } // namespace Parsing::Operators
 
 #endif // CC_PARSING_OPERATORS_HPP

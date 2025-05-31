@@ -1,166 +1,200 @@
 #include "VariableResolution.hpp"
+#include "ASTParser.hpp"
 
 #include <unordered_set>
 
-namespace Semantics {
-
-bool VariableResolution::resolve()
-{
-    m_valid = true;
-    m_counter = 0;
-    program.accept(*this);
-    return m_valid;
+namespace {
+using Flag = SymbolTable::State;
+using Storage = Parsing::Declaration::StorageClass;
 }
 
-void VariableResolution::visit(Parsing::Program& program)
+namespace Semantics {
+
+void VariableResolution::reset()
 {
-    m_variableStack.push();
+    m_nameCounter = 0;
+    m_valid = true;
+}
+
+bool VariableResolution::resolve(Parsing::Program& program)
+{
+    reset();
     ASTTraverser::visit(program);
-    m_variableStack.pop();
+    return m_valid;
 }
 
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
-    if (!m_valid)
-        return;
-    if (hasDuplicates(funDecl.params)) {
+    const SymbolTable::ReturnedFuncEntry prevEntry = m_symbolTable.lookupFunc(funDecl.name);
+    if (!isValidFuncDecl(funDecl, m_symbolTable, prevEntry)) {
         m_valid = false;
         return;
     }
-    if (!m_variableStack.tryDeclare(funDecl.name, Variable::Type::Function)) {
-        m_valid = false;
-        return;
-    }
-    if (m_funcDecls.contains(funDecl.name)) {
-        if (funDecl.params.size() != m_funcDecls[funDecl.name].size()) {
-            m_valid = false;
-            return;
-        }
-    }
-    if (functionDefinitionInOtherFunctionBody(funDecl)) {
-        m_valid = false;
-        return;
-    }
-    if (functionAlreadyDefined(funDecl)) {
-        m_valid = false;
-        return;
-    }
-    m_funcDecls[funDecl.name] = funDecl.params;
-    m_variableStack.addDecl(funDecl.name, makeTemporary(funDecl.name), Variable::Type::Function);
-    if (funDecl.body == nullptr)
-        return;
-    m_definedFunctions.insert(funDecl.name);
-    m_inFunctionBody = true;
-    m_variableStack.addArgs(funDecl.params);
+    bool global = !m_symbolTable.inFunc();
+    if (prevEntry.isSet(Flag::Contains) && prevEntry.isSet(Flag::Global))
+        global = true;
+    const bool defined = funDecl.body != nullptr;
+    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || funDecl.storage == Storage::Static;
+    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && funDecl.storage != Storage::Static;
+    m_symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), internal, external, global, defined);
+    ScopeGuard scopeGuard(m_symbolTable);
+    m_symbolTable.setArgs(funDecl.params);
     ASTTraverser::visit(funDecl);
-    m_variableStack.clearArgs();
-    m_inFunctionBody = false;
+    m_symbolTable.clearArgs();
 }
 
-void VariableResolution::visit(Parsing::Block& block)
+bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
+                     const SymbolTable& symbolTable,
+                     const SymbolTable::ReturnedFuncEntry& returnedEntry)
 {
-    m_variableStack.push();
-    ASTTraverser::visit(block);
-    m_variableStack.pop();
+    if (funDecl.storage == Storage::Static && symbolTable.inFunc())
+        return false;
+    if (duplicatesInArgs(funDecl.params))
+        return false;
+    if (symbolTable.inFunc() && funDecl.body != nullptr)
+        return false;
+    if (!returnedEntry.isSet(Flag::Contains))
+        return true;
+    if (returnedEntry.argSize != funDecl.params.size())
+        return false;
+    if (returnedEntry.isSet(Flag::Defined) && funDecl.body != nullptr)
+        return false;
+    if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::FromCurrentScope))
+        return false;
+    if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::Global))
+        return false;
+    if (returnedEntry.isSet(Flag::ExternalLinkage) && funDecl.storage == Storage::Static)
+        return false;
+    return true;
 }
 
-void VariableResolution::visit(Parsing::ForStmt& function)
+bool duplicatesInArgs(const std::vector<std::string>& args)
 {
-    m_variableStack.push();
-    ASTTraverser::visit(function);
-    m_variableStack.pop();
+    std::unordered_set<std::string> duplicates;
+    for (const std::string& arg : args) {
+        if (duplicates.contains(arg))
+            return true;
+        duplicates.insert(arg);
+    }
+    return false;
+}
+
+void VariableResolution::visit(Parsing::CompoundStmt& compoundStmt)
+{
+    ScopeGuard scopeGuard(m_symbolTable);
+    ASTTraverser::visit(compoundStmt);
+}
+
+void VariableResolution::visit(Parsing::ForStmt& forStmt)
+{
+    ScopeGuard scopeGuard(m_symbolTable);
+    ASTTraverser::visit(forStmt);
 }
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    if (!m_valid)
-         return;
-    if (m_variableStack.inInnerMost(varDecl.name)) {
+    const SymbolTable::ReturnedVarEntry prevEntry = m_symbolTable.lookupVar(varDecl.name);
+    if (!isValidVarDecl(varDecl, m_symbolTable, prevEntry)) {
         m_valid = false;
         return;
     }
-    if (!m_variableStack.tryDeclare(varDecl.name, Variable::Type::Int)) {
-        m_valid = false;
-        return;
+    const bool global = !m_symbolTable.inFunc();
+    const bool defined = prevEntry.isSet(Flag::Defined) || varDecl.init != nullptr;
+    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || hasInternalLinkageVar(varDecl);
+    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && hasExternalLinkageVar(varDecl);
+    if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
+        m_symbolTable.addVarEntry(
+            varDecl.name, varDecl.name, internal, external, global, defined);
     }
-    const std::string uniqueName = makeTemporary(varDecl.name);
-    m_variableStack.addDecl(varDecl.name, uniqueName, Variable::Type::Int);
-    varDecl.name = uniqueName;
-    if (varDecl.init != nullptr)
-        varDecl.init->accept(*this);
+    else {
+        const std::string uniqueName = makeTemporaryName(varDecl.name);
+        m_symbolTable.addVarEntry(varDecl.name, uniqueName, internal, external, global, defined);
+        varDecl.name = uniqueName;
+    }
+    ASTTraverser::visit(varDecl);
+}
+
+
+bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable,
+                    const SymbolTable::ReturnedVarEntry prevEntry)
+{
+    if (prevEntry.isSet(Flag::InArgs))
+        return false;
+    if (!prevEntry.isSet(Flag::Contains))
+        return true;
+    if (!symbolTable.inFunc())
+        return isValidVarDeclGlobal(varDecl, prevEntry);
+    if (isIllegalVarRedecl(varDecl, prevEntry))
+        return false;
+    if (varDecl.storage == Storage::Extern && prevEntry.isSet(Flag::ExternalLinkage) && !prevEntry.isSet(Flag::CorrectType))
+        return false;
+    if (prevEntry.isSet(Flag::CorrectType) && prevEntry.isSet(Flag::FromCurrentScope) &&
+            varDecl.storage != Storage::Extern)
+        return false;
+    return true;
+}
+
+bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry& prevEntry)
+{
+    if (!prevEntry.isSet(Flag::CorrectType))
+        return false;
+    if (varDecl.init != nullptr && prevEntry.isSet(Flag::Defined))
+        return false;
+    if (hasInternalLinkageVar(varDecl) && !prevEntry.isSet(Flag::InternalLinkage))
+        return false;
+    if (varDecl.storage == Storage::None && prevEntry.isSet(Flag::InternalLinkage))
+        return false;
+    return true;
 }
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    if (!m_valid)
-        return;
-    if (m_variableStack.inArg(varExpr.name))
-        return;
-    const std::string varName = m_variableStack.tryCall(varExpr.name, Variable::Type::Int);
-    if (varName.empty()) {
+    const SymbolTable::ReturnedVarEntry returnedEntry = m_symbolTable.lookupVar(varExpr.name);
+    if (!isValidVarExpr(varExpr, returnedEntry)) {
         m_valid = false;
         return;
     }
-    varExpr.name = varName;
+    // UGGLY HACK
+    if (returnedEntry.isSet(Flag::ExternalLinkage) && !returnedEntry.isSet(Flag::Global))
+        varExpr.name += ".external";
+    else if (!returnedEntry.isSet(Flag::InArgs))
+        varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
+    ASTTraverser::visit(varExpr);
 }
 
-void VariableResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
+bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::ReturnedVarEntry returnedEntry)
 {
-    if (!m_valid)
-        return;
-    if (assignmentExpr.lhs->kind != Parsing::Expr::Kind::Var) {
-        m_valid = false;
-        return;
-    }
-    auto varExpr = static_cast<Parsing::VarExpr*>(assignmentExpr.lhs.get());
-    const std::string varName = m_variableStack.tryCall(varExpr->name, Variable::Type::Int);
-    if (varName.empty()) {
-        m_valid = false;
-        return;
-    }
-    varExpr->name = varName;
-    assignmentExpr.rhs->accept(*this);
+    if (returnedEntry.isSet(Flag::InArgs))
+        return true;
+    if (!returnedEntry.isSet(Flag::Contains))
+        return false;
+    if (!returnedEntry.isSet(Flag::CorrectType))
+        return false;
+    return true;
 }
 
 void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
 {
-    if (!m_valid)
-        return;
-    const std::string varName = m_variableStack.tryCall(funCallExpr.identifier, Variable::Type::Function);
-    if (varName.empty()) {
-        m_valid = false;
-        return;
-    }
-    if (m_funcDecls[funCallExpr.identifier].size() != funCallExpr.args.size()) {
+    if (!isValidFuncCall(funCallExpr, m_symbolTable)) {
         m_valid = false;
         return;
     }
     ASTTraverser::visit(funCallExpr);
 }
 
-std::string VariableResolution::makeTemporary(const std::string& name)
+bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable)
 {
-    return name + '.' + std::to_string(m_counter++);
+    const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funCallExpr.name);
+    if (!returnedEntry.isSet(Flag::Contains))
+        return false;
+    if (!returnedEntry.isSet(Flag::CorrectType))
+        return false;
+    return true;
 }
 
-bool VariableResolution::hasDuplicates(const std::vector<std::string>& vec)
+std::string VariableResolution::makeTemporaryName(const std::string& name)
 {
-    std::unordered_set<std::string> seen;
-    for (const auto& str : vec) {
-        if (seen.contains(str))
-            return true;
-        seen.insert(str);
-    }
-    return false;
+    return name + '.' + std::to_string(m_nameCounter++) + ".tmp";
 }
 
-bool VariableResolution::functionAlreadyDefined(const Parsing::FunDecl& funDecl) const
-{
-    return funDecl.body != nullptr && m_definedFunctions.contains(funDecl.name);
-}
-
-bool VariableResolution::functionDefinitionInOtherFunctionBody(const Parsing::FunDecl& funDecl) const
-{
-    return m_inFunctionBody && funDecl.body != nullptr;
-}
 } // Semantics

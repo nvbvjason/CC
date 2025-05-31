@@ -8,10 +8,11 @@ namespace Parsing {
 // for Levelisation
 
 /*
-    program = Program(function_declaration*)
+    program = Program(declaration*)
     declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
-    variable_declaration = (identifier name, exp? init)
-    function_definition = (identifier name, identifier* params, block? body)
+    variable_declaration = (identifier name, exp? init, storage_class?)
+    function_definition = (identifier name, identifier* params, block? body, storage_class?)
+    storage_class = Static | Extern
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
     for_init = InitDecl(variable_declaration) | InitExp(exp?)
@@ -37,7 +38,7 @@ namespace Parsing {
         | Assignment(assign_operator, exp, exp)
         | Conditional(exp condition, exp, exp)
         | FunctionCall(identifier, exp* args)
-    unary_operator = Complement | Negate | Not
+    unary_operator = Complement | Negate | Not | Plus
                    | PrefixIncrement | PostFixIncrement
                    | PrefixDecrement | PostFixDecrement
     binary_operator = Add | Subtract | Multiply | Divide | Remainder

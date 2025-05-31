@@ -13,7 +13,7 @@ void ValidateReturn::visit(Parsing::FunDecl& funDecl)
     if (funDecl.body == nullptr)
         return;
     if (funDecl.body->body.empty()) {
-            addReturnZero(funDecl);
+        addReturnZero(funDecl);
         return;
     }
 

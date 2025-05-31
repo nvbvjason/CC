@@ -3,7 +3,7 @@
 #ifndef CC_PARSING_VALIDATE_RETURN_HPP
 #define CC_PARSING_VALIDATE_RETURN_HPP
 
-#include "Frontend/Traverser/ASTTraverser.hpp"
+#include "ASTTraverser.hpp"
 #include "ASTParser.hpp"
 
 namespace Semantics {
