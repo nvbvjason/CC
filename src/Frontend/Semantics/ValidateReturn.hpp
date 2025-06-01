@@ -19,7 +19,7 @@ private:
 
 inline void ValidateReturn::addReturnZero(Parsing::FunDecl& funDecl)
 {
-    auto zeroConstExpr = std::make_unique<Parsing::ConstExpr>(0);
+    auto zeroConstExpr = std::make_unique<Parsing::ConstExpr>(0, Parsing::VarType(Parsing::Type::Kind::Int));
     auto returnStmt = std::make_unique<Parsing::ReturnStmt>(std::move(zeroConstExpr));
     auto returnBlockStmt = std::make_unique<Parsing::StmtBlockItem>(std::move(returnStmt));
     funDecl.body->body.push_back(std::move(returnBlockStmt));

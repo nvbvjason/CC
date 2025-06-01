@@ -4,35 +4,23 @@
 #define CC_PARSING_EXPR_TREE_HPP
 
 #include "ASTVisitor.hpp"
+#include "ASTBase.hpp"
+#include "AstTypes.hpp"
 #include "ShortTypes.hpp"
 
 #include <memory>
 #include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
 namespace Parsing {
 
-struct Expr {
-    enum class Kind {
-        Constant, Var, Unary, Binary, Assignment, Conditional, FunctionCall,
-    };
-    Kind kind;
-
-    virtual ~Expr() = default;
-    virtual void accept(ASTVisitor& visitor) = 0;
-    virtual void accept(ConstASTVisitor& visitor) const = 0;
-
-    Expr() = delete;
-protected:
-    explicit Expr(const Kind kind)
-        : kind(kind) {}
-};
-
 struct ConstExpr final : Expr {
-    i32 value;
+    std::variant<i32, i64> value;
 
-    explicit ConstExpr(const i32 value) noexcept
-        : Expr(Kind::Constant), value(value) {}
+    ConstExpr(const i32 value, std::unique_ptr<Type> varType) noexcept
+        : Expr(Kind::Constant, std::move(varType)), value(value) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -43,8 +31,8 @@ struct ConstExpr final : Expr {
 struct VarExpr final : Expr {
     std::string name;
 
-    explicit VarExpr(std::string name) noexcept
-        : Expr(Kind::Var), name(std::move(name)) {}
+    explicit VarExpr(std::string name, std::unique_ptr<Type> varType) noexcept
+        : Expr(Kind::Var, std::move(varType)), name(std::move(name)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -61,8 +49,8 @@ struct UnaryExpr final : Expr {
     Operator op;
     std::unique_ptr<Expr> operand;
 
-    UnaryExpr(const Operator op, std::unique_ptr<Expr> expr)
-        : Expr(Kind::Unary), op(op), operand(std::move(expr)) {}
+    UnaryExpr(const Operator op, std::unique_ptr<Expr> expr, std::unique_ptr<Type> type)
+        : Expr(Kind::Unary, std::move(type)), op(op), operand(std::move(expr)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -84,8 +72,8 @@ struct BinaryExpr final : Expr {
     std::unique_ptr<Expr> lhs;
     std::unique_ptr<Expr> rhs;
 
-    BinaryExpr(const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
-        : Expr(Kind::Binary), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+    BinaryExpr(const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs, std::unique_ptr<Type> type)
+        : Expr(Kind::Binary, std::move(type)), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -104,8 +92,8 @@ struct AssignmentExpr final : Expr {
     std::unique_ptr<Expr> lhs;
     std::unique_ptr<Expr> rhs;
 
-    AssignmentExpr(const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
-        : Expr(Kind::Assignment), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+    AssignmentExpr(const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs, std::unique_ptr<Type> type)
+        : Expr(Kind::Assignment, std::move(type)), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -119,8 +107,9 @@ struct ConditionalExpr final : Expr {
     std::unique_ptr<Expr> second;
     ConditionalExpr(std::unique_ptr<Expr> condition,
                     std::unique_ptr<Expr> first,
-                    std::unique_ptr<Expr> second)
-        : Expr(Kind::Conditional), condition(std::move(condition)),
+                    std::unique_ptr<Expr> second,
+                    std::unique_ptr<Type> type)
+        : Expr(Kind::Conditional, std::move(type)), condition(std::move(condition)),
           first(std::move(first)), second(std::move(second)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
@@ -134,8 +123,8 @@ struct FunCallExpr final : Expr {
     std::
     vector<std::unique_ptr<Expr>> args;
 
-    FunCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args)
-        : Expr(Kind::FunctionCall), name(std::move(identifier)), args(std::move(args)) {}
+    FunCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args, std::unique_ptr<Type> type)
+        : Expr(Kind::FunctionCall, std::move(type)), name(std::move(identifier)), args(std::move(args)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

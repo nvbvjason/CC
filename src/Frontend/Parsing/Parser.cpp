@@ -1,5 +1,4 @@
 #include "Parser.hpp"
-#include "Token.hpp"
 
 #include <cassert>
 
@@ -45,7 +44,7 @@ std::unique_ptr<VarDecl> Parser::varDeclParse(const Storage storage,
     }
     if (!expect(TokenType::Semicolon))
         return nullptr;
-    auto varDecl = std::make_unique<VarDecl>(storage, iden);
+    auto varDecl = std::make_unique<VarDecl>(storage, iden, VarType(Type::Kind::Int));
     if (init)
         varDecl->init = std::move(init);
     return varDecl;
@@ -450,7 +449,7 @@ std::unique_ptr<Expr> Parser::factorParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case TokenType::IntegerLiteral: {
-            auto constantExpr = std::make_unique<ConstExpr>(lexeme.getValue());
+            auto constantExpr = std::make_unique<ConstExpr>(lexeme.getValue(), VarType(Type::Kind::Int));
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;

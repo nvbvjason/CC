@@ -292,9 +292,12 @@ void GenerateIr::generateLabelStmt(const Parsing::LabelStmt& labelStmt)
 void GenerateIr::generateCaseStmt(const Parsing::CaseStmt& caseStmt)
 {
     const auto constExpr = dynamic_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
-    m_instructions.push_back(
-        std::make_unique<LabelInst>(Identifier(caseStmt.identifier + std::to_string(constExpr->value)))
-    );
+    if (constExpr->type.kind == VarKind::Int) {
+        m_instructions.push_back(
+            std::make_unique<LabelInst>(
+                Identifier(caseStmt.identifier + std::to_string(std::get<i32>(constExpr->value))))
+        );
+    }
     generateStmt(*caseStmt.body);
 }
 
@@ -378,12 +381,12 @@ void GenerateIr::generateSwitchStmt(const Parsing::SwitchStmt& stmt)
         m_instructions.push_back(
             std::make_unique<BinaryInst>(BinaryInst::Operation::Equal,
                                          realValue,
-                                         std::make_shared<ValueConst>(constExpr->value),
+                                         std::make_shared<ValueConst>(std::get<i32>(constExpr->value)),
                                          destination)
             );
         m_instructions.push_back(
             std::make_unique<JumpIfNotZeroInst>(destination,
-                Identifier(stmt.identifier + std::to_string(constExpr->value)))
+                Identifier(stmt.identifier + std::to_string(std::get<i32>(constExpr->value))))
         );
     }
     if (stmt.hasDefault)
@@ -561,7 +564,7 @@ std::shared_ptr<Value> GenerateIr::generateBinaryOrInst(const Parsing::BinaryExp
 std::shared_ptr<Value> GenerateIr::generateConstInst(const Parsing::Expr& parsingExpr)
 {
     const auto constant = dynamic_cast<const Parsing::ConstExpr*>(&parsingExpr);
-    auto result = std::make_unique<ValueConst>(constant->value);
+    auto result = std::make_unique<ValueConst>(std::get<i32>(constant->value));
     return result;
 }
 

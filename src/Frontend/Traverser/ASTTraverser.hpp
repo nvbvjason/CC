@@ -20,6 +20,10 @@ public:
     void visit(StmtBlockItem& stmtBlockItem) override;
     void visit(DeclBlockItem& declBlockItem) override;
 
+    // Type
+    void visit(VarType& varType) override {}
+    void visit(FunctionType& functionType) override;
+
     // ForInit
     void visit(DeclForInit& declForInit) override;
     void visit(ExprForInit& exprForInit) override;

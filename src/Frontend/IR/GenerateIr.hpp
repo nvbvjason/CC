@@ -12,6 +12,7 @@
 namespace Ir {
 class GenerateIr {
     using Storage = Parsing::Declaration::StorageClass;
+    using VarKind = Parsing::Type::Kind;
 
     bool m_global = true;
     std::vector<std::unique_ptr<Instruction>> m_instructions;

@@ -17,7 +17,7 @@ void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
     if (isNonConstantInSwitchCase(caseStmt))
         m_valid = false;
     const auto constantExpr = static_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
-    const i32 value = constantExpr->value;
+    const i32 value = std::get<i32>(constantExpr->value);
     std::vector<i32>& vec = m_case[caseStmt.identifier];
     if (std::ranges::find(vec, value) != vec.end())
         m_valid = false;
@@ -98,15 +98,26 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     switchStmt.identifier = makeTemporary("switch");
     m_breakLabel = switchStmt.identifier;
     m_switchLabel = switchStmt.identifier;
+    const Parsing::VarType varType = getSwitchConditionType(switchStmt);
     m_case[switchStmt.identifier] = std::vector<i32>();
     ASTTraverser::visit(switchStmt);
     for (const i32 value : m_case[switchStmt.identifier])
         switchStmt.cases.push_back(
-            std::make_unique<Parsing::ConstExpr>(value)
+            std::make_unique<Parsing::ConstExpr>(value, varType)
             );
     if (m_default.contains(switchStmt.identifier))
         switchStmt.hasDefault = true;
     m_breakLabel = breakTemp;
     m_switchLabel = switchTemp;
+}
+
+Parsing::VarType LoopLabeling::getSwitchConditionType(const Parsing::SwitchStmt& switchStmt)
+{
+    const auto condition = static_cast<const Parsing::ConstExpr*>(switchStmt.condition.get());
+    if (condition->type.kind == Parsing::VarType::Kind::Int)
+        return Parsing::VarType(Parsing::VarType::Kind::Int);
+    if (condition->type.kind == Parsing::VarType::Kind::Long)
+        return Parsing::VarType(Parsing::VarType::Kind::Long);
+    std::unreachable();
 }
 } // Semantics

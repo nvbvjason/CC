@@ -6,6 +6,16 @@ namespace Parsing {
 
 namespace {
 
+std::string varTypeToString(const Parsing::VarType::Kind& kind)
+{
+    using Type = Parsing::VarType::Kind;
+    switch (kind) {
+        case Type::Int:     return "int";
+        case Type::Long:    return "long";
+        default:            return "unknown";
+    }
+}
+
 std::string unaryOpToString(const UnaryExpr::Operator op)
 {
     using Operator = UnaryExpr::Operator;
@@ -17,7 +27,7 @@ std::string unaryOpToString(const UnaryExpr::Operator op)
         case Operator::PrefixDecrement:      return "pre  --";
         case Operator::PostFixIncrement:     return "post ++";
         case Operator::PrefixIncrement:      return "pre  ++";
-        default: return "?";
+        default: return "unknown";
     }
 }
 
@@ -43,7 +53,7 @@ std::string binaryOpToString(const BinaryExpr::Operator op)
         case Operator::LessOrEqual:     return "<=";
         case Operator::GreaterThan  :   return ">";
         case Operator::GreaterOrEqual:  return ">=";
-        default:                        return "?";
+        default:                        return "unknown";
     }
 }
 std::string assignmentOpToString(const AssignmentExpr::Operator op)
@@ -61,7 +71,7 @@ std::string assignmentOpToString(const AssignmentExpr::Operator op)
         case Operator::BitwiseXorAssign:    return "^=";
         case Operator::LeftShiftAssign:     return "<<=";
         case Operator::RightShiftAssign:    return ">>=";
-        default: return "?";
+        default:                            return "unknown";
     }
 }
 
@@ -113,6 +123,17 @@ void ASTPrinter::visit(const Block& block)
     IndentGuard guard(m_indentLevel);
     addLine("Block");
     ConstASTTraverser::visit(block);
+}
+
+void ASTPrinter::visit(const VarType& varType)
+{
+    addLine(varTypeToString(varType.kind));
+    ConstASTTraverser::visit(varType);
+}
+
+void ASTPrinter::visit(const FunctionType& functionType)
+{
+    ConstASTTraverser::visit(functionType);
 }
 
 void ASTPrinter::visit(const StmtBlockItem& stmtBlockItem)
@@ -264,7 +285,10 @@ void ASTPrinter::visit(const AssignmentExpr& assignmentExpr)
 void ASTPrinter::visit(const ConstExpr& constExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine(std::to_string(constExpr.value));
+    if (constExpr.type.kind == Type::Kind::Int)
+        addLine(std::to_string(std::get<i32>(constExpr.value)));
+    else if (constExpr.type.kind == Type::Kind::Long)
+        addLine(std::to_string(std::get<i64>(constExpr.value)));
     ConstASTTraverser::visit(constExpr);
 }
 

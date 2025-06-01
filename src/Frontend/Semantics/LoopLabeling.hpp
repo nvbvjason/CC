@@ -35,6 +35,7 @@ public:
 private:
     static bool isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt);
     static bool isNonConstantInSwitchCase(const Parsing::CaseStmt& caseStmt);
+    static Parsing::VarType getSwitchConditionType(const Parsing::SwitchStmt& switchStmt);
     static std::string makeTemporary(const std::string& name);
 };
 

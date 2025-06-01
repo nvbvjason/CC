@@ -19,6 +19,10 @@ public:
 
     virtual void visit(Block&) = 0;
 
+    // Type
+    virtual void visit(VarType&) = 0;
+    virtual void visit(FunctionType&) = 0;
+
     virtual void visit(StmtBlockItem&) = 0;
     virtual void visit(DeclBlockItem&) = 0;
 
@@ -64,6 +68,10 @@ public:
     virtual void visit(const FunDecl&) = 0;
 
     virtual void visit(const Block&) = 0;
+
+    // Type
+    virtual void visit(const VarType&) = 0;
+    virtual void visit(const FunctionType&) = 0;
 
     virtual void visit(const StmtBlockItem&) = 0;
     virtual void visit(const DeclBlockItem&) = 0;

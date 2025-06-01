@@ -46,7 +46,6 @@
 */
 
 #include "ASTParser.hpp"
-#include "Frontend/Lexing/Token.hpp"
 #include "Operators.hpp"
 
 #include <vector>

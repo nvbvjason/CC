@@ -39,6 +39,13 @@ void ASTTraverser::visit(DeclBlockItem& declBlockItem)
     declBlockItem.decl->accept(*this);
 }
 
+void ASTTraverser::visit(FunctionType& functionType)
+{
+    functionType.returnType->accept(*this);
+    for (const std::unique_ptr<Type>& type : functionType.params)
+        type->accept(*this);
+}
+
 // ForInit
 void ASTTraverser::visit(DeclForInit& declForInit)
 {

@@ -33,6 +33,10 @@ public:
 
     void visit(const Block& block) override;
 
+    // Type
+    void visit(const VarType& varType) override;
+    void visit(const FunctionType& functionType) override;
+
     // BlockItem
     void visit(const StmtBlockItem& stmtBlockItem) override;
     void visit(const DeclBlockItem& declBlockItem) override;

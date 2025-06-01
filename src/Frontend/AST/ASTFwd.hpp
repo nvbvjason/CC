@@ -10,8 +10,11 @@ namespace Parsing {
 /*
     program = Program(declaration*)
     declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
-    variable_declaration = (identifier name, exp? init, storage_class?)
-    function_definition = (identifier name, identifier* params, block? body, storage_class?)
+    variable_declaration = (identifier name, exp? init,
+                            type var_type, storage_class?)
+    function_definition = (identifier name, identifier* params, block? body,
+                           type var_type, storage_class?)
+    type = Int | Long | FunType(type* params, type ret)
     storage_class = Static | Extern
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
@@ -31,8 +34,9 @@ namespace Parsing {
               | For(for_init init, exp? condition, exp? post, statement body, identifier label)
               | Switch(identifier, exp condition, statement body, expr cases*, bool hasDefault)
               | Null
-    exp = Constant(int)
+    exp = Constant(const)
         | Var(identifier)
+        | Cast(type target, exp)
         | Unary(unary_operator, exp)
         | Binary(binary_operator, exp, exp)
         | Assignment(assign_operator, exp, exp)
@@ -52,6 +56,7 @@ namespace Parsing {
                     | MultiplyAssign | DivideAssign | ModuloAssign
                     | BitwiseAndAssign | BitwiseOrAssign | BitwiseXorAssign
                     | LeftShiftAssign | RightShiftAssign
+    const = ConstInt(int) | ConstLong(int)
 */
 
 // Program structure
@@ -68,6 +73,11 @@ struct Block;
 struct BlockItem;
 struct StmtBlockItem;
 struct DeclBlockItem;
+
+// Types
+struct Type;
+struct VarType;
+struct FunctionType;
 
 // For loop initialization
 struct ForInit;
@@ -101,7 +111,6 @@ struct BinaryExpr;
 struct AssignmentExpr;
 struct ConditionalExpr;
 struct FunCallExpr;
-
 } // Parsing
 
 #endif // CC_PARSING_AST_FWD_HPP

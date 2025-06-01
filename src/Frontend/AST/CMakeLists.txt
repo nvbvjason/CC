@@ -5,6 +5,10 @@ add_library(AST
         ASTVisitor.cpp
         ASTExpr.cpp
         ASTExpr.hpp
+        ASTBase.cpp
+        ASTBase.hpp
+        AstTypes.cpp
+        AstTypes.hpp
 )
 
 target_include_directories(AST PUBLIC

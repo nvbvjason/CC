@@ -39,6 +39,13 @@ void ConstASTTraverser::visit(const DeclBlockItem& declBlockItem)
     declBlockItem.decl->accept(*this);
 }
 
+void ConstASTTraverser::visit(const FunctionType& functionType)
+{
+    functionType.returnType->accept(*this);
+    for (const auto& type : functionType.params)
+        type->accept(*this);
+}
+
 // ForInit
 void ConstASTTraverser::visit(const DeclForInit& declForInit)
 {

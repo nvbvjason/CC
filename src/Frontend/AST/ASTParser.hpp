@@ -3,9 +3,9 @@
 #ifndef CC_PARSING_ABSTRACT_TREE_HPP
 #define CC_PARSING_ABSTRACT_TREE_HPP
 
-#include "ShortTypes.hpp"
 #include "ASTVisitor.hpp"
 #include "ASTExpr.hpp"
+#include "ASTBase.hpp"
 
 #include <memory>
 #include <string>
@@ -14,72 +14,18 @@
 
 namespace Parsing {
 
-struct Stmt {
-    enum class Kind {
-        Return, Expression, If, Goto, Compound,
-        Break, Continue, Label, Case, Default, While, DoWhile, For, Switch,
-        Null
-    };
-    Kind kind;
-    virtual ~Stmt() = default;
-    virtual void accept(ASTVisitor& visitor) = 0;
-    virtual void accept(ConstASTVisitor& visitor) const = 0;
-    Stmt() = delete;
-protected:
-    explicit Stmt(const Kind kind)
-        : kind(kind) {}
-};
-
-struct Declaration {
-    enum class Kind : u8 {
-        VarDecl, FuncDecl
-    };
-    enum class StorageClass : u8 {
-        None,
-        Extern,
-        Static
-    };
-    Kind kind;
-    StorageClass storage = StorageClass::None;
-
-    virtual ~Declaration() = default;
-
-    virtual void accept(ASTVisitor& visitor) = 0;
-    virtual void accept(ConstASTVisitor& visitor) const = 0;
-
-    Declaration() = delete;
-protected:
-    explicit Declaration(const Kind kind, const StorageClass storageClass)
-        : kind(kind), storage(storageClass) {}
-};
-
 struct VarDecl final : Declaration {
     std::string name;
     std::unique_ptr<Expr> init = nullptr;
+    std::unique_ptr<Type> type;
 
-    explicit VarDecl(const StorageClass storageClass, std::string name)
-        : Declaration(Kind::VarDecl, storageClass), name(std::move(name)) {}
+    explicit VarDecl(const StorageClass storageClass, std::string name, std::unique_ptr<Type> type)
+        : Declaration(Kind::VarDecl, storageClass), name(std::move(name)), type(std::move(type)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
     VarDecl() = delete;
-};
-
-struct ForInit {
-    enum class Kind {
-        Declaration, Expression
-    };
-    Kind kind;
-
-    virtual ~ForInit() = default;
-    virtual void accept(ASTVisitor& visitor) = 0;
-    virtual void accept(ConstASTVisitor& visitor) const = 0;
-
-    ForInit() = delete;
-protected:
-    explicit ForInit(const Kind kind)
-        : kind(kind) {}
 };
 
 struct DeclForInit final : ForInit {
@@ -105,22 +51,6 @@ struct ExprForInit final : ForInit {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
-};
-
-struct BlockItem {
-    enum class Kind : u8 {
-        Declaration, Statement
-    };
-    Kind kind;
-
-    virtual ~BlockItem() = default;
-    virtual void accept(ASTVisitor& visitor) = 0;
-    virtual void accept(ConstASTVisitor& visitor) const = 0;
-
-    BlockItem() = delete;
-protected:
-    explicit BlockItem(const Kind kind)
-        : kind(kind) {}
 };
 
 struct StmtBlockItem final : BlockItem {
