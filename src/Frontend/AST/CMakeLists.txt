@@ -7,8 +7,8 @@ add_library(AST
         ASTExpr.hpp
         ASTBase.cpp
         ASTBase.hpp
-        AstTypes.cpp
-        AstTypes.hpp
+        ASTTypes.cpp
+        ASTTypes.hpp
 )
 
 target_include_directories(AST PUBLIC

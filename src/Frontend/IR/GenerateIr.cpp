@@ -292,7 +292,7 @@ void GenerateIr::generateLabelStmt(const Parsing::LabelStmt& labelStmt)
 void GenerateIr::generateCaseStmt(const Parsing::CaseStmt& caseStmt)
 {
     const auto constExpr = dynamic_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
-    if (constExpr->type.kind == VarKind::Int) {
+    if (constExpr->type->kind == VarKind::Int) {
         m_instructions.push_back(
             std::make_unique<LabelInst>(
                 Identifier(caseStmt.identifier + std::to_string(std::get<i32>(constExpr->value))))

@@ -22,7 +22,7 @@ public:
 
     // Type
     void visit(const VarType& varType) override {}
-    void visit(const FunctionType& functionType) override;
+    void visit(const FuncType& functionType) override;
 
     // ForInit
     void visit(const DeclForInit& declForInit) override;
@@ -48,6 +48,7 @@ public:
     // Expression
     void visit(const ConstExpr& constExpr) override {}
     void visit(const VarExpr& varExpr) override {}
+    void visit(const CastExpr& castExpr) override;
     void visit(const UnaryExpr& unaryExpr) override;
     void visit(const BinaryExpr& binaryExpr) override;
     void visit(const AssignmentExpr& assignmentExpr) override;

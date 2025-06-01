@@ -19,7 +19,7 @@ struct VarDecl final : Declaration {
     std::unique_ptr<Expr> init = nullptr;
     std::unique_ptr<Type> type;
 
-    explicit VarDecl(const StorageClass storageClass, std::string name, std::unique_ptr<Type> type)
+    explicit VarDecl(const StorageClass storageClass, std::string name, std::unique_ptr<Type>&& type)
         : Declaration(Kind::VarDecl, storageClass), name(std::move(name)), type(std::move(type)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
@@ -88,6 +88,7 @@ struct FunDecl final : Declaration {
     std::string name;
     std::vector<std::string> params;
     std::unique_ptr<Block> body = nullptr;
+    std::unique_ptr<Type> type = nullptr;
 
     explicit FunDecl(const StorageClass storageClass, std::string name)
         : Declaration(Kind::FuncDecl, storageClass), name(std::move(name)) {}

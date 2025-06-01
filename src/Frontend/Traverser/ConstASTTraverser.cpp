@@ -1,4 +1,6 @@
 #include "../Traverser/ConstASTTraverser.hpp"
+
+#include "ASTTypes.hpp"
 #include "../AST/ASTParser.hpp"
 
 namespace Parsing {
@@ -39,7 +41,7 @@ void ConstASTTraverser::visit(const DeclBlockItem& declBlockItem)
     declBlockItem.decl->accept(*this);
 }
 
-void ConstASTTraverser::visit(const FunctionType& functionType)
+void ConstASTTraverser::visit(const FuncType& functionType)
 {
     functionType.returnType->accept(*this);
     for (const auto& type : functionType.params)
@@ -128,6 +130,11 @@ void ConstASTTraverser::visit(const SwitchStmt& switchStmt)
 }
 
 // Expression
+void ConstASTTraverser::visit(const CastExpr& castExpr)
+{
+    castExpr.expr->accept(*this);
+}
+
 void ConstASTTraverser::visit(const UnaryExpr& unaryExpr)
 {
     unaryExpr.operand->accept(*this);

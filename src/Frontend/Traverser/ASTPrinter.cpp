@@ -1,14 +1,15 @@
 #include "ASTPrinter.hpp"
 
 #include "ASTParser.hpp"
+#include "ASTTypes.hpp"
 
 namespace Parsing {
 
 namespace {
 
-std::string varTypeToString(const Parsing::VarType::Kind& kind)
+std::string varTypeToString(const VarType::Kind& kind)
 {
-    using Type = Parsing::VarType::Kind;
+    using Type = VarType::Kind;
     switch (kind) {
         case Type::Int:     return "int";
         case Type::Long:    return "long";
@@ -131,7 +132,7 @@ void ASTPrinter::visit(const VarType& varType)
     ConstASTTraverser::visit(varType);
 }
 
-void ASTPrinter::visit(const FunctionType& functionType)
+void ASTPrinter::visit(const FuncType& functionType)
 {
     ConstASTTraverser::visit(functionType);
 }
@@ -285,9 +286,9 @@ void ASTPrinter::visit(const AssignmentExpr& assignmentExpr)
 void ASTPrinter::visit(const ConstExpr& constExpr)
 {
     IndentGuard guard(m_indentLevel);
-    if (constExpr.type.kind == Type::Kind::Int)
+    if (constExpr.type->kind == Type::Kind::Int)
         addLine(std::to_string(std::get<i32>(constExpr.value)));
-    else if (constExpr.type.kind == Type::Kind::Long)
+    else if (constExpr.type->kind == Type::Kind::Long)
         addLine(std::to_string(std::get<i64>(constExpr.value)));
     ConstASTTraverser::visit(constExpr);
 }

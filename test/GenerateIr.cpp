@@ -2,9 +2,9 @@
 
 #include "GenerateIr.hpp"
 #include "IR/GenerateIr.hpp"
-
 #include "ASTIr.hpp"
 #include "Frontend/AST/ASTParser.hpp"
+#include "Frontend/AST/ASTTypes.hpp"
 
 TEST(GenerateIrTests, VarExprToIrPreservesType)
 {
@@ -16,7 +16,9 @@ TEST(GenerateIrTests, VarExprToIrPreservesType)
 
 TEST(GenerateIrTests, ConstExprToIrPreservesType)
 {
-    const auto constExpr = std::make_unique<Parsing::ConstExpr>(5, Parsing::VarType(Parsing::VarType::Kind::Int));
+    const auto constExpr = std::make_unique<Parsing::ConstExpr>(
+        5, std::make_unique<Parsing::VarType>(Parsing::Type::Kind::Int)
+        );
     const auto expected = std::make_shared<Ir::ValueConst>(5);
     const std::shared_ptr<Ir::Value> result = Ir::GenerateIr::generateConstInst(*constExpr);
     EXPECT_EQ(expected->type, result->type);

@@ -77,7 +77,7 @@ struct DeclBlockItem;
 // Types
 struct Type;
 struct VarType;
-struct FunctionType;
+struct FuncType;
 
 // For loop initialization
 struct ForInit;
@@ -106,6 +106,7 @@ struct NullStmt;
 struct Expr;
 struct ConstExpr;
 struct VarExpr;
+struct CastExpr;
 struct UnaryExpr;
 struct BinaryExpr;
 struct AssignmentExpr;

@@ -1,5 +1,6 @@
 #include "LoopLabeling.hpp"
 #include "ASTParser.hpp"
+#include "ASTTypes.hpp"
 
 namespace Semantics {
 bool LoopLabeling::programValidate(Parsing::Program& program)
@@ -103,7 +104,7 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     ASTTraverser::visit(switchStmt);
     for (const i32 value : m_case[switchStmt.identifier])
         switchStmt.cases.push_back(
-            std::make_unique<Parsing::ConstExpr>(value, varType)
+            std::make_unique<Parsing::ConstExpr>(value, std::make_unique<Parsing::VarType>(varType))
             );
     if (m_default.contains(switchStmt.identifier))
         switchStmt.hasDefault = true;
@@ -114,9 +115,9 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
 Parsing::VarType LoopLabeling::getSwitchConditionType(const Parsing::SwitchStmt& switchStmt)
 {
     const auto condition = static_cast<const Parsing::ConstExpr*>(switchStmt.condition.get());
-    if (condition->type.kind == Parsing::VarType::Kind::Int)
+    if (condition->type->kind == Parsing::VarType::Kind::Int)
         return Parsing::VarType(Parsing::VarType::Kind::Int);
-    if (condition->type.kind == Parsing::VarType::Kind::Long)
+    if (condition->type->kind == Parsing::VarType::Kind::Long)
         return Parsing::VarType(Parsing::VarType::Kind::Long);
     std::unreachable();
 }

@@ -35,7 +35,7 @@ public:
 
     // Type
     void visit(const VarType& varType) override;
-    void visit(const FunctionType& functionType) override;
+    void visit(const FuncType& functionType) override;
 
     // BlockItem
     void visit(const StmtBlockItem& stmtBlockItem) override;

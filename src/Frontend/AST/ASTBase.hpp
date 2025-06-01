@@ -58,10 +58,10 @@ protected:
 
 struct Expr {
     enum class Kind {
-        Constant, Var, Unary, Binary, Assignment, Conditional, FunctionCall,
+        Constant, Var, Cast, Unary, Binary, Assignment, Conditional, FunctionCall,
     };
     Kind kind;
-    std::unique_ptr<Type> type;
+    std::unique_ptr<Type> type = nullptr;
 
     virtual ~Expr() = default;
 
@@ -70,8 +70,10 @@ struct Expr {
 
     Expr() = delete;
 protected:
-    explicit Expr(const Kind kind, std::unique_ptr<Type>&& type)
+    Expr(const Kind kind, std::unique_ptr<Type>&& type)
         : kind(kind), type(std::move(type)) {}
+    explicit Expr(const Kind kind)
+        : kind(kind) {}
 };
 
 struct Stmt {

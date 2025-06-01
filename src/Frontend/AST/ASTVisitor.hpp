@@ -21,7 +21,7 @@ public:
 
     // Type
     virtual void visit(VarType&) = 0;
-    virtual void visit(FunctionType&) = 0;
+    virtual void visit(FuncType&) = 0;
 
     virtual void visit(StmtBlockItem&) = 0;
     virtual void visit(DeclBlockItem&) = 0;
@@ -50,6 +50,7 @@ public:
     // Expressions
     virtual void visit(ConstExpr&) = 0;
     virtual void visit(VarExpr&) = 0;
+    virtual void visit(CastExpr&) = 0;
     virtual void visit(UnaryExpr&) = 0;
     virtual void visit(BinaryExpr&) = 0;
     virtual void visit(AssignmentExpr&) = 0;
@@ -71,7 +72,7 @@ public:
 
     // Type
     virtual void visit(const VarType&) = 0;
-    virtual void visit(const FunctionType&) = 0;
+    virtual void visit(const FuncType&) = 0;
 
     virtual void visit(const StmtBlockItem&) = 0;
     virtual void visit(const DeclBlockItem&) = 0;
@@ -100,6 +101,7 @@ public:
     // Expressions
     virtual void visit(const ConstExpr&) = 0;
     virtual void visit(const VarExpr&) = 0;
+    virtual void visit(const CastExpr&) = 0;
     virtual void visit(const UnaryExpr&) = 0;
     virtual void visit(const BinaryExpr&) = 0;
     virtual void visit(const AssignmentExpr&) = 0;
