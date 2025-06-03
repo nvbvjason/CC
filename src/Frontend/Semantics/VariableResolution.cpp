@@ -104,16 +104,18 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
     const bool external = !prevEntry.isSet(Flag::InternalLinkage) && hasExternalLinkageVar(varDecl);
     if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
         m_symbolTable.addVarEntry(
-            varDecl.name, varDecl.name, internal, external, global, defined);
+            varDecl.name, varDecl.name, getSymbolType(varDecl.type->kind),
+            internal, external, global, defined);
     }
     else {
         const std::string uniqueName = makeTemporaryName(varDecl.name);
-        m_symbolTable.addVarEntry(varDecl.name, uniqueName, internal, external, global, defined);
+        m_symbolTable.addVarEntry(
+            varDecl.name, uniqueName, getSymbolType(varDecl.type->kind),
+            internal, external, global, defined);
         varDecl.name = uniqueName;
     }
     ASTTraverser::visit(varDecl);
 }
-
 
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable,
                     const SymbolTable::ReturnedVarEntry prevEntry)
@@ -126,7 +128,9 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
         return isValidVarDeclGlobal(varDecl, prevEntry);
     if (isIllegalVarRedecl(varDecl, prevEntry))
         return false;
-    if (varDecl.storage == Storage::Extern && prevEntry.isSet(Flag::ExternalLinkage) && !prevEntry.isSet(Flag::CorrectType))
+    if (varDecl.storage == Storage::Extern
+        && prevEntry.isSet(Flag::ExternalLinkage)
+        && !prevEntry.isSet(Flag::CorrectType))
         return false;
     if (prevEntry.isSet(Flag::CorrectType) && prevEntry.isSet(Flag::FromCurrentScope) &&
             varDecl.storage != Storage::Extern)
@@ -154,11 +158,15 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         m_valid = false;
         return;
     }
-    // UGGLY HACK
+    // UGLY HACK
     if (returnedEntry.isSet(Flag::ExternalLinkage) && !returnedEntry.isSet(Flag::Global))
         varExpr.name += ".external";
     else if (!returnedEntry.isSet(Flag::InArgs))
         varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
+    if (returnedEntry.type == SymbolTable::SymbolType::Int)
+        varExpr.type = std::make_unique<Parsing::VarType>(Parsing::VarType::Kind::Int);
+    else
+        varExpr.type = std::make_unique<Parsing::VarType>(Parsing::VarType::Kind::Long);
     ASTTraverser::visit(varExpr);
 }
 
@@ -190,6 +198,18 @@ bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable&
     if (!returnedEntry.isSet(Flag::CorrectType))
         return false;
     return true;
+}
+
+SymbolTable::SymbolType getSymbolType(const Parsing::VarType::Kind kind)
+{
+    using VarType = Parsing::VarType::Kind;
+    using SymbolType = SymbolTable::SymbolType;
+    switch (kind) {
+        case VarType::Int:      return SymbolType::Int;
+        case VarType::Long:     return SymbolType::Long;
+        case VarType::Function: return SymbolType::Function;
+    }
+    std::unreachable();
 }
 
 std::string VariableResolution::makeTemporaryName(const std::string& name)

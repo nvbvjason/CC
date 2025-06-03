@@ -65,6 +65,9 @@ ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTa
     Semantics::VariableResolution variableResolution(symbolTable);
     if (!variableResolution.resolve(programNode))
         return ErrorCode::VariableResolution;
+    Semantics::TypeResolution typeResolution;
+    if (!typeResolution.validate(programNode))
+        return ErrorCode::TypeResolution;
     Semantics::ValidateReturn validateReturn;
     if (!validateReturn.programValidate(programNode))
         return ErrorCode::ValidateReturn;
@@ -77,9 +80,6 @@ ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTa
     Semantics::LoopLabeling loopLabeling;
     if (!loopLabeling.programValidate(programNode))
         return ErrorCode::LoopLabeling;
-    Semantics::TypeResolution typeResolution;
-    if (!typeResolution.validate(programNode))
-        return ErrorCode::TypeResolution;
     return ErrorCode::OK;
 }
 

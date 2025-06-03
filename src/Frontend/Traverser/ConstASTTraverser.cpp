@@ -152,11 +152,11 @@ void ConstASTTraverser::visit(const AssignmentExpr& assignmentExpr)
     assignmentExpr.rhs->accept(*this);
 }
 
-void ConstASTTraverser::visit(const ConditionalExpr& conditionalExpr)
+void ConstASTTraverser::visit(const TernaryExpr& conditionalExpr)
 {
     conditionalExpr.condition->accept(*this);
-    conditionalExpr.first->accept(*this);
-    conditionalExpr.second->accept(*this);
+    conditionalExpr.trueExpr->accept(*this);
+    conditionalExpr.falseExpr->accept(*this);
 }
 
 void ConstASTTraverser::visit(const FunCallExpr& functionCallExpr)

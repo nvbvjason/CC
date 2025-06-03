@@ -69,7 +69,7 @@ public:
     void visit(const AssignmentExpr& assignmentExpr) override;
     void visit(const ConstExpr& constExpr) override;
     void visit(const VarExpr& varExpr) override;
-    void visit(const ConditionalExpr& conditionalExpr) override;
+    void visit(const TernaryExpr& conditionalExpr) override;
 
     void visit(const FunCallExpr& functionCallExpr) override;
 

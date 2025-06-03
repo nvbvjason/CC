@@ -5,7 +5,7 @@
 
 #include "ASTIr.hpp"
 #include "ASTParser.hpp"
-#include "Frontend/SymbolTable.hpp"
+#include "SymbolTable.hpp"
 
 #include <unordered_set>
 

@@ -1,9 +1,10 @@
 #include "ASTParser.hpp"
 #include "GenerateIr.hpp"
-#include "CodeGen/AsmAST.hpp"
+#include "ASTTypes.hpp"
 
 #include <cassert>
 #include <stdexcept>
+
 
 namespace Ir {
 static Identifier makeTemporaryName();
@@ -13,6 +14,7 @@ static BinaryInst::Operation getPostPrefixOperation(Parsing::UnaryExpr::Operator
 static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation);
 static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Operator binaryOperation);
+static SymbolTable::SymbolType getSymbolType(Parsing::VarType::Kind kind);
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
 {
@@ -143,7 +145,10 @@ void GenerateIr::generateDeclarationStaticLocal(const Parsing::VarDecl& varDecl)
     auto variable = std::make_unique<StaticVariable>(
         varDecl.name, value, false);
     m_topLevels.push_back(std::move(variable));
-     m_symbolTable.addVarEntry(varDecl.name, varDecl.name, true, false, false, defined);
+    m_symbolTable.addVarEntry(varDecl.name,
+                              varDecl.name,
+                              getSymbolType(varDecl.type->kind),
+                              true, false, false, defined);
 }
 
 void GenerateIr::generateStmt(const Parsing::Stmt& stmt)
@@ -575,17 +580,17 @@ std::shared_ptr<Value> GenerateIr::generateConditionalInst(const Parsing::Expr& 
     Identifier endLabelIden = makeTemporaryName();
     Identifier falseLabelName = makeTemporaryName();
 
-    const auto conditionalExpr = dynamic_cast<const Parsing::ConditionalExpr*>(&stmt);
+    const auto conditionalExpr = dynamic_cast<const Parsing::TernaryExpr*>(&stmt);
     auto condition = generateInst(*conditionalExpr->condition);
 
     m_instructions.push_back(std::make_unique<JumpIfZeroInst>(condition, falseLabelName));
 
-    auto trueValue = generateInst(*conditionalExpr->first);
+    auto trueValue = generateInst(*conditionalExpr->trueExpr);
     m_instructions.push_back(std::make_unique<CopyInst>(trueValue, result));
     m_instructions.push_back(std::make_unique<JumpInst>(endLabelIden));
 
     m_instructions.push_back(std::make_unique<LabelInst>(falseLabelName));
-    auto right = generateInst(*conditionalExpr->second);
+    auto right = generateInst(*conditionalExpr->falseExpr);
     m_instructions.push_back(std::make_unique<CopyInst>(right, result));
 
     m_instructions.push_back(std::make_unique<LabelInst>(endLabelIden));
@@ -706,5 +711,17 @@ BinaryInst::Operation getPostPrefixOperation(const Parsing::UnaryExpr::Operator 
         default:
             throw std::invalid_argument("Invalid postfix operation");
     }
+}
+
+SymbolTable::SymbolType getSymbolType(const Parsing::VarType::Kind kind)
+{
+    using VarType = Parsing::VarType::Kind;
+    using SymbolType = SymbolTable::SymbolType;
+    switch (kind) {
+        case VarType::Int:      return SymbolType::Int;
+        case VarType::Long:     return SymbolType::Long;
+        case VarType::Function: return SymbolType::Function;
+    }
+    std::unreachable();
 }
 } // IR

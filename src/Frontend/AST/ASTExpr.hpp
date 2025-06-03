@@ -112,20 +112,20 @@ struct AssignmentExpr final : Expr {
     AssignmentExpr() = delete;
 };
 
-struct ConditionalExpr final : Expr {
+struct TernaryExpr final : Expr {
     std::unique_ptr<Expr> condition;
-    std::unique_ptr<Expr> first;
-    std::unique_ptr<Expr> second;
-    ConditionalExpr(std::unique_ptr<Expr> condition,
+    std::unique_ptr<Expr> trueExpr;
+    std::unique_ptr<Expr> falseExpr;
+    TernaryExpr(std::unique_ptr<Expr> condition,
                     std::unique_ptr<Expr> first,
                     std::unique_ptr<Expr> second)
         : Expr(Kind::Conditional), condition(std::move(condition)),
-          first(std::move(first)), second(std::move(second)) {}
+          trueExpr(std::move(first)), falseExpr(std::move(second)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
-    ConditionalExpr() = delete;
+    TernaryExpr() = delete;
 };
 
 struct FunCallExpr final : Expr {

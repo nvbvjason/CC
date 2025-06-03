@@ -110,7 +110,7 @@ struct CastExpr;
 struct UnaryExpr;
 struct BinaryExpr;
 struct AssignmentExpr;
-struct ConditionalExpr;
+struct TernaryExpr;
 struct FunCallExpr;
 } // Parsing
 

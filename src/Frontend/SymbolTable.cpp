@@ -1,4 +1,3 @@
-#include "ASTIr.hpp"
 #include "SymbolTable.hpp"
 
 #include <cassert>
@@ -26,15 +25,15 @@ SymbolTable::ReturnedVarEntry SymbolTable::lookupVar(const std::string& uniqueNa
         const auto it = m_entries[i].find(uniqueName);
         if (it == m_entries[i].end())
             continue;
-        const bool correctType = it->second.type == SymbolType::Var;
+        const bool correctType = it->second.type != SymbolType::Function;
         const bool fromCurrentScope = i == m_entries.size() - 1;
         const bool internal = it->second.isSet(State::InternalLinkage);
         const bool external = it->second.isSet(State::ExternalLinkage);
         const bool global = it->second.isSet(State::Global);
         const bool defined = it->second.isSet(State::Defined);
-        return {true, inArgs, correctType, fromCurrentScope, internal, external, global, defined};
+        return {it->second.type, true, inArgs, correctType, fromCurrentScope, internal, external, global, defined};
     }
-    return {false, inArgs, false, false, false, false, false, false};
+    return {SymbolType::Int, false, inArgs, false, false, false, false, false, false};
 }
 
 SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& uniqueName) const
@@ -43,7 +42,7 @@ SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& unique
         const auto it = m_entries[i].find(uniqueName);
         if (it == m_entries[i].end())
             continue;
-        const bool correctType = it->second.type == SymbolType::Func;
+        const bool correctType = it->second.type == SymbolType::Function;
         const bool fromCurrentScope = i == m_entries.size() - 1;
         const bool internal = it->second.isSet(State::InternalLinkage);
         const bool external = it->second.isSet(State::ExternalLinkage);
@@ -81,6 +80,7 @@ void SymbolTable::clearArgs()
 
 void SymbolTable::addVarEntry(const std::string& name,
                               const std::string& uniqueName,
+                              const SymbolType type,
                               const bool internal,
                               const bool external,
                               const bool global,
@@ -88,7 +88,7 @@ void SymbolTable::addVarEntry(const std::string& name,
 {
 
     m_entries.back().insert_or_assign(name,Entry(
-        uniqueName, SymbolType::Var, internal, external, global, defined)
+        uniqueName, type, internal, external, global, defined)
         );
 }
 
@@ -99,7 +99,7 @@ void SymbolTable::addFuncEntry(const std::string& name,
                                const bool global,
                                const bool defined)
 {
-    m_entries.back().insert(std::make_pair(name, Entry(name, SymbolType::Func, internal, external, global, defined)));
+    m_entries.back().insert(std::make_pair(name, Entry(name, SymbolType::Function, internal, external, global, defined)));
     m_funcs.insert(std::make_pair(name, argsSize));
 }
 
@@ -118,5 +118,5 @@ bool SymbolTable::isFunc(const std::string& name) const
     const auto it = m_entries.front().find(name);
     if (it == m_entries.front().end())
         return false;
-    return it->second.type == SymbolType::Func;
+    return it->second.type == SymbolType::Function;
 }

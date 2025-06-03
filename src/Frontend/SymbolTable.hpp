@@ -12,6 +12,9 @@
 
 class SymbolTable {
 public:
+    enum class SymbolType {
+        Function, Long, Int
+    };
     enum class State : u16 {
         None                = 0,
         Contains            = 1 << 0,
@@ -72,7 +75,9 @@ public:
         }
     };
     struct ReturnedVarEntry : FlagBase<ReturnedVarEntry>  {
-        ReturnedVarEntry(const bool contains,
+        SymbolType type;
+        ReturnedVarEntry(const SymbolType s,
+                         const bool contains,
                          const bool inArgs,
                          const bool correctType,
                          const bool fromCurrentScope,
@@ -81,6 +86,7 @@ public:
                          const bool global,
                          const bool defined)
         {
+            type = s;
             if (contains)
                 set(State::Contains);
             if (correctType)
@@ -100,9 +106,6 @@ public:
         }
     };
 private:
-    enum class SymbolType  {
-        Var, Func
-    };
     struct Entry : FlagBase<Entry>  {
         std::string uniqueName;
         State returnFlag = State::None;
@@ -138,6 +141,7 @@ public:
     void clearArgs();
     void addVarEntry(const std::string& name,
                      const std::string& uniqueName,
+                     SymbolType type,
                      bool internal, bool external, bool global, bool defined);
     void addFuncEntry(const std::string& name, i32 argsSize, bool internal, bool external, bool global, bool defined);
     void addScope();

@@ -1,9 +1,12 @@
-#include "Frontend/Semantics/TypeResolution.hpp"
+#include "TypeResolution.hpp"
+
+#include "ASTIr.hpp"
+#include "ASTTypes.hpp"
 
 namespace Semantics {
-bool TypeResolution::validate(const Parsing::Program& program)
+bool TypeResolution::validate(Parsing::Program& program)
 {
-    ConstASTTraverser::visit(program);
+    ASTTraverser::visit(program);
     return m_valid;
 }
 
@@ -16,7 +19,7 @@ bool TypeResolution::hasConflictingFuncLinkage(const Parsing::FunDecl& funDecl)
             it->second == Storage::None) && funDecl.storage == Storage::Static;
 }
 
-void TypeResolution::visit(const Parsing::FunDecl& funDecl)
+void TypeResolution::visit(Parsing::FunDecl& funDecl)
 {
     if (hasConflictingFuncLinkage(funDecl)) {
         m_valid = false;
@@ -38,18 +41,20 @@ void TypeResolution::visit(const Parsing::FunDecl& funDecl)
     if (funDecl.body != nullptr)
         m_definedFunctions.insert(funDecl.name);
     m_global = false;
-    ConstASTTraverser::visit(funDecl);
+    const auto type = static_cast<Parsing::FuncType*>(funDecl.type.get());
+    m_returnTypesFuncs.emplace(funDecl.name, type->returnType->kind);
+    ASTTraverser::visit(funDecl);
     m_global = true;
 }
 
-void TypeResolution::visit(const Parsing::DeclForInit& declForInit)
+void TypeResolution::visit(Parsing::DeclForInit& declForInit)
 {
     if (hasStorageClassSpecifier(declForInit))
         m_valid = false;
-    ConstASTTraverser::visit(declForInit);
+    ASTTraverser::visit(declForInit);
 }
 
-void TypeResolution::visit(const Parsing::FunCallExpr& funCallExpr)
+void TypeResolution::visit(Parsing::FunCallExpr& funCallExpr)
 {
     const auto it = m_functionArgCounts.find(funCallExpr.name);
     if (it == m_functionArgCounts.end()) {
@@ -60,10 +65,11 @@ void TypeResolution::visit(const Parsing::FunCallExpr& funCallExpr)
         m_valid = false;
         return;
     }
-    ConstASTTraverser::visit(funCallExpr);
+    ASTTraverser::visit(funCallExpr);
+    funCallExpr.type = std::make_unique<Parsing::VarType>(m_returnTypesFuncs[funCallExpr.name]);
 }
 
-void TypeResolution::visit(const Parsing::VarDecl& varDecl)
+void TypeResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (varDecl.storage == Storage::Extern &&
         varDecl.init != nullptr) {
@@ -79,15 +85,80 @@ void TypeResolution::visit(const Parsing::VarDecl& varDecl)
     if (!m_global && !m_globalStaticVars.contains(varDecl.name))
         m_definedFunctions.insert(varDecl.name);
     m_isConst = true;
-    ConstASTTraverser::visit(varDecl);
+    ASTTraverser::visit(varDecl);
     if (illegalNonConstInitialization(varDecl, m_isConst, m_global))
         m_valid = false;
 }
 
-void TypeResolution::visit(const Parsing::VarExpr& varExpr)
+void TypeResolution::visit(Parsing::VarExpr& varExpr)
 {
     m_isConst = false;
-    ConstASTTraverser::visit(varExpr);
+    ASTTraverser::visit(varExpr);
 }
 
+void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
+{
+    ASTTraverser::visit(unaryExpr);
+    if (unaryExpr.op == Parsing::UnaryExpr::Operator::Not) {
+        unaryExpr.type = std::make_unique<Parsing::VarType>(Parsing::Type::Kind::Int);
+        return;
+    }
+    unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->kind);
+}
+
+void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
+{
+    using Oper = Parsing::BinaryExpr::Operator;
+    using Type = Parsing::Type::Kind;
+    ASTTraverser::visit(binaryExpr);
+    if (binaryExpr.op == Oper::And ||
+        binaryExpr.op == Oper::Or) {
+        binaryExpr.type = std::make_unique<Parsing::VarType>(Parsing::Type::Kind::Int);
+        return;
+    }
+    const Type leftType = binaryExpr.lhs->type->kind;
+    const Type rightType = binaryExpr.rhs->type->kind;
+    const Type commonType = getCommonType(leftType, rightType);
+    if (commonType != leftType)
+        binaryExpr.lhs = std::make_unique<Parsing::CastExpr>(
+            std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.lhs));
+    if (commonType != rightType)
+        binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(
+            std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.rhs));
+    if (binaryExpr.op == Oper::Equal || binaryExpr.op == Oper::NotEqual ||
+        binaryExpr.op == Oper::LessThan || binaryExpr.op == Oper::LessOrEqual ||
+        binaryExpr.op == Oper::GreaterThan || binaryExpr.op == Oper::GreaterOrEqual) {
+        binaryExpr.type = std::make_unique<Parsing::VarType>(Type::Int);
+        return;
+    }
+    binaryExpr.type = std::make_unique<Parsing::VarType>(commonType);
+}
+
+void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
+{
+    using Type = Parsing::Type::Kind;
+    ASTTraverser::visit(assignmentExpr);
+    const Type leftType = assignmentExpr.lhs->type->kind;
+    const Type rightType = assignmentExpr.rhs->type->kind;
+    if (leftType != rightType)
+        assignmentExpr.lhs = std::make_unique<Parsing::CastExpr>(
+            std::make_unique<Parsing::VarType>(rightType), std::move(assignmentExpr.lhs));
+    assignmentExpr.type = std::make_unique<Parsing::VarType>(rightType);
+}
+
+void TypeResolution::visit(Parsing::TernaryExpr& ternaryExpr)
+{
+    using Type = Parsing::Type::Kind;
+    ASTTraverser::visit(ternaryExpr);
+    const Type trueType = ternaryExpr.trueExpr->type->kind;
+    const Type falseType = ternaryExpr.falseExpr->type->kind;
+    const Type commonType = getCommonType(trueType, falseType);
+    if (commonType != trueType)
+        ternaryExpr.trueExpr = std::make_unique<Parsing::CastExpr>(
+            std::make_unique<Parsing::VarType>(commonType), std::move(ternaryExpr.trueExpr));
+    if (commonType != falseType)
+        ternaryExpr.falseExpr = std::make_unique<Parsing::CastExpr>(
+            std::make_unique<Parsing::VarType>(commonType), std::move(ternaryExpr.falseExpr));
+    ternaryExpr.type = std::make_unique<Parsing::VarType>(commonType);
+}
 } // namespace Semantics

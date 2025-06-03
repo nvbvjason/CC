@@ -23,7 +23,7 @@ std::unique_ptr<Declaration> Parser::declarationParse()
     const Lexing::Token lexeme = advance();
     if (lexeme.m_type != TokenType::Identifier)
         return nullptr;
-    Storage storage = getStorageClass(storageClass);
+    const Storage storage = getStorageClass(storageClass);
     if (peekTokenType() == TokenType::Equal ||
         peekTokenType() == TokenType::Semicolon)
         return varDeclParse(type, storage, lexeme.m_lexeme);
@@ -77,7 +77,9 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(const TokenType type,
     if (block != nullptr)
         result->body = std::move(block);
     result->params = std::move(paramList->params);
-    result->type = std::make_unique<FuncType>(std::make_unique<VarType>(Operators::varType(type)), std::move(paramList->types));
+    result->type = std::make_unique<FuncType>(
+        std::make_unique<VarType>(Operators::varType(type)), std::move(paramList->types)
+        );
     return result;
 }
 
@@ -148,7 +150,7 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
             return {nullptr, true};
         if (decl->kind == Declaration::Kind::FuncDecl)
             return {nullptr, true};
-        auto varDecl = static_cast<VarDecl*>(decl.release());
+        const auto varDecl = static_cast<VarDecl*>(decl.release());
         return {std::make_unique<DeclForInit>(std::unique_ptr<VarDecl>(varDecl)), false};
     }
     std::unique_ptr<Expr> expr = exprParse(0);
@@ -405,7 +407,7 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
             auto second = exprParse(Operators::precedence(TokenType::Colon));
             if (second == nullptr)
                 return nullptr;
-            left = std::make_unique<ConditionalExpr>(
+            left = std::make_unique<TernaryExpr>(
                 std::move(left), std::move(first), std::move(second)
             );
         }
@@ -498,7 +500,7 @@ std::unique_ptr<Expr> Parser::factorParse()
             advance();
             if (!expect(TokenType::OpenParen))
                 return std::make_unique<VarExpr>(lexeme.m_lexeme);
-            std::unique_ptr<std::vector<std::unique_ptr<Expr>>> arguments = argumentListParse();
+            const std::unique_ptr<std::vector<std::unique_ptr<Expr>>> arguments = argumentListParse();
             if (arguments == nullptr)
                 return nullptr;
             if (!expect(TokenType::CloseParen))

@@ -7,6 +7,7 @@
 #include "ShortTypes.hpp"
 #include "ASTParser.hpp"
 #include "Frontend/SymbolTable.hpp"
+#include "ASTTypes.hpp"
 
 #include <string>
 
@@ -31,8 +32,9 @@ public:
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
     void visit(Parsing::VarDecl& varDecl) override;
+
     void visit(Parsing::VarExpr& varExpr) override;
-    void visit(Parsing::FunCallExpr& funCallExpr) override;
+    void visit(Parsing::FunCallExpr& functionCallExpr) override;
 private:
     void reset();
     std::string makeTemporaryName(const std::string &name);
@@ -49,6 +51,7 @@ bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable&
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, SymbolTable::ReturnedVarEntry returnedEntry);
 
 bool duplicatesInArgs(const std::vector<std::string>& args);
+SymbolTable::SymbolType getSymbolType(Parsing::VarType::Kind kind);
 inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry prevEntry)
 {
     using Flag = SymbolTable::State;

@@ -54,7 +54,7 @@ public:
     virtual void visit(UnaryExpr&) = 0;
     virtual void visit(BinaryExpr&) = 0;
     virtual void visit(AssignmentExpr&) = 0;
-    virtual void visit(ConditionalExpr&) = 0;
+    virtual void visit(TernaryExpr&) = 0;
     virtual void visit(FunCallExpr&) = 0;
 };
 
@@ -105,7 +105,7 @@ public:
     virtual void visit(const UnaryExpr&) = 0;
     virtual void visit(const BinaryExpr&) = 0;
     virtual void visit(const AssignmentExpr&) = 0;
-    virtual void visit(const ConditionalExpr&) = 0;
+    virtual void visit(const TernaryExpr&) = 0;
     virtual void visit(const FunCallExpr&) = 0;
 };
 

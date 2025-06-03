@@ -300,14 +300,14 @@ void ASTPrinter::visit(const VarExpr& varExpr)
     ConstASTTraverser::visit(varExpr);
 }
 
-void ASTPrinter::visit(const ConditionalExpr& conditionalExpr)
+void ASTPrinter::visit(const TernaryExpr& conditionalExpr)
 {
     IndentGuard guard(m_indentLevel);
     conditionalExpr.condition->accept(*this);
     addLine("?");
-    conditionalExpr.first->accept(*this);
+    conditionalExpr.trueExpr->accept(*this);
     addLine(":");
-    conditionalExpr.second->accept(*this);
+    conditionalExpr.falseExpr->accept(*this);
     addLine(";");
 }
 

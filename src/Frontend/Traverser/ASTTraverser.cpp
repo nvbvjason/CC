@@ -151,11 +151,11 @@ void ASTTraverser::visit(AssignmentExpr& assignmentExpr)
     assignmentExpr.rhs->accept(*this);
 }
 
-void ASTTraverser::visit(ConditionalExpr& conditionalExpr)
+void ASTTraverser::visit(TernaryExpr& conditionalExpr)
 {
     conditionalExpr.condition->accept(*this);
-    conditionalExpr.first->accept(*this);
-    conditionalExpr.second->accept(*this);
+    conditionalExpr.trueExpr->accept(*this);
+    conditionalExpr.falseExpr->accept(*this);
 }
 
 void ASTTraverser::visit(FunCallExpr& functionCallExpr)
