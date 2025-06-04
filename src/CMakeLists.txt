@@ -6,7 +6,6 @@ add_subdirectory(Types)
 # Add CompilerDriver library
 add_library(CompilerDriver
         CompilerDriver.cpp
-        CompilerDriver.hpp
         ShortTypes.hpp
 )
 

@@ -1,4 +1,5 @@
-add_library(ParsingTraversers
+add_library(ParsingTraversers STATIC
+        ASTPrinter.cpp
         ASTTraverser.cpp
         ConstASTTraverser.cpp)
 

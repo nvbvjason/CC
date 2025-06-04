@@ -1,4 +1,4 @@
-add_library(FrontendIR
+add_library(FrontendIR STATIC
         GenerateIr.cpp
 )
 

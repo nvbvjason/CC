@@ -1,14 +1,10 @@
-add_library(AST
+add_library(AST STATIC
         ASTFwd.cpp
         ASTParser.cpp
-        ../Traverser/ASTPrinter.cpp
         ASTVisitor.cpp
         ASTExpr.cpp
-        ASTExpr.hpp
         ASTBase.cpp
-        ASTBase.hpp
         ASTTypes.cpp
-        ASTTypes.hpp
 )
 
 target_include_directories(AST PUBLIC

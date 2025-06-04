@@ -1,4 +1,4 @@
-add_library(Lexing
+add_library(Lexing STATIC
         Lexer.cpp
         Token.cpp
 )

@@ -1,13 +1,10 @@
-add_library(Semantics
+add_library(Semantics STATIC
         ValidateReturn.cpp
         VariableResolution.cpp
         LvalueVerification.cpp
         GotoLabelsUnique.cpp
-        GotoLabelsUnique.hpp
         LoopLabeling.cpp
-        LoopLabeling.hpp
         TypeResolution.cpp
-        TypeResolution.hpp
 )
 
 target_include_directories(Semantics PUBLIC

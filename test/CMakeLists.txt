@@ -6,14 +6,10 @@ add_executable(CC_test
         Codegen.cpp
         Lexer.cpp
         Parser.cpp
-        Codegen.hpp
-        Lexer.hpp
-        Parser.hpp
         ParserStmt.cpp
         Token.cpp
         ParserExpr.cpp
         GenerateIr.cpp
-        GenerateIr.hpp
 )
 
 target_include_directories(CC_test PRIVATE

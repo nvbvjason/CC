@@ -9,7 +9,6 @@
 #include <sstream>
 #include <string>
 
-
 namespace Parsing {
 class ASTPrinter : public ConstASTTraverser {
     class IndentGuard {
