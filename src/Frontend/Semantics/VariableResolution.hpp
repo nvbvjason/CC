@@ -51,7 +51,6 @@ bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable&
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, SymbolTable::ReturnedVarEntry returnedEntry);
 
 bool duplicatesInArgs(const std::vector<std::string>& args);
-SymbolTable::SymbolType getSymbolType(Parsing::VarType::Kind kind);
 inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry prevEntry)
 {
     using Flag = SymbolTable::State;

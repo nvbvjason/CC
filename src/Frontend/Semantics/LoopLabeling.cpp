@@ -13,10 +13,14 @@ bool LoopLabeling::programValidate(Parsing::Program& program)
 void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
 {
     caseStmt.identifier = m_switchLabel;
-    if (isOutsideSwitchStmt(caseStmt))
+    if (isOutsideSwitchStmt(caseStmt)) {
         m_valid = false;
-    if (isNonConstantInSwitchCase(caseStmt))
+        return;
+    }
+    if (isNonConstantInSwitchCase(caseStmt)) {
         m_valid = false;
+        return;
+    }
     const auto constantExpr = static_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
     const i32 value = std::get<i32>(constantExpr->value);
     std::vector<i32>& vec = m_case[caseStmt.identifier];
@@ -115,10 +119,8 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
 Parsing::VarType LoopLabeling::getSwitchConditionType(const Parsing::SwitchStmt& switchStmt)
 {
     const auto condition = static_cast<const Parsing::ConstExpr*>(switchStmt.condition.get());
-    if (condition->type->kind == Parsing::VarType::Kind::Int)
-        return Parsing::VarType(Parsing::VarType::Kind::Int);
-    if (condition->type->kind == Parsing::VarType::Kind::Long)
-        return Parsing::VarType(Parsing::VarType::Kind::Long);
+    if (condition->type->kind == Type::I32)     return Parsing::VarType(Type::I32);
+    if (condition->type->kind == Type::I64)     return Parsing::VarType(Type::I64);
     std::unreachable();
 }
 } // Semantics

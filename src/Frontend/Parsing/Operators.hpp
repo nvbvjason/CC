@@ -15,7 +15,7 @@ using TokenType = Lexing::Token::Type;
 [[nodiscard]] constexpr UnaryExpr::Operator unaryOperator(TokenType type);
 [[nodiscard]] constexpr BinaryExpr::Operator binaryOperator(TokenType type);
 [[nodiscard]] constexpr AssignmentExpr::Operator assignOperator(TokenType type);
-[[nodiscard]] constexpr VarType::Kind varType(TokenType type);
+[[nodiscard]] constexpr Type varType(TokenType type);
 [[nodiscard]] constexpr bool isBinaryOperator(TokenType type);
 [[nodiscard]] constexpr bool isUnaryOperator(TokenType type);
 [[nodiscard]] constexpr bool isAssignmentOperator(TokenType type);
@@ -101,12 +101,11 @@ constexpr AssignmentExpr::Operator assignOperator(TokenType type)
     }
 }
 
-constexpr VarType::Kind varType(const TokenType type)
+constexpr Type varType(const TokenType type)
 {
-    using Kind = VarType::Kind;
     switch (type) {
-        case TokenType::IntKeyword:  return Kind::Int;
-        case TokenType::LongKeyword: return Kind::Long;
+        case TokenType::IntKeyword:  return Type::I32;
+        case TokenType::LongKeyword: return Type::I64;
 
         default:
             assert(false && "Invalid varType: varType(Token::Type)");

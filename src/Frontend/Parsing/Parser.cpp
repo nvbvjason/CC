@@ -86,7 +86,7 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(const TokenType type,
 std::unique_ptr<Parser::ParamList> Parser::paramsListParse()
 {
     std::vector<std::string> params;
-    std::vector<std::unique_ptr<Type>> paramTypes;
+    std::vector<std::unique_ptr<TypeBase>> paramTypes;
     if (expect(TokenType::Void))
         return std::make_unique<ParamList>(std::move(params), std::move(paramTypes));
     TokenType type = typeParse();
@@ -482,7 +482,7 @@ std::unique_ptr<Expr> Parser::factorParse()
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case TokenType::IntegerLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.geti32Value(), std::make_unique<VarType>(Type::Kind::Int)
+                lexeme.geti32Value(), std::make_unique<VarType>(Type::I32)
                 );
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
@@ -490,7 +490,7 @@ std::unique_ptr<Expr> Parser::factorParse()
         }
         case TokenType::LongLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.geti64Value(), std::make_unique<VarType>(Type::Kind::Long)
+                lexeme.geti64Value(), std::make_unique<VarType>(Type::I64)
                 );
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;

@@ -65,8 +65,8 @@ class Parser {
     using Storage = Declaration::StorageClass;
     struct ParamList {
         std::vector<std::string> params;
-        std::vector<std::unique_ptr<Type>> types;
-        ParamList(std::vector<std::string>&& params, std::vector<std::unique_ptr<Type>>&& types)
+        std::vector<std::unique_ptr<TypeBase>> types;
+        ParamList(std::vector<std::string>&& params, std::vector<std::unique_ptr<TypeBase>>&& types)
             :params(std::move(params)), types(std::move(types)) {}
     };
     bool m_atFileScope = true;

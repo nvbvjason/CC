@@ -10,11 +10,10 @@
 #include <vector>
 #include <unordered_map>
 
+#include "Types/Type.hpp"
+
 class SymbolTable {
 public:
-    enum class SymbolType {
-        Function, Long, Int
-    };
     enum class State : u16 {
         None                = 0,
         Contains            = 1 << 0,
@@ -75,8 +74,8 @@ public:
         }
     };
     struct ReturnedVarEntry : FlagBase<ReturnedVarEntry>  {
-        SymbolType type;
-        ReturnedVarEntry(const SymbolType s,
+        Type type;
+        ReturnedVarEntry(const Type t,
                          const bool contains,
                          const bool inArgs,
                          const bool correctType,
@@ -86,7 +85,7 @@ public:
                          const bool global,
                          const bool defined)
         {
-            type = s;
+            type = t;
             if (contains)
                 set(State::Contains);
             if (correctType)
@@ -109,9 +108,9 @@ private:
     struct Entry : FlagBase<Entry>  {
         std::string uniqueName;
         State returnFlag = State::None;
-        SymbolType type;
+        Type type;
         Entry(std::string uniqueName,
-              const SymbolType type,
+              const Type type,
               const bool internal,
               const bool external,
               const bool global,
@@ -141,7 +140,7 @@ public:
     void clearArgs();
     void addVarEntry(const std::string& name,
                      const std::string& uniqueName,
-                     SymbolType type,
+                     Type type,
                      bool internal, bool external, bool global, bool defined);
     void addFuncEntry(const std::string& name, i32 argsSize, bool internal, bool external, bool global, bool defined);
     void addScope();

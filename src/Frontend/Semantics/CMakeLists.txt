@@ -15,7 +15,8 @@ target_include_directories(Semantics PUBLIC
         ${CMAKE_SOURCE_DIR}/src/Frontend/AST
         ${CMAKE_SOURCE_DIR}/src/Frontend/Lexing
         ${CMAKE_SOURCE_DIR}/src/Frontend/Traverser
+        ${CMAKE_SOURCE_DIR}/src/Types
 )
 
 # Semantics depends on AST
-target_link_libraries(Semantics PUBLIC AST Frontend)
+target_link_libraries(Semantics PUBLIC AST Frontend TYPES)

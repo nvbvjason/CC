@@ -104,13 +104,13 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
     const bool external = !prevEntry.isSet(Flag::InternalLinkage) && hasExternalLinkageVar(varDecl);
     if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
         m_symbolTable.addVarEntry(
-            varDecl.name, varDecl.name, getSymbolType(varDecl.type->kind),
+            varDecl.name, varDecl.name, varDecl.type->kind,
             internal, external, global, defined);
     }
     else {
         const std::string uniqueName = makeTemporaryName(varDecl.name);
         m_symbolTable.addVarEntry(
-            varDecl.name, uniqueName, getSymbolType(varDecl.type->kind),
+            varDecl.name, uniqueName, varDecl.type->kind,
             internal, external, global, defined);
         varDecl.name = uniqueName;
     }
@@ -163,10 +163,10 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         varExpr.name += ".external";
     else if (!returnedEntry.isSet(Flag::InArgs))
         varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
-    if (returnedEntry.type == SymbolTable::SymbolType::Int)
-        varExpr.type = std::make_unique<Parsing::VarType>(Parsing::VarType::Kind::Int);
+    if (returnedEntry.type == Type::I32)
+        varExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
     else
-        varExpr.type = std::make_unique<Parsing::VarType>(Parsing::VarType::Kind::Long);
+        varExpr.type = std::make_unique<Parsing::VarType>(Type::I64);
     ASTTraverser::visit(varExpr);
 }
 
@@ -198,18 +198,6 @@ bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable&
     if (!returnedEntry.isSet(Flag::CorrectType))
         return false;
     return true;
-}
-
-SymbolTable::SymbolType getSymbolType(const Parsing::VarType::Kind kind)
-{
-    using VarType = Parsing::VarType::Kind;
-    using SymbolType = SymbolTable::SymbolType;
-    switch (kind) {
-        case VarType::Int:      return SymbolType::Int;
-        case VarType::Long:     return SymbolType::Long;
-        case VarType::Function: return SymbolType::Function;
-    }
-    std::unreachable();
 }
 
 std::string VariableResolution::makeTemporaryName(const std::string& name)

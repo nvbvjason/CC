@@ -1,6 +1,7 @@
 add_subdirectory(Frontend)
 add_subdirectory(IR)
 add_subdirectory(CodeGen)
+add_subdirectory(Types)
 
 # Add CompilerDriver library
 add_library(CompilerDriver
@@ -15,6 +16,7 @@ target_include_directories(CompilerDriver PUBLIC
         ${CMAKE_SOURCE_DIR}/src/IR
         ${CMAKE_SOURCE_DIR}/src/CodeGen
         ${CMAKE_SOURCE_DIR}/src/Frontend
+        ${CMAKE_SOURCE_DIR}/src/Types
 )
 
 # Link CompilerDriver against required libraries
@@ -22,6 +24,7 @@ target_link_libraries(CompilerDriver PUBLIC
         CodeGen
         IR
         Frontend
+        TYPES
 )
 
 # Add executable for the compiler
@@ -46,4 +49,5 @@ target_link_libraries(CC PRIVATE
         AST
         IR
         CodeGen
+        TYPES
 )

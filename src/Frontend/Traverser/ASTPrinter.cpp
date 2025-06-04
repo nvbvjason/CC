@@ -7,13 +7,12 @@ namespace Parsing {
 
 namespace {
 
-std::string varTypeToString(const VarType::Kind& kind)
+std::string varTypeToString(const Type kind)
 {
-    using Type = VarType::Kind;
     switch (kind) {
-        case Type::Int:     return "int";
-        case Type::Long:    return "long";
-        default:            return "unknown";
+        case Type::I32:    return "int";
+        case Type::I64:    return "long";
+        default:           return "unknown";
     }
 }
 
@@ -286,9 +285,9 @@ void ASTPrinter::visit(const AssignmentExpr& assignmentExpr)
 void ASTPrinter::visit(const ConstExpr& constExpr)
 {
     IndentGuard guard(m_indentLevel);
-    if (constExpr.type->kind == Type::Kind::Int)
+    if (constExpr.type->kind == Type::I32)
         addLine(std::to_string(std::get<i32>(constExpr.value)));
-    else if (constExpr.type->kind == Type::Kind::Long)
+    else if (constExpr.type->kind == Type::I64)
         addLine(std::to_string(std::get<i64>(constExpr.value)));
     ConstASTTraverser::visit(constExpr);
 }

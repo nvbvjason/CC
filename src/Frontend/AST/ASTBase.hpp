@@ -5,22 +5,21 @@
 
 #include "ASTVisitor.hpp"
 #include "ShortTypes.hpp"
+#include "Types/Type.hpp"
 
 #include <memory>
 
+
 namespace Parsing {
 
-struct Type {
-    enum class Kind {
-        Int, Long, Function
-    };
-    Kind kind;
-    virtual ~Type() = default;
+struct TypeBase {
+    Type kind;
+    virtual ~TypeBase() = default;
     virtual void accept(ASTVisitor& visitor) = 0;
     virtual void accept(ConstASTVisitor& visitor) const = 0;
-    Type() = delete;
+    TypeBase() = delete;
 protected:
-    explicit Type(const Kind kind)
+    explicit TypeBase(const Type kind)
         : kind(kind) {}
 };
 
@@ -61,7 +60,7 @@ struct Expr {
         Constant, Var, Cast, Unary, Binary, Assignment, Conditional, FunctionCall,
     };
     Kind kind;
-    std::unique_ptr<Type> type = nullptr;
+    std::unique_ptr<TypeBase> type = nullptr;
 
     virtual ~Expr() = default;
 
@@ -70,7 +69,7 @@ struct Expr {
 
     Expr() = delete;
 protected:
-    Expr(const Kind kind, std::unique_ptr<Type>&& type)
+    Expr(const Kind kind, std::unique_ptr<TypeBase>&& type)
         : kind(kind), type(std::move(type)) {}
     explicit Expr(const Kind kind)
         : kind(kind) {}

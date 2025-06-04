@@ -75,7 +75,7 @@ struct StmtBlockItem;
 struct DeclBlockItem;
 
 // Types
-struct Type;
+struct TypeBase;
 struct VarType;
 struct FuncType;
 

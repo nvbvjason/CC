@@ -17,7 +17,7 @@ TEST(GenerateIrTests, VarExprToIrPreservesType)
 TEST(GenerateIrTests, ConstExprToIrPreservesType)
 {
     const auto constExpr = std::make_unique<Parsing::ConstExpr>(
-        5, std::make_unique<Parsing::VarType>(Parsing::Type::Kind::Int)
+        5, std::make_unique<Parsing::VarType>(Type::I32)
         );
     const auto expected = std::make_shared<Ir::ValueConst>(5);
     const std::shared_ptr<Ir::Value> result = Ir::GenerateIr::generateConstInst(*constExpr);

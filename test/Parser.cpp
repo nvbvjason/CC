@@ -6,20 +6,20 @@
 
 namespace {
 using Token = Lexing::Token;
-using Type = Lexing::Token::Type;
+using TokenType = Lexing::Token::Type;
 }
 
-std::vector<Token> generateTokens(const std::vector<Type>& tokenTypes)
+std::vector<Token> generateTokens(const std::vector<TokenType>& tokenTypes)
 {
     std::vector<Token> tokens;
     tokens.reserve(tokenTypes.size() + 1);
     for (const auto& tokenType : tokenTypes)
         tokens.emplace_back(1, 1, tokenType, "");
-    tokens.emplace_back(1, 1, Type::EndOfFile, "");
+    tokens.emplace_back(1, 1, TokenType::EndOfFile, "");
     return tokens;
 }
 
-Parsing::Parser createParser(const std::vector<Type>& tokenTypes)
+Parsing::Parser createParser(const std::vector<TokenType>& tokenTypes)
 {
     const std::vector<Token> tokens = generateTokens(tokenTypes);
     return Parsing::Parser(tokens);
@@ -27,7 +27,7 @@ Parsing::Parser createParser(const std::vector<Type>& tokenTypes)
 
 TEST(ParserTests, BlockParseSuccesEmpty)
 {
-    const std::vector tokenTypes{Type::OpenParen, Type::CloseBrace};
+    const std::vector tokenTypes{TokenType::OpenParen, TokenType::CloseBrace};
     Parsing::Parser parser = createParser(tokenTypes);
     const auto ptr= parser.blockParse();
     EXPECT_EQ(nullptr, ptr);
@@ -35,7 +35,7 @@ TEST(ParserTests, BlockParseSuccesEmpty)
 
 TEST(ParserTests, BlockParseSuccesWithBody)
 {
-    const std::vector tokenTypes{Type::OpenParen, Type::Semicolon, Type::CloseBrace};
+    const std::vector tokenTypes{TokenType::OpenParen, TokenType::Semicolon, TokenType::CloseBrace};
     Parsing::Parser parser = createParser(tokenTypes);
     const auto ptr= parser.blockParse();
     EXPECT_EQ(nullptr, ptr);
@@ -44,7 +44,7 @@ TEST(ParserTests, BlockParseSuccesWithBody)
 
 TEST(ParserTests, BlockParseMissingOpenBrace)
 {
-    const std::vector tokenTypes{Type::IntKeyword, Type::CloseBrace};
+    const std::vector tokenTypes{TokenType::IntKeyword, TokenType::CloseBrace};
     Parsing::Parser parser = createParser(tokenTypes);
     const auto ptr= parser.blockParse();
     EXPECT_EQ(nullptr, ptr);
@@ -52,7 +52,7 @@ TEST(ParserTests, BlockParseMissingOpenBrace)
 
 TEST(ParserTests, forInitParseSuccesInit)
 {
-    const std::vector tokenTypes{Type::IntKeyword, Type::Identifier, Type::Equal, Type::IntegerLiteral, Type::Semicolon};
+    const std::vector tokenTypes{TokenType::IntKeyword, TokenType::Identifier, TokenType::Equal, TokenType::IntegerLiteral, TokenType::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     const auto [ptr, err] = parser.forInitParse();
     EXPECT_FALSE(err);
@@ -60,7 +60,7 @@ TEST(ParserTests, forInitParseSuccesInit)
 
 TEST(ParserTests, forInitParseSuccesExpr)
 {
-    const std::vector tokenTypes{Type::IntegerLiteral, Type::Semicolon};
+    const std::vector tokenTypes{TokenType::IntegerLiteral, TokenType::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     const auto [ptr, err] = parser.forInitParse();
     EXPECT_FALSE(err);
@@ -68,7 +68,7 @@ TEST(ParserTests, forInitParseSuccesExpr)
 
 TEST(ParserTests, forInitParseMissingSemicolon)
 {
-    const std::vector tokenTypes{Type::IntegerLiteral};
+    const std::vector tokenTypes{TokenType::IntegerLiteral};
     Parsing::Parser parser = createParser(tokenTypes);
     const auto [ptr, err] = parser.forInitParse();
     EXPECT_TRUE(err);

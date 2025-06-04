@@ -14,7 +14,6 @@ static BinaryInst::Operation getPostPrefixOperation(Parsing::UnaryExpr::Operator
 static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation);
 static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Operator binaryOperation);
-static SymbolTable::SymbolType getSymbolType(Parsing::VarType::Kind kind);
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
 {
@@ -147,7 +146,7 @@ void GenerateIr::generateDeclarationStaticLocal(const Parsing::VarDecl& varDecl)
     m_topLevels.push_back(std::move(variable));
     m_symbolTable.addVarEntry(varDecl.name,
                               varDecl.name,
-                              getSymbolType(varDecl.type->kind),
+                              varDecl.type->kind,
                               true, false, false, defined);
 }
 
@@ -297,7 +296,7 @@ void GenerateIr::generateLabelStmt(const Parsing::LabelStmt& labelStmt)
 void GenerateIr::generateCaseStmt(const Parsing::CaseStmt& caseStmt)
 {
     const auto constExpr = dynamic_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
-    if (constExpr->type->kind == VarKind::Int) {
+    if (constExpr->type->kind == Type::I32) {
         m_instructions.push_back(
             std::make_unique<LabelInst>(
                 Identifier(caseStmt.identifier + std::to_string(std::get<i32>(constExpr->value))))
@@ -711,17 +710,5 @@ BinaryInst::Operation getPostPrefixOperation(const Parsing::UnaryExpr::Operator 
         default:
             throw std::invalid_argument("Invalid postfix operation");
     }
-}
-
-SymbolTable::SymbolType getSymbolType(const Parsing::VarType::Kind kind)
-{
-    using VarType = Parsing::VarType::Kind;
-    using SymbolType = SymbolTable::SymbolType;
-    switch (kind) {
-        case VarType::Int:      return SymbolType::Int;
-        case VarType::Long:     return SymbolType::Long;
-        case VarType::Function: return SymbolType::Function;
-    }
-    std::unreachable();
 }
 } // IR

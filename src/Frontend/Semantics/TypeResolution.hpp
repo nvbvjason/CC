@@ -10,13 +10,12 @@
 #include <unordered_map>
 #include <unordered_set>
 
-
  namespace Semantics {
 
 class TypeResolution : public Parsing::ASTTraverser {
     using Storage = Parsing::Declaration::StorageClass;
     std::unordered_map<std::string, Parsing::Declaration::StorageClass> m_storageClassesFuncs;
-    std::unordered_map<std::string, Parsing::Type::Kind> m_returnTypesFuncs;
+    std::unordered_map<std::string, Type> m_returnTypesFuncs;
     std::unordered_map<std::string, size_t> m_functionArgCounts;
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
@@ -52,14 +51,5 @@ inline bool illegalNonConstInitialization(const Parsing::VarDecl& varDecl,
 {
     return !isConst && (global || varDecl.storage ==  Parsing::Declaration::StorageClass::Static);
 }
-
-inline Parsing::Type::Kind getCommonType(const Parsing::Type::Kind type1, const Parsing::Type::Kind type2)
-{
-    if (type1 == type2)
-        return type1;
-    return Parsing::Type::Kind::Long;
-}
-
 } // Semantics
-
 #endif // CC_SEMANTICS_TYPE_RESOLUTION_HPP

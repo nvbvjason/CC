@@ -2,6 +2,7 @@
 
 #include "ASTIr.hpp"
 #include "ASTTypes.hpp"
+#include "TypeConversion.hpp"
 
 namespace Semantics {
 bool TypeResolution::validate(Parsing::Program& program)
@@ -100,7 +101,7 @@ void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
 {
     ASTTraverser::visit(unaryExpr);
     if (unaryExpr.op == Parsing::UnaryExpr::Operator::Not) {
-        unaryExpr.type = std::make_unique<Parsing::VarType>(Parsing::Type::Kind::Int);
+        unaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         return;
     }
     unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->kind);
@@ -109,11 +110,10 @@ void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
 void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
 {
     using Oper = Parsing::BinaryExpr::Operator;
-    using Type = Parsing::Type::Kind;
     ASTTraverser::visit(binaryExpr);
     if (binaryExpr.op == Oper::And ||
         binaryExpr.op == Oper::Or) {
-        binaryExpr.type = std::make_unique<Parsing::VarType>(Parsing::Type::Kind::Int);
+        binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         return;
     }
     const Type leftType = binaryExpr.lhs->type->kind;
@@ -128,7 +128,7 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
     if (binaryExpr.op == Oper::Equal || binaryExpr.op == Oper::NotEqual ||
         binaryExpr.op == Oper::LessThan || binaryExpr.op == Oper::LessOrEqual ||
         binaryExpr.op == Oper::GreaterThan || binaryExpr.op == Oper::GreaterOrEqual) {
-        binaryExpr.type = std::make_unique<Parsing::VarType>(Type::Int);
+        binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         return;
     }
     binaryExpr.type = std::make_unique<Parsing::VarType>(commonType);
@@ -136,7 +136,6 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
 
 void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
 {
-    using Type = Parsing::Type::Kind;
     ASTTraverser::visit(assignmentExpr);
     const Type leftType = assignmentExpr.lhs->type->kind;
     const Type rightType = assignmentExpr.rhs->type->kind;
@@ -148,7 +147,6 @@ void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
 
 void TypeResolution::visit(Parsing::TernaryExpr& ternaryExpr)
 {
-    using Type = Parsing::Type::Kind;
     ASTTraverser::visit(ternaryExpr);
     const Type trueType = ternaryExpr.trueExpr->type->kind;
     const Type falseType = ternaryExpr.falseExpr->type->kind;

@@ -427,7 +427,7 @@ TEST(Chapter8_Loops, parsingInvalid)
     }
 }
 
-TEST(Chapter8, semanticsInvalid)
+TEST(Chapter8_Loops, semanticsInvalid)
 {
     const fs::path validPath = testsFolderPath / "chapter_8/invalid_semantics";
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
