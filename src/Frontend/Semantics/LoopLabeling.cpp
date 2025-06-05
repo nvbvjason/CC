@@ -103,24 +103,16 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     switchStmt.identifier = makeTemporary("switch");
     m_breakLabel = switchStmt.identifier;
     m_switchLabel = switchStmt.identifier;
-    const Parsing::VarType varType = getSwitchConditionType(switchStmt);
+    const Type conditionType = switchStmt.condition->type->kind;
     m_case[switchStmt.identifier] = std::vector<i32>();
     ASTTraverser::visit(switchStmt);
     for (const i32 value : m_case[switchStmt.identifier])
         switchStmt.cases.push_back(
-            std::make_unique<Parsing::ConstExpr>(value, std::make_unique<Parsing::VarType>(varType))
+            std::make_unique<Parsing::ConstExpr>(value, std::make_unique<Parsing::VarType>(conditionType))
             );
     if (m_default.contains(switchStmt.identifier))
         switchStmt.hasDefault = true;
     m_breakLabel = breakTemp;
     m_switchLabel = switchTemp;
-}
-
-Parsing::VarType LoopLabeling::getSwitchConditionType(const Parsing::SwitchStmt& switchStmt)
-{
-    const auto condition = static_cast<const Parsing::ConstExpr*>(switchStmt.condition.get());
-    if (condition->type->kind == Type::I32)     return Parsing::VarType(Type::I32);
-    if (condition->type->kind == Type::I64)     return Parsing::VarType(Type::I64);
-    std::unreachable();
 }
 } // Semantics

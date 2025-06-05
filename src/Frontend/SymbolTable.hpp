@@ -4,26 +4,24 @@
 #define CC_FRONTEND_SYMBOL_TABLE_HPP
 
 #include "ShortTypes.hpp"
+#include "Types/Type.hpp"
 
 #include <string>
 #include <utility>
 #include <vector>
 #include <unordered_map>
 
-#include "Types/Type.hpp"
-
 class SymbolTable {
 public:
     enum class State : u16 {
         None                = 0,
         Contains            = 1 << 0,
-        CorrectType         = 1 << 1,
-        FromCurrentScope    = 1 << 2,
-        InternalLinkage     = 1 << 3,
-        ExternalLinkage     = 1 << 4,
-        Global              = 1 << 5,
-        Defined             = 1 << 6,
-        InArgs              = 1 << 7,
+        FromCurrentScope    = 1 << 1,
+        InternalLinkage     = 1 << 2,
+        ExternalLinkage     = 1 << 3,
+        Global              = 1 << 4,
+        Defined             = 1 << 5,
+        InArgs              = 1 << 6,
     };
     template <typename>
     struct FlagBase {
@@ -46,21 +44,20 @@ public:
         }
     };
     struct ReturnedFuncEntry : FlagBase<ReturnedFuncEntry>  {
+        Type type;
         i32 argSize;
-        ReturnedFuncEntry(const i32 argSize,
+        ReturnedFuncEntry(const Type type,
+                          const i32 argSize,
                           const bool contains,
-                          const bool correctType,
                           const bool fromCurrentScope,
                           const bool internal,
                           const bool external,
                           const bool isGlobal,
                           const bool defined)
-            : argSize(argSize)
+            : type(type), argSize(argSize)
         {
             if (contains)
                 set(State::Contains);
-            if (correctType)
-                set(State::CorrectType);
             if (fromCurrentScope)
                 set(State::FromCurrentScope);
             if (internal)
@@ -78,7 +75,6 @@ public:
         ReturnedVarEntry(const Type t,
                          const bool contains,
                          const bool inArgs,
-                         const bool correctType,
                          const bool fromCurrentScope,
                          const bool internal,
                          const bool external,
@@ -88,8 +84,6 @@ public:
             type = t;
             if (contains)
                 set(State::Contains);
-            if (correctType)
-                set(State::CorrectType);
             if (inArgs)
                 set(State::InArgs);
             if (fromCurrentScope)

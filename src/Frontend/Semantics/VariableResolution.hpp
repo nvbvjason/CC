@@ -63,9 +63,11 @@ inline bool hasInternalLinkageVar(const Parsing::VarDecl& varDecl)
     using Storage = Parsing::Declaration::StorageClass;
     return varDecl.storage == Storage::Static;
 }
-inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl)
+inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl, bool global)
 {
     using Storage = Parsing::Declaration::StorageClass;
+    if (global && varDecl.storage != Storage::Static)
+        return true;
     return varDecl.storage == Storage::Extern;
 }
 } // Semantics

@@ -59,9 +59,9 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
         return false;
     if (returnedEntry.isSet(Flag::Defined) && funDecl.body != nullptr)
         return false;
-    if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::FromCurrentScope))
+    if (returnedEntry.type != funDecl.type->kind && returnedEntry.isSet(Flag::FromCurrentScope))
         return false;
-    if (!returnedEntry.isSet(Flag::CorrectType) && returnedEntry.isSet(Flag::Global))
+    if (returnedEntry.type != funDecl.type->kind && returnedEntry.isSet(Flag::Global))
         return false;
     if (returnedEntry.isSet(Flag::ExternalLinkage) && funDecl.storage == Storage::Static)
         return false;
@@ -101,7 +101,7 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
     const bool global = !m_symbolTable.inFunc();
     const bool defined = prevEntry.isSet(Flag::Defined) || varDecl.init != nullptr;
     const bool internal = prevEntry.isSet(Flag::InternalLinkage) || hasInternalLinkageVar(varDecl);
-    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && hasExternalLinkageVar(varDecl);
+    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && hasExternalLinkageVar(varDecl, !m_symbolTable.inFunc());
     if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
         m_symbolTable.addVarEntry(
             varDecl.name, varDecl.name, varDecl.type->kind,
@@ -130,9 +130,9 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
         return false;
     if (varDecl.storage == Storage::Extern
         && prevEntry.isSet(Flag::ExternalLinkage)
-        && !prevEntry.isSet(Flag::CorrectType))
+        && prevEntry.type != varDecl.type->kind)
         return false;
-    if (prevEntry.isSet(Flag::CorrectType) && prevEntry.isSet(Flag::FromCurrentScope) &&
+    if (prevEntry.type != varDecl.type->kind && prevEntry.isSet(Flag::FromCurrentScope) &&
             varDecl.storage != Storage::Extern)
         return false;
     return true;
@@ -140,7 +140,7 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
 
 bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry& prevEntry)
 {
-    if (!prevEntry.isSet(Flag::CorrectType))
+    if (prevEntry.type != varDecl.type->kind)
         return false;
     if (varDecl.init != nullptr && prevEntry.isSet(Flag::Defined))
         return false;
@@ -176,7 +176,7 @@ bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::Returned
         return true;
     if (!returnedEntry.isSet(Flag::Contains))
         return false;
-    if (!returnedEntry.isSet(Flag::CorrectType))
+    if (returnedEntry.type == Type::Function)
         return false;
     return true;
 }
@@ -195,7 +195,7 @@ bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable&
     const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funCallExpr.name);
     if (!returnedEntry.isSet(Flag::Contains))
         return false;
-    if (!returnedEntry.isSet(Flag::CorrectType))
+    if (returnedEntry.type != Type::Function)
         return false;
     return true;
 }

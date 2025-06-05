@@ -11,31 +11,14 @@ bool TypeResolution::validate(Parsing::Program& program)
     return m_valid;
 }
 
-bool TypeResolution::hasConflictingFuncLinkage(const Parsing::FunDecl& funDecl)
-{
-    const auto it = m_storageClassesFuncs.find(funDecl.name);
-    if (it == m_storageClassesFuncs.end())
-        return false;
-    return (it->second == Storage::Extern ||
-            it->second == Storage::None) && funDecl.storage == Storage::Static;
-}
-
 void TypeResolution::visit(Parsing::FunDecl& funDecl)
 {
-    if (hasConflictingFuncLinkage(funDecl)) {
+    const auto it = m_functions.find(funDecl.name);
+    if (it != m_functions.end() && !validFuncDecl(it->second, funDecl)) {
         m_valid = false;
         return;
     }
-    if (!m_storageClassesFuncs.contains(funDecl.name))
-        m_storageClassesFuncs[funDecl.name] = funDecl.storage;
     if (!m_global && funDecl.body != nullptr) {
-        m_valid = false;
-        return;
-    }
-    const auto it = m_functionArgCounts.find(funDecl.name);
-    if (it == m_functionArgCounts.end())
-        m_functionArgCounts.emplace_hint(it, funDecl.name, funDecl.params.size());
-    else if (it->second != funDecl.params.size()) {
         m_valid = false;
         return;
     }
@@ -43,9 +26,24 @@ void TypeResolution::visit(Parsing::FunDecl& funDecl)
         m_definedFunctions.insert(funDecl.name);
     m_global = false;
     const auto type = static_cast<Parsing::FuncType*>(funDecl.type.get());
-    m_returnTypesFuncs.emplace(funDecl.name, type->returnType->kind);
+    FuncEntry funcEntry(type->params, type->returnType->kind, funDecl.storage, funDecl.body != nullptr);
+    m_functions.emplace_hint(it, funDecl.name, std::move(funcEntry));
     ASTTraverser::visit(funDecl);
     m_global = true;
+}
+
+bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl)
+{
+    if ((funcEntry.storage == Storage::Extern || funcEntry.storage == Storage::None)
+        && funDecl.storage == Storage::Static)
+        return false;
+    if (funDecl.params.size() != funcEntry.paramTypes.size())
+        return false;
+    const auto type = static_cast<Parsing::FuncType*>(funDecl.type.get());
+    for (size_t i = 0; i < funDecl.params.size(); ++i)
+        if (funcEntry.paramTypes[i] != type->params[i]->kind)
+            return false;
+    return true;
 }
 
 void TypeResolution::visit(Parsing::DeclForInit& declForInit)
@@ -57,17 +55,17 @@ void TypeResolution::visit(Parsing::DeclForInit& declForInit)
 
 void TypeResolution::visit(Parsing::FunCallExpr& funCallExpr)
 {
-    const auto it = m_functionArgCounts.find(funCallExpr.name);
-    if (it == m_functionArgCounts.end()) {
+    const auto it = m_functions.find(funCallExpr.name);
+    if (it == m_functions.end()) {
         m_valid = false;
         return;
     }
-    if (it->second != funCallExpr.args.size()) {
+    if (it->second.paramTypes.size() != funCallExpr.args.size()) {
         m_valid = false;
         return;
     }
+    funCallExpr.type = std::make_unique<Parsing::VarType>(it->second.returnType);
     ASTTraverser::visit(funCallExpr);
-    funCallExpr.type = std::make_unique<Parsing::VarType>(m_returnTypesFuncs[funCallExpr.name]);
 }
 
 void TypeResolution::visit(Parsing::VarDecl& varDecl)

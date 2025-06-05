@@ -31,9 +31,9 @@ SymbolTable::ReturnedVarEntry SymbolTable::lookupVar(const std::string& uniqueNa
         const bool external = it->second.isSet(State::ExternalLinkage);
         const bool global = it->second.isSet(State::Global);
         const bool defined = it->second.isSet(State::Defined);
-        return {it->second.type, true, inArgs, correctType, fromCurrentScope, internal, external, global, defined};
+        return {it->second.type, true, inArgs, fromCurrentScope, internal, external, global, defined};
     }
-    return {Type::I32, false, inArgs, false, false, false, false, false, false};
+    return {Type::I32, false, inArgs, false, false, false, false, false};
 }
 
 SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& uniqueName) const
@@ -42,7 +42,7 @@ SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& unique
         const auto it = m_entries[i].find(uniqueName);
         if (it == m_entries[i].end())
             continue;
-        const bool correctType = it->second.type == Type::Function;
+        const Type type = it->second.type;
         const bool fromCurrentScope = i == m_entries.size() - 1;
         const bool internal = it->second.isSet(State::InternalLinkage);
         const bool external = it->second.isSet(State::ExternalLinkage);
@@ -51,9 +51,9 @@ SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& unique
         i32 argsSize = 0;
         if (m_funcs.contains(uniqueName))
             argsSize = m_funcs.at(uniqueName);
-        return {argsSize, true, correctType, fromCurrentScope, internal, external, global, defined};
+        return {type, argsSize, true, fromCurrentScope, internal, external, global, defined};
     }
-    return {false, false, false, false, false, false, false, false};
+    return {Type::I32, false, false, false, false, false, false, false};
 }
 
 std::string SymbolTable::getUniqueName(const std::string& unique) const

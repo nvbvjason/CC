@@ -13,10 +13,23 @@
  namespace Semantics {
 
 class TypeResolution : public Parsing::ASTTraverser {
+    struct FuncEntry {
+        std::vector<Type> paramTypes;
+        Type returnType;
+        Parsing::Declaration::StorageClass storage;
+        bool defined;
+        FuncEntry(const std::vector<std::unique_ptr<Parsing::TypeBase>>& params,
+                  const Type returnType,
+                  const Parsing::Declaration::StorageClass storage,
+                  const bool defined)
+            : returnType(returnType), storage(storage), defined(defined)
+        {
+            for (const auto& paramType : params)
+                paramTypes.emplace_back(paramType->kind);
+        }
+    };
     using Storage = Parsing::Declaration::StorageClass;
-    std::unordered_map<std::string, Parsing::Declaration::StorageClass> m_storageClassesFuncs;
-    std::unordered_map<std::string, Type> m_returnTypesFuncs;
-    std::unordered_map<std::string, size_t> m_functionArgCounts;
+    std::unordered_map<std::string, FuncEntry> m_functions;
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
@@ -37,6 +50,7 @@ public:
     void visit(Parsing::BinaryExpr& binaryExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
     void visit(Parsing::TernaryExpr& ternaryExpr) override;
+    static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 };
 

@@ -627,6 +627,26 @@ TEST(Chapter11_Long_Integers, parsingInvalid)
     }
 }
 
+TEST(Chapter11_Long_Integers, invalidLabels)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_11/invalid_labels";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter11_Long_Integers, invalidTypes)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_11/invalid_types";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
 void cleanUp()
 {
     for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))

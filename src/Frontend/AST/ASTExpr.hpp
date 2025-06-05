@@ -40,10 +40,12 @@ struct VarExpr final : Expr {
 };
 
 struct CastExpr final : Expr {
-    std::unique_ptr<TypeBase> type;
     std::unique_ptr<Expr> expr;
     CastExpr(std::unique_ptr<TypeBase>&& type, std::unique_ptr<Expr>&& expr) noexcept
-        : Expr(Kind::Cast), type(std::move(type)), expr(std::move(expr)) {}
+        : Expr(Kind::Cast, std::move(type)), expr(std::move(expr)) {}
+    explicit CastExpr(std::unique_ptr<Expr>&& expr) noexcept
+        : Expr(Kind::Cast), expr(std::move(expr)) {}
+
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
