@@ -38,13 +38,12 @@ class TypeResolution : public Parsing::ASTTraverser {
     bool m_global = true;
 public:
     bool validate(Parsing::Program& program);
-    bool hasConflictingFuncLinkage(const Parsing::FunDecl& funDecl);
 
     void visit(Parsing::FunDecl& funDecl) override;
+    void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::DeclForInit& declForInit) override;
 
     void visit(Parsing::FunCallExpr& funCallExpr) override;
-    void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::UnaryExpr& unaryExpr) override;
     void visit(Parsing::BinaryExpr& binaryExpr) override;

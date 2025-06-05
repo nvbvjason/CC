@@ -1,11 +1,12 @@
 #include "CompilerDriver.hpp"
 #include "AsmPrinter.hpp"
-#include "Frontend/FrontendDriver.hpp"
-#include "IR/ASTIr.hpp"
-#include "IR/IrPrinter.hpp"
-#include "CodeGen/AsmAST.hpp"
-#include "CodeGen/GenerateAsmTree.hpp"
-#include "CodeGen/Assembly.hpp"
+#include "FrontendDriver.hpp"
+#include "ASTIr.hpp"
+#include "IrPrinter.hpp"
+#include "AsmAST.hpp"
+#include "GenerateAsmTree.hpp"
+#include "Assembly.hpp"
+#include "PseudoRegisterReplacer.hpp"
 
 #include <algorithm>
 #include <iostream>

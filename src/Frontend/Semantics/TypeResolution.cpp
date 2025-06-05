@@ -85,8 +85,16 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         m_definedFunctions.insert(varDecl.name);
     m_isConst = true;
     ASTTraverser::visit(varDecl);
-    if (illegalNonConstInitialization(varDecl, m_isConst, m_global))
+    if (illegalNonConstInitialization(varDecl, m_isConst, m_global)) {
         m_valid = false;
+        return;
+    }
+    if (varDecl.init == nullptr)
+        return;
+    const Type commonType = getCommonType(varDecl.type->kind, varDecl.init->type->kind);
+    if (commonType != varDecl.init->type->kind)
+        varDecl.init = std::make_unique<Parsing::CastExpr>(
+            std::make_unique<Parsing::VarType>(commonType), std::move(varDecl.init));
 }
 
 void TypeResolution::visit(Parsing::VarExpr& varExpr)

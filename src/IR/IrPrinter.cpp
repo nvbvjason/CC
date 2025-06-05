@@ -51,10 +51,10 @@ void IrPrinter::print(const Function& function)
 
 std::string IrPrinter::print(const Value& value)
 {
-    switch (value.type) {
-        case Value::Type::Variable:
+    switch (value.kind) {
+        case Value::Kind::Variable:
             return print(static_cast<const ValueVar&>(value));
-        case Value::Type::Constant:
+        case Value::Kind::Constant:
             return print(static_cast<const ValueConst&>(value));
     }
     std::unreachable();
@@ -135,7 +135,11 @@ std::string IrPrinter::print(const ValueVar& val)
 
 std::string IrPrinter::print(const ValueConst& val)
 {
-    return "Const(" + std::to_string(val.value) + ")";
+    if (val.type == Type::I32)
+        return "Const(" + std::to_string(std::get<i32>(val.value)) + ")";
+    if (val.type == Type::I64)
+        return "Const(" + std::to_string(std::get<i64>(val.value)) + ")";
+    std::unreachable();
 }
 
 std::string to_string(UnaryInst::Operation op)
@@ -176,24 +180,24 @@ std::string to_string(BinaryInst::Operation op)
 }
 
 void IrPrinter::print(const Instruction& instruction) {
-    switch (instruction.type) {
-        case Instruction::Type::Return:
+    switch (instruction.kind) {
+        case Instruction::Kind::Return:
             visit(static_cast<const ReturnInst&>(instruction)); break;
-        case Instruction::Type::Unary:
+        case Instruction::Kind::Unary:
             visit(static_cast<const UnaryInst&>(instruction)); break;
-        case Instruction::Type::Binary:
+        case Instruction::Kind::Binary:
             visit(static_cast<const BinaryInst&>(instruction)); break;
-        case Instruction::Type::Copy:
+        case Instruction::Kind::Copy:
             visit(static_cast<const CopyInst&>(instruction)); break;
-        case Instruction::Type::Jump:
+        case Instruction::Kind::Jump:
             visit(static_cast<const JumpInst&>(instruction)); break;
-        case Instruction::Type::JumpIfZero:
+        case Instruction::Kind::JumpIfZero:
             visit(static_cast<const JumpIfZeroInst&>(instruction)); break;
-        case Instruction::Type::JumpIfNotZero:
+        case Instruction::Kind::JumpIfNotZero:
             visit(static_cast<const JumpIfNotZeroInst&>(instruction)); break;
-        case Instruction::Type::Label:
+        case Instruction::Kind::Label:
             visit(static_cast<const LabelInst&>(instruction)); break;
-        case Instruction::Type::FunCall:
+        case Instruction::Kind::FunCall:
             visit(static_cast<const FunCallInst&>(instruction)); break;
         default:
             m_oss << "Unknown Instruction\n";

@@ -8,10 +8,11 @@
 
 TEST(GenerateIrTests, VarExprToIrPreservesType)
 {
-    const auto varExpr = std::make_unique<Parsing::VarExpr>("v");
-    const auto expected = std::make_shared<Ir::ValueVar>(Ir::Identifier("v"));
+    auto varExpr = std::make_unique<Parsing::VarExpr>("v");
+    varExpr->type = std::make_unique<Parsing::VarType>(Type::I32);
+    const auto expected = std::make_shared<Ir::ValueVar>(Ir::Identifier("v"), Type::I32);
     const std::shared_ptr<Ir::Value> result = Ir::GenerateIr::generateVarInst(*varExpr);
-    EXPECT_EQ(expected->type, result->type);
+    EXPECT_EQ(expected->kind, result->kind);
 }
 
 TEST(GenerateIrTests, ConstExprToIrPreservesType)
@@ -21,5 +22,5 @@ TEST(GenerateIrTests, ConstExprToIrPreservesType)
         );
     const auto expected = std::make_shared<Ir::ValueConst>(5);
     const std::shared_ptr<Ir::Value> result = Ir::GenerateIr::generateConstInst(*constExpr);
-    EXPECT_EQ(expected->type, result->type);
+    EXPECT_EQ(expected->kind, result->kind);
 }

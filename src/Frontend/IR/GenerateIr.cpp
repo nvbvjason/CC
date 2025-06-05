@@ -1,10 +1,8 @@
 #include "ASTParser.hpp"
 #include "GenerateIr.hpp"
-#include "ASTTypes.hpp"
 
 #include <cassert>
 #include <stdexcept>
-
 
 namespace Ir {
 static Identifier makeTemporaryName();
@@ -116,19 +114,19 @@ void GenerateIr::generateForInit(const Parsing::ForInit& forInit)
     }
 }
 
-void GenerateIr::generateDeclaration(const Parsing::Declaration& declaration)
+void GenerateIr::generateDeclaration(const Parsing::Declaration& decl)
 {
-    if (declaration.kind == Parsing::Declaration::Kind::VarDecl) {
-        const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&declaration);
+    if (decl.kind == Parsing::Declaration::Kind::VarDecl) {
+        const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&decl);
         if (varDecl->init == nullptr)
             return;
         if (varDecl->storage == Storage::Static)
             return generateDeclarationStaticLocal(*varDecl);
         std::shared_ptr<Value> value = generateInst(*varDecl->init);
-        auto temporary = std::make_shared<ValueVar>(makeTemporaryName());
+        auto temporary = std::make_shared<ValueVar>(makeTemporaryName(), varDecl->type->kind);
         m_instructions.push_back(std::make_unique<CopyInst>(value, temporary));
         const Identifier iden(varDecl->name);
-        auto var = std::make_shared<ValueVar>(iden);
+        auto var = std::make_shared<ValueVar>(iden, varDecl->type->kind);
         m_instructions.push_back(std::make_unique<CopyInst>(temporary, var));
     }
 }
@@ -381,7 +379,7 @@ void GenerateIr::generateSwitchStmt(const Parsing::SwitchStmt& stmt)
     auto realValue = generateInst(*stmt.condition);
     for (const auto& caseStmt : stmt.cases) {
         const auto constExpr = dynamic_cast<const Parsing::ConstExpr*>(caseStmt.get());
-        const auto destination = std::make_shared<ValueVar>(makeTemporaryName());
+        const auto destination = std::make_shared<ValueVar>(makeTemporaryName(), constExpr->type->kind);
         m_instructions.push_back(
             std::make_unique<BinaryInst>(BinaryInst::Operation::Equal,
                                          realValue,
@@ -410,6 +408,8 @@ std::shared_ptr<Value> GenerateIr::generateInst(const Parsing::Expr& parsingExpr
 {
     using ExprKind = Parsing::Expr::Kind;
     switch (parsingExpr.kind) {
+        case ExprKind::Cast:
+            return generateCast(parsingExpr);
         case ExprKind::Var:
             return generateVarInst(parsingExpr);
         case ExprKind::Constant:
@@ -421,19 +421,36 @@ std::shared_ptr<Value> GenerateIr::generateInst(const Parsing::Expr& parsingExpr
         case ExprKind::Assignment:
             return generateAssignInst(parsingExpr);
         case ExprKind::Conditional:
-            return generateConditionalInst(parsingExpr);
+            return generateTernaryInst(parsingExpr);
         case ExprKind::FunctionCall:
             return generateFuncCallInst(parsingExpr);
         default:
             assert("Unexpected expression type ir generateInst");
-            std::unreachable();
     }
+    std::unreachable();
+}
+
+std::shared_ptr<Value> GenerateIr::generateCast(const Parsing::Expr& parsingExpr)
+{
+    const auto castExpr = static_cast<const Parsing::CastExpr*>(&parsingExpr);
+    auto result = generateInst(*castExpr->expr);
+    const Type type = parsingExpr.type->kind;
+    const Type innerType = castExpr->expr->type->kind;
+    if (type == innerType)
+        return result;
+    const Identifier iden(makeTemporaryName());
+    auto dst = std::make_shared<ValueVar>(iden, type);
+    if (type == Type::I64)
+        m_instructions.push_back(std::make_unique<SignExtendInst>(result, dst));
+    else
+        m_instructions.push_back(std::make_unique<TruncateInst>(result, dst));
+    return dst;
 }
 
 std::shared_ptr<Value> GenerateIr::generateUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr)
 {
-    auto originalForReturn = std::make_shared<ValueVar>(makeTemporaryName());
-    auto tempNew = std::make_shared<ValueVar>(makeTemporaryName());
+    auto originalForReturn = std::make_shared<ValueVar>(makeTemporaryName(), unaryExpr.type->kind);
+    auto tempNew = std::make_shared<ValueVar>(makeTemporaryName(), unaryExpr.type->kind);
     auto original = generateInst(*unaryExpr.operand);
     m_instructions.push_back(std::make_unique<CopyInst>(original, originalForReturn));
     auto operation = std::make_shared<ValueConst>(1);
@@ -447,7 +464,7 @@ std::shared_ptr<Value> GenerateIr::generateUnaryPostfixInst(const Parsing::Unary
 std::shared_ptr<Value> GenerateIr::generateUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr)
 {
     auto original = generateInst(*unaryExpr.operand);
-    auto temp = std::make_shared<ValueVar>(Identifier(makeTemporaryName()));
+    auto temp = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), unaryExpr.type->kind);
     m_instructions.push_back(std::make_unique<BinaryInst>(
         getPostPrefixOperation(unaryExpr.op), original, std::make_shared<ValueConst>(1), temp)
     );
@@ -466,7 +483,7 @@ std::shared_ptr<Value> GenerateIr::generateUnaryInst(const Parsing::Expr& parsin
         return generateInst(*unaryParsingPtr->operand);
     UnaryInst::Operation operation = convertUnaryOperation(unaryParsingPtr->op);
     auto source = generateInst(*unaryParsingPtr->operand);
-    auto destination = std::make_shared<ValueVar>(makeTemporaryName());
+    auto destination = std::make_shared<ValueVar>(makeTemporaryName(), parsingExpr.type->kind);
     m_instructions.push_back(std::make_unique<UnaryInst>(operation, source, destination));
     return destination;
 }
@@ -475,7 +492,7 @@ std::shared_ptr<Value> GenerateIr::generateVarInst(const Parsing::Expr& parsingE
 {
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(&parsingExpr);
     const Identifier iden(varExpr->name);
-    auto var = std::make_shared<ValueVar>(iden);
+    auto var = std::make_shared<ValueVar>(iden, parsingExpr.type->kind);
     return var;
 }
 
@@ -490,7 +507,7 @@ std::shared_ptr<Value> GenerateIr::generateBinaryInst(const Parsing::Expr& parsi
     auto source1 = generateInst(*binaryParsing->lhs);
     auto source2 = generateInst(*binaryParsing->rhs);
 
-    auto destination = std::make_shared<ValueVar>(makeTemporaryName());
+    auto destination = std::make_shared<ValueVar>(makeTemporaryName(), parsingExpr.type->kind);
 
     m_instructions.push_back(std::make_unique<BinaryInst>(operation, source1, source2, destination));
     return destination;
@@ -508,7 +525,7 @@ std::shared_ptr<Value> GenerateIr::generateSimpleAssignInst(const Parsing::Assig
 {
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr.lhs.get());
     const Identifier iden(varExpr->name);
-    auto destination = std::make_shared<ValueVar>(iden);
+    auto destination = std::make_shared<ValueVar>(iden, assignExpr.type->kind);
     auto result = generateInst(*assignExpr.rhs);
     m_instructions.push_back(std::make_unique<CopyInst>(result, destination));
     return destination;
@@ -518,9 +535,9 @@ std::shared_ptr<Value> GenerateIr::generateCompoundAssignInst(const Parsing::Ass
 {
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr.lhs.get());
     const Identifier iden(varExpr->name);
-    auto lhs = std::make_shared<ValueVar>(iden);
+    auto lhs = std::make_shared<ValueVar>(iden, assignExpr.type->kind);
     BinaryInst::Operation operation = convertAssiOperation(assignExpr.op);
-    auto destination = std::make_shared<ValueVar>(makeTemporaryName());
+    auto destination = std::make_shared<ValueVar>(makeTemporaryName(), assignExpr.type->kind);
     auto rhs = generateInst(*assignExpr.rhs);
     m_instructions.push_back(std::make_unique<BinaryInst>(operation, lhs, rhs, destination));
     m_instructions.push_back(std::make_unique<CopyInst>(destination, lhs));
@@ -529,7 +546,7 @@ std::shared_ptr<Value> GenerateIr::generateCompoundAssignInst(const Parsing::Ass
 
 std::shared_ptr<Value> GenerateIr::generateBinaryAndInst(const Parsing::BinaryExpr& parsingExpr)
 {
-    auto result = std::make_shared<ValueVar>(makeTemporaryName());
+    auto result = std::make_shared<ValueVar>(makeTemporaryName(), parsingExpr.type->kind);
     auto lhs = generateInst(*parsingExpr.lhs);
     Identifier falseLabelIden = makeTemporaryName();
     m_instructions.push_back(std::make_unique<JumpIfZeroInst>(lhs, falseLabelIden));
@@ -548,7 +565,7 @@ std::shared_ptr<Value> GenerateIr::generateBinaryAndInst(const Parsing::BinaryEx
 
 std::shared_ptr<Value> GenerateIr::generateBinaryOrInst(const Parsing::BinaryExpr& binaryExpr)
 {
-    auto result = std::make_shared<ValueVar>(makeTemporaryName());
+    auto result = std::make_shared<ValueVar>(makeTemporaryName(), binaryExpr.type->kind);
     auto lhs = generateInst(*binaryExpr.lhs);
     Identifier trueLabelIden = makeTemporaryName();
     m_instructions.push_back(std::make_unique<JumpIfNotZeroInst>(lhs, trueLabelIden));
@@ -572,14 +589,14 @@ std::shared_ptr<Value> GenerateIr::generateConstInst(const Parsing::Expr& parsin
     return result;
 }
 
-std::shared_ptr<Value> GenerateIr::generateConditionalInst(const Parsing::Expr& stmt)
+std::shared_ptr<Value> GenerateIr::generateTernaryInst(const Parsing::Expr& ternary)
 {
-    auto result = std::make_shared<ValueVar>(makeTemporaryName());
+    auto result = std::make_shared<ValueVar>(makeTemporaryName(), ternary.type->kind);
 
     Identifier endLabelIden = makeTemporaryName();
     Identifier falseLabelName = makeTemporaryName();
 
-    const auto conditionalExpr = dynamic_cast<const Parsing::TernaryExpr*>(&stmt);
+    const auto conditionalExpr = dynamic_cast<const Parsing::TernaryExpr*>(&ternary);
     auto condition = generateInst(*conditionalExpr->condition);
 
     m_instructions.push_back(std::make_unique<JumpIfZeroInst>(condition, falseLabelName));
@@ -596,14 +613,14 @@ std::shared_ptr<Value> GenerateIr::generateConditionalInst(const Parsing::Expr& 
     return result;
 }
 
-std::shared_ptr<Value> GenerateIr::generateFuncCallInst(const Parsing::Expr& stmt)
+std::shared_ptr<Value> GenerateIr::generateFuncCallInst(const Parsing::Expr& parsingExpr)
 {
-    const auto parseFunction = dynamic_cast<const Parsing::FunCallExpr*>(&stmt);
+    const auto parseFunction = dynamic_cast<const Parsing::FunCallExpr*>(&parsingExpr);
     std::vector<std::shared_ptr<Value>> arguments;
     arguments.reserve(parseFunction->args.size());
     for (const auto& expr : parseFunction->args)
         arguments.push_back(generateInst(*expr));
-    auto dst = std::make_shared<ValueVar>(makeTemporaryName());
+    auto dst = std::make_shared<ValueVar>(makeTemporaryName(), parsingExpr.type->kind);
     m_instructions.push_back(std::make_unique<FunCallInst>(
         Identifier(parseFunction->name), std::move(arguments), dst
         ));

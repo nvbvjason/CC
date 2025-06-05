@@ -4,10 +4,9 @@
 #define CC_CODEGEN_PSEUDO_REGISTER_REPLACER_HPP
 
 #include "AsmAST.hpp"
+#include "Frontend/SymbolTable.hpp"
 
 #include <unordered_map>
-
-#include "Frontend/SymbolTable.hpp"
 
 namespace CodeGen {
 

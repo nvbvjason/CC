@@ -45,6 +45,7 @@ public:
     void generateForStmt(const Parsing::ForStmt& stmt);
     void generateSwitchStmt(const Parsing::SwitchStmt& stmt);
     std::shared_ptr<Value> generateInst(const Parsing::Expr& parsingExpr);
+    std::shared_ptr<Value> generateCast(const Parsing::Expr& parsingExpr);
     std::shared_ptr<Value> generateUnaryInst(const Parsing::Expr& parsingExpr);
     std::shared_ptr<Value> generateUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr);
     std::shared_ptr<Value> generateUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr);
@@ -54,8 +55,8 @@ public:
     std::shared_ptr<Value> generateAssignInst(const Parsing::Expr& binaryExpr);
     std::shared_ptr<Value> generateSimpleAssignInst(const Parsing::AssignmentExpr& assignExpr);
     std::shared_ptr<Value> generateCompoundAssignInst(const Parsing::AssignmentExpr& assignExpr);
-    std::shared_ptr<Value> generateConditionalInst(const Parsing::Expr& stmt);
-    std::shared_ptr<Value> generateFuncCallInst(const Parsing::Expr& stmt);
+    std::shared_ptr<Value> generateTernaryInst(const Parsing::Expr& ternary);
+    std::shared_ptr<Value> generateFuncCallInst(const Parsing::Expr& parsingExpr);
     static std::shared_ptr<Value> generateConstInst(const Parsing::Expr& parsingExpr);
     static std::shared_ptr<Value> generateVarInst(const Parsing::Expr& parsingExpr);
 };
