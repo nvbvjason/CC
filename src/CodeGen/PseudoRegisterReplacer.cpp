@@ -6,14 +6,10 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
     if (operand->kind == Operand::Kind::Pseudo && operand) {
         const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
         if (pseudo->referingTo == ReferingTo::Extern ||
-            pseudo->referingTo == ReferingTo::Arg) {
+            pseudo->referingTo == ReferingTo::Static) {
             operand = std::make_shared<DataOperand>(pseudo->identifier);
             return;
         }
-        // if (entry.isSet(SymbolTable::State::CorrectType) entry.type != operand.type) {
-        //     operand = std::make_shared<DataOperand>(pseudo->identifier);
-        //     return;
-        // }
         if (!m_pseudoMap.contains(pseudo->identifier)) {
             m_stackPtr -= 4;
             m_pseudoMap[pseudo->identifier] = m_stackPtr;

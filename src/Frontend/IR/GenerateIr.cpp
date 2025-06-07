@@ -125,10 +125,10 @@ void GenerateIr::generateDeclaration(const Parsing::Declaration& decl)
 {
     if (decl.kind == Parsing::Declaration::Kind::VarDecl) {
         const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&decl);
-        if (varDecl->init == nullptr)
-            return;
         if (varDecl->storage == Storage::Static)
             return generateDeclarationStaticLocal(*varDecl);
+        if (varDecl->init == nullptr)
+            return;
         std::shared_ptr<Value> value = generateInst(*varDecl->init);
         auto temporary = std::make_shared<ValueVar>(makeTemporaryName(), varDecl->type->kind);
         m_instructions.push_back(std::make_unique<CopyInst>(value, temporary, varDecl->type->kind));
@@ -535,6 +535,7 @@ std::shared_ptr<Value> GenerateIr::generateSimpleAssignInst(const Parsing::Assig
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr.lhs.get());
     const Identifier iden(varExpr->name);
     auto destination = std::make_shared<ValueVar>(iden, assignExpr.type->kind);
+    destination->referingTo = varExpr->referingTo;
     auto result = generateInst(*assignExpr.rhs);
     m_instructions.push_back(std::make_unique<CopyInst>(result, destination, assignExpr.type->kind));
     return destination;
@@ -545,6 +546,7 @@ std::shared_ptr<Value> GenerateIr::generateCompoundAssignInst(const Parsing::Ass
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(assignExpr.lhs.get());
     const Identifier iden(varExpr->name);
     auto lhs = std::make_shared<ValueVar>(iden, assignExpr.type->kind);
+    lhs->referingTo = varExpr->referingTo;
     BinaryInst::Operation operation = convertAssiOperation(assignExpr.op);
     auto destination = std::make_shared<ValueVar>(makeTemporaryName(), assignExpr.type->kind);
     auto rhs = generateInst(*assignExpr.rhs);

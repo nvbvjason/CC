@@ -163,8 +163,10 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         varExpr.referingTo = ReferingTo::Extern;
     else if (!returnedEntry.isSet(Flag::InArgs))
         varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
-    if (returnedEntry.isSet(Flag::InArgs))
-        varExpr.referingTo = ReferingTo::Arg;
+    if (returnedEntry.isSet(Flag::ExternalLinkage))
+        varExpr.referingTo = ReferingTo::Extern;
+    if (returnedEntry.isSet(Flag::InternalLinkage))
+        varExpr.referingTo = ReferingTo::Static;
     if (returnedEntry.type == Type::I32)
         varExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
     else

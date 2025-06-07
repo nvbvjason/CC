@@ -6,6 +6,7 @@
 #include <cassert>
 #include <random>
 #include <stdexcept>
+#include <sys/stat.h>
 
 namespace {
 using RegType = CodeGen::RegisterOperand::Kind;
@@ -70,14 +71,15 @@ std::unique_ptr<TopLevel> GenerateAsmTree::generateFunction(const Ir::Function& 
 std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable)
 {
     const Type type = staticVariable.type;
+    const Ir::ValueConst* value = static_cast<const Ir::ValueConst*>(staticVariable.value.get());
     if (type == Type::I32)
         return std::make_unique<StaticVariable>(staticVariable.name,
-                                                staticVariable.global,
+                                                std::get<i32>(value->value),
                                                 getAssemblyType(staticVariable.type),
                                                 staticVariable.global);
     if (type == Type::I64)
         return std::make_unique<StaticVariable>(staticVariable.name,
-                                            staticVariable.global,
+                                                std::get<i64>(value->value),
                                                 getAssemblyType(staticVariable.type),
                                                 staticVariable.global);
     std::abort();
