@@ -223,6 +223,7 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper, AssemblyType type)
             default:                 return "not set asmUnaryOperator";
         }
     }
+
 }
 
 std::string asmBinaryOperator(const BinaryInst::Operator oper, const AssemblyType type)

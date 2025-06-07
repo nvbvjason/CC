@@ -129,7 +129,7 @@ struct DataOperand final : Operand {
 
 struct Inst {
     enum class Kind : u8 {
-        Move, Unary, Binary, Cmp, Idiv, Cdq, Jmp, JmpCC, SetCC, Label,
+        Move, MoveSX, Unary, Binary, Cmp, Idiv, Cdq, Jmp, JmpCC, SetCC, Label,
         Push, Call, Ret
     };
     enum class CondCode : u8 {
@@ -145,6 +145,20 @@ struct Inst {
 protected:
     explicit Inst(const Kind k)
         : kind(k) {}
+};
+
+struct MoveSXInst final : Inst {
+    std::shared_ptr<Operand> src;
+    std::shared_ptr<Operand> dst;
+
+    MoveSXInst(
+        std::shared_ptr<Operand> src,
+        std::shared_ptr<Operand> dst)
+        : Inst(Kind::MoveSX), src(std::move(src)), dst(std::move(dst)) {}
+
+    void accept(InstVisitor& visitor) override;
+
+    MoveSXInst() = delete;
 };
 
 struct MoveInst final : Inst {
@@ -346,6 +360,7 @@ struct InstVisitor {
     virtual ~InstVisitor() = default;
 
     virtual void visit(MoveInst&) = 0;
+    virtual void visit(MoveSXInst&) = 0;
     virtual void visit(UnaryInst&) = 0;
     virtual void visit(BinaryInst&) = 0;
     virtual void visit(CmpInst&) = 0;
@@ -361,6 +376,7 @@ struct InstVisitor {
 };
 
 inline void MoveInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
+inline void MoveSXInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void UnaryInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void BinaryInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void CmpInst::accept(InstVisitor& visitor) { visitor.visit(*this); }

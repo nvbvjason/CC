@@ -60,6 +60,8 @@ public:
 
     void binaryInst(const Ir::BinaryInst& irBinary);
 
+    void generateSignExtendInst(const Ir::SignExtendInst& signExtend);
+    void generateTruncateInst(const Ir::TruncateInst& truncate);
     void generateBinaryDivideInst(const Ir::BinaryInst& irBinary);
     void generateBinaryRemainderInst(const Ir::BinaryInst& irBinary);
     void generateBinaryCondInst(const Ir::BinaryInst& irBinary);

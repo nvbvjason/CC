@@ -13,13 +13,11 @@ namespace CodeGen {
 class PseudoRegisterReplacer final : public InstVisitor {
     std::unordered_map<std::string, i32> m_pseudoMap;
     i32 m_stackPtr = 0;
-    //const SymbolTable &c_symbolTable;
 public:
-    // explicit PseudoRegisterReplacer(const SymbolTable &symbolTable)
-    //     : c_symbolTable(symbolTable) {}
     [[nodiscard]] i32 stackPointer() const { return m_stackPtr; }
 
     void visit(MoveInst& move) override;
+    void visit(MoveSXInst&) override;
     void visit(UnaryInst& unary) override;
     void visit(BinaryInst& binary) override;
     void visit(IdivInst& idiv) override;

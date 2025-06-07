@@ -86,16 +86,28 @@ std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& stati
 void GenerateAsmTree::transformInst(const std::unique_ptr<Ir::Instruction>& inst)
 {
     switch (inst->kind) {
-        case Ir::Instruction::Kind::Unary: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irUnary = static_cast<Ir::UnaryInst*>(inst.get());
-            unaryInst(*irUnary);
-            break;
-        }
         case Ir::Instruction::Kind::Return: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             const auto irReturn = static_cast<Ir::ReturnInst*>(inst.get());
             returnInst(*irReturn);
+            break;
+        }
+        case Ir::Instruction::Kind::SignExtend: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto signExtend = static_cast<Ir::SignExtendInst*>(inst.get());
+            generateSignExtendInst(*signExtend);
+            break;
+        }
+        case Ir::Instruction::Kind::Truncate: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto truncate = static_cast<Ir::TruncateInst*>(inst.get());
+            generateTruncateInst(*truncate);
+            break;
+        }
+        case Ir::Instruction::Kind::Unary: {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto irUnary = static_cast<Ir::UnaryInst*>(inst.get());
+            unaryInst(*irUnary);
             break;
         }
         case Ir::Instruction::Kind::Binary: {
@@ -104,10 +116,10 @@ void GenerateAsmTree::transformInst(const std::unique_ptr<Ir::Instruction>& inst
             binaryInst(*irBinary);
             break;
         }
-        case Ir::Instruction::Kind::Label: {
+        case Ir::Instruction::Kind::Copy: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irLabel = static_cast<Ir::LabelInst*>(inst.get());
-            generateLabelInst(*irLabel);
+            const auto irCopy = static_cast<Ir::CopyInst*>(inst.get());
+            generateCopyInst(*irCopy);
             break;
         }
         case Ir::Instruction::Kind::Jump: {
@@ -128,10 +140,10 @@ void GenerateAsmTree::transformInst(const std::unique_ptr<Ir::Instruction>& inst
             generateJumpIfNotZeroInst(*irJumpIfNotZero);
             break;
         }
-        case Ir::Instruction::Kind::Copy: {
+        case Ir::Instruction::Kind::Label: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irCopy = static_cast<Ir::CopyInst*>(inst.get());
-            generateCopyInst(*irCopy);
+            const auto irLabel = static_cast<Ir::LabelInst*>(inst.get());
+            generateLabelInst(*irLabel);
             break;
         }
         case Ir::Instruction::Kind::FunCall: {
@@ -240,6 +252,20 @@ void GenerateAsmTree::binaryInst(const Ir::BinaryInst& irBinary)
         default:
             throw std::runtime_error("Unsupported binary operation");
     }
+}
+
+void GenerateAsmTree::generateSignExtendInst(const Ir::SignExtendInst& signExtend)
+{
+    std::shared_ptr<Operand> src1 = operand(signExtend.src);
+    std::shared_ptr<Operand> src2 = operand(signExtend.dst);
+    insts.emplace_back(std::make_unique<MoveSXInst>(src2, src1));
+}
+
+void GenerateAsmTree::generateTruncateInst(const Ir::TruncateInst& truncate)
+{
+    std::shared_ptr<Operand> src1 = operand(truncate.src);
+    std::shared_ptr<Operand> src2 = operand(truncate.dst);
+    insts.emplace_back(std::make_unique<MoveInst>(src2, src1, AssemblyType::LongWord));
 }
 
 void GenerateAsmTree::generateBinaryCondInst(const Ir::BinaryInst& irBinary)

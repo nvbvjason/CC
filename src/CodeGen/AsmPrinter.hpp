@@ -29,6 +29,7 @@ public:
     void add(const StaticVariable& staticVariable);
     void add(const Inst& inst);
     void add(const MoveInst& moveInst);
+    void add(const MoveSXInst& moveSXInst);
     void add(const UnaryInst& unaryInst);
     void add(const BinaryInst& binaryInst);
     void add(const CmpInst& cmpInst);

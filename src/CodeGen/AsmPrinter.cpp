@@ -1,5 +1,6 @@
 #include "AsmPrinter.hpp"
 
+#include <cassert>
 #include <iomanip>
 
 #include "Assembly.hpp"
@@ -92,6 +93,14 @@ void AsmPrinter::add(const MoveInst& moveInst)
 {
     IndentGuard indent(m_indentLevel);
     addLine("MoveInst: ", to_string(*moveInst.src) + " " + to_string(*moveInst.dst));
+}
+
+void AsmPrinter::add(const MoveSXInst& moveSXInst)
+{
+    IndentGuard indent(m_indentLevel);
+    addLine("MoveSXInst: ",
+        to_string(*moveSXInst.src) + " " +
+        to_string(*moveSXInst.dst));
 }
 
 void AsmPrinter::add(const UnaryInst& unaryInst)
@@ -207,8 +216,9 @@ std::string to_string(const ImmOperand& immOperand)
     switch (immOperand.type) {
         case AssemblyType::QuadWord: return "ImmOperand(" + std::to_string(std::get<i64>(immOperand.value)) + ")";
         case AssemblyType::LongWord: return "ImmOperand(" + std::to_string(std::get<i32>(immOperand.value)) + ")";
-        std::abort();
+        assert("should not get hit");
     }
+    std::unreachable();
 }
 
 std::string to_string(const RegisterOperand& registerOperand)
@@ -230,17 +240,17 @@ std::string to_string(const RegisterOperand::Kind& type)
 {
     using Type = RegisterOperand::Kind;
     switch (type) {
-        case Type::AX:          return "AX";
-        case Type::CX:          return "CX";
-        case Type::DX:          return "DX";
-        case Type::DI:          return "DI";
-        case Type::SI:          return "SI";
-        case Type::R8:          return "R8";
-        case Type::R9:          return "R9";
-        case Type::R10:         return "R10";
-        case Type::R11:         return "R11";
-        case Type::SP:          return "SP";
-        default:                return "UnknownRegister";
+        case Type::AX:    return "AX";
+        case Type::CX:    return "CX";
+        case Type::DX:    return "DX";
+        case Type::DI:    return "DI";
+        case Type::SI:    return "SI";
+        case Type::R8:    return "R8";
+        case Type::R9:    return "R9";
+        case Type::R10:   return "R10";
+        case Type::R11:   return "R11";
+        case Type::SP:    return "SP";
+        default:          return "UnknownRegister";
     }
 }
 

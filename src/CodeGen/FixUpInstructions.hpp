@@ -26,6 +26,7 @@ public:
     void visit(CallInst&) override {}
 
     // Unchanged instructions handled in fixUp
+    void visit(MoveSXInst&) override {}
     void visit(UnaryInst&) override {}
     void visit(SetCCInst&) override {}
     void visit(CdqInst&) override {}

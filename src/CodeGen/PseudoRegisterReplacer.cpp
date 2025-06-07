@@ -29,6 +29,12 @@ void PseudoRegisterReplacer::visit(MoveInst& move)
     replaceIfPseudo(move.dst);
 }
 
+void PseudoRegisterReplacer::visit(MoveSXInst& moveSX)
+{
+    replaceIfPseudo(moveSX.src);
+    replaceIfPseudo(moveSX.dst);
+}
+
 void PseudoRegisterReplacer::visit(UnaryInst& unary)
 {
     replaceIfPseudo(unary.destination);
