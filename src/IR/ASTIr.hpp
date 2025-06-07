@@ -57,6 +57,7 @@ protected:
 };
 
 struct ValueVar final : Value {
+    ReferingTo referingTo = ReferingTo::Local;
     Identifier value;
     explicit ValueVar(Identifier v, const Type t)
         : Value(t, Kind::Variable), value(std::move(v)) {}

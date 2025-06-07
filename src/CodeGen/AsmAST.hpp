@@ -10,6 +10,8 @@
 #include <variant>
 #include <vector>
 
+#include "Types/Type.hpp"
+
 /*
 
 program = Program(function_definition)
@@ -105,8 +107,9 @@ struct RegisterOperand final : Operand {
 
 struct PseudoOperand final : Operand {
     std::string identifier;
-    explicit PseudoOperand(std::string identifier)
-        : Operand(Kind::Pseudo), identifier(std::move(identifier)) {}
+    ReferingTo referingTo = ReferingTo::Local;
+    PseudoOperand(std::string identifier, ReferingTo referingTo)
+        : Operand(Kind::Pseudo), identifier(std::move(identifier)), referingTo(referingTo) {}
 
     PseudoOperand() = delete;
 };

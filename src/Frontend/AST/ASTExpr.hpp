@@ -28,8 +28,9 @@ struct ConstExpr final : Expr {
 };
 
 struct VarExpr final : Expr {
-    std::string name;
 
+    std::string name;
+    ReferingTo referingTo = ReferingTo::Local;
     explicit VarExpr(std::string name) noexcept
         : Expr(Kind::Var), name(std::move(name)) {}
 

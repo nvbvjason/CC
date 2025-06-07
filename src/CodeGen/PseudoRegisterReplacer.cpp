@@ -5,10 +5,9 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
 {
     if (operand->kind == Operand::Kind::Pseudo && operand) {
         const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
-        //const auto entry = c_symbolTable.lookupVar(pseudo->identifier);
-        if (pseudo->identifier.ends_with(".external")) {
-            operand = std::make_shared<DataOperand>(
-                pseudo->identifier.substr(0, pseudo->identifier.size() - 9));
+        if (pseudo->referingTo == ReferingTo::Extern ||
+            pseudo->referingTo == ReferingTo::Arg) {
+            operand = std::make_shared<DataOperand>(pseudo->identifier);
             return;
         }
         // if (entry.isSet(SymbolTable::State::CorrectType) entry.type != operand.type) {

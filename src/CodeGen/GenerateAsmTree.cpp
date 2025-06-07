@@ -463,8 +463,8 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
         }
         case Ir::Value::Kind::Variable: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto valueConst = static_cast<Ir::ValueVar*>(value.get());
-            return std::make_shared<PseudoOperand>(valueConst->value.value);
+            const auto valueVar = static_cast<Ir::ValueVar*>(value.get());
+            return std::make_shared<PseudoOperand>(valueVar->value.value, valueVar->referingTo);
         }
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");

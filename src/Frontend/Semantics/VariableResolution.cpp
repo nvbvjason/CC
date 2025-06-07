@@ -159,11 +159,12 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         m_valid = false;
         return;
     }
-    // UGLY HACK
     if (returnedEntry.isSet(Flag::ExternalLinkage) && !returnedEntry.isSet(Flag::Global))
-        varExpr.name += ".external";
+        varExpr.referingTo = ReferingTo::Extern;
     else if (!returnedEntry.isSet(Flag::InArgs))
         varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
+    if (returnedEntry.isSet(Flag::InArgs))
+        varExpr.referingTo = ReferingTo::Arg;
     if (returnedEntry.type == Type::I32)
         varExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
     else

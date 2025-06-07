@@ -501,6 +501,7 @@ std::shared_ptr<Value> GenerateIr::generateVarInst(const Parsing::Expr& parsingE
     const auto varExpr = dynamic_cast<const Parsing::VarExpr*>(&parsingExpr);
     const Identifier iden(varExpr->name);
     auto var = std::make_shared<ValueVar>(iden, parsingExpr.type->kind);
+    var->referingTo = varExpr->referingTo;
     return var;
 }
 
