@@ -20,7 +20,7 @@ void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyP
         std::unique_ptr<TopLevel> topLevel = topLevelIr(*decl);
         if (topLevel == nullptr)
             continue;
-        m_topLevels.push_back(std::move(topLevel));
+        m_topLevels.emplace_back(std::move(topLevel));
     }
     tackyProgram.topLevels = std::move(m_topLevels);
 }
@@ -71,9 +71,10 @@ std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDecl& parsing
     m_instructions = std::move(functionTacky->insts);
     functionTacky->args.reserve(parsingFunction.params.size());
     functionTacky->argTypes.reserve(parsingFunction.params.size());
+    auto funcType = static_cast<const Parsing::FuncType*>(parsingFunction.type.get());
     for (i32 i = 0; i < parsingFunction.params.size(); ++i) {
         functionTacky->args.emplace_back(Identifier(parsingFunction.params[i]));
-        functionTacky->argTypes.emplace_back(parsingFunction.type->kind);
+        functionTacky->argTypes.emplace_back(funcType->params[i]->kind);
     }
     generateBlock(*parsingFunction.body);
     functionTacky->insts = std::move(m_instructions);

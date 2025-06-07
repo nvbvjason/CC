@@ -54,7 +54,6 @@ public:
     void generateProgram(const Ir::Program &program, Program &programCodegen);
     std::unique_ptr<TopLevel> generateTopLevel(const Ir::TopLevel& topLevel);
     std::unique_ptr<TopLevel> generateFunction(const Ir::Function& function);
-    std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable);
     void transformInst(const std::unique_ptr<Ir::Instruction>& inst);
     void unaryInst(const Ir::UnaryInst& irUnary);
     void generateUnaryNotInst(const Ir::UnaryInst& irUnary);
@@ -65,11 +64,10 @@ public:
     void generateBinaryRemainderInst(const Ir::BinaryInst& irBinary);
     void generateBinaryCondInst(const Ir::BinaryInst& irBinary);
     void generateBinaryBasicInst(const Ir::BinaryInst& irBinary);
-    void generateBinaryShiftInst(const Ir::BinaryInst& irBinary);
 
     void generateJumpInst(const Ir::JumpInst& irJump);
-    void generateJumpIfZeroInst(const Ir::JumpIfZeroInst& irBinary);
-    void generateJumpIfNotZeroInst(const Ir::JumpIfNotZeroInst& irBinary);
+    void generateJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZero);
+    void generateJumpIfNotZeroInst(const Ir::JumpIfNotZeroInst& jumpIfNotZero);
     void generateCopyInst(const Ir::CopyInst& type);
     void generateLabelInst(const Ir::LabelInst& irLabel);
     void returnInst(const Ir::ReturnInst& returnInst);
@@ -77,6 +75,9 @@ public:
     void pushFunCallArgs(const Ir::FunCallInst& funcCall);
     void generateFunCallInst(const Ir::FunCallInst& type);
 };
+
+std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable);
+
 
 i32 getStackPadding(size_t numArgs);
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
@@ -86,7 +87,7 @@ AssemblyType getAssemblyType(Type type);
 
 std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 
-[[nodiscard]] i32 replacingPseudoRegisters(Function& function, const SymbolTable& symbolTable);
+[[nodiscard]] i32 replacingPseudoRegisters(const Function& function, const SymbolTable& symbolTable);
 void fixUpInstructions(Function& function, i32 stackAlloc);
 
 inline AssemblyType getAssemblyType(Type type)

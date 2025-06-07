@@ -7,7 +7,8 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
         const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
         const auto entry = c_symbolTable.lookupVar(pseudo->identifier);
         if (pseudo->identifier.ends_with(".external")) {
-            operand = std::make_shared<DataOperand>(pseudo->identifier.substr(0, pseudo->identifier.size() - 9));
+            operand = std::make_shared<DataOperand>(
+                pseudo->identifier.substr(0, pseudo->identifier.size() - 9));
             return;
         }
         // if (entry.isSet(SymbolTable::State::CorrectType) entry.type != operand.type) {

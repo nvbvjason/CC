@@ -18,7 +18,7 @@ namespace CodeGen {
 void GenerateAsmTree::generateProgram(const Ir::Program &program, Program &programCodegen)
 {
     for (const auto& toplevelIr : program.topLevels)
-        programCodegen.topLevels.push_back(std::move(generateTopLevel(*toplevelIr)));
+        programCodegen.topLevels.emplace_back(std::move(generateTopLevel(*toplevelIr)));
 }
 
 std::unique_ptr<TopLevel> GenerateAsmTree::generateTopLevel(const Ir::TopLevel& topLevel)
@@ -49,7 +49,7 @@ std::unique_ptr<TopLevel> GenerateAsmTree::generateFunction(const Ir::Function& 
         auto src = std::make_shared<RegisterOperand>(registerTypes[regIndex], AssemblyType::LongWord);
         auto arg = std::make_shared<Ir::ValueVar>(function.args[regIndex], function.argTypes[regIndex]);
         std::shared_ptr<Operand> dst = operand(arg);
-        functionCodeGen->instructions.emplace_back(std::make_unique<MoveInst>(
+        insts.emplace_back(std::make_unique<MoveInst>(
             src, dst, getAssemblyType(function.argTypes[regIndex]))
             );
     }
@@ -58,7 +58,7 @@ std::unique_ptr<TopLevel> GenerateAsmTree::generateFunction(const Ir::Function& 
         auto stack = std::make_shared<StackOperand>(8 * stackPtr);
         auto arg = std::make_shared<Ir::ValueVar>(function.args[regIndex], function.argTypes[regIndex]);
         std::shared_ptr<Operand> dst = operand(arg);
-        functionCodeGen->instructions.emplace_back(std::make_unique<MoveInst>(
+        insts.emplace_back(std::make_unique<MoveInst>(
             stack, dst, getAssemblyType(function.argTypes[regIndex])));
     }
     for (const std::unique_ptr<Ir::Instruction>& inst : function.insts)
@@ -67,7 +67,7 @@ std::unique_ptr<TopLevel> GenerateAsmTree::generateFunction(const Ir::Function& 
     return functionCodeGen;
 }
 
-std::unique_ptr<TopLevel> GenerateAsmTree::generateStaticVariable(const Ir::StaticVariable& staticVariable)
+std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable)
 {
     const Type type = staticVariable.type;
     if (type == Type::I32)
@@ -75,10 +75,12 @@ std::unique_ptr<TopLevel> GenerateAsmTree::generateStaticVariable(const Ir::Stat
                                                 staticVariable.global,
                                                 getAssemblyType(staticVariable.type),
                                                 staticVariable.global);
-    return std::make_unique<StaticVariable>(staticVariable.name,
-                                        staticVariable.global,
-                                        getAssemblyType(staticVariable.type),
-                                        staticVariable.global);
+    if (type == Type::I64)
+        return std::make_unique<StaticVariable>(staticVariable.name,
+                                            staticVariable.global,
+                                                getAssemblyType(staticVariable.type),
+                                                staticVariable.global);
+    std::abort();
 }
 
 void GenerateAsmTree::transformInst(const std::unique_ptr<Ir::Instruction>& inst)
@@ -146,38 +148,40 @@ void GenerateAsmTree::transformInst(const std::unique_ptr<Ir::Instruction>& inst
 void GenerateAsmTree::generateJumpInst(const Ir::JumpInst& irJump)
 {
     Identifier iden(irJump.target.value);
-    insts.push_back(std::make_unique<JmpInst>(iden));
+    insts.emplace_back(std::make_unique<JmpInst>(iden));
 }
 
 void GenerateAsmTree::generateJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZero)
 {
     std::shared_ptr<Operand> condition = operand(jumpIfZero.condition);
-    insts.push_back(std::make_unique<CmpInst>(std::make_shared<ImmOperand>(0), condition, AssemblyType::LongWord));
+    insts.emplace_back(std::make_unique<CmpInst>(
+        std::make_shared<ImmOperand>(0), condition, AssemblyType::LongWord));
 
     Identifier target(jumpIfZero.target.value);
-    insts.push_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::E, target));
+    insts.emplace_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::E, target));
 }
 
 void GenerateAsmTree::generateJumpIfNotZeroInst(const Ir::JumpIfNotZeroInst& jumpIfNotZero)
 {
     std::shared_ptr<Operand> condition = operand(jumpIfNotZero.condition);
-    insts.push_back(std::make_unique<CmpInst>(std::make_shared<ImmOperand>(0), condition, AssemblyType::LongWord));
+    insts.emplace_back(std::make_unique<CmpInst>(
+        std::make_shared<ImmOperand>(0), condition, AssemblyType::LongWord));
 
     Identifier target(jumpIfNotZero.target.value);
-    insts.push_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::NE, target));
+    insts.emplace_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::NE, target));
 }
 
 void GenerateAsmTree::generateCopyInst(const Ir::CopyInst& type)
 {
     std::shared_ptr<Operand> src = operand(type.source);
     std::shared_ptr<Operand> dst = operand(type.destination);
-    insts.push_back(std::make_unique<MoveInst>(src, dst, getAssemblyType(type.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(src, dst, getAssemblyType(type.type)));
 }
 
 void GenerateAsmTree::generateLabelInst(const Ir::LabelInst& irLabel)
 {
     Identifier label(irLabel.target.value);
-    insts.push_back(std::make_unique<LabelInst>(label));
+    insts.emplace_back(std::make_unique<LabelInst>(label));
 }
 
 void GenerateAsmTree::unaryInst(const Ir::UnaryInst& irUnary)
@@ -197,12 +201,12 @@ void GenerateAsmTree::generateUnaryNotInst(const Ir::UnaryInst& irUnary)
 {
     std::shared_ptr<Operand> src = operand(irUnary.source);
     auto immOperand = std::make_shared<ImmOperand>(0);
-    insts.push_back(std::make_unique<CmpInst>(immOperand, src, getAssemblyType(irUnary.type)));
+    insts.emplace_back(std::make_unique<CmpInst>(immOperand, src, getAssemblyType(irUnary.type)));
 
     std::shared_ptr<Operand> dst = operand(irUnary.destination);
-    insts.push_back(std::make_unique<MoveInst>(immOperand, dst, getAssemblyType(irUnary.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(immOperand, dst, getAssemblyType(irUnary.type)));
 
-    insts.push_back(std::make_unique<SetCCInst>(BinaryInst::CondCode::E, dst));
+    insts.emplace_back(std::make_unique<SetCCInst>(BinaryInst::CondCode::E, dst));
 }
 
 void GenerateAsmTree::binaryInst(const Ir::BinaryInst& irBinary)
@@ -242,14 +246,14 @@ void GenerateAsmTree::generateBinaryCondInst(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary.source1);
     std::shared_ptr<Operand> src2 = operand(irBinary.source2);
-    insts.push_back(std::make_unique<CmpInst>(src2, src1, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<CmpInst>(src2, src1, getAssemblyType(irBinary.type)));
 
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
     std::shared_ptr<Operand> imm = std::make_shared<ImmOperand>(0);
-    insts.push_back(std::make_unique<MoveInst>(imm, dst, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(imm, dst, getAssemblyType(irBinary.type)));
 
     BinaryInst::CondCode cc = condCode(irBinary.operation);
-    insts.push_back(std::make_unique<SetCCInst>(cc, dst));
+    insts.emplace_back(std::make_unique<SetCCInst>(cc, dst));
 }
 
 void GenerateAsmTree::generateBinaryDivideInst(const Ir::BinaryInst& irBinary)
@@ -257,15 +261,15 @@ void GenerateAsmTree::generateBinaryDivideInst(const Ir::BinaryInst& irBinary)
     std::shared_ptr<Operand> src1 = operand(irBinary.source1);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(
         RegisterOperand::Kind::AX, getAssemblyType(irBinary.type));
-    insts.push_back(std::make_unique<MoveInst>(src1, regAX, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, getAssemblyType(irBinary.type)));
 
-    insts.push_back(std::make_unique<CdqInst>(getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<CdqInst>(getAssemblyType(irBinary.type)));
 
     std::shared_ptr<Operand> src2 = operand(irBinary.source2);
-    insts.push_back(std::make_unique<IdivInst>(src2, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<IdivInst>(src2, getAssemblyType(irBinary.type)));
 
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
-    insts.push_back(std::make_unique<MoveInst>(regAX, dst, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(regAX, dst, getAssemblyType(irBinary.type)));
 }
 
 void GenerateAsmTree::generateBinaryRemainderInst(const Ir::BinaryInst& irBinary)
@@ -273,28 +277,28 @@ void GenerateAsmTree::generateBinaryRemainderInst(const Ir::BinaryInst& irBinary
     std::shared_ptr<Operand> src1 = operand(irBinary.source1);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(
         RegisterOperand::Kind::AX, getAssemblyType(irBinary.type));
-    insts.push_back(std::make_unique<MoveInst>(src1, regAX, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, getAssemblyType(irBinary.type)));
 
-    insts.push_back(std::make_unique<CdqInst>(getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<CdqInst>(getAssemblyType(irBinary.type)));
 
     std::shared_ptr<Operand> src2 = operand(irBinary.source2);
-    insts.push_back(std::make_unique<IdivInst>(src2, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<IdivInst>(src2, getAssemblyType(irBinary.type)));
 
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
     const auto regDX = std::make_shared<RegisterOperand>(
         RegisterOperand::Kind::DX, getAssemblyType(irBinary.type));
-    insts.push_back(std::make_unique<MoveInst>(regDX, dst, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(regDX, dst, getAssemblyType(irBinary.type)));
 }
 
 void GenerateAsmTree::generateBinaryBasicInst(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> src1 = operand(irBinary.source1);
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
-    insts.push_back(std::make_unique<MoveInst>(src1, dst, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(src1, dst, getAssemblyType(irBinary.type)));
 
     BinaryInst::Operator oper = binaryOperator(irBinary.operation);
     std::shared_ptr<Operand> src2 = operand(irBinary.source2);
-    insts.push_back(std::make_unique<BinaryInst>(src2, dst, oper, getAssemblyType(irBinary.type)));
+    insts.emplace_back(std::make_unique<BinaryInst>(src2, dst, oper, getAssemblyType(irBinary.type)));
 }
 
 void GenerateAsmTree::returnInst(const Ir::ReturnInst& returnInst)
@@ -302,9 +306,10 @@ void GenerateAsmTree::returnInst(const Ir::ReturnInst& returnInst)
     std::shared_ptr<Operand> val = operand(returnInst.returnValue);
     std::shared_ptr<Operand> operandRegister = std::make_shared<RegisterOperand>(
         RegisterOperand::Kind::AX, getAssemblyType(returnInst.type));
-    insts.push_back(std::make_unique<MoveInst>(val, operandRegister, getAssemblyType(returnInst.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(
+        val, operandRegister, getAssemblyType(returnInst.type)));
 
-    insts.push_back(std::make_unique<ReturnInst>());
+    insts.emplace_back(std::make_unique<ReturnInst>());
 }
 
 void GenerateAsmTree::generateFunCallInst(const Ir::FunCallInst& type)
@@ -316,7 +321,7 @@ void GenerateAsmTree::generateFunCallInst(const Ir::FunCallInst& type)
             std::make_shared<RegisterOperand>(RegisterOperand::Kind::SP, AssemblyType::QuadWord),
             BinaryInst::Operator::Sub, AssemblyType::QuadWord));
     pushFunCallArgs(type);
-    insts.push_back(std::make_unique<CallInst>(Identifier(type.funName.value)));
+    insts.emplace_back(std::make_unique<CallInst>(Identifier(type.funName.value)));
     const i32 bytesToRemove = 8 * (type.args.size() - 6) + stackPadding;
     if (0 < bytesToRemove)
         insts.emplace_back(std::make_unique<BinaryInst>(
@@ -400,7 +405,8 @@ BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
         case IrOper::LeftShift:    return AsmOper::LeftShift;
         case IrOper::RightShift:   return AsmOper::RightShift;
         default:
-            throw std::invalid_argument("Invalid BinaryOperation type: " + std::to_string(static_cast<int>(type)));
+            throw std::invalid_argument("Invalid BinaryOperation type: " +
+                std::to_string(static_cast<int>(type)));
     }
 }
 
@@ -440,10 +446,10 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
     }
 }
 
-i32 replacingPseudoRegisters(Function& function, const SymbolTable& symbolTable)
+i32 replacingPseudoRegisters(const Function& function, const SymbolTable& symbolTable)
 {
     PseudoRegisterReplacer pseudoRegisterReplacer(symbolTable);
-    for (auto& inst : function.instructions)
+    for (const auto& inst : function.instructions)
         inst->accept(pseudoRegisterReplacer);
     return pseudoRegisterReplacer.stackPointer();
 }
