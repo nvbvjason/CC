@@ -137,7 +137,7 @@ CodeGen::Program codegen(const Ir::Program& irProgram, const SymbolTable& symbol
         if (topLevel->type == CodeGen::TopLevel::Type::StaticVariable)
             continue;
         auto function = dynamic_cast<CodeGen::Function*>(topLevel.get());
-        const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function, symbolTable);
+        const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function);
         CodeGen::fixUpInstructions(*function, stackAlloc);
     }
     return codegenProgram;

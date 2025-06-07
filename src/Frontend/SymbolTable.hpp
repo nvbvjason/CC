@@ -11,6 +11,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include "ASTParser.hpp"
+
 class SymbolTable {
 public:
     enum class State : u16 {
@@ -124,13 +126,14 @@ private:
     std::vector<std::unordered_map<std::string, Entry>> m_entries;
     std::unordered_map<std::string, i32> m_funcs;
     std::vector<std::string> m_args;
+    std::vector<Type> m_argTypes;
 public:
     SymbolTable();
     [[nodiscard]] bool contains(const std::string& name) const;
     [[nodiscard]] ReturnedVarEntry lookupVar(const std::string& uniqueName) const;
     [[nodiscard]] ReturnedFuncEntry lookupFunc(const std::string& uniqueName) const;
     std::string getUniqueName(const std::string& unique) const;
-    void setArgs(const std::vector<std::string>& args);
+    void setArgs(const Parsing::FunDecl& funDecl);
     void clearArgs();
     void addVarEntry(const std::string& name,
                      const std::string& uniqueName,

@@ -4,7 +4,7 @@
 #define CC_CODEGEN_PSEUDO_REGISTER_REPLACER_HPP
 
 #include "AsmAST.hpp"
-#include "Frontend/SymbolTable.hpp"
+//#include "Frontend/SymbolTable.hpp"
 
 #include <unordered_map>
 
@@ -13,10 +13,10 @@ namespace CodeGen {
 class PseudoRegisterReplacer final : public InstVisitor {
     std::unordered_map<std::string, i32> m_pseudoMap;
     i32 m_stackPtr = 0;
-    const SymbolTable &c_symbolTable;
+    //const SymbolTable &c_symbolTable;
 public:
-    explicit PseudoRegisterReplacer(const SymbolTable &symbolTable)
-        : c_symbolTable(symbolTable) {}
+    // explicit PseudoRegisterReplacer(const SymbolTable &symbolTable)
+    //     : c_symbolTable(symbolTable) {}
     [[nodiscard]] i32 stackPointer() const { return m_stackPtr; }
 
     void visit(MoveInst& move) override;

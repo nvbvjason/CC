@@ -103,7 +103,7 @@ void ASTPrinter::visit(const Program& program)
 void ASTPrinter::visit(const VarDecl& varDecl)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("VarDecl " + varDecl.name + ' ' + storageClass(varDecl.storage));
+    addLine("VarDecl " + varDecl.name + ' ' + storageClass(varDecl.storage) + ' ' + varTypeToString(varDecl.type->kind));
     ConstASTTraverser::visit(varDecl);
 }
 
@@ -286,9 +286,9 @@ void ASTPrinter::visit(const ConstExpr& constExpr)
 {
     IndentGuard guard(m_indentLevel);
     if (constExpr.type->kind == Type::I32)
-        addLine(std::to_string(std::get<i32>(constExpr.value)));
+        addLine(std::to_string(std::get<i32>(constExpr.value)) + ' ' + varTypeToString(Type::I32));
     else if (constExpr.type->kind == Type::I64)
-        addLine(std::to_string(std::get<i64>(constExpr.value)));
+        addLine(std::to_string(std::get<i64>(constExpr.value)) + ' ' + varTypeToString(Type::I32));
     ConstASTTraverser::visit(constExpr);
 }
 

@@ -4,7 +4,7 @@
 #define CC_CONCRETE_TREE_HPP
 
 #include "AsmAST.hpp"
-#include "Frontend/SymbolTable.hpp"
+//#include "Frontend/SymbolTable.hpp"
 #include "IR/ASTIr.hpp"
 
 /*
@@ -87,7 +87,7 @@ AssemblyType getAssemblyType(Type type);
 
 std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 
-[[nodiscard]] i32 replacingPseudoRegisters(const Function& function, const SymbolTable& symbolTable);
+[[nodiscard]] i32 replacingPseudoRegisters(const Function& function);
 void fixUpInstructions(Function& function, i32 stackAlloc);
 
 inline AssemblyType getAssemblyType(Type type)

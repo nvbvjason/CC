@@ -38,7 +38,7 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
     const bool external = !prevEntry.isSet(Flag::InternalLinkage) && funDecl.storage != Storage::Static;
     m_symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), internal, external, global, defined);
     ScopeGuard scopeGuard(m_symbolTable);
-    m_symbolTable.setArgs(funDecl.params);
+    m_symbolTable.setArgs(funDecl);
     ASTTraverser::visit(funDecl);
     m_symbolTable.clearArgs();
 }

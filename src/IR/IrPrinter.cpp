@@ -65,12 +65,24 @@ std::string IrPrinter::print(const Identifier& identifier)
     return identifier.value;
 }
 
-void IrPrinter::visit(const ReturnInst& inst)
+void IrPrinter::print(const ReturnInst& inst)
 {
     addLine("Return " + print(*inst.returnValue));
 }
 
-void IrPrinter::visit(const UnaryInst& inst)
+void IrPrinter::print(const SignExtendInst& inst)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("SignExtend " + print(*inst.src) + " -> " + print(*inst.dst));
+}
+
+void IrPrinter::print(const TruncateInst& inst)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("Truncate " + print(*inst.src) + " -> " + print(*inst.dst));
+}
+
+void IrPrinter::print(const UnaryInst& inst)
 {
     IndentGuard guard(m_indentLevel);
     addLine(to_string(inst.operation) + " " +
@@ -78,7 +90,7 @@ void IrPrinter::visit(const UnaryInst& inst)
             print(*inst.destination));
 }
 
-void IrPrinter::visit(const BinaryInst& inst)
+void IrPrinter::print(const BinaryInst& inst)
 {
     IndentGuard guard(m_indentLevel);
     addLine(print(*inst.source1) + " " +
@@ -87,37 +99,37 @@ void IrPrinter::visit(const BinaryInst& inst)
             print(*inst.destination));
 }
 
-void IrPrinter::visit(const CopyInst& inst)
+void IrPrinter::print(const CopyInst& inst)
 {
     IndentGuard guard(m_indentLevel);
     addLine("Copy " + print(*inst.source) + " -> " + print(*inst.destination));
 }
 
-void IrPrinter::visit(const JumpInst& inst)
+void IrPrinter::print(const JumpInst& inst)
 {
     IndentGuard guard(m_indentLevel);
     addLine("Jump " + print(inst.target));
 }
 
-void IrPrinter::visit(const JumpIfZeroInst& inst)
+void IrPrinter::print(const JumpIfZeroInst& inst)
 {
     IndentGuard guard(m_indentLevel);
     addLine("JumpIfZero " + print(*inst.condition) + ", " + print(inst.target));
 }
 
-void IrPrinter::visit(const JumpIfNotZeroInst& inst)
+void IrPrinter::print(const JumpIfNotZeroInst& inst)
 {
     IndentGuard guard(m_indentLevel);
     addLine("JumpIfNotZero " + print(*inst.condition) + ", " + print(inst.target));
 }
 
-void IrPrinter::visit(const LabelInst& inst)
+void IrPrinter::print(const LabelInst& inst)
 {
     IndentGuard guard(m_indentLevel);
     addLine("Label " +print(inst.target));
 }
 
-void IrPrinter::visit(const FunCallInst &inst)
+void IrPrinter::print(const FunCallInst &inst)
 {
     IndentGuard guard(m_indentLevel);
     addLine("FunCall: " + inst.funName.value);
@@ -182,23 +194,27 @@ std::string to_string(BinaryInst::Operation op)
 void IrPrinter::print(const Instruction& instruction) {
     switch (instruction.kind) {
         case Instruction::Kind::Return:
-            visit(static_cast<const ReturnInst&>(instruction)); break;
+            print(static_cast<const ReturnInst&>(instruction)); break;
+        case Instruction::Kind::SignExtend:
+            print(static_cast<const SignExtendInst&>(instruction)); break;
+        case Instruction::Kind::Truncate:
+            print(static_cast<const TruncateInst&>(instruction)); break;
         case Instruction::Kind::Unary:
-            visit(static_cast<const UnaryInst&>(instruction)); break;
+            print(static_cast<const UnaryInst&>(instruction)); break;
         case Instruction::Kind::Binary:
-            visit(static_cast<const BinaryInst&>(instruction)); break;
+            print(static_cast<const BinaryInst&>(instruction)); break;
         case Instruction::Kind::Copy:
-            visit(static_cast<const CopyInst&>(instruction)); break;
+            print(static_cast<const CopyInst&>(instruction)); break;
         case Instruction::Kind::Jump:
-            visit(static_cast<const JumpInst&>(instruction)); break;
+            print(static_cast<const JumpInst&>(instruction)); break;
         case Instruction::Kind::JumpIfZero:
-            visit(static_cast<const JumpIfZeroInst&>(instruction)); break;
+            print(static_cast<const JumpIfZeroInst&>(instruction)); break;
         case Instruction::Kind::JumpIfNotZero:
-            visit(static_cast<const JumpIfNotZeroInst&>(instruction)); break;
+            print(static_cast<const JumpIfNotZeroInst&>(instruction)); break;
         case Instruction::Kind::Label:
-            visit(static_cast<const LabelInst&>(instruction)); break;
+            print(static_cast<const LabelInst&>(instruction)); break;
         case Instruction::Kind::FunCall:
-            visit(static_cast<const FunCallInst&>(instruction)); break;
+            print(static_cast<const FunCallInst&>(instruction)); break;
         default:
             m_oss << "Unknown Instruction\n";
             break;

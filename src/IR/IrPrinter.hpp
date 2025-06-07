@@ -32,15 +32,17 @@ public:
     static std::string print(const ValueConst& val);
 
 private:
-    void visit(const ReturnInst& inst);
-    void visit(const UnaryInst& inst);
-    void visit(const BinaryInst& inst);
-    void visit(const CopyInst& inst);
-    void visit(const JumpInst& inst);
-    void visit(const JumpIfZeroInst& inst);
-    void visit(const JumpIfNotZeroInst& inst);
-    void visit(const LabelInst& inst);
-    void visit(const FunCallInst& inst);
+    void print(const ReturnInst& inst);
+    void print(const SignExtendInst& inst);
+    void print(const TruncateInst& inst);
+    void print(const UnaryInst& inst);
+    void print(const BinaryInst& inst);
+    void print(const CopyInst& inst);
+    void print(const JumpInst& inst);
+    void print(const JumpIfZeroInst& inst);
+    void print(const JumpIfNotZeroInst& inst);
+    void print(const LabelInst& inst);
+    void print(const FunCallInst& inst);
 
     void addLine(const std::string &line);
     std::string getIndent() const;

@@ -1,4 +1,5 @@
 #include "SymbolTable.hpp"
+#include "ASTTypes.hpp"
 
 #include <cassert>
 
@@ -21,6 +22,11 @@ bool SymbolTable::contains(const std::string& name) const
 SymbolTable::ReturnedVarEntry SymbolTable::lookupVar(const std::string& uniqueName) const
 {
     const bool inArgs = isInArgs(uniqueName);
+    if (inArgs) {
+        for (i32 i = 0; i < m_argTypes.size(); ++i)
+            if (uniqueName == m_args[i])
+                return {m_argTypes[i], true, true, false, false, false, false, false};
+    }
     for (i64 i = m_entries.size() - 1; 0 <= i; --i) {
         const auto it = m_entries[i].find(uniqueName);
         if (it == m_entries[i].end())
@@ -68,9 +74,13 @@ std::string SymbolTable::getUniqueName(const std::string& unique) const
     std::unreachable();
 }
 
-void SymbolTable::setArgs(const std::vector<std::string>& args)
+void SymbolTable::setArgs(const Parsing::FunDecl& funDecl)
 {
-    m_args = args;
+    m_args = funDecl.params;
+    m_argTypes.clear();
+    auto funcType = static_cast<const Parsing::FuncType*>(funDecl.type.get());
+    for (const auto& param : funcType->params)
+        m_argTypes.emplace_back(param->kind);
 }
 
 void SymbolTable::clearArgs()

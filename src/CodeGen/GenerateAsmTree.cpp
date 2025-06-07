@@ -445,9 +445,9 @@ std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value)
     }
 }
 
-i32 replacingPseudoRegisters(const Function& function, const SymbolTable& symbolTable)
+i32 replacingPseudoRegisters(const Function& function)
 {
-    PseudoRegisterReplacer pseudoRegisterReplacer(symbolTable);
+    PseudoRegisterReplacer pseudoRegisterReplacer;
     for (const auto& inst : function.instructions)
         inst->accept(pseudoRegisterReplacer);
     return pseudoRegisterReplacer.stackPointer();
