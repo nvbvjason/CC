@@ -360,8 +360,7 @@ void GenerateAsmTree::pushFunCallArgs(const Ir::FunCallInst& funcCall)
                 src, std::make_shared<RegisterOperand>(RegisterOperand::Kind::AX, type),
                 type));
             insts.emplace_back(std::make_unique<PushInst>(
-                std::make_shared<RegisterOperand>(RegisterOperand::Kind::AX, type))
-            );
+                std::make_shared<RegisterOperand>(RegisterOperand::Kind::AX, AssemblyType::QuadWord)));
         }
     }
 }
