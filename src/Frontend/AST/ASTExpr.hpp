@@ -132,8 +132,7 @@ struct TernaryExpr final : Expr {
 
 struct FunCallExpr final : Expr {
     std::string name;
-    std::
-    vector<std::unique_ptr<Expr>> args;
+    std::vector<std::unique_ptr<Expr>> args;
 
     FunCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args)
         : Expr(Kind::FunctionCall), name(std::move(identifier)), args(std::move(args)) {}

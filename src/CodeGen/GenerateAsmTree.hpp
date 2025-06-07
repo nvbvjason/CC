@@ -48,37 +48,37 @@ Var(identifier)         Pseudo(identifier)
 */
 
 namespace CodeGen {
+class GenerateAsmTree {
+    std::vector<std::unique_ptr<Inst>> insts;
+public:
+    void generateProgram(const Ir::Program &program, Program &programCodegen);
+    std::unique_ptr<TopLevel> generateTopLevel(const Ir::TopLevel& topLevel);
+    std::unique_ptr<TopLevel> generateFunction(const Ir::Function& function);
+    std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable);
+    void transformInst(const std::unique_ptr<Ir::Instruction>& inst);
+    void unaryInst(const Ir::UnaryInst& irUnary);
+    void generateUnaryNotInst(const Ir::UnaryInst& irUnary);
 
-void generateProgram(const Ir::Program &program, Program &programCodegen);
-std::unique_ptr<TopLevel> generateTopLevel(const Ir::TopLevel& topLevel);
-std::unique_ptr<TopLevel> generateFunction(const Ir::Function& function);
-std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable);
-void transformInst(const std::unique_ptr<Function>& functionCodeGen, const std::unique_ptr<Ir::Instruction>& inst);
-void unaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
-void generateUnaryNotInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::UnaryInst* irUnary);
+    void binaryInst(const Ir::BinaryInst& irBinary);
 
-void binaryInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
+    void generateBinaryDivideInst(const Ir::BinaryInst& irBinary);
+    void generateBinaryRemainderInst(const Ir::BinaryInst& irBinary);
+    void generateBinaryCondInst(const Ir::BinaryInst& irBinary);
+    void generateBinaryBasicInst(const Ir::BinaryInst& irBinary);
+    void generateBinaryShiftInst(const Ir::BinaryInst& irBinary);
 
-void generateBinaryDivideInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
-void generateBinaryRemainderInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
-void generateBinaryCondInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
-void generateBinaryBasicInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
-void generateBinaryShiftInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::BinaryInst* irBinary);
+    void generateJumpInst(const Ir::JumpInst& irJump);
+    void generateJumpIfZeroInst(const Ir::JumpIfZeroInst& irBinary);
+    void generateJumpIfNotZeroInst(const Ir::JumpIfNotZeroInst& irBinary);
+    void generateCopyInst(const Ir::CopyInst& type);
+    void generateLabelInst(const Ir::LabelInst& irLabel);
+    void returnInst(const Ir::ReturnInst& returnInst);
 
-void generateJumpInst(std::vector<std::unique_ptr<Inst>>& insts,
-                      const Ir::JumpInst* irJump);
-void generateJumpIfZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
-                            const Ir::JumpIfZeroInst* irBinary);
-void generateJumpIfNotZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
-                               const Ir::JumpIfNotZeroInst* irBinary);
-void generateCopyInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::CopyInst* type);
-void generateLabelInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::LabelInst* irLabel);
-void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* returnInst);
+    void pushFunCallArgs(const Ir::FunCallInst& funcCall);
+    void generateFunCallInst(const Ir::FunCallInst& type);
+};
 
 i32 getStackPadding(size_t numArgs);
-void pushFunCallArgs(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* funcCall);
-void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type);
-
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation type);

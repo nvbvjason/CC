@@ -14,8 +14,8 @@ void asmStaticVariable(std::string& result, const StaticVariable& staticVariable
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction);
 std::string asmOperand(const std::shared_ptr<Operand>& operand);
 std::string asmRegister(const RegisterOperand* reg);
-std::string asmUnaryOperator(UnaryInst::Operator oper);
-std::string asmBinaryOperator(BinaryInst::Operator oper);
+std::string asmUnaryOperator(UnaryInst::Operator oper, AssemblyType type);
+std::string asmBinaryOperator(BinaryInst::Operator oper, AssemblyType type);
 std::string asmFormatLabel(const std::string& name);
 std::string asmFormatInstruction(const std::string& mnemonic,
                                  const std::string& operands = "",

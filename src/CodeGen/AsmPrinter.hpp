@@ -54,9 +54,10 @@ std::string to_string(const StackOperand& stackOperand);
 
 std::string to_string(const UnaryInst::Kind& kind);
 std::string to_string(const UnaryInst::Operator& oper);
-std::string to_string(const RegisterOperand::Type& oper);
+std::string to_string(const RegisterOperand::Kind& oper);
 std::string to_string(const BinaryInst::Operator& oper);
 std::string to_string(const Inst::CondCode& condCode);
+std::string to_string(AssemblyType type);
 } // CodeGen
 
 #endif // CC_CODEGEN_ASM_PRINTER_HPP

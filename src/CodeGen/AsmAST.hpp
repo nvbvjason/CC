@@ -49,7 +49,7 @@ namespace CodeGen {
 struct InstVisitor;
 
 enum class AssemblyType : u8 {
-    LongWord, QuadWord
+    Byte, Word, LongWord, QuadWord
 };
 
 struct Identifier {
@@ -59,10 +59,11 @@ struct Identifier {
 };
 
 struct Operand {
-    enum class Kind {
+    enum class Kind : u8 {
         Imm, Register, Pseudo, Stack, Data
     };
     Kind kind;
+    AssemblyType type;
 
     virtual ~Operand() = default;
 
@@ -70,28 +71,34 @@ struct Operand {
 protected:
     explicit Operand(const Kind k)
         : kind(k) {}
+    Operand(const Kind k, const AssemblyType t)
+    : kind(k), type(t) {}
 };
 
 struct ImmOperand final : Operand {
     std::variant<i32, i64> value;
-    AssemblyType type;
-    explicit ImmOperand(const i64 value)
-        : Operand(Kind::Imm), value(value), type(AssemblyType::QuadWord) {}
 
+    ImmOperand(const AssemblyType t, const i64 v)
+    : Operand(Kind::Imm, t), value(v) {}
+    explicit ImmOperand(const i64 value)
+        : Operand(Kind::Imm, AssemblyType::QuadWord), value(value) {}
+
+    ImmOperand(const AssemblyType t, const i32 v)
+        : Operand(Kind::Imm, t), value(v) {}
     explicit ImmOperand(const i32 value)
-        : Operand(Kind::Imm), value(value), type(AssemblyType::LongWord) {}
+        : Operand(Kind::Imm, AssemblyType::LongWord), value(value) {}
 
     ImmOperand() = delete;
 };
 
 struct RegisterOperand final : Operand {
-    enum class Type : u8 {
+    enum class Kind : u8 {
         AX, CX, DX, DI, SI, R8, R9, R10, R11, SP
     };
-    Type type;
-    u8 size;
-    explicit RegisterOperand(const Type k, const u8 size)
-        : Operand(Kind::Register), type(k), size(size) {}
+    Kind kind;
+
+    explicit RegisterOperand(const Kind k, const AssemblyType t)
+        : Operand(Operand::Kind::Register, t), kind(k) {}
 
     RegisterOperand() = delete;
 };

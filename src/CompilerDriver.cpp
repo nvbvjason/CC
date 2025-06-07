@@ -131,7 +131,8 @@ void printIr(const Ir::Program& irProgram)
 CodeGen::Program codegen(const Ir::Program& irProgram, const SymbolTable& symbolTable)
 {
     CodeGen::Program codegenProgram;
-    CodeGen::generateProgram(irProgram, codegenProgram);
+    CodeGen::GenerateAsmTree generateAsmTree;
+    generateAsmTree.generateProgram(irProgram, codegenProgram);
     for (auto& topLevel : codegenProgram.topLevels) {
         if (topLevel->type == CodeGen::TopLevel::Type::StaticVariable)
             continue;

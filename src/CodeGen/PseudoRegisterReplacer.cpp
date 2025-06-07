@@ -10,7 +10,6 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
             operand = std::make_shared<DataOperand>(pseudo->identifier.substr(0, pseudo->identifier.size() - 9));
             return;
         }
-        //
         // if (entry.isSet(SymbolTable::State::CorrectType) entry.type != operand.type) {
         //     operand = std::make_shared<DataOperand>(pseudo->identifier);
         //     return;

@@ -213,7 +213,7 @@ std::string to_string(const ImmOperand& immOperand)
 
 std::string to_string(const RegisterOperand& registerOperand)
 {
-    return "Register(" + to_string(registerOperand.type) + ", " + std::to_string(registerOperand.size) + ")";
+    return "Register(" + to_string(registerOperand.kind) + ", " + to_string(registerOperand.kind) + ")";
 }
 
 std::string to_string(const PseudoOperand& pseudoOperand)
@@ -226,9 +226,9 @@ std::string to_string(const StackOperand& stackOperand)
     return "Stack(" + std::to_string(stackOperand.value) + ")";
 }
 
-std::string to_string(const RegisterOperand::Type& type)
+std::string to_string(const RegisterOperand::Kind& type)
 {
-    using Type = RegisterOperand::Type;
+    using Type = RegisterOperand::Kind;
     switch (type) {
         case Type::AX:          return "AX";
         case Type::CX:          return "CX";
@@ -239,6 +239,7 @@ std::string to_string(const RegisterOperand::Type& type)
         case Type::R9:          return "R9";
         case Type::R10:         return "R10";
         case Type::R11:         return "R11";
+        case Type::SP:          return "SP";
         default:                return "UnknownRegister";
     }
 }
@@ -249,7 +250,7 @@ std::string to_string(const UnaryInst::Operator& oper)
     switch (oper) {
         case Oper::Neg:     return "!";
         case Oper::Not:     return "~";
-        default:            return "UnknownUnaryOp";
+        default:            return "Unknown UnaryOp";
     }
 }
 
@@ -265,7 +266,7 @@ std::string to_string(const BinaryInst::Operator& oper)
         case Oper::BitwiseXor:      return "^";
         case Oper::LeftShift:       return "<<";
         case Oper::RightShift:      return ">>";
-        default:                    return "UnknownBinaryOp";
+        default:                    return "Unknown BinaryOp";
     }
 }
 
@@ -279,9 +280,17 @@ std::string to_string(const Inst::CondCode& condCode)
         case CondCode::LE:      return "LE";
         case CondCode::G:       return "G";
         case CondCode::GE:      return "GE";
-        default:                return "UnknownCondCode";
+        default:                return "Unknown CondCode";
     }
+}
 
+std::string to_string(const AssemblyType type)
+{
+    switch (type) {
+        case AssemblyType::QuadWord: return "QuadWord";
+        case AssemblyType::LongWord: return "LongWord";
+        default:                return "Unknown AssemblyType";
+    }
 }
 
 void AsmPrinter::addLine(const std::string& name,

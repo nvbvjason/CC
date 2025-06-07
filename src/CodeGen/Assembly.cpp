@@ -74,18 +74,21 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Move: {
             const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
             std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
-            result += asmFormatInstruction("movl", operand);;
+            if (moveInst->type == AssemblyType::LongWord)
+                result += asmFormatInstruction("movl", operand);
+            if (moveInst->type == AssemblyType::QuadWord)
+                result += asmFormatInstruction("movq", operand);;
             return;
         }
         case Inst::Kind::Unary: {
             const auto unaryInst = dynamic_cast<UnaryInst*>(instruction.get());
-            result += asmFormatInstruction(asmUnaryOperator(unaryInst->oper), asmOperand(unaryInst->destination));
+            result += asmFormatInstruction(asmUnaryOperator(unaryInst->oper, unaryInst->type), asmOperand(unaryInst->destination));
             return;
         }
         case Inst::Kind::Binary: {
             const auto binaryInst = dynamic_cast<BinaryInst*>(instruction.get());
             std::string operands = asmOperand(binaryInst->lhs) + ", " + asmOperand(binaryInst->rhs);
-            result += asmFormatInstruction(asmBinaryOperator(binaryInst->oper), operands);
+            result += asmFormatInstruction(asmBinaryOperator(binaryInst->oper, binaryInst->type), operands);
             return;
         }
         case Inst::Kind::Cdq: {
@@ -175,7 +178,7 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
 
 std::string asmRegister(const RegisterOperand* reg)
 {
-    using Type = RegisterOperand::Type;
+    using Type = RegisterOperand::Kind;
     static const std::unordered_map<Type, std::array<const char*, 4>> registerMap = {
         {Type::AX,  {"%al",   "%ax",   "%eax",  "%rax"}},
         {Type::CX,  {"%cl",   "%cx",   "%ecx",  "%rcx"}},
@@ -185,52 +188,77 @@ std::string asmRegister(const RegisterOperand* reg)
         {Type::R8,  {"%r8b",  "%r8w",  "%r8d",  "%r8"}},
         {Type::R9,  {"%r9b",  "%r9w",  "%r9d",  "%r9"}},
         {Type::R10, {"%r10b", "%r10w", "%r10d", "%r10"}},
-        {Type::R11, {"%r11b", "%r11w", "%r11d", "%r11"}}
+        {Type::R11, {"%r11b", "%r11w", "%r11d", "%r11"}},
+        {Type::SP,  {"%rsp",  "%rsp",  "%rsp",  "%rsp"}}
     };
 
-    // Find the register in our map
-    auto it = registerMap.find(reg->type);
-    if (it == registerMap.end()) {
+    auto it = registerMap.find(reg->kind);
+    if (it == registerMap.end())
         return "invalid_register";
-    }
 
-    // Get the appropriate name based on size
     const auto& names = it->second;
-    switch (reg->size) {
-        case 1: return names[0];  // 8-bit
-        case 2: return names[1];  // 16-bit
-        case 4: return names[2];  // 32-bit
-        case 8: return names[3];  // 64-bit
+    switch (reg->type) {
+        case AssemblyType::Byte:     return names[0];
+        case AssemblyType::Word:     return names[1];
+        case AssemblyType::LongWord: return names[2];
+        case AssemblyType::QuadWord: return names[3];
         default: return "invalid_size";
     }
 }
 
-std::string asmUnaryOperator(const UnaryInst::Operator oper)
+std::string asmUnaryOperator(const UnaryInst::Operator oper, AssemblyType type)
 {
     using Operator = UnaryInst::Operator;
-    switch (oper) {
-        case Operator::Neg:      return "negl";
-        case Operator::Not:      return "notl";
-        default:                 return "not set asmUnaryOperator";
+    if (type == AssemblyType::LongWord) {
+        switch (oper) {
+            case Operator::Neg:      return "negl";
+            case Operator::Not:      return "notl";
+            default:                 return "not set asmUnaryOperator";
+        }
+    }
+    if (type == AssemblyType::QuadWord) {
+        switch (oper) {
+            case Operator::Neg:      return "negq";
+            case Operator::Not:      return "notq";
+            default:                 return "not set asmUnaryOperator";
+        }
     }
 }
 
-std::string asmBinaryOperator(BinaryInst::Operator oper)
+std::string asmBinaryOperator(const BinaryInst::Operator oper, const AssemblyType type)
 {
     using Operator = BinaryInst::Operator;
-    switch (oper) {
-        case Operator::Mul:             return "imull";
-        case Operator::Add:             return "addl";
-        case Operator::Sub:             return "subl";
+    if (type == AssemblyType::LongWord) {
+        switch (oper) {
+            case Operator::Mul:             return "imull";
+            case Operator::Add:             return "addl";
+            case Operator::Sub:             return "subl";
 
-        case Operator::BitwiseAnd:      return "andl";
-        case Operator::BitwiseOr:       return "orl";
-        case Operator::BitwiseXor:      return "xorl";
+            case Operator::BitwiseAnd:      return "andl";
+            case Operator::BitwiseOr:       return "orl";
+            case Operator::BitwiseXor:      return "xorl";
 
-        case Operator::LeftShift:       return "shll";
-        case Operator::RightShift:      return "sarl";
-        default:
-            return "not set asmBinaryOperator";
+            case Operator::LeftShift:       return "shll";
+            case Operator::RightShift:      return "sarl";
+            default:
+                return "not set asmBinaryOperator";
+        }
+    }
+    if (type == AssemblyType::QuadWord) {
+        switch (oper) {
+            case Operator::Mul:             return "imulq";
+            case Operator::Add:             return "addq";
+            case Operator::Sub:             return "subq";
+
+            case Operator::BitwiseAnd:      return "andq";
+            case Operator::BitwiseOr:       return "orq";
+            case Operator::BitwiseXor:      return "xorq";
+
+            case Operator::LeftShift:       return "shlq";
+            case Operator::RightShift:      return "sarq";
+            default:
+                return "not set asmBinaryOperator";
+        }
     }
 }
 

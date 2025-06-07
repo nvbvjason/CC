@@ -132,8 +132,9 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
         && prevEntry.isSet(Flag::ExternalLinkage)
         && prevEntry.type != varDecl.type->kind)
         return false;
-    if (prevEntry.type != varDecl.type->kind && prevEntry.isSet(Flag::FromCurrentScope) &&
-            varDecl.storage != Storage::Extern)
+    if (prevEntry.type != varDecl.type->kind &&
+        prevEntry.isSet(Flag::FromCurrentScope) &&
+        varDecl.storage != Storage::Extern)
         return false;
     return true;
 }
