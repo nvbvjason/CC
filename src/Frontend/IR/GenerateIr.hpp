@@ -50,7 +50,7 @@ public:
     std::shared_ptr<Value> generateUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr);
     std::shared_ptr<Value> generateUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr);
     std::shared_ptr<Value> generateBinaryInst(const Parsing::Expr& parsingExpr);
-    std::shared_ptr<Value> generateBinaryAndInst(const Parsing::BinaryExpr& parsingExpr);
+    std::shared_ptr<Value> generateBinaryAndInst(const Parsing::BinaryExpr& binaryExpr);
     std::shared_ptr<Value> generateBinaryOrInst(const Parsing::BinaryExpr& binaryExpr);
     std::shared_ptr<Value> generateAssignInst(const Parsing::Expr& binaryExpr);
     std::shared_ptr<Value> generateSimpleAssignInst(const Parsing::AssignmentExpr& assignExpr);

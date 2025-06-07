@@ -71,11 +71,6 @@ void asmStaticVariable(std::string& result, const StaticVariable& staticVariable
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction)
 {
     switch (instruction->kind) {
-        case Inst::Kind::AllocateStack: {
-            const auto instAllocStack = dynamic_cast<AllocStackInst*>(instruction.get());
-            result += asmFormatInstruction("subq", "$" + std::to_string(instAllocStack->alloc) + ", %rsp");
-            return;
-        }
         case Inst::Kind::Move: {
             const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
             std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
@@ -144,11 +139,6 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             result += asmFormatInstruction("call", callInst->funName.value);
             return;
         }
-        case Inst::Kind::DeallocateStack: {
-            const auto deallocateStack = dynamic_cast<DeallocStackInst*>(instruction.get());
-            result += asmFormatInstruction("addq", "$" + std::to_string(deallocateStack->dealloc) + ", %rsp");
-            return;
-        }
         default:
             result += asmFormatInstruction("not set asmInstruction");
             return;
@@ -166,7 +156,9 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
             return "invalid pseudo";
         case Operand::Kind::Imm: {
             const auto immOperand = dynamic_cast<ImmOperand*>(operand.get());
-            return "$" + std::to_string(immOperand->value);
+            if (immOperand->type == AssemblyType::LongWord)
+                return "$" + std::to_string(std::get<i32>(immOperand->value));
+            return "$" + std::to_string(std::get<i64>(immOperand->value));
         }
         case Operand::Kind::Stack: {
             const auto stackOperand = dynamic_cast<StackOperand*>(operand.get());

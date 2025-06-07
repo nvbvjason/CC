@@ -27,17 +27,15 @@ public:
     void visit(SetCCInst& setCCInst) override;
     void visit(PushInst& pushInst) override;
 
-    void visit(DeallocStackInst&) override {}
     void visit(CallInst&) override {}
     void visit(CdqInst&) override {}
-    void visit(AllocStackInst&) override {}
     void visit(ReturnInst&) override {}
     void visit(JmpInst&) override {}
     void visit(JmpCCInst&) override {}
     void visit(LabelInst&) override {}
 private:
     void replaceIfPseudo(std::shared_ptr<Operand>& operand);
-    bool isStatic(const std::string& iden);
+    static bool isStatic(const std::string& iden);
 };
 
 inline bool PseudoRegisterReplacer::isStatic(const std::string& iden)

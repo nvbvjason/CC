@@ -73,22 +73,28 @@ void generateJumpIfNotZeroInst(std::vector<std::unique_ptr<Inst>>& insts,
                                const Ir::JumpIfNotZeroInst* irBinary);
 void generateCopyInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::CopyInst* type);
 void generateLabelInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::LabelInst* irLabel);
-void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* inst);
+void returnInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::ReturnInst* returnInst);
 
 i32 getStackPadding(size_t numArgs);
-void pushFunCallArgs(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type);
+void pushFunCallArgs(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* funcCall);
 void generateFunCallInst(std::vector<std::unique_ptr<Inst>>& insts, const Ir::FunCallInst* type);
 
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation type);
+AssemblyType getAssemblyType(Type type);
 
 std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 
-[[nodiscard]] i32 getStaticVariableInitial(const Ir::StaticVariable& staticVariable);
-
 [[nodiscard]] i32 replacingPseudoRegisters(Function& function, const SymbolTable& symbolTable);
 void fixUpInstructions(Function& function, i32 stackAlloc);
+
+inline AssemblyType getAssemblyType(Type type)
+{
+    if (type == Type::I32)
+        return AssemblyType::LongWord;
+    return AssemblyType::QuadWord;
+}
 
 }
 

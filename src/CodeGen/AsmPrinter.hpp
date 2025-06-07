@@ -38,8 +38,6 @@ public:
     void add(const JmpCCInst& jmpCCInst);
     void add(const SetCCInst& setCCInst);
     void add(const LabelInst& labelInst);
-    void add(const AllocStackInst& allocStackInst);
-    void add(const DeallocStackInst& deallocStackInst);
     void add(const PushInst& pushInst);
     void add(const CallInst& callInst);
     void add(const ReturnInst& returnInst);

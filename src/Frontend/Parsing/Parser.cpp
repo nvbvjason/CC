@@ -78,8 +78,8 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(const TokenType type,
         result->body = std::move(block);
     result->params = std::move(paramList->params);
     result->type = std::make_unique<FuncType>(
-        std::make_unique<VarType>(Operators::varType(type)), std::move(paramList->types)
-        );
+        std::make_unique<VarType>(Operators::varType(type)),
+        std::move(paramList->types));
     return result;
 }
 
@@ -593,14 +593,15 @@ Declaration::StorageClass getStorageClass(const Lexing::Token::Type tokenType)
 {
     using TokenType = Lexing::Token::Type;
     using StorageClass = Declaration::StorageClass;
-    if (tokenType == TokenType::Static)
-        return StorageClass::Static;
-    if (tokenType == TokenType::Extern)
-        return StorageClass::Extern;
-    if (tokenType == TokenType::NotAToken)
-        return StorageClass::None;
+    switch (tokenType) {
+        case TokenType::Static:     return StorageClass::Static;
+        case TokenType::Extern:     return StorageClass::Extern;
+        case TokenType::NotAToken:  return StorageClass::None;
+        default:
+            assert("getVarStorageClass invalid TokenType");
+            std::abort();
+    }
     assert("getVarStorageClass invalid TokenType");
-    std::unreachable();
 }
 
 bool Parser::match(const TokenType &type)

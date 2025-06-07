@@ -22,7 +22,6 @@ public:
     void visit(BinaryInst& binary) override;
     void visit(CmpInst& cmp) override;
     void visit(IdivInst& idiv) override;
-    void visit(DeallocStackInst&) override {}
     void visit(PushInst&) override {}
     void visit(CallInst&) override {}
 
@@ -33,7 +32,6 @@ public:
     void visit(JmpInst&) override {}
     void visit(JmpCCInst&) override {}
     void visit(LabelInst&) override {}
-    void visit(AllocStackInst&) override {}
     void visit(ReturnInst&) override {}
 
     void fixUp();

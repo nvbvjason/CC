@@ -8,11 +8,11 @@ std::string IrPrinter::print(const Program& program)
 {
     addLine("Program:");
     for (const auto& topLevel : program.topLevels) {
-        if (topLevel->type == TopLevel::Type::Function) {
+        if (topLevel->type == TopLevel::Kind::Function) {
             const auto function = dynamic_cast<Function*>(topLevel.get());
             print(*function);
         }
-        if (topLevel->type == TopLevel::Type::StaticVariable) {
+        if (topLevel->type == TopLevel::Kind::StaticVariable) {
             const auto variable = dynamic_cast<StaticVariable*>(topLevel.get());
             print(*variable);
         }

@@ -85,19 +85,20 @@ struct Instruction {
         FunCall
     };
     Kind kind;
+    Type type;
 
     Instruction() = delete;
 
     virtual ~Instruction() = default;
 protected:
-    explicit Instruction(const Kind t)
-        : kind(t) {}
+    explicit Instruction(const Kind k, const Type t)
+        : kind(k), type(t) {}
 };
 
 struct ReturnInst final : Instruction {
     std::shared_ptr<Value> returnValue;
-    explicit ReturnInst(std::shared_ptr<Value> v)
-        : Instruction(Kind::Return), returnValue(std::move(v)) {}
+    explicit ReturnInst(std::shared_ptr<Value> v, const Type t)
+        : Instruction(Kind::Return, t), returnValue(std::move(v)) {}
 
     ~ReturnInst() override;
 };
@@ -105,15 +106,15 @@ struct ReturnInst final : Instruction {
 struct SignExtendInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    SignExtendInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
-        : Instruction(Kind::SignExtend), src(std::move(src)), dst(std::move(dst)) {}
+    SignExtendInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
+        : Instruction(Kind::SignExtend, t), src(std::move(src)), dst(std::move(dst)) {}
 };
 
 struct TruncateInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    TruncateInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
-        : Instruction(Kind::Truncate), src(std::move(src)), dst(std::move(dst)) {}
+    TruncateInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
+        : Instruction(Kind::Truncate, t), src(std::move(src)), dst(std::move(dst)) {}
 
     TruncateInst() = delete;
 };
@@ -125,8 +126,8 @@ struct UnaryInst final : Instruction {
     Operation operation;
     std::shared_ptr<Value> source;
     std::shared_ptr<Value> destination;
-    UnaryInst(const Operation op, std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
-        : Instruction(Kind::Unary), operation(op), source(std::move(src)), destination(std::move(dst)) {}
+    UnaryInst(const Operation op, std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
+        : Instruction(Kind::Unary, t), operation(op), source(std::move(src)), destination(std::move(dst)) {}
 
     ~UnaryInst() override;
 
@@ -148,8 +149,9 @@ struct BinaryInst final : Instruction {
     BinaryInst(const Operation op,
                const std::shared_ptr<Value>& src1,
                const std::shared_ptr<Value>& src2,
-               const std::shared_ptr<Value>& dst)
-        : Instruction(Kind::Binary), operation(op), source1(src1), source2(src2), destination(dst) {}
+               const std::shared_ptr<Value>& dst,
+               const Type t)
+        : Instruction(Kind::Binary, t), operation(op), source1(src1), source2(src2), destination(dst) {}
 
     ~BinaryInst() override;
 
@@ -159,8 +161,8 @@ struct BinaryInst final : Instruction {
 struct CopyInst final : Instruction {
     std::shared_ptr<Value> source;
     std::shared_ptr<Value> destination;
-    CopyInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
-        : Instruction(Kind::Copy), source(std::move(src)), destination(std::move(dst)) {}
+    CopyInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
+        : Instruction(Kind::Copy, t), source(std::move(src)), destination(std::move(dst)) {}
 
     ~CopyInst() override;
 
@@ -170,7 +172,7 @@ struct CopyInst final : Instruction {
 struct JumpInst final : Instruction {
     Identifier target;
     explicit JumpInst(Identifier target)
-        : Instruction(Kind::Jump), target(std::move(target)) {}
+        : Instruction(Kind::Jump, Type::I32), target(std::move(target)) {}
 
     ~JumpInst() override;
 
@@ -181,7 +183,7 @@ struct JumpIfZeroInst final : Instruction {
     std::shared_ptr<Value> condition;
     Identifier target;
     JumpIfZeroInst(std::shared_ptr<Value> condition, Identifier target)
-        : Instruction(Kind::JumpIfZero), condition(std::move(condition)), target(std::move(target)) {}
+        : Instruction(Kind::JumpIfZero, Type::I32), condition(std::move(condition)), target(std::move(target)) {}
 
     ~JumpIfZeroInst() override;
 
@@ -192,7 +194,7 @@ struct JumpIfNotZeroInst final : Instruction {
     std::shared_ptr<Value> condition;
     Identifier target;
     JumpIfNotZeroInst(std::shared_ptr<Value> condition, Identifier target)
-        : Instruction(Kind::JumpIfNotZero), condition(std::move(condition)), target(std::move(target)) {}
+        : Instruction(Kind::JumpIfNotZero, Type::I32), condition(std::move(condition)), target(std::move(target)) {}
 
     ~JumpIfNotZeroInst() override;
 
@@ -202,7 +204,7 @@ struct JumpIfNotZeroInst final : Instruction {
 struct LabelInst final : Instruction {
     Identifier target;
     explicit LabelInst(Identifier target)
-        : Instruction(Kind::Label), target(std::move(target)) {}
+        : Instruction(Kind::Label, Type::I32), target(std::move(target)) {}
 
     ~LabelInst() override;
 
@@ -213,8 +215,11 @@ struct FunCallInst final : Instruction {
     Identifier funName;
     std::vector<std::shared_ptr<Value>> args;
     std::shared_ptr<Value> destination;
-    FunCallInst(Identifier funName, std::vector<std::shared_ptr<Value>> args, std::shared_ptr<Value> dst)
-        : Instruction(Kind::FunCall), funName(std::move(funName)), args(std::move(args)), destination(std::move(dst)) {}
+    FunCallInst(Identifier funName,
+                std::vector<std::shared_ptr<Value>> args,
+                std::shared_ptr<Value> dst,
+                const Type t)
+        : Instruction(Kind::FunCall, t), funName(std::move(funName)), args(std::move(args)), destination(std::move(dst)) {}
 
     ~FunCallInst() override;
 
@@ -222,26 +227,27 @@ struct FunCallInst final : Instruction {
 };
 
 struct TopLevel {
-    enum class Type {
+    enum class Kind {
         Function, StaticVariable
     };
-    Type type;
+    Kind type;
 
     TopLevel() = delete;
 
     virtual ~TopLevel() = default;
 protected:
-    explicit TopLevel(const Type t)
+    explicit TopLevel(const Kind t)
         : type(t) {}
 };
 
 struct Function : TopLevel {
     std::string name;
     std::vector<Identifier> args;
+    std::vector<Type> argTypes;
     std::vector<std::unique_ptr<Instruction>> insts;
     const bool isGlobal;
     Function(std::string identifier, const bool isGlobal)
-        : TopLevel(Type::Function), name(std::move(identifier)), isGlobal(isGlobal) {}
+        : TopLevel(Kind::Function), name(std::move(identifier)), isGlobal(isGlobal) {}
 
     ~Function() override;
 
@@ -251,12 +257,14 @@ struct Function : TopLevel {
 struct StaticVariable : TopLevel {
     std::string name;
     std::shared_ptr<Value> value;
+    const Type type;
     const bool global;
     explicit StaticVariable(std::string identifier,
                             const std::shared_ptr<Value>& value,
+                            const Type ty,
                             const bool isGlobal)
-        : TopLevel(Type::StaticVariable), name
-                (std::move(identifier)), value(value), global(isGlobal) {}
+        : TopLevel(Kind::StaticVariable), name
+                (std::move(identifier)), value(value), type(ty), global(isGlobal) {}
 
     ~StaticVariable() override;
 

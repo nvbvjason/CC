@@ -77,10 +77,6 @@ void AsmPrinter::add(const Inst& inst)
             add(static_cast<const SetCCInst&>(inst)); break;
         case Kind::Label:
             add(static_cast<const LabelInst&>(inst)); break;
-        case Kind::AllocateStack:
-            add(static_cast<const AllocStackInst&>(inst)); break;
-        case Kind::DeallocateStack:
-            add(static_cast<const DeallocStackInst&>(inst)); break;
         case Kind::Push:
             add(static_cast<const PushInst&>(inst)); break;
         case Kind::Call:
@@ -166,18 +162,6 @@ void AsmPrinter::add(const LabelInst& labelInst)
             to_string(labelInst.target));
 }
 
-void AsmPrinter::add(const AllocStackInst& allocStackInst)
-{
-    IndentGuard indent(m_indentLevel);
-    addLine("AllocStack(" + std::to_string(allocStackInst.alloc) + ")");
-}
-
-void AsmPrinter::add(const DeallocStackInst& deallocStackInst)
-{
-    IndentGuard indent(m_indentLevel);
-    addLine("DeallocStack(" + std::to_string(deallocStackInst.dealloc) + ")");
-}
-
 void AsmPrinter::add(const PushInst& pushInst)
 {
     IndentGuard indent(m_indentLevel);
@@ -220,7 +204,11 @@ std::string to_string(const Operand& operand)
 
 std::string to_string(const ImmOperand& immOperand)
 {
-    return "ImmOperand(" + std::to_string(immOperand.value) + ")";
+    switch (immOperand.type) {
+        case AssemblyType::QuadWord: return "ImmOperand(" + std::to_string(std::get<i64>(immOperand.value)) + ")";
+        case AssemblyType::LongWord: return "ImmOperand(" + std::to_string(std::get<i32>(immOperand.value)) + ")";
+        std::abort();
+    }
 }
 
 std::string to_string(const RegisterOperand& registerOperand)

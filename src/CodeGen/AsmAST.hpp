@@ -7,25 +7,26 @@
 
 #include <memory>
 #include <utility>
+#include <variant>
 #include <vector>
 
 /*
 
 program = Program(function_definition)
+assembly_type = Longword | Quadword
 top_level = Function(identifier name, bool global, instruction* instructions)
-          | StaticVariable(identifier name, bool global, int init)
-instruction = Mov(operand src, operand dst)
-            | Unary(unary_operator, operand)
-            | Binary(binary_operator, operand, operand)
+          | StaticVariable(identifier name, bool global, int alignment, int init)
+instruction = Mov(assembly_type, operand src, operand dst)
+            | Movsx(operand src, operand dst)
+            | Unary(unary_operator, assembly_type, operand)
+            | Binary(binary_operator, assembly_type, operand, operand)
             | Cmp(operand, operand)
-            | Idiv(operand)
-            | Cdq
+            | Idiv(assembly_type, operand)
+            | Cdq(assembly_type)
             | Jmp(identifier)
             | JmpCC(cond_code, identifier)
             | SetCC(cond_code, operand)
             | Label(identifier)
-            | Allocate_stack(int)
-            | DeallocateStack(int)
             | Push(operand)
             | Call(identifier)
             | Ret
@@ -39,13 +40,17 @@ operand = Imm(int)
         | Stack(int)
         | Data(identifier)
 cond_code = E | NE | G | GE | L | LE
-reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP
 
 */
 
 namespace CodeGen {
 
 struct InstVisitor;
+
+enum class AssemblyType : u8 {
+    LongWord, QuadWord
+};
 
 struct Identifier {
     std::string value;
@@ -68,21 +73,25 @@ protected:
 };
 
 struct ImmOperand final : Operand {
-    i32 value;
+    std::variant<i32, i64> value;
+    AssemblyType type;
+    explicit ImmOperand(const i64 value)
+        : Operand(Kind::Imm), value(value), type(AssemblyType::QuadWord) {}
+
     explicit ImmOperand(const i32 value)
-        : Operand(Kind::Imm), value(value) {}
+        : Operand(Kind::Imm), value(value), type(AssemblyType::LongWord) {}
 
     ImmOperand() = delete;
 };
 
 struct RegisterOperand final : Operand {
     enum class Type : u8 {
-        AX, CX, DX, DI, SI, R8, R9, R10, R11
+        AX, CX, DX, DI, SI, R8, R9, R10, R11, SP
     };
     Type type;
     u8 size;
     explicit RegisterOperand(const Type k, const u8 size)
-        : Operand(Operand::Kind::Register), type(k), size(size) {}
+        : Operand(Kind::Register), type(k), size(size) {}
 
     RegisterOperand() = delete;
 };
@@ -112,11 +121,11 @@ struct DataOperand final : Operand {
 };
 
 struct Inst {
-    enum class Kind {
+    enum class Kind : u8 {
         Move, Unary, Binary, Cmp, Idiv, Cdq, Jmp, JmpCC, SetCC, Label,
-        AllocateStack, DeallocateStack, Push, Call, Ret
+        Push, Call, Ret
     };
-    enum class CondCode {
+    enum class CondCode : u8 {
         E, NE, G, GE, L, LE
     };
     Kind kind;
@@ -134,9 +143,13 @@ protected:
 struct MoveInst final : Inst {
     std::shared_ptr<Operand> src;
     std::shared_ptr<Operand> dst;
+    AssemblyType type;
 
-    MoveInst(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst)
-        : Inst(Kind::Move), src(src), dst(dst) {}
+    MoveInst(
+        std::shared_ptr<Operand> src,
+        std::shared_ptr<Operand> dst,
+        const AssemblyType t)
+        : Inst(Kind::Move), src(std::move(src)), dst(std::move(dst)), type(t) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -144,14 +157,15 @@ struct MoveInst final : Inst {
 };
 
 struct UnaryInst final : Inst {
-    enum class Operator {
+    enum class Operator : u8 {
         Neg, Not
     };
-    Operator oper;
     std::shared_ptr<Operand> destination;
+    Operator oper;
+    AssemblyType type;
 
-    UnaryInst(const Operator op, const std::shared_ptr<Operand>& dst)
-        : Inst(Kind::Unary), oper(op), destination(dst) {}
+    UnaryInst(std::shared_ptr<Operand> dst, const Operator op, const AssemblyType type)
+        : Inst(Kind::Unary), destination(std::move(dst)), oper(op), type(type) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -159,16 +173,20 @@ struct UnaryInst final : Inst {
 };
 
 struct BinaryInst final : Inst {
-    enum class Operator {
+    enum class Operator : u8 {
         Add, Sub, Mul,
         BitwiseAnd, BitwiseOr, BitwiseXor,
         LeftShift, RightShift,
     };
-    Operator oper;
     std::shared_ptr<Operand> lhs;
     std::shared_ptr<Operand> rhs;
-    BinaryInst(const Operator op, const std::shared_ptr<Operand>& lhs, const std::shared_ptr<Operand>& rhs)
-        :Inst(Kind::Binary), oper(op), lhs(lhs), rhs(rhs) {}
+    Operator oper;
+    AssemblyType type;
+    BinaryInst(std::shared_ptr<Operand> lhs,
+               std::shared_ptr<Operand> rhs,
+               const Operator op,
+               const AssemblyType ty)
+        :Inst(Kind::Binary), lhs(std::move(lhs)), rhs(std::move(rhs)), oper(op), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -178,8 +196,9 @@ struct BinaryInst final : Inst {
 struct CmpInst final : Inst {
     std::shared_ptr<Operand> lhs;
     std::shared_ptr<Operand> rhs;
-    CmpInst(const std::shared_ptr<Operand>& lhs, const std::shared_ptr<Operand>& rhs)
-        : Inst(Kind::Cmp), lhs(lhs), rhs(rhs) {}
+    AssemblyType type;
+    CmpInst(std::shared_ptr<Operand> lhs, std::shared_ptr<Operand> rhs, const AssemblyType ty)
+        : Inst(Kind::Cmp), lhs(std::move(lhs)), rhs(std::move(rhs)), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -188,8 +207,10 @@ struct CmpInst final : Inst {
 
 struct IdivInst final : Inst {
     std::shared_ptr<Operand> operand;
-    explicit IdivInst(const std::shared_ptr<Operand>& operand)
-        : Inst(Kind::Idiv), operand(operand) {}
+    AssemblyType type;
+
+    IdivInst(std::shared_ptr<Operand> operand, const AssemblyType ty)
+        : Inst(Kind::Idiv), operand(std::move(operand)), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -197,8 +218,10 @@ struct IdivInst final : Inst {
 };
 
 struct CdqInst final : Inst {
-    explicit CdqInst()
-        : Inst(Kind::Cdq) {}
+    AssemblyType type;
+
+    explicit CdqInst(const AssemblyType ty)
+        : Inst(Kind::Cdq), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
 };
@@ -227,8 +250,8 @@ struct JmpCCInst final : Inst {
 struct SetCCInst final : Inst {
     CondCode condition;
     std::shared_ptr<Operand> operand;
-    explicit SetCCInst(const CondCode condition, const std::shared_ptr<Operand>& operand)
-        : Inst(Kind::SetCC), condition(condition), operand(operand) {}
+    explicit SetCCInst(const CondCode condition, std::shared_ptr<Operand> operand)
+        : Inst(Kind::SetCC), condition(condition), operand(std::move(operand)) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -245,30 +268,10 @@ struct LabelInst final : Inst {
     LabelInst() = delete;
 };
 
-struct AllocStackInst final : Inst {
-    i32 alloc;
-    explicit AllocStackInst(i32 alloc)
-        : Inst(Kind::AllocateStack), alloc(alloc) {}
-
-    void accept(InstVisitor& visitor) override;
-
-    AllocStackInst() = delete;
-};
-
-struct DeallocStackInst final : Inst {
-    i32 dealloc;
-    explicit DeallocStackInst(i32 dealloc)
-        : Inst(Kind::DeallocateStack), dealloc(dealloc) {}
-
-    void accept(InstVisitor& visitor) override;
-
-    DeallocStackInst() = delete;
-};
-
 struct PushInst final : Inst {
     std::shared_ptr<Operand> operand;
-    explicit PushInst(const std::shared_ptr<Operand>& operand)
-        : Inst(Kind::Push), operand(operand) {}
+    explicit PushInst(std::shared_ptr<Operand> operand)
+        : Inst(Kind::Push), operand(std::move(operand)) {}
 
     void accept(InstVisitor& visitor) override;
 
@@ -277,7 +280,7 @@ struct PushInst final : Inst {
 
 struct CallInst final : Inst {
     Identifier funName;
-    explicit CallInst(Identifier  iden)
+    explicit CallInst(Identifier iden)
         : Inst(Kind::Call), funName(std::move(iden)) {}
 
     void accept(InstVisitor& visitor) override;
@@ -311,7 +314,7 @@ struct Function : TopLevel {
     std::vector<std::unique_ptr<Inst>> instructions;
     i64 stackAlloc = 0;
     const bool isGlobal;
-    Function(std::string name, bool isGlobal)
+    Function(std::string name, const bool isGlobal)
         : TopLevel(Type::Function), name(std::move(name)), isGlobal(isGlobal) {}
 
     Function() = delete;
@@ -319,10 +322,11 @@ struct Function : TopLevel {
 
 struct StaticVariable : TopLevel {
     std::string name;
-    i32 init;
+    i64 init;
+    AssemblyType type;
     const bool global;
-    StaticVariable(std::string name, bool isGlobal, i32 init)
-        : TopLevel(Type::StaticVariable), name(std::move(name)), init(init), global(isGlobal) {}
+    StaticVariable(std::string name, const i64 init, const AssemblyType type, const bool isGlobal)
+        : TopLevel(Type::StaticVariable), name(std::move(name)), init(init), type(type), global(isGlobal) {}
 
     StaticVariable() = delete;
 };
@@ -344,8 +348,6 @@ struct InstVisitor {
     virtual void visit(JmpCCInst&) = 0;
     virtual void visit(SetCCInst&) = 0;
     virtual void visit(LabelInst&) = 0;
-    virtual void visit(AllocStackInst&) = 0;
-    virtual void visit(DeallocStackInst&) = 0;
     virtual void visit(PushInst&) = 0;
     virtual void visit(CallInst&) = 0;
     virtual void visit(ReturnInst&) = 0;
@@ -361,8 +363,6 @@ inline void JmpInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void JmpCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void SetCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void LabelInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void AllocStackInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void DeallocStackInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void PushInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void CallInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void ReturnInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
