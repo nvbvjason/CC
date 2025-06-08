@@ -5,7 +5,6 @@
 
 #include "Token.hpp"
 #include "ASTParser.hpp"
-#include "ASTTypes.hpp"
 
 #include <cassert>
 
@@ -15,7 +14,6 @@ using TokenType = Lexing::Token::Type;
 [[nodiscard]] constexpr UnaryExpr::Operator unaryOperator(TokenType type);
 [[nodiscard]] constexpr BinaryExpr::Operator binaryOperator(TokenType type);
 [[nodiscard]] constexpr AssignmentExpr::Operator assignOperator(TokenType type);
-[[nodiscard]] constexpr Type varType(TokenType type);
 [[nodiscard]] constexpr bool isBinaryOperator(TokenType type);
 [[nodiscard]] constexpr bool isUnaryOperator(TokenType type);
 [[nodiscard]] constexpr bool isAssignmentOperator(TokenType type);
@@ -98,18 +96,6 @@ constexpr AssignmentExpr::Operator assignOperator(TokenType type)
 
         default:
             assert(false && "Invalid binary operator: assignOperator(Token::Type)");
-            std::unreachable();
-    }
-}
-
-constexpr Type varType(const TokenType type)
-{
-    switch (type) {
-        case TokenType::IntKeyword:  return Type::I32;
-        case TokenType::LongKeyword: return Type::I64;
-
-        default:
-            assert(false && "Invalid varType: varType(Token::Type)");
             std::unreachable();
     }
 }
@@ -261,6 +247,8 @@ constexpr bool isSpecifier(const TokenType type)
         case TokenType::Extern:
         case TokenType::IntKeyword:
         case TokenType::LongKeyword:
+        case TokenType::Signed:
+        case TokenType::Unsigned:
             return true;
         default:
             return false;
@@ -283,6 +271,8 @@ constexpr bool isType(const TokenType type)
     switch (type) {
         case TokenType::IntKeyword:
         case TokenType::LongKeyword:
+        case TokenType::Signed:
+        case TokenType::Unsigned:
             return true;
         default:
             return false;

@@ -304,13 +304,13 @@ void Lexer::addToken(const Token::Type type)
     std::string text = c_source.substr(m_start, ahead);
     m_tokens.emplace_back(m_line, m_column - ahead, type, text);
     if (type == Token::Type::IntegerLiteral)
-        m_tokens.back().m_dataSigned = std::stoi(text);
+        m_tokens.back().m_data = std::stoi(text);
     if (type == Token::Type::LongLiteral)
-        m_tokens.back().m_dataSigned = std::stoll(text);
+        m_tokens.back().m_data = std::stol(text);
     if (type == Token::Type::UnsignedLongLiteral)
-        m_tokens.back().m_dataUnSigned = std::stoull(text);
+        m_tokens.back().m_data = std::stoul(text);
     if (type == Token::Type::UnsignedIntegerLiteral)
-        m_tokens.back().m_dataUnSigned = static_cast<u32>(std::stoull(text));
+        m_tokens.back().m_data = static_cast<u32>(std::stoull(text));
 }
 
 bool isValid(const std::string& input, const std::regex& regex)

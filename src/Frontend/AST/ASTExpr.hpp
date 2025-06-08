@@ -16,12 +16,18 @@
 namespace Parsing {
 
 struct ConstExpr final : Expr {
-    std::variant<i32, i64> value;
+    std::variant<i32, i64, u32, u64> value;
 
     ConstExpr(const i32 value, std::unique_ptr<TypeBase>&& varType) noexcept
         : Expr(Kind::Constant, std::move(varType)), value(value) {}
 
     ConstExpr(const i64 value, std::unique_ptr<TypeBase>&& varType) noexcept
+        : Expr(Kind::Constant, std::move(varType)), value(value) {}
+
+    ConstExpr(const u32 value, std::unique_ptr<TypeBase>&& varType) noexcept
+    : Expr(Kind::Constant, std::move(varType)), value(value) {}
+
+    ConstExpr(const u64 value, std::unique_ptr<TypeBase>&& varType) noexcept
         : Expr(Kind::Constant, std::move(varType)), value(value) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }

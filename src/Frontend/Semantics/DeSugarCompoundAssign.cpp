@@ -1,5 +1,6 @@
 #include "DeSugarCompoundAssign.hpp"
 #include "ASTExpr.hpp"
+#include "ASTTypes.hpp"
 #include "Operators.hpp"
 
 namespace Semantics {

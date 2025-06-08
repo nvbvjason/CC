@@ -10,7 +10,7 @@ enum class ReferingTo : u8 {
 };
 
 enum class Type {
-    I32, I64, Function
+    Invalid, I32, I64, U32, U64, Function
 };
 
 #endif // CC_TYPS_HPP

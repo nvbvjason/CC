@@ -104,8 +104,7 @@ struct Token {
         NotAToken,                       // maybe bad design
         Invalid                          // Invalid token
     };
-    std::variant<i32, i64> m_dataSigned = 0;
-    std::variant<u32, u64> m_dataUnSigned = 0u;
+    std::variant<i32, i64, u32, u64> m_data;
     i32 m_line;
     u16 m_column;
     Type m_type;
@@ -114,10 +113,10 @@ struct Token {
         : m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
     [[nodiscard]] i32 line() const { return m_line; }
     [[nodiscard]] u16 column() const { return m_column; }
-    [[nodiscard]] i32 getI32Value() const { return std::get<i32>(m_dataSigned); }
-    [[nodiscard]] u32 getU32Value() const { return std::get<u32>(m_dataUnSigned); }
-    [[nodiscard]] i64 getI64Value() const { return std::get<i64>(m_dataSigned); }
-    [[nodiscard]] u64 getU64Value() const { return std::get<u64>(m_dataUnSigned); }
+    [[nodiscard]] i32 getI32Value() const { return std::get<i32>(m_data); }
+    [[nodiscard]] u32 getU32Value() const { return std::get<u32>(m_data); }
+    [[nodiscard]] i64 getI64Value() const { return std::get<i64>(m_data); }
+    [[nodiscard]] u64 getU64Value() const { return std::get<u64>(m_data); }
     [[nodiscard]] std::string getTypeName() const;
 };
 

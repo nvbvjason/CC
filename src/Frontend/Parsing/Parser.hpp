@@ -9,7 +9,7 @@
     <variable_declaration>  ::= { <specifier> }+ <identifier> [ "=" <exp> ] ";"
     <function_declaration>  ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
     <param-list>            ::= "void" | { <type-specifier> }+ <identifier> { "," { <type-specifier> }+ <identifier> }
-    <type-specifier>        ::= "int" | "long"
+    <type-specifier>        ::= "int" | "long" | "unsigned" | "signed"
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
     <block_item>            ::= <statement> | <declaration>
@@ -51,6 +51,8 @@
     <identifier>            ::= ? An identifier token ?
     <int>                   ::= ? A int token ?
     <long>                  ::= ? A int or long token ?
+    <uint>                  ::= ? An unsigned int token ?
+    <ulong>                 ::= ? An unsigned int or unsigned long token ?
 */
 
 #include "ASTParser.hpp"
@@ -78,10 +80,10 @@ public:
         : c_tokens(c_tokens) {}
     bool programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
-    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(TokenType type,
+    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(Type type,
                                                         Storage storage,
                                                         const std::string& iden);
-    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(TokenType type,
+    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(Type type,
                                                         Storage storage,
                                                         const std::string& iden);
     [[nodiscard]] std::unique_ptr<ParamList> paramsListParse();
@@ -113,9 +115,9 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
-    [[nodiscard]] TokenType typeParse();
-    [[nodiscard]] std::tuple<TokenType, TokenType> specifierParse();
-    [[nodiscard]] static TokenType typeResolve(const std::vector<TokenType>& tokens);
+    [[nodiscard]] Type typeParse();
+    [[nodiscard]] std::tuple<Type, TokenType> specifierParse();
+    [[nodiscard]] static Type typeResolve(std::vector<TokenType>& tokens);
 private:
     bool match(const TokenType& type);
     Lexing::Token advance() { return c_tokens[m_current++]; }
@@ -128,6 +130,7 @@ private:
     [[nodiscard]] bool expect(TokenType type);
 };
 
+bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens);
 Declaration::StorageClass getStorageClass(Lexing::Token::Type tokenType);
 inline bool Parser::continuePrecedenceClimbing(const i32 minPrecedence, const TokenType nextToken)
 {
