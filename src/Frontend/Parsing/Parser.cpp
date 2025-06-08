@@ -482,7 +482,7 @@ std::unique_ptr<Expr> Parser::factorParse()
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case TokenType::IntegerLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.geti32Value(), std::make_unique<VarType>(Type::I32)
+                lexeme.getI32Value(), std::make_unique<VarType>(Type::I32)
                 );
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
@@ -490,7 +490,7 @@ std::unique_ptr<Expr> Parser::factorParse()
         }
         case TokenType::LongLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.geti64Value(), std::make_unique<VarType>(Type::I64)
+                lexeme.getI64Value(), std::make_unique<VarType>(Type::I64)
                 );
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;

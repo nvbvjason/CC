@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <ostream>
+#include <regex>
 #include <variant>
 
 namespace Lexing {
@@ -56,7 +57,9 @@ struct Token {
         // Identifiers & Literals
         Identifier,                      // User-defined names
         IntegerLiteral,                  // Integer literals
-        LongLiteral,                     // Long Literal
+        UnsignedIntegerLiteral,          // Unsigned Integer literals
+        LongLiteral,                     // Long literal
+        UnsignedLongLiteral,             // Unsigned long literals
 
         // Assignment
         Equal,                           // =
@@ -93,13 +96,16 @@ struct Token {
         Default,                         // default
         Static,                          // static
         Extern,                          // extern
+        Signed,                          // Signed
+        Unsigned,                        // Unsigned
 
         // Special Tokens
         EndOfFile,                       // EOF marker
         NotAToken,                       // maybe bad design
         Invalid                          // Invalid token
     };
-    std::variant<i32, i64> m_data = 0;
+    std::variant<i32, i64> m_dataSigned = 0;
+    std::variant<u32, u64> m_dataUnSigned = 0u;
     i32 m_line;
     u16 m_column;
     Type m_type;
@@ -108,12 +114,15 @@ struct Token {
         : m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
     [[nodiscard]] i32 line() const { return m_line; }
     [[nodiscard]] u16 column() const { return m_column; }
-    [[nodiscard]] i32 geti32Value() const { return std::get<i32>(m_data); }
-    [[nodiscard]] i64 geti64Value() const { return std::get<i64>(m_data); }
+    [[nodiscard]] i32 getI32Value() const { return std::get<i32>(m_dataSigned); }
+    [[nodiscard]] u32 getU32Value() const { return std::get<u32>(m_dataUnSigned); }
+    [[nodiscard]] i64 getI64Value() const { return std::get<i64>(m_dataSigned); }
+    [[nodiscard]] u64 getU64Value() const { return std::get<u64>(m_dataUnSigned); }
     [[nodiscard]] std::string getTypeName() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Token& token);
+bool isValid(const std::string& input, const std::regex& regex);
 bool operator==(const Token& lhs, const Token& rhs);
 
 }

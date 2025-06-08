@@ -139,6 +139,16 @@ TEST(LexerTests, Extern)
     TestSingleTokenLexing("extern", TokenType::Extern);
 }
 
+TEST(LexerTests, Signed)
+{
+    TestSingleTokenLexing("signed", TokenType::Signed);
+}
+
+TEST(LexerTests, Unsigned)
+{
+    TestSingleTokenLexing("unsigned", TokenType::Unsigned);
+}
+
 TEST(LexerTests, Percent)
 {
     TestSingleTokenLexing("%", TokenType::Percent);
@@ -320,6 +330,11 @@ TEST(LexerTests, IntegerLiteral)
     TestSingleTokenLexing("34875", TokenType::IntegerLiteral);
 }
 
+TEST(LexerTests, LongLiteralOverflowFromInteger)
+{
+    TestSingleTokenLexing("2147483648", TokenType::LongLiteral);
+}
+
 TEST(LexerTests, LongLiteralUpperCase)
 {
     TestSingleTokenLexing("2309L", TokenType::LongLiteral);
@@ -328,6 +343,36 @@ TEST(LexerTests, LongLiteralUpperCase)
 TEST(LexerTests, LongLiteralLowerCase)
 {
     TestSingleTokenLexing("2309l", TokenType::LongLiteral);
+}
+
+TEST(LexerTests, UnsignedIntegerLiteral)
+{
+    TestSingleTokenLexing("2147483648u", TokenType::UnsignedIntegerLiteral);
+}
+
+TEST(LexerTests, UnsignedIntegerLiteralLowerCase)
+{
+    TestSingleTokenLexing("214u", TokenType::UnsignedIntegerLiteral);
+}
+
+TEST(LexerTests, UnsignedIntegerLiteralUpperCase)
+{
+    TestSingleTokenLexing("2147U", TokenType::UnsignedIntegerLiteral);
+}
+
+TEST(LexerTests, UnsignedLongLiteralOverflowFromInteger)
+{
+    TestSingleTokenLexing("4294967296u", TokenType::UnsignedLongLiteral);
+}
+
+TEST(LexerTests, UnsignedLongLiteralUpperCase)
+{
+    TestSingleTokenLexing("2147UL", TokenType::UnsignedLongLiteral);
+}
+
+TEST(LexerTests, UnsignedLongLiteralLowerCase)
+{
+    TestSingleTokenLexing("2147ul", TokenType::UnsignedLongLiteral);
 }
 
 TEST(LexerTests, InvalidInput) {

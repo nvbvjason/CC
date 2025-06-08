@@ -129,10 +129,6 @@ void TypeResolution::visit(Parsing::VarExpr& varExpr)
 void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
 {
     ASTTraverser::visit(unaryExpr);
-    // if (unaryExpr.op == Parsing::UnaryExpr::Operator::Not) {
-    //     unaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
-    //     return;
-    // }
     unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->kind);
 }
 

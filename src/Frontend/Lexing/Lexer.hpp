@@ -36,7 +36,9 @@ class Lexer {
         { "default", Token::Type::Default },
         { "static", Token::Type::Static },
         { "extern", Token::Type::Extern },
-        {"long", Token::Type::LongKeyword}
+        {"long", Token::Type::LongKeyword},
+        {"signed", Token::Type::Signed},
+        {"unsigned", Token::Type::Unsigned},
     };
 public:
     explicit Lexer(const std::string& input)

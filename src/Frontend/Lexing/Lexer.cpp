@@ -3,6 +3,7 @@
 #include <string>
 #include <cctype>
 #include <algorithm>
+#include <climits>
 
 namespace Lexing {
 
@@ -246,22 +247,31 @@ void Lexer::integer()
 {
     while (isdigit(peek()))
         advance();
-    char next = peek();
-    if (next == 'L' || next == 'l') {
-        const i32 stopNums = m_current;
-        while (!isAtEnd() && (next == 'L' || next == 'l')) {
-            advance();
-            next = peek();
-        }
-        if (stopNums + 1 != m_current)
-            addToken(Token::Type::Invalid);
-        else
-            addToken(Token::Type::LongLiteral);
+    while (!isAtEnd() && isalpha(peek()))
+        advance();
+    const i32 ahead = m_current - m_start;
+    const std::string text = c_source.substr(m_start, ahead);
+    static const std::regex patternUL(R"(^[0-9]+([lL][uU]|[uU][lL])$)");
+    static const std::regex patternL(R"(^[0-9]+[lL]$)");
+    static const std::regex patternU(R"(^[0-9]+([Uu])$)");
+    static const std::regex patternI(R"(^[0-9]+$)");
+    if (isValid(text, patternUL)) {
+        addToken(Token::Type::UnsignedLongLiteral);
         return;
     }
-    if (!isalpha(next) || next == '_') {
-        const i32 ahead = m_current - m_start;
-        const std::string text = c_source.substr(m_start, ahead);
+    if (isValid(text, patternL)) {
+        addToken(Token::Type::LongLiteral);
+        return;
+    }
+    if (isValid(text, patternU)) {
+        const u64 num = std::stoull(text);
+        if (UINT_MAX < num)
+            addToken(Token::Type::UnsignedLongLiteral);
+        else
+            addToken(Token::Type::UnsignedIntegerLiteral);
+        return;
+    }
+    if (isValid(text, patternI)) {
         try {
             int num = std::stoi(text);
             addToken(Token::Type::IntegerLiteral);
@@ -269,9 +279,9 @@ void Lexer::integer()
         catch (const std::out_of_range&) {
             addToken(Token::Type::LongLiteral);
         }
+        return;
     }
-    else
-        addToken(Token::Type::Invalid);
+    addToken(Token::Type::Invalid);
 }
 
 void Lexer::identifier()
@@ -294,9 +304,18 @@ void Lexer::addToken(const Token::Type type)
     std::string text = c_source.substr(m_start, ahead);
     m_tokens.emplace_back(m_line, m_column - ahead, type, text);
     if (type == Token::Type::IntegerLiteral)
-        m_tokens.back().m_data = std::stoi(text);
+        m_tokens.back().m_dataSigned = std::stoi(text);
     if (type == Token::Type::LongLiteral)
-        m_tokens.back().m_data = std::stoll(text);
+        m_tokens.back().m_dataSigned = std::stoll(text);
+    if (type == Token::Type::UnsignedLongLiteral)
+        m_tokens.back().m_dataUnSigned = std::stoull(text);
+    if (type == Token::Type::UnsignedIntegerLiteral)
+        m_tokens.back().m_dataUnSigned = static_cast<u32>(std::stoull(text));
+}
+
+bool isValid(const std::string& input, const std::regex& regex)
+{
+    return std::regex_match(input, regex);
 }
 
 }
