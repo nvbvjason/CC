@@ -355,7 +355,7 @@ void GenerateAsmTree::generateFunCallInst(const Ir::FunCallInst& funcCall)
         insts.emplace_back(std::make_unique<BinaryInst>(
         std::make_shared<ImmOperand>(bytesToRemove),
         std::make_shared<RegisterOperand>(RegisterOperand::Kind::SP, AssemblyType::QuadWord),
-        BinaryInst::Operator::Sub,
+        BinaryInst::Operator::Add,
         AssemblyType::QuadWord));
     std::shared_ptr<Operand> destination = operand(funcCall.destination);
     insts.emplace_back(std::make_unique<MoveInst>(

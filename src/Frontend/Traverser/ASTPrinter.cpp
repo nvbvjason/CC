@@ -39,7 +39,7 @@ std::string binaryOpToString(const BinaryExpr::Operator op)
         case Operator::Subtract:        return "-";
         case Operator::Multiply:        return "*";
         case Operator::Divide:          return "/";
-        case Operator::Remainder:       return "%";
+        case Operator::Modulo:       return "%";
         case Operator::BitwiseAnd:      return "&";
         case Operator::BitwiseOr:       return "|";
         case Operator::BitwiseXor:      return "^";

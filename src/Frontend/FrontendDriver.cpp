@@ -16,6 +16,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "DeSugarCompoundAssign.hpp"
+
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
@@ -67,6 +69,8 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
 
 ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable)
 {
+    Semantics::DeSugarCompoundAssign deSugarCompoundAssign;
+    deSugarCompoundAssign.deSugar(programNode);
     Semantics::VariableResolution variableResolution(symbolTable);
     if (!variableResolution.resolve(programNode))
         return ErrorCode::VariableResolution;

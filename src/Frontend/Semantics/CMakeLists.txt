@@ -5,6 +5,8 @@ add_library(Semantics STATIC
         GotoLabelsUnique.cpp
         LoopLabeling.cpp
         TypeResolution.cpp
+        DeSugarCompoundAssign.cpp
+        DeSugarCompoundAssign.hpp
 )
 
 target_include_directories(Semantics PUBLIC

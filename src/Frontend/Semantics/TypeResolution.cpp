@@ -111,6 +111,13 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
                 std::make_unique<Parsing::VarType>(varDecl.type->kind));
         }
     }
+    else {
+        if (varDecl.type->kind != varDecl.init->type->kind) {
+            varDecl.init = std::make_unique<Parsing::CastExpr>(
+                std::make_unique<Parsing::VarType>(varDecl.type->kind),
+                std::move(varDecl.init));
+        }
+    }
 }
 
 void TypeResolution::visit(Parsing::VarExpr& varExpr)
@@ -147,10 +154,13 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
     if (commonType != rightType)
         binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.rhs));
+    if (binaryExpr.op == Oper::LeftShift || binaryExpr.op == Oper::RightShift) {
+        binaryExpr.type = std::make_unique<Parsing::VarType>(leftType);
+        return;
+    }
     if (binaryExpr.op == Oper::Equal || binaryExpr.op == Oper::NotEqual ||
         binaryExpr.op == Oper::LessThan || binaryExpr.op == Oper::LessOrEqual ||
-        binaryExpr.op == Oper::GreaterThan || binaryExpr.op == Oper::GreaterOrEqual ||
-        binaryExpr.op == Oper::LeftShift || binaryExpr.op == Oper::RightShift) {
+        binaryExpr.op == Oper::GreaterThan || binaryExpr.op == Oper::GreaterOrEqual) {
         binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         return;
     }

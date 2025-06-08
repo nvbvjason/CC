@@ -31,7 +31,6 @@ struct ConstExpr final : Expr {
 };
 
 struct VarExpr final : Expr {
-
     std::string name;
     ReferingTo referingTo = ReferingTo::Local;
     explicit VarExpr(std::string name) noexcept
@@ -77,7 +76,7 @@ struct UnaryExpr final : Expr {
 
 struct BinaryExpr final : Expr {
     enum class Operator {
-        Add, Subtract, Multiply, Divide, Remainder,
+        Add, Subtract, Multiply, Divide, Modulo,
         BitwiseAnd, BitwiseOr, BitwiseXor,
         LeftShift, RightShift,
         And, Or,
@@ -123,8 +122,8 @@ struct TernaryExpr final : Expr {
     std::unique_ptr<Expr> trueExpr;
     std::unique_ptr<Expr> falseExpr;
     TernaryExpr(std::unique_ptr<Expr> condition,
-                    std::unique_ptr<Expr> first,
-                    std::unique_ptr<Expr> second)
+                std::unique_ptr<Expr> first,
+                std::unique_ptr<Expr> second)
         : Expr(Kind::Conditional), condition(std::move(condition)),
           trueExpr(std::move(first)), falseExpr(std::move(second)) {}
 

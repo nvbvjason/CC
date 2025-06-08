@@ -22,6 +22,7 @@ using TokenType = Lexing::Token::Type;
 [[nodiscard]] constexpr bool isStorageSpecifier(TokenType type);
 [[nodiscard]] constexpr bool isSpecifier(TokenType type);
 [[nodiscard]] constexpr bool isType(TokenType type);
+[[nodiscard]] constexpr BinaryExpr::Operator getBinaryOperator(AssignmentExpr::Operator oper);
 
 // https://en.cppreference.com/w/c/language/operator_precedence
 [[nodiscard]] constexpr i32 precedence(TokenType type);
@@ -54,7 +55,7 @@ constexpr BinaryExpr::Operator binaryOperator(const TokenType type)
         case TokenType::Minus:              return Operator::Subtract;
         case TokenType::Asterisk:           return Operator::Multiply;
         case TokenType::ForwardSlash:       return Operator::Divide;
-        case TokenType::Percent:            return Operator::Remainder;
+        case TokenType::Percent:            return Operator::Modulo;
 
         // Bitwise operators
         case TokenType::Ampersand:          return Operator::BitwiseAnd;
@@ -221,7 +222,7 @@ constexpr i32 getPrecedenceLevel(const BinaryExpr::Operator oper)
     switch (oper) {
         case Operator::Multiply:
         case Operator::Divide:
-        case Operator::Remainder:
+        case Operator::Modulo:
             return 3;
         case Operator::Add:
         case Operator::Subtract:
@@ -285,6 +286,27 @@ constexpr bool isType(const TokenType type)
             return true;
         default:
             return false;
+    }
+}
+
+constexpr BinaryExpr::Operator getBinaryOperator(const AssignmentExpr::Operator oper)
+{
+    using Assign = AssignmentExpr::Operator;
+    using Binary = BinaryExpr::Operator;
+    switch (oper) {
+        case Assign::PlusAssign:        return Binary::Add;
+        case Assign::MinusAssign:       return Binary::Subtract;
+        case Assign::MultiplyAssign:    return Binary::Multiply;
+        case Assign::DivideAssign:      return Binary::Divide;
+        case Assign::ModuloAssign:      return Binary::Modulo;
+        case Assign::BitwiseAndAssign:  return Binary::BitwiseAnd;
+        case Assign::BitwiseOrAssign:   return Binary::BitwiseOr;
+        case Assign::BitwiseXorAssign:  return Binary::BitwiseXor;
+        case Assign::LeftShiftAssign:   return Binary::LeftShift;
+        case Assign::RightShiftAssign:  return Binary::RightShift;
+        default:
+            assert(false && "Invalid binary operator getBinaryOperator");
+            std::unreachable();
     }
 }
 
