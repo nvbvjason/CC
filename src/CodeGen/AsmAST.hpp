@@ -80,13 +80,8 @@ protected:
 struct ImmOperand final : Operand {
     std::variant<i32, i64> value;
 
-    ImmOperand(const AssemblyType t, const i64 v)
-    : Operand(Kind::Imm, t), value(v) {}
     explicit ImmOperand(const i64 value)
         : Operand(Kind::Imm, AssemblyType::QuadWord), value(value) {}
-
-    ImmOperand(const AssemblyType t, const i32 v)
-        : Operand(Kind::Imm, t), value(v) {}
     explicit ImmOperand(const i32 value)
         : Operand(Kind::Imm, AssemblyType::LongWord), value(value) {}
 

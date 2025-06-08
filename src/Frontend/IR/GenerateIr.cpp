@@ -254,7 +254,7 @@ void GenerateIr::generateIfStmt(const Parsing::IfStmt& ifStmt)
     Identifier endLabelIden = makeTemporaryName();
     m_instructions.emplace_back(std::make_unique<JumpIfZeroInst>(condition, endLabelIden));
     generateStmt(*ifStmt.thenStmt);
-    m_instructions.push_back(std::make_unique<LabelInst>(endLabelIden));
+    m_instructions.emplace_back(std::make_unique<LabelInst>(endLabelIden));
 }
 
 void GenerateIr::generateIfElseStmt(const Parsing::IfStmt& ifStmt)

@@ -264,7 +264,7 @@ void ASTPrinter::visit(const SwitchStmt& switchStmt)
 void ASTPrinter::visit(const UnaryExpr& unaryExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("(" + unaryOpToString(unaryExpr.op) + " ");
+    addLine("Unary " + unaryOpToString(unaryExpr.op) + " " + varTypeToString(unaryExpr.type->kind));
     ConstASTTraverser::visit(unaryExpr);
 }
 
@@ -278,7 +278,7 @@ void ASTPrinter::visit(const CastExpr& castExpr)
 void ASTPrinter::visit(const BinaryExpr& binaryExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("Binary " + binaryOpToString(binaryExpr.op));
+    addLine("Binary " + binaryOpToString(binaryExpr.op) + " " + varTypeToString(binaryExpr.type->kind));
     ConstASTTraverser::visit(binaryExpr);
 }
 

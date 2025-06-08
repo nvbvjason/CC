@@ -168,8 +168,12 @@ void GenerateAsmTree::generateJumpInst(const Ir::JumpInst& irJump)
 void GenerateAsmTree::generateJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZero)
 {
     std::shared_ptr<Operand> condition = operand(jumpIfZero.condition);
-    insts.emplace_back(std::make_unique<CmpInst>(
-        std::make_shared<ImmOperand>(0), condition, AssemblyType::LongWord));
+    if (condition->type == AssemblyType::LongWord)
+        insts.emplace_back(std::make_unique<CmpInst>(
+            std::make_shared<ImmOperand>(0), condition, AssemblyType::LongWord));
+    if (condition->type == AssemblyType::QuadWord)
+        insts.emplace_back(std::make_unique<CmpInst>(
+        std::make_shared<ImmOperand>(0l), condition, AssemblyType::QuadWord));
 
     Identifier target(jumpIfZero.target.value);
     insts.emplace_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::E, target));
@@ -178,9 +182,12 @@ void GenerateAsmTree::generateJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZer
 void GenerateAsmTree::generateJumpIfNotZeroInst(const Ir::JumpIfNotZeroInst& jumpIfNotZero)
 {
     std::shared_ptr<Operand> condition = operand(jumpIfNotZero.condition);
-    insts.emplace_back(std::make_unique<CmpInst>(
-        std::make_shared<ImmOperand>(0), condition, AssemblyType::LongWord));
-
+    if (condition->type == AssemblyType::LongWord)
+        insts.emplace_back(std::make_unique<CmpInst>(
+            std::make_shared<ImmOperand>(0), condition, AssemblyType::LongWord));
+    if (condition->type == AssemblyType::QuadWord)
+        insts.emplace_back(std::make_unique<CmpInst>(
+        std::make_shared<ImmOperand>(0l), condition, AssemblyType::QuadWord));
     Identifier target(jumpIfNotZero.target.value);
     insts.emplace_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::NE, target));
 }
@@ -214,7 +221,11 @@ void GenerateAsmTree::unaryInst(const Ir::UnaryInst& irUnary)
 void GenerateAsmTree::generateUnaryNotInst(const Ir::UnaryInst& irUnary)
 {
     std::shared_ptr<Operand> src = operand(irUnary.source);
-    auto immOperand = std::make_shared<ImmOperand>(0);
+    std::shared_ptr<ImmOperand> immOperand = nullptr;
+    if (src->type == AssemblyType::QuadWord)
+        immOperand = std::make_shared<ImmOperand>(0l);
+    if (src->type == AssemblyType::LongWord)
+        immOperand = std::make_shared<ImmOperand>(0);
     insts.emplace_back(std::make_unique<CmpInst>(immOperand, src, src->type));
 
     std::shared_ptr<Operand> dst = operand(irUnary.destination);
@@ -277,7 +288,11 @@ void GenerateAsmTree::generateBinaryCondInst(const Ir::BinaryInst& irBinary)
     insts.emplace_back(std::make_unique<CmpInst>(src2, src1, src1->type));
 
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
-    std::shared_ptr<Operand> imm = std::make_shared<ImmOperand>(0);
+    std::shared_ptr<Operand> imm = nullptr;
+    if (src1->type == AssemblyType::LongWord)
+        imm = std::make_shared<ImmOperand>(0);
+    if (src2->type == AssemblyType::QuadWord)
+        imm = std::make_shared<ImmOperand>(0l);
     insts.emplace_back(std::make_unique<MoveInst>(imm, dst, dst->type));
 
     BinaryInst::CondCode cc = condCode(irBinary.operation);
