@@ -1,9 +1,8 @@
 #include "LoopLabeling.hpp"
-
-#include <assert.h>
-
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
+
+#include <cassert>
 
 namespace Semantics {
 bool LoopLabeling::programValidate(Parsing::Program& program)

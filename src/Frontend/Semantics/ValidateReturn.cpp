@@ -20,15 +20,24 @@ void ValidateReturn::visit(Parsing::FunDecl& funDecl)
     for (std::unique_ptr<Parsing::BlockItem>& blockItem : funDecl.body->body)
         blockItem->accept(*this);
 
-    auto& lastBlockItem = funDecl.body->body.back();
+    const auto& lastBlockItem = funDecl.body->body.back();
     if (lastBlockItem->kind != Parsing::BlockItem::Kind::Statement) {
         addReturnZero(funDecl);
         return;
     }
 
-    auto* stmtBlockItem = dynamic_cast<Parsing::StmtBlockItem*>(lastBlockItem.get());
-    if (stmtBlockItem->stmt->kind != Parsing::Stmt::Kind::Return)
+    const auto stmtBlockItem = dynamic_cast<Parsing::StmtBlockItem*>(lastBlockItem.get());
+    if (stmtBlockItem->stmt->kind != Parsing::Stmt::Kind::Return) {
         addReturnZero(funDecl);
+        return;
+    }
+    const auto returnStmt = dynamic_cast<Parsing::ReturnStmt*>(stmtBlockItem->stmt.get());
+    const auto funcType = static_cast<const Parsing::FuncType*>(funDecl.type.get());
+    if (funcType->returnType->kind != returnStmt->expr->type->kind) {
+        returnStmt->expr = std::make_unique<Parsing::CastExpr>(
+            std::make_unique<Parsing::VarType>(funcType->returnType->kind),
+            std::move(returnStmt->expr));
+    }
 }
 
 void ValidateReturn::visit(Parsing::StmtBlockItem& stmtBlockItem)

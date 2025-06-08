@@ -98,10 +98,19 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     }
     if (varDecl.init == nullptr)
         return;
-    const Type commonType = getCommonType(varDecl.type->kind, varDecl.init->type->kind);
-    if (commonType != varDecl.init->type->kind)
-        varDecl.init = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(commonType), std::move(varDecl.init));
+    if (varDecl.init->kind == Parsing::Expr::Kind::Constant) {
+        const auto constExpr = static_cast<const Parsing::ConstExpr*>(varDecl.init.get());
+        if (varDecl.type->kind == Type::I64 && varDecl.init->type->kind == Type::I32) {
+            varDecl.init = std::make_unique<Parsing::ConstExpr>(
+                static_cast<i64>(std::get<i32>(constExpr->value)),
+                std::make_unique<Parsing::VarType>(varDecl.type->kind));
+        }
+        if (varDecl.type->kind == Type::I32 && varDecl.init->type->kind == Type::I64) {
+            varDecl.init = std::make_unique<Parsing::ConstExpr>(
+                static_cast<i32>(std::get<i64>(constExpr->value)),
+                std::make_unique<Parsing::VarType>(varDecl.type->kind));
+        }
+    }
 }
 
 void TypeResolution::visit(Parsing::VarExpr& varExpr)

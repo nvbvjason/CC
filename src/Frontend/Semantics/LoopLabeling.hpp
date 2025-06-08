@@ -24,6 +24,7 @@ class LoopLabeling : public Parsing::ASTTraverser {
     std::string switchLabel;
 public:
     bool programValidate(Parsing::Program& program);
+    bool getValue(Parsing::CaseStmt& caseStmt, const Parsing::ConstExpr* constantExpr);
 
     void visit(Parsing::BreakStmt&) override;
     void visit(Parsing::ContinueStmt&) override;
