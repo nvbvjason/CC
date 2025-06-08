@@ -64,6 +64,7 @@ public:
 
     // Expression
     void visit(const UnaryExpr& unaryExpr) override;
+    void visit(const CastExpr& castExpr) override;
     void visit(const BinaryExpr& binaryExpr) override;
     void visit(const AssignmentExpr& assignmentExpr) override;
     void visit(const ConstExpr& constExpr) override;

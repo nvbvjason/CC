@@ -15,11 +15,12 @@
 #include <format>
 
 static void printIr(const Ir::Program& irProgram);
-static CodeGen::Program codegen(const Ir::Program& irProgram, const SymbolTable& symbolTable);
+static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::filesystem::path& name);
 static bool isCommandLineArgumentValid(const std::string& argument);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
 static void makeLib(const std::string& asmFile, const std::string& outputFile);
+void fixAsm(CodeGen::Program& codegenProgram);
 static void cleanUp();
 
 i32 CompilerDriver::run()
@@ -50,9 +51,20 @@ ErrorCode CompilerDriver::wrappedRun()
         printIr(irProgram);
         return ErrorCode::OK;
     }
-    CodeGen::Program codegenProgram = codegen(irProgram, symbolTable);
+    CodeGen::Program codegenProgram = codegen(irProgram);
     if (argument == "--codegen")
         return ErrorCode::OK;
+    if (argument == "--printAsm") {
+        CodeGen::AsmPrinter printer;
+        std::cout << printer.printProgram(codegenProgram);
+        return ErrorCode::OK;
+    }
+    fixAsm(codegenProgram);
+    if (argument == "--printAsmAfter") {
+        CodeGen::AsmPrinter printer;
+        std::cout << printer.printProgram(codegenProgram);
+        return ErrorCode::OK;
+    }
     if (argument == "--printAsm") {
         CodeGen::AsmPrinter printer;
         std::cout << printer.printProgram(codegenProgram);
@@ -128,11 +140,8 @@ void printIr(const Ir::Program& irProgram)
     std::cout << printer.print(irProgram);
 }
 
-CodeGen::Program codegen(const Ir::Program& irProgram, const SymbolTable& symbolTable)
+void fixAsm(CodeGen::Program& codegenProgram)
 {
-    CodeGen::Program codegenProgram;
-    CodeGen::GenerateAsmTree generateAsmTree;
-    generateAsmTree.generateProgram(irProgram, codegenProgram);
     for (auto& topLevel : codegenProgram.topLevels) {
         if (topLevel->type == CodeGen::TopLevel::Type::StaticVariable)
             continue;
@@ -140,6 +149,13 @@ CodeGen::Program codegen(const Ir::Program& irProgram, const SymbolTable& symbol
         const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function);
         CodeGen::fixUpInstructions(*function, stackAlloc);
     }
+}
+
+CodeGen::Program codegen(const Ir::Program& irProgram)
+{
+    CodeGen::Program codegenProgram;
+    CodeGen::GenerateAsmTree generateAsmTree;
+    generateAsmTree.generateProgram(irProgram, codegenProgram);
     return codegenProgram;
 }
 
@@ -152,7 +168,7 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 {
     constexpr std::array validArguments = {"",  "--printAst","--help", "-h", "--version",
         "--lex", "--parse", "--tacky", "--codegen", "--printTacky", "--validate",
-        "--assemble", "--printAsm", "-c", "--printAstAfter"};
+        "--assemble", "--printAsm", "--printAsmAfter", "-c", "--printAstAfter", "--printTokens"};
     return std::ranges::contains(validArguments, argument);
 }
 

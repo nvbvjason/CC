@@ -272,7 +272,7 @@ struct SwitchStmt final : Stmt {
     std::string identifier;
     std::unique_ptr<Expr> condition;
     std::unique_ptr<Stmt> body;
-    std::vector<std::unique_ptr<ConstExpr>> cases;
+    std::vector<std::variant<i32, i64>> cases;
 
     bool hasDefault = false;
 

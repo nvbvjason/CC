@@ -60,6 +60,8 @@ void AsmPrinter::add(const Inst& inst)
     switch (inst.kind) {
         case Kind::Move:
             add(static_cast<const MoveInst&>(inst)); break;
+        case Kind::MoveSX:
+            add(static_cast<const MoveSXInst&>(inst)); break;
         case Kind::Unary:
             add(static_cast<const UnaryInst&>(inst)); break;
         case Kind::Binary:
@@ -206,6 +208,8 @@ std::string to_string(const Operand& operand)
             return to_string(static_cast<const PseudoOperand&>(operand));
         case Kind::Stack:
             return to_string(static_cast<const StackOperand&>(operand));
+        case Kind::Data:
+            return to_string(static_cast<const DataOperand&>(operand));
         default:
             std::unreachable();
     }
@@ -213,27 +217,31 @@ std::string to_string(const Operand& operand)
 
 std::string to_string(const ImmOperand& immOperand)
 {
-    switch (immOperand.type) {
-        case AssemblyType::QuadWord: return "ImmOperand(" + std::to_string(std::get<i64>(immOperand.value)) + ")";
-        case AssemblyType::LongWord: return "ImmOperand(" + std::to_string(std::get<i32>(immOperand.value)) + ")";
-        assert("should not get hit");
-    }
+    if (immOperand.type == AssemblyType::QuadWord)
+        return "ImmOperand(" + std::to_string(std::get<i64>(immOperand.value)) + ", " + to_string(immOperand.type) + ")";
+    if (immOperand.type == AssemblyType::LongWord)
+        return "ImmOperand(" + std::to_string(std::get<i32>(immOperand.value)) + ", " + to_string(immOperand.type) + ")";
     std::unreachable();
 }
 
 std::string to_string(const RegisterOperand& registerOperand)
 {
-    return "Register(" + to_string(registerOperand.kind) + ", " + to_string(registerOperand.kind) + ")";
+    return "Register(" + to_string(registerOperand.kind) + ", " + to_string(registerOperand.type) + ")";
 }
 
 std::string to_string(const PseudoOperand& pseudoOperand)
 {
-    return "Pseudo(" + pseudoOperand.identifier + ")";
+    return "Pseudo(" + pseudoOperand.identifier + ", " + to_string(pseudoOperand.type) + ")";
 }
 
 std::string to_string(const StackOperand& stackOperand)
 {
     return "Stack(" + std::to_string(stackOperand.value) + ")";
+}
+
+std::string to_string(const DataOperand& dataOperand)
+{
+    return "Data(" + dataOperand.identifier + ", " + to_string(dataOperand.type) + ")";
 }
 
 std::string to_string(const RegisterOperand::Kind& type)
@@ -306,8 +314,8 @@ std::string to_string(const AssemblyType type)
 void AsmPrinter::addLine(const std::string& name,
                          const std::string& operands)
 {
-    constexpr int mnemonicWidth = 8;
-    constexpr int operandsWidth = 50;
+    constexpr i32 mnemonicWidth = 10;
+    constexpr i32 operandsWidth = 50;
     std::ostringstream oss;
     oss << getIndent();
     oss << std::left << std::setw(mnemonicWidth) << name

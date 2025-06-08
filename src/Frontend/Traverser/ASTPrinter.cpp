@@ -266,6 +266,13 @@ void ASTPrinter::visit(const UnaryExpr& unaryExpr)
     ConstASTTraverser::visit(unaryExpr);
 }
 
+void ASTPrinter::visit(const CastExpr& castExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("Cast (" + varTypeToString(castExpr.type->kind) + ')');
+    ConstASTTraverser::visit(castExpr);
+}
+
 void ASTPrinter::visit(const BinaryExpr& binaryExpr)
 {
     IndentGuard guard(m_indentLevel);
@@ -288,7 +295,7 @@ void ASTPrinter::visit(const ConstExpr& constExpr)
     if (constExpr.type->kind == Type::I32)
         addLine(std::to_string(std::get<i32>(constExpr.value)) + ' ' + varTypeToString(Type::I32));
     else if (constExpr.type->kind == Type::I64)
-        addLine(std::to_string(std::get<i64>(constExpr.value)) + ' ' + varTypeToString(Type::I32));
+        addLine(std::to_string(std::get<i64>(constExpr.value)) + ' ' + varTypeToString(Type::I64));
     ConstASTTraverser::visit(constExpr);
 }
 

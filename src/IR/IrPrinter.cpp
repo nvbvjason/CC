@@ -142,15 +142,17 @@ void IrPrinter::print(const FunCallInst &inst)
 
 std::string IrPrinter::print(const ValueVar& val)
 {
-    return "Var(" + print(val.value) + ")";
+    if (val.type == Type::I32)
+        return "Var(" + print(val.value) + ") i32";
+    return "Var(" + print(val.value) + ") i64";
 }
 
 std::string IrPrinter::print(const ValueConst& val)
 {
     if (val.type == Type::I32)
-        return "Const(" + std::to_string(std::get<i32>(val.value)) + ")";
+        return "Const(" + std::to_string(std::get<i32>(val.value)) + ") i32";
     if (val.type == Type::I64)
-        return "Const(" + std::to_string(std::get<i64>(val.value)) + ")";
+        return "Const(" + std::to_string(std::get<i64>(val.value)) + ") i64";
     std::unreachable();
 }
 

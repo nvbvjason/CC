@@ -19,6 +19,7 @@ public:
         : m_insts(insts), stackAlloc(stackAlloc) {}
 
     void visit(MoveInst& moveInst) override;
+    void visit(MoveSXInst&) override;
     void visit(BinaryInst& binary) override;
     void visit(CmpInst& cmp) override;
     void visit(IdivInst& idiv) override;
@@ -26,7 +27,6 @@ public:
     void visit(CallInst&) override {}
 
     // Unchanged instructions handled in fixUp
-    void visit(MoveSXInst&) override {}
     void visit(UnaryInst&) override {}
     void visit(SetCCInst&) override {}
     void visit(CdqInst&) override {}

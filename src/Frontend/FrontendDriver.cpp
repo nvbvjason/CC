@@ -30,6 +30,11 @@ std::tuple<Ir::Program, ErrorCode> FrontendDriver::run() const
         return {std::move(Ir::Program()), ErrorCode::Lexer};
     if (m_arg == "--lex")
         return {Ir::Program(), ErrorCode::OK};
+    if (m_arg == "--printTokens") {
+        for (const auto& token : tokens)
+            std::cout << token << '\n';
+        return {Ir::Program(), ErrorCode::OK};
+    }
     Parsing::Program program;
     if (!parse(tokens, program))
         return {std::move(Ir::Program()), ErrorCode::Parser};
@@ -65,15 +70,15 @@ ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTa
     Semantics::VariableResolution variableResolution(symbolTable);
     if (!variableResolution.resolve(programNode))
         return ErrorCode::VariableResolution;
+    Semantics::LvalueVerification lvalueVerification;
+    if (!lvalueVerification.resolve(programNode))
+        return ErrorCode::LValueVerification;
     Semantics::TypeResolution typeResolution;
     if (!typeResolution.validate(programNode))
         return ErrorCode::TypeResolution;
     Semantics::ValidateReturn validateReturn;
     if (!validateReturn.programValidate(programNode))
         return ErrorCode::ValidateReturn;
-    Semantics::LvalueVerification lvalueVerification;
-    if (!lvalueVerification.resolve(programNode))
-        return ErrorCode::LValueVerification;
     Semantics::GotoLabelsUnique labelsUnique;
     if (!labelsUnique.programValidate(programNode))
         return ErrorCode::LabelsUnique;

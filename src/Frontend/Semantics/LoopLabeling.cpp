@@ -1,118 +1,153 @@
 #include "LoopLabeling.hpp"
+
+#include <assert.h>
+
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
 
 namespace Semantics {
 bool LoopLabeling::programValidate(Parsing::Program& program)
 {
-    m_valid = true;
+    valid = true;
     ASTTraverser::visit(program);
-    return m_valid;
+    return valid;
 }
 
 void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
 {
-    caseStmt.identifier = m_switchLabel;
+    caseStmt.identifier = switchLabel;
     if (isOutsideSwitchStmt(caseStmt)) {
-        m_valid = false;
+        valid = false;
         return;
     }
     if (isNonConstantInSwitchCase(caseStmt)) {
-        m_valid = false;
+        valid = false;
         return;
     }
     const auto constantExpr = static_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
-    const i32 value = std::get<i32>(constantExpr->value);
-    std::vector<i32>& vec = m_case[caseStmt.identifier];
-    if (std::ranges::find(vec, value) != vec.end())
-        m_valid = false;
-    else
-        vec.push_back(value);
+    switch (conditionType) {
+        case Type::I32: {
+            i32 value = 0;
+            if (constantExpr->type->kind == Type::I32)
+                value = std::get<i32>(constantExpr->value);
+            if (constantExpr->type->kind == Type::I64)
+                value = static_cast<i64>(std::get<i64>(constantExpr->value));
+            auto it = switchCases.find(switchLabel);
+            for (const std::variant<i32, i64>& v : it->second) {
+                if (value == std::get<i32>(v)) {
+                    valid = false;
+                    return;
+                }
+            }
+            it->second.emplace_back(value);
+            caseStmt.identifier += std::to_string(value);
+            break;
+        }
+        case Type::I64: {
+            i64 value = 0;
+            if (constantExpr->type->kind == Type::I32)
+                value = static_cast<i64>(std::get<i32>(constantExpr->value));
+            if (constantExpr->type->kind == Type::I64)
+                value = std::get<i64>(constantExpr->value);
+            auto it = switchCases.find(switchLabel);
+            for (const std::variant<i32, i64>& v : it->second) {
+                if (value == std::get<i64>(v)) {
+                    valid = false;
+                    return;
+                }
+            }
+            it->second.emplace_back(value);
+            caseStmt.identifier += std::to_string(value);
+            break;
+        }
+        default:
+            assert("Should never be reached");
+            std::unreachable();
+    }
     ASTTraverser::visit(caseStmt);
 }
 
 void LoopLabeling::visit(Parsing::DefaultStmt& defaultStmt)
 {
-    defaultStmt.identifier = m_switchLabel;
+    defaultStmt.identifier = switchLabel;
     if (m_default.contains(defaultStmt.identifier))
-        m_valid = false;
+        valid = false;
     m_default.insert(defaultStmt.identifier);
     if (defaultStmt.identifier.empty())
-        m_valid = false;
+        valid = false;
     ASTTraverser::visit(defaultStmt);
 }
 
 void LoopLabeling::visit(Parsing::ContinueStmt& continueStmt)
 {
-    continueStmt.identifier = m_continueLabel;
-    if (!m_valid)
+    continueStmt.identifier = continueLabel;
+    if (!valid)
         return;
     if (continueStmt.identifier.empty())
-        m_valid = false;
+        valid = false;
 }
 
 void LoopLabeling::visit(Parsing::BreakStmt& breakStmt)
 {
-    breakStmt.identifier = m_breakLabel;
-    if (!m_valid)
+    breakStmt.identifier = breakLabel;
+    if (!valid)
         return;
     if (breakStmt.identifier.empty())
-        m_valid = false;
+        valid = false;
 }
 
 void LoopLabeling::visit(Parsing::WhileStmt& whileStmt)
 {
-    const std::string continueTemp = m_continueLabel;
-    const std::string breakTemp = m_breakLabel;
+    const std::string continueTemp = continueLabel;
+    const std::string breakTemp = breakLabel;
     whileStmt.identifier = makeTemporary("while");
-    m_continueLabel = whileStmt.identifier;
-    m_breakLabel = whileStmt.identifier;
+    continueLabel = whileStmt.identifier;
+    breakLabel = whileStmt.identifier;
     ASTTraverser::visit(whileStmt);
-    m_continueLabel = continueTemp;
-    m_breakLabel = breakTemp;
+    continueLabel = continueTemp;
+    breakLabel = breakTemp;
 }
 
 void LoopLabeling::visit(Parsing::DoWhileStmt& doWhileStmt)
 {
-    const std::string continueTemp = m_continueLabel;
-    const std::string breakTemp = m_breakLabel;
+    const std::string continueTemp = continueLabel;
+    const std::string breakTemp = breakLabel;
     doWhileStmt.identifier = makeTemporary("do.While");
-    m_continueLabel = doWhileStmt.identifier;
-    m_breakLabel = doWhileStmt.identifier;
+    continueLabel = doWhileStmt.identifier;
+    breakLabel = doWhileStmt.identifier;
     ASTTraverser::visit(doWhileStmt);
-    m_continueLabel = continueTemp;
-    m_breakLabel = breakTemp;
+    continueLabel = continueTemp;
+    breakLabel = breakTemp;
 }
 
 void LoopLabeling::visit(Parsing::ForStmt& forStmt)
 {
-    const std::string continueTemp = m_continueLabel;
-    const std::string breakTemp = m_breakLabel;
+    const std::string continueTemp = continueLabel;
+    const std::string breakTemp = breakLabel;
     forStmt.identifier = makeTemporary("for");
-    m_continueLabel = forStmt.identifier;
-    m_breakLabel = forStmt.identifier;
+    continueLabel = forStmt.identifier;
+    breakLabel = forStmt.identifier;
     ASTTraverser::visit(forStmt);
-    m_continueLabel = continueTemp;
-    m_breakLabel = breakTemp;
+    continueLabel = continueTemp;
+    breakLabel = breakTemp;
 }
 
 void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
 {
-    const std::string breakTemp = m_breakLabel;
-    const std::string switchTemp = m_switchLabel;
+    const std::string breakTemp = breakLabel;
+    const std::string switchTemp = switchLabel;
+    const Type conditionTypeTemp = conditionType;
     switchStmt.identifier = makeTemporary("switch");
-    m_breakLabel = switchStmt.identifier;
-    m_switchLabel = switchStmt.identifier;
-    const Type conditionType = switchStmt.condition->type->kind;
-    m_case[switchStmt.identifier] = std::vector<i32>();
+    breakLabel = switchStmt.identifier;
+    switchLabel = switchStmt.identifier;
+    conditionType = switchStmt.condition->type->kind;
+    switchCases[switchStmt.identifier] = std::vector<std::variant<i32, i64>>();
     ASTTraverser::visit(switchStmt);
-    for (const i32 value : m_case[switchStmt.identifier])
-        switchStmt.cases.push_back(
-            std::make_unique<Parsing::ConstExpr>(value, std::make_unique<Parsing::VarType>(conditionType))
-            );
+    switchStmt.cases = switchCases[switchStmt.identifier];
     if (m_default.contains(switchStmt.identifier))
         switchStmt.hasDefault = true;
-    m_breakLabel = breakTemp;
-    m_switchLabel = switchTemp;
+    breakLabel = breakTemp;
+    switchLabel = switchTemp;
+    conditionType = conditionTypeTemp;
 }
 } // Semantics

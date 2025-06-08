@@ -66,6 +66,13 @@ void TypeResolution::visit(Parsing::FunCallExpr& funCallExpr)
     }
     funCallExpr.type = std::make_unique<Parsing::VarType>(it->second.returnType);
     ASTTraverser::visit(funCallExpr);
+    for (int i = 0; i < funCallExpr.args.size(); ++i) {
+        const Type typeInner = funCallExpr.args[i]->type->kind;
+        const Type castTo = it->second.paramTypes[i];
+        if (typeInner != castTo)
+            funCallExpr.args[i] = std::make_unique<Parsing::CastExpr>(
+                std::make_unique<Parsing::VarType>(castTo), std::move(funCallExpr.args[i]));
+    }
 }
 
 void TypeResolution::visit(Parsing::VarDecl& varDecl)
@@ -133,7 +140,8 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
             std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.rhs));
     if (binaryExpr.op == Oper::Equal || binaryExpr.op == Oper::NotEqual ||
         binaryExpr.op == Oper::LessThan || binaryExpr.op == Oper::LessOrEqual ||
-        binaryExpr.op == Oper::GreaterThan || binaryExpr.op == Oper::GreaterOrEqual) {
+        binaryExpr.op == Oper::GreaterThan || binaryExpr.op == Oper::GreaterOrEqual ||
+        binaryExpr.op == Oper::LeftShift || binaryExpr.op == Oper::RightShift) {
         binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         return;
     }
@@ -146,9 +154,9 @@ void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
     const Type leftType = assignmentExpr.lhs->type->kind;
     const Type rightType = assignmentExpr.rhs->type->kind;
     if (leftType != rightType)
-        assignmentExpr.lhs = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(rightType), std::move(assignmentExpr.lhs));
-    assignmentExpr.type = std::make_unique<Parsing::VarType>(rightType);
+        assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
+            std::make_unique<Parsing::VarType>(leftType), std::move(assignmentExpr.rhs));
+    assignmentExpr.type = std::make_unique<Parsing::VarType>(leftType);
 }
 
 void TypeResolution::visit(Parsing::TernaryExpr& ternaryExpr)

@@ -15,12 +15,13 @@
 namespace Semantics {
 
 class LoopLabeling : public Parsing::ASTTraverser {
-    bool m_valid = true;
+    bool valid = true;
     std::unordered_set<std::string> m_default;
-    std::unordered_map<std::string, std::vector<i32>> m_case;
-    std::string m_breakLabel;
-    std::string m_continueLabel;
-    std::string m_switchLabel;
+    std::unordered_map<std::string, std::vector<std::variant<i32, i64>>> switchCases;
+    Type conditionType = Type::I32;
+    std::string breakLabel;
+    std::string continueLabel;
+    std::string switchLabel;
 public:
     bool programValidate(Parsing::Program& program);
 

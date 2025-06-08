@@ -108,24 +108,24 @@ struct RegisterOperand final : Operand {
 struct PseudoOperand final : Operand {
     std::string identifier;
     ReferingTo referingTo = ReferingTo::Local;
-    PseudoOperand(std::string identifier, ReferingTo referingTo)
-        : Operand(Kind::Pseudo), identifier(std::move(identifier)), referingTo(referingTo) {}
+    PseudoOperand(std::string identifier, const ReferingTo referingTo, const AssemblyType t)
+        : Operand(Kind::Pseudo, t), identifier(std::move(identifier)), referingTo(referingTo) {}
 
     PseudoOperand() = delete;
 };
 
 struct StackOperand final : Operand {
     i32 value;
-    explicit StackOperand(const i32 value)
-        : Operand(Kind::Stack), value(value) {}
+    StackOperand(const i32 value, const AssemblyType type)
+        : Operand(Kind::Stack, type), value(value) {}
 
     StackOperand() = delete;
 };
 
 struct DataOperand final : Operand {
     std::string identifier;
-    explicit DataOperand(std::string iden)
-        : Operand(Kind::Data), identifier(std::move(iden)) {}
+    DataOperand(std::string iden, const AssemblyType t)
+        : Operand(Kind::Data, t), identifier(std::move(iden)) {}
 
     DataOperand() = delete;
 };

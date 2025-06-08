@@ -20,6 +20,8 @@ void FixUpInstructions::fixUp()
         m_insts.erase(m_insts.begin());
         if (inst->kind == Inst::Kind::Move)
             visit(*static_cast<MoveInst*>(inst.get()));
+        else if (inst->kind == Inst::Kind::MoveSX)
+            visit(*static_cast<MoveSXInst*>(inst.get()));
         else if (inst->kind == Inst::Kind::Binary)
             visit(*static_cast<BinaryInst*>(inst.get()));
         else if (inst->kind == Inst::Kind::Cmp)
@@ -32,8 +34,6 @@ void FixUpInstructions::fixUp()
     m_insts.swap(m_copy);
 }
 
-
-
 void FixUpInstructions::visit(MoveInst& moveInst)
 {
     if (areBothOnTheStack(moveInst)) {
@@ -44,6 +44,17 @@ void FixUpInstructions::visit(MoveInst& moveInst)
     }
     else
         insert(std::make_unique<MoveInst>(moveInst));
+}
+
+void FixUpInstructions::visit(MoveSXInst& moveSXInst)
+{
+    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, AssemblyType::LongWord);
+    auto first = std::make_unique<MoveInst>(moveSXInst.src, regR10, AssemblyType::LongWord);
+    auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, AssemblyType::QuadWord);
+    auto second = std::make_unique<MoveSXInst>(regR10, regR11);
+    auto third = std::make_unique<MoveInst>(regR11, moveSXInst.dst, AssemblyType::QuadWord);
+
+    insert(std::move(first), std::move(second), std::move(third));
 }
 
 void FixUpInstructions::visit(BinaryInst& binary)
@@ -76,7 +87,6 @@ void FixUpInstructions::binaryMul(BinaryInst& binaryInst)
 
 void FixUpInstructions::binaryOthers(BinaryInst& binaryInst)
 {
-
     auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, binaryInst.type);
     auto first = std::make_unique<MoveInst>(binaryInst.lhs, regR10, binaryInst.type);
     auto second = std::make_unique<BinaryInst>(regR10, binaryInst.rhs, binaryInst.oper, binaryInst.type);

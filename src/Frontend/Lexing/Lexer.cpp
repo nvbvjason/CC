@@ -261,7 +261,7 @@ void Lexer::integer()
     }
     if (!isalpha(next) || next == '_') {
         const i32 ahead = m_current - m_start;
-        std::string text = c_source.substr(m_start, ahead);
+        const std::string text = c_source.substr(m_start, ahead);
         try {
             int num = std::stoi(text);
             addToken(Token::Type::IntegerLiteral);

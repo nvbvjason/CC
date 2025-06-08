@@ -21,6 +21,9 @@ struct ConstExpr final : Expr {
     ConstExpr(const i32 value, std::unique_ptr<TypeBase>&& varType) noexcept
         : Expr(Kind::Constant, std::move(varType)), value(value) {}
 
+    ConstExpr(const i64 value, std::unique_ptr<TypeBase>&& varType) noexcept
+        : Expr(Kind::Constant, std::move(varType)), value(value) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 

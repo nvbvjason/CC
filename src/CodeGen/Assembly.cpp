@@ -6,13 +6,19 @@
 
 namespace CodeGen {
 
+std::string makeTemporaryPseudoName()
+{
+    static i32 i = 0;
+    return std::to_string(i++) + "..";
+}
+
 std::string asmProgram(const Program& program)
 {
     std::string result;
     for (const std::unique_ptr<TopLevel>& topLevel : program.topLevels) {
         if (topLevel->type == TopLevel::Type::StaticVariable) {
             const auto var = static_cast<const StaticVariable*>(topLevel.get());
-            asmGlobalVar(result, *var);
+            asmStaticVariable(result, *var);
             continue;
         }
         const auto function = dynamic_cast<Function*>(topLevel.get());
@@ -22,7 +28,7 @@ std::string asmProgram(const Program& program)
     return result;
 }
 
-void asmGlobalVar(std::string& result, const StaticVariable& variable)
+void asmStaticVariable(std::string& result, const StaticVariable& variable)
 {
     if (variable.global)
         result += asmFormatInstruction(".globl", variable.name);
@@ -30,12 +36,19 @@ void asmGlobalVar(std::string& result, const StaticVariable& variable)
         result += asmFormatInstruction(".bss");
     else
         result += asmFormatInstruction(".data");
-    result += asmFormatInstruction(".align","4");
+    if (variable.type == AssemblyType::LongWord)
+        result += asmFormatInstruction(".align","4");
+    if (variable.type == AssemblyType::QuadWord)
+        result += asmFormatInstruction(".align","8");
     result += asmFormatLabel(variable.name);
-    if (variable.init == 0)
-        result += asmFormatInstruction(".zero", "4");
-    else
-        result += asmFormatInstruction(".long", std::to_string(variable.init));
+    if (variable.init == 0 && variable.type == AssemblyType::LongWord)
+        result += asmFormatInstruction(".zero 4");
+    if (variable.init != 0 && variable.type == AssemblyType::LongWord)
+        result += asmFormatInstruction(".long " + std::to_string(variable.init));
+    if (variable.init == 0 && variable.type == AssemblyType::QuadWord)
+        result += asmFormatInstruction(".zero 8");
+    if (variable.init != 0 && variable.type == AssemblyType::QuadWord)
+        result += asmFormatInstruction(".quad " + std::to_string(variable.init));
     result += '\n';
 }
 
@@ -52,22 +65,6 @@ void asmFunction(std::string& result, const Function& functionNode)
     result += '\n';
 }
 
-void asmStaticVariable(std::string& result, const StaticVariable& staticVariableNode)
-{
-    if (staticVariableNode.global)
-        result += asmFormatInstruction(".globl", staticVariableNode.name);
-    if (staticVariableNode.init == 0)
-        result += asmFormatInstruction(".data");
-    else
-        result += asmFormatInstruction(".bss");
-    result += asmFormatInstruction(alignDirective());
-    result += asmFormatLabel(staticVariableNode.name);
-    if (staticVariableNode.init == 0)
-        result += asmFormatInstruction(".zero 4");
-    else
-        result += asmFormatInstruction(".long " + std::to_string(staticVariableNode.init));
-}
-
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction)
 {
     switch (instruction->kind) {
@@ -78,6 +75,12 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
                 result += asmFormatInstruction("movl", operand);
             if (moveInst->type == AssemblyType::QuadWord)
                 result += asmFormatInstruction("movq", operand);;
+            return;
+        }
+        case Inst::Kind::MoveSX: {
+            const auto moveSXInst = dynamic_cast<MoveSXInst*>(instruction.get());
+            std::string operands = asmOperand(moveSXInst->src) + ", " + asmOperand(moveSXInst->dst);
+            result += asmFormatInstruction("movslq", operands);
             return;
         }
         case Inst::Kind::Unary: {
@@ -92,12 +95,19 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             return;
         }
         case Inst::Kind::Cdq: {
-            result += asmFormatInstruction("cdq");
+            const auto cdqInst = dynamic_cast<CdqInst*>(instruction.get());
+            if (cdqInst->type == AssemblyType::LongWord)
+                result += asmFormatInstruction("cdq");
+            if (cdqInst->type == AssemblyType::QuadWord)
+                result += asmFormatInstruction("cqo");
             return;
         }
         case Inst::Kind::Idiv: {
             const auto idivInst = dynamic_cast<IdivInst*>(instruction.get());
-            result += asmFormatInstruction("idivl", asmOperand(idivInst->operand));
+            if (idivInst->type == AssemblyType::LongWord)
+                result += asmFormatInstruction("idivl", asmOperand(idivInst->operand));
+            if (idivInst->type == AssemblyType::QuadWord)
+                result += asmFormatInstruction("idivq", asmOperand(idivInst->operand));
             return;
         }
         case Inst::Kind::Ret: {
@@ -109,7 +119,10 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Cmp: {
             const auto cmpInst = dynamic_cast<CmpInst*>(instruction.get());
             const std::string operands = asmOperand(cmpInst->lhs) + ", " + asmOperand(cmpInst->rhs);
-            result += asmFormatInstruction("cmpl", operands);
+            if (cmpInst->lhs->type == AssemblyType::LongWord)
+                result += asmFormatInstruction("cmpl", operands);
+            if (cmpInst->lhs->type == AssemblyType::QuadWord)
+                result += asmFormatInstruction("cmpq", operands);
             return;
         }
         case Inst::Kind::Jmp: {
@@ -223,7 +236,6 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper, AssemblyType type)
             default:                 return "not set asmUnaryOperator";
         }
     }
-
 }
 
 std::string asmBinaryOperator(const BinaryInst::Operator oper, const AssemblyType type)
@@ -261,11 +273,6 @@ std::string asmBinaryOperator(const BinaryInst::Operator oper, const AssemblyTyp
                 return "not set asmBinaryOperator";
         }
     }
-}
-
-std::string alignDirective()
-{
-    return ".align 4";
 }
 
 std::string asmFormatLabel(const std::string& name)

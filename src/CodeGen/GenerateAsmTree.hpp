@@ -75,11 +75,11 @@ public:
     void returnInst(const Ir::ReturnInst& returnInst);
 
     void pushFunCallArgs(const Ir::FunCallInst& funcCall);
-    void generateFunCallInst(const Ir::FunCallInst& type);
+    void generateFunCallInst(const Ir::FunCallInst& funcCall);
+    std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 };
 
 std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable);
-
 
 i32 getStackPadding(size_t numArgs);
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
@@ -87,7 +87,6 @@ BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation type);
 AssemblyType getAssemblyType(Type type);
 
-std::shared_ptr<Operand> operand(const std::shared_ptr<Ir::Value>& value);
 
 [[nodiscard]] i32 replacingPseudoRegisters(const Function& function);
 void fixUpInstructions(Function& function, i32 stackAlloc);
@@ -98,6 +97,8 @@ inline AssemblyType getAssemblyType(Type type)
         return AssemblyType::LongWord;
     return AssemblyType::QuadWord;
 }
+
+std::string makeTemporaryPseudoName();
 
 }
 

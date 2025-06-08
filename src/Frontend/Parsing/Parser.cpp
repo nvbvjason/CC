@@ -213,8 +213,8 @@ std::unique_ptr<Stmt> Parser::ifStmtParse()
         return nullptr;
     if (!expect(TokenType::OpenParen))
         return nullptr;
-    std::unique_ptr<Expr> expr = exprParse(0);
-    if (expr == nullptr)
+    std::unique_ptr<Expr> condition = exprParse(0);
+    if (condition == nullptr)
         return nullptr;
     if (!expect(TokenType::CloseParen))
         return nullptr;
@@ -225,9 +225,9 @@ std::unique_ptr<Stmt> Parser::ifStmtParse()
         std::unique_ptr<Stmt> elseStmt = stmtParse();
         if (elseStmt == nullptr)
             return nullptr;
-        return std::make_unique<IfStmt>(std::move(expr), std::move(thenStmt), std::move(elseStmt));
+        return std::make_unique<IfStmt>(std::move(condition), std::move(thenStmt), std::move(elseStmt));
     }
-    return std::make_unique<IfStmt>(std::move(expr), std::move(thenStmt));
+    return std::make_unique<IfStmt>(std::move(condition), std::move(thenStmt));
 }
 
 std::unique_ptr<Stmt> Parser::gotoStmtParse()
@@ -441,7 +441,7 @@ std::unique_ptr<Expr> Parser::castExpr()
             return nullptr;
         if (!expect(TokenType::CloseParen))
             return nullptr;
-        auto innerExpr = exprParse(0);
+        auto innerExpr = castExpr();
         if (innerExpr == nullptr)
             return nullptr;
         return std::make_unique<CastExpr>(

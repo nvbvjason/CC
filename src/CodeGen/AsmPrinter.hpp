@@ -52,6 +52,7 @@ std::string to_string(const ImmOperand& immOperand);
 std::string to_string(const RegisterOperand& registerOperand);
 std::string to_string(const PseudoOperand& pseudoOperand);
 std::string to_string(const StackOperand& stackOperand);
+std::string to_string(const DataOperand& stackOperand);
 
 std::string to_string(const UnaryInst::Kind& kind);
 std::string to_string(const UnaryInst::Operator& oper);
