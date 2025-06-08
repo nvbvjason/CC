@@ -6,5 +6,7 @@
 #include "Type.hpp"
 
 Type getCommonType(Type t1, Type t2);
+bool isSigned(Type t);
+i32 getSize(Type t);
 
 #endif // CC_TYPE_CONVERSION_HPP

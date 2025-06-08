@@ -20,6 +20,7 @@ top_level = Function(identifier, bool global, identifier params, instruction* bo
 instruction = Return(val)
             | SignExtend(val src, val dst)
             | Truncate(val src, val dst)
+            | ZeroExtern(val src, val dst)
             | Unary(unary_operator, val src, val dst)
             | Binary(binary_operator, val src1, val src2, val dst)
             | Copy(val src, val dst)
@@ -68,11 +69,15 @@ struct ValueVar final : Value {
 };
 
 struct ValueConst final : Value {
-    std::variant<i32, i64> value;
+    std::variant<i32, i64, u32, u64> value;
     explicit ValueConst(const i32 v)
         : Value(Type::I32 ,Kind::Constant), value(v) {}
     explicit ValueConst(const i64 v)
         : Value(Type::I64 ,Kind::Constant), value(v) {}
+    explicit ValueConst(const u32 v)
+        : Value(Type::U32 ,Kind::Constant), value(v) {}
+    explicit ValueConst(const u64 v)
+        : Value(Type::U64 ,Kind::Constant), value(v) {}
 
     ~ValueConst() override;
 
@@ -81,7 +86,7 @@ struct ValueConst final : Value {
 
 struct Instruction {
     enum class Kind {
-        Return, SignExtend, Truncate, Unary, Binary, Copy,
+        Return, SignExtend, Truncate, ZeroExtend, Unary, Binary, Copy,
         Jump, JumpIfZero, JumpIfNotZero, Label,
         FunCall
     };
@@ -118,6 +123,15 @@ struct TruncateInst final : Instruction {
         : Instruction(Kind::Truncate, t), src(std::move(src)), dst(std::move(dst)) {}
 
     TruncateInst() = delete;
+};
+
+struct ZeroExtendInst final : Instruction {
+    std::shared_ptr<Value> src;
+    std::shared_ptr<Value> dst;
+    ZeroExtendInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
+        : Instruction(Kind::ZeroExtend, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    ZeroExtendInst() = delete;
 };
 
 struct UnaryInst final : Instruction {

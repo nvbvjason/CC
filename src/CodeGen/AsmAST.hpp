@@ -19,7 +19,8 @@ assembly_type = Longword | Quadword
 top_level = Function(identifier name, bool global, instruction* instructions)
           | StaticVariable(identifier name, bool global, int alignment, int init)
 instruction = Mov(assembly_type, operand src, operand dst)
-            | Movsx(operand src, operand dst)
+            | MovSX(operand src, operand dst)
+            | MoveZeroExtend(operand src, operand dst)
             | Unary(unary_operator, assembly_type, operand)
             | Binary(binary_operator, assembly_type, operand, operand)
             | Cmp(operand, operand)
@@ -78,12 +79,17 @@ protected:
 };
 
 struct ImmOperand final : Operand {
-    std::variant<i32, i64> value;
+    std::variant<i32, i64, u32, u64> value;
 
     explicit ImmOperand(const i64 value)
         : Operand(Kind::Imm, AssemblyType::QuadWord), value(value) {}
     explicit ImmOperand(const i32 value)
         : Operand(Kind::Imm, AssemblyType::LongWord), value(value) {}
+    explicit ImmOperand(const u64 value)
+        : Operand(Kind::Imm, AssemblyType::QuadWord), value(value) {}
+    explicit ImmOperand(const u32 value)
+        : Operand(Kind::Imm, AssemblyType::LongWord), value(value) {}
+
 
     ImmOperand() = delete;
 };

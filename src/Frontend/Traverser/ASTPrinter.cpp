@@ -12,6 +12,8 @@ std::string varTypeToString(const Type kind)
     switch (kind) {
         case Type::I32:    return "int";
         case Type::I64:    return "long";
+        case Type::U32:    return "u int";
+        case Type::U64:    return "u long";
         default:           return "unknown";
     }
 }

@@ -167,10 +167,7 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         varExpr.referingTo = ReferingTo::Extern;
     if (returnedEntry.isSet(Flag::InternalLinkage))
         varExpr.referingTo = ReferingTo::Static;
-    if (returnedEntry.type == Type::I32)
-        varExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
-    else
-        varExpr.type = std::make_unique<Parsing::VarType>(Type::I64);
+    varExpr.type = std::make_unique<Parsing::VarType>(returnedEntry.type);
     ASTTraverser::visit(varExpr);
 }
 

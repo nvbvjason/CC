@@ -39,10 +39,12 @@ bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::Fu
         return false;
     if (funDecl.params.size() != funcEntry.paramTypes.size())
         return false;
-    const auto type = static_cast<Parsing::FuncType*>(funDecl.type.get());
+    const auto funcType = static_cast<Parsing::FuncType*>(funDecl.type.get());
     for (size_t i = 0; i < funDecl.params.size(); ++i)
-        if (funcEntry.paramTypes[i] != type->params[i]->kind)
+        if (funcEntry.paramTypes[i] != funcType->params[i]->kind)
             return false;
+    if (funcType->returnType->kind != funcEntry.returnType)
+        return false;
     return true;
 }
 

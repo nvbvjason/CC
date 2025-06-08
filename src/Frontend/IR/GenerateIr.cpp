@@ -8,6 +8,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "Types/TypeConversion.hpp"
+
 namespace Ir {
 static Identifier makeTemporaryName();
 static bool isPostfixOp(Parsing::UnaryExpr::Operator oper);
@@ -15,7 +17,6 @@ static bool isPrefixOp(Parsing::UnaryExpr::Operator oper);
 static BinaryInst::Operation getPostPrefixOperation(Parsing::UnaryExpr::Operator oper);
 static UnaryInst::Operation convertUnaryOperation(Parsing::UnaryExpr::Operator unaryOperation);
 static BinaryInst::Operation convertBinaryOperation(Parsing::BinaryExpr::Operator binaryOperation);
-static BinaryInst::Operation convertAssiOperation(Parsing::AssignmentExpr::Operator binaryOperation);
 static std::string generateCaseLabelName(std::string before);
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
@@ -373,29 +374,35 @@ void GenerateIr::generateSwitchStmt(const Parsing::SwitchStmt& stmt)
 {
     auto realValue = generateInst(*stmt.condition);
     const Type conditionType = stmt.condition->type->kind;
-    for (const std::variant<i32, i64>& caseValue : stmt.cases) {
+    for (const std::variant<i32, i64, u32, u64>& caseValue : stmt.cases) {
+        const auto destination = std::make_shared<ValueVar>(makeTemporaryName(), conditionType);
+        std::string caseLabelName;
+        std::shared_ptr<ValueConst> src2;
         if (conditionType == Type::I32) {
             const i32 value = std::get<i32>(caseValue);
-            const auto destination = std::make_shared<ValueVar>(makeTemporaryName(), conditionType);
-            m_instructions.emplace_back(std::make_unique<BinaryInst>(
-                BinaryInst::Operation::Equal, realValue, std::make_shared<ValueConst>(value),
-                destination, realValue->type)
-                );
-            m_instructions.emplace_back(std::make_unique<JumpIfNotZeroInst>(
-                destination, Identifier(generateCaseLabelName(stmt.identifier + std::to_string(value))))
-                );
+            caseLabelName = generateCaseLabelName(stmt.identifier + std::to_string(value));
+            src2 = std::make_shared<ValueConst>(value);
         }
         if (conditionType == Type::I64) {
             const i64 value = std::get<i64>(caseValue);
-            const auto destination = std::make_shared<ValueVar>(makeTemporaryName(), conditionType);
-            m_instructions.emplace_back(std::make_unique<BinaryInst>(
-                BinaryInst::Operation::Equal, realValue, std::make_shared<ValueConst>(value),
-                destination, realValue->type)
-                );
-            m_instructions.emplace_back(std::make_unique<JumpIfNotZeroInst>(
-                destination, Identifier(generateCaseLabelName(stmt.identifier + std::to_string(value))))
-                );
+            caseLabelName = generateCaseLabelName(stmt.identifier + std::to_string(value));
+            src2 = std::make_shared<ValueConst>(value);
         }
+        if (conditionType == Type::U32) {
+            const u32 value = std::get<u32>(caseValue);
+            caseLabelName = generateCaseLabelName(stmt.identifier + std::to_string(value));
+            src2 = std::make_shared<ValueConst>(value);
+        }
+        if (conditionType == Type::U64) {
+            const u64 value = std::get<u32>(caseValue);
+            caseLabelName = generateCaseLabelName(stmt.identifier + std::to_string(value));
+            src2 = std::make_shared<ValueConst>(value);
+        }
+        m_instructions.emplace_back(std::make_unique<BinaryInst>(
+            BinaryInst::Operation::Equal, realValue, src2,
+            destination, realValue->type));
+        m_instructions.emplace_back(std::make_unique<JumpIfNotZeroInst>(
+            destination, Identifier(caseLabelName)));
     }
     if (stmt.hasDefault)
         m_instructions.emplace_back(std::make_unique<JumpInst>(
@@ -440,14 +447,16 @@ std::shared_ptr<Value> GenerateIr::generateCast(const Parsing::Expr& parsingExpr
     auto result = generateInst(*castExpr->expr);
     const Type type = parsingExpr.type->kind;
     const Type innerType = castExpr->expr->type->kind;
-    if (type == innerType)
-        return result;
     const Identifier iden(makeTemporaryName());
     auto dst = std::make_shared<ValueVar>(iden, type);
-    if (type == Type::I64)
+    if (type == innerType)
+        m_instructions.emplace_back(std::make_unique<CopyInst>(result, dst, type));
+    else if (getSize(type) < getSize(innerType))
+        m_instructions.emplace_back(std::make_unique<TruncateInst>(result, dst, type));
+    else if (isSigned(innerType))
         m_instructions.emplace_back(std::make_unique<SignExtendInst>(result, dst, type));
     else
-        m_instructions.emplace_back(std::make_unique<TruncateInst>(result, dst, innerType));
+        m_instructions.emplace_back(std::make_unique<ZeroExtendInst>(result, dst, type));
     return dst;
 }
 
@@ -577,6 +586,10 @@ std::shared_ptr<Value> GenerateIr::generateConstInst(const Parsing::Expr& parsin
     const auto constant = dynamic_cast<const Parsing::ConstExpr*>(&parsingExpr);
     if (constant->type->kind == Type::I32)
         return std::make_unique<ValueConst>(std::get<i32>(constant->value));
+    if (constant->type->kind == Type::U32)
+        return std::make_unique<ValueConst>(std::get<u32>(constant->value));
+    if (constant->type->kind == Type::U64)
+        return std::make_unique<ValueConst>(std::get<u64>(constant->value));
     return std::make_unique<ValueConst>(std::get<i64>(constant->value));
 }
 
@@ -649,7 +662,7 @@ BinaryInst::Operation convertBinaryOperation(const Parsing::BinaryExpr::Operator
         case Parse::Subtract:       return Ir::Subtract;
         case Parse::Multiply:       return Ir::Multiply;
         case Parse::Divide:         return Ir::Divide;
-        case Parse::Modulo:      return Ir::Remainder;
+        case Parse::Modulo:         return Ir::Remainder;
 
         case Parse::BitwiseAnd:     return Ir::BitwiseAnd;
         case Parse::BitwiseOr:      return Ir::BitwiseOr;
@@ -669,27 +682,6 @@ BinaryInst::Operation convertBinaryOperation(const Parsing::BinaryExpr::Operator
 
         default:
             throw std::invalid_argument("Invalid binary operation convertBinaryOperation generateIr");
-    }
-}
-
-BinaryInst::Operation convertAssiOperation(const Parsing::AssignmentExpr::Operator binaryOperation)
-{
-    using AssignOper = Parsing::AssignmentExpr::Operator;
-    using Ir = BinaryInst::Operation;
-    switch (binaryOperation) {
-        case AssignOper::BitwiseAndAssign: return Ir::BitwiseAnd;
-        case AssignOper::BitwiseOrAssign:  return Ir::BitwiseOr;
-        case AssignOper::BitwiseXorAssign: return Ir::BitwiseXor;
-        case AssignOper::LeftShiftAssign:  return Ir::LeftShift;
-        case AssignOper::RightShiftAssign: return Ir::RightShift;
-        case AssignOper::MinusAssign:      return Ir::Subtract;
-        case AssignOper::MultiplyAssign:   return Ir::Multiply;
-        case AssignOper::DivideAssign:     return Ir::Divide;
-        case AssignOper::ModuloAssign:     return Ir::Remainder;
-        case AssignOper::PlusAssign:       return Ir::Add;
-
-        default:
-            throw std::invalid_argument("Invalid binary operation convertAssiOperation generateIr");
     }
 }
 

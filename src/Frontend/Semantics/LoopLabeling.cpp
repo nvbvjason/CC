@@ -26,43 +26,27 @@ void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
     const auto constantExpr = static_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
     switch (conditionType) {
         case Type::I32: {
-            i32 value = 0;
-            if (constantExpr->type->kind == Type::I32)
-                value = std::get<i32>(constantExpr->value);
-            if (constantExpr->type->kind == Type::I64)
-                value = static_cast<i64>(std::get<i64>(constantExpr->value));
-            auto it = switchCases.find(switchLabel);
-            for (const std::variant<i32, i64>& v : it->second) {
-                if (value == std::get<i32>(v)) {
-                    valid = false;
-                    return;
-                }
-            }
-            it->second.emplace_back(value);
-            caseStmt.identifier += std::to_string(value);
+            processSwitchCase<i32>(constantExpr, switchCases, switchLabel, caseStmt, valid);
             break;
         }
         case Type::I64: {
-            i64 value = 0;
-            if (constantExpr->type->kind == Type::I32)
-                value = static_cast<i64>(std::get<i32>(constantExpr->value));
-            if (constantExpr->type->kind == Type::I64)
-                value = std::get<i64>(constantExpr->value);
-            auto it = switchCases.find(switchLabel);
-            for (const std::variant<i32, i64>& v : it->second) {
-                if (value == std::get<i64>(v)) {
-                    valid = false;
-                    return;
-                }
-            }
-            it->second.emplace_back(value);
-            caseStmt.identifier += std::to_string(value);
+            processSwitchCase<i64>(constantExpr, switchCases, switchLabel, caseStmt, valid);
+            break;
+        }
+        case Type::U32: {
+            processSwitchCase<u32>(constantExpr, switchCases, switchLabel, caseStmt, valid);
+            break;
+        }
+        case Type::U64: {
+            processSwitchCase<u64>(constantExpr, switchCases, switchLabel, caseStmt, valid);
             break;
         }
         default:
             assert("Should never be reached");
             std::unreachable();
     }
+    if (!valid)
+        return;
     ASTTraverser::visit(caseStmt);
 }
 
@@ -140,7 +124,7 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     breakLabel = switchStmt.identifier;
     switchLabel = switchStmt.identifier;
     conditionType = switchStmt.condition->type->kind;
-    switchCases[switchStmt.identifier] = std::vector<std::variant<i32, i64>>();
+    switchCases[switchStmt.identifier] = std::vector<std::variant<i32, i64, u32, u64>>();
     ASTTraverser::visit(switchStmt);
     switchStmt.cases = switchCases[switchStmt.identifier];
     if (m_default.contains(switchStmt.identifier))
