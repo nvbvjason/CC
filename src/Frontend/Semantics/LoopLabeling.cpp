@@ -24,6 +24,10 @@ void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
         return;
     }
     const auto constantExpr = static_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
+    if (constantExpr->type->kind == Type::Double) {
+        valid = false;
+        return;
+    }
     switch (conditionType) {
         case Type::I32: {
             processSwitchCase<i32>(constantExpr, switchCases, switchLabel, caseStmt, valid);
@@ -124,6 +128,10 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     breakLabel = switchStmt.identifier;
     switchLabel = switchStmt.identifier;
     conditionType = switchStmt.condition->type->kind;
+    if (conditionType == Type::Double) {
+        valid = false;
+        return;
+    }
     switchCases[switchStmt.identifier] = std::vector<std::variant<i32, i64, u32, u64>>();
     ASTTraverser::visit(switchStmt);
     switchStmt.cases = switchCases[switchStmt.identifier];

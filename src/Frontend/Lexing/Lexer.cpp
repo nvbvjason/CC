@@ -345,7 +345,7 @@ void Lexer::addToken(const Token::Type type)
             double value = std::stod(text);
             m_tokens.back().m_data = value;
         } catch (const std::out_of_range&) {
-            m_tokens.back().m_data = 0.0; // Or handle differently (e.g., mark token as invalid)
+            m_tokens.back().m_data = 0.0;
         }
     }
 }

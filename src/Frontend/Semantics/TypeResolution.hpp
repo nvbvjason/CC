@@ -82,5 +82,21 @@ inline bool illegalNonConstInitialization(const Parsing::VarDecl& varDecl,
 {
     return !isConst && (global || varDecl.storage ==  Parsing::Declaration::StorageClass::Static);
 }
+
+inline bool isBinaryBitwise(const Parsing::BinaryExpr& binaryExpr)
+{
+    using Operator = Parsing::BinaryExpr::Operator;
+    return binaryExpr.op == Operator::BitwiseAnd || binaryExpr.op == Operator::BitwiseOr ||
+           binaryExpr.op == Operator::BitwiseXor || binaryExpr.op == Operator::LeftShift ||
+           binaryExpr.op == Operator::RightShift;
+}
+
+inline bool isBinaryComparison(const Parsing::BinaryExpr& binaryExpr)
+{
+    using Operator = Parsing::BinaryExpr::Operator;
+    return binaryExpr.op == Operator::Equal || binaryExpr.op == Operator::NotEqual ||
+           binaryExpr.op == Operator::LessThan || binaryExpr.op == Operator::LessOrEqual ||
+           binaryExpr.op == Operator::GreaterThan || binaryExpr.op == Operator::GreaterOrEqual;
+}
 } // Semantics
 #endif // CC_SEMANTICS_TYPE_RESOLUTION_HPP

@@ -92,6 +92,8 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         m_definedFunctions.insert(varDecl.name);
     m_isConst = true;
     ASTTraverser::visit(varDecl);
+    if (!m_valid)
+        return;
     if (illegalNonConstInitialization(varDecl, m_isConst, m_global)) {
         m_valid = false;
         return;
@@ -128,6 +130,12 @@ void TypeResolution::visit(Parsing::VarExpr& varExpr)
 void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
 {
     ASTTraverser::visit(unaryExpr);
+    if (unaryExpr.operand->type->kind == Type::Double) {
+        if (unaryExpr.op == Parsing::UnaryExpr::Operator::Complement) {
+            m_valid = false;
+            return;
+        }
+    }
     unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->kind);
 }
 
@@ -143,6 +151,10 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
     const Type leftType = binaryExpr.lhs->type->kind;
     const Type rightType = binaryExpr.rhs->type->kind;
     const Type commonType = getCommonType(leftType, rightType);
+    if (commonType == Type::Double && (isBinaryBitwise(binaryExpr) || binaryExpr.op == Oper::Modulo)) {
+        m_valid = false;
+        return;
+    }
     if (commonType != leftType)
         binaryExpr.lhs = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.lhs));
@@ -153,10 +165,10 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
         binaryExpr.type = std::make_unique<Parsing::VarType>(leftType);
         return;
     }
-    if (binaryExpr.op == Oper::Equal || binaryExpr.op == Oper::NotEqual ||
-        binaryExpr.op == Oper::LessThan || binaryExpr.op == Oper::LessOrEqual ||
-        binaryExpr.op == Oper::GreaterThan || binaryExpr.op == Oper::GreaterOrEqual) {
-        if (isSigned(commonType))
+    if (isBinaryComparison(binaryExpr)) {
+        if (commonType == Type::Double)
+            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::Double);
+        else if (isSigned(commonType))
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         else
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::U32);
@@ -168,6 +180,8 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
 void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
 {
     ASTTraverser::visit(assignmentExpr);
+    if (!m_valid)
+        return;
     const Type leftType = assignmentExpr.lhs->type->kind;
     const Type rightType = assignmentExpr.rhs->type->kind;
     if (leftType != rightType)
