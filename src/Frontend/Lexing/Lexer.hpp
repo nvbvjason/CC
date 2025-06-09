@@ -64,7 +64,6 @@ private:
     void floating();
 };
 
-bool isValid(const std::string& input, const std::regex& regex);
 inline bool matchesUL(const std::string& text, const i32 endNumbers, const i32 current)
 {
     if (endNumbers + 2 != current)

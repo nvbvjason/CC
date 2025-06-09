@@ -291,17 +291,26 @@ void Lexer::number()
 
 void Lexer::floating()
 {
-    while (!isAtEnd() && (peek() == '_' || peek() == '.' || peek() == '+' || peek() == '-' ||
-        isalpha(peek()) || isdigit(peek())))
+    if (peek() == '.')
         advance();
-    const i32 ahead = m_current - m_start;
-    const std::string text = c_source.substr(m_start, ahead);
-    static const std::regex patternDouble(R"(^([0-9]*\.[0-9]+|[0-9]+\.?)[Ee][+-]?[0-9]+|[0-9]*\.[0-9]+|[0-9]+\.$)");
-    if (std::regex_match(text, patternDouble)) {
-        addToken(Token::Type::DoubleLiteral);
+    while (!isAtEnd() && isdigit(peek()))
+        advance();
+    if (tolower(peek()) == 'e') {
+        advance();
+        if (peek() == '+' || peek() == '-')
+            advance();
+        if (!isdigit(peek())) {
+            addToken(Token::Type::Invalid);
+            return;
+        }
+        while (!isAtEnd() && isdigit(peek()))
+            advance();
+    }
+    if (peek() == '.' || isalnum(peek()) || peek() == '_') {
+        addToken(Token::Type::Invalid);
         return;
     }
-    addToken(Token::Type::Invalid);
+    addToken(Token::Type::DoubleLiteral);
 }
 
 void Lexer::identifier()
@@ -340,10 +349,4 @@ void Lexer::addToken(const Token::Type type)
         }
     }
 }
-
-bool isValid(const std::string& input, const std::regex& regex)
-{
-    return std::regex_match(input, regex);
-}
-
 }
