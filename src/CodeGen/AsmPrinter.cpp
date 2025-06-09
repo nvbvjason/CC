@@ -282,8 +282,8 @@ std::string to_string(const BinaryInst::Operator& oper)
         case Oper::BitwiseAnd:      return "&";
         case Oper::BitwiseOr:       return "|";
         case Oper::BitwiseXor:      return "^";
-        case Oper::LeftShift:       return "<<";
-        case Oper::RightShift:      return ">>";
+        case Oper::LeftShiftSigned:       return "<<";
+        case Oper::RightShiftSigned:      return ">>";
         default:                    return "Unknown BinaryOp";
     }
 }
@@ -298,6 +298,10 @@ std::string to_string(const Inst::CondCode& condCode)
         case CondCode::LE:      return "LE";
         case CondCode::G:       return "G";
         case CondCode::GE:      return "GE";
+        case CondCode::A:       return "A";
+        case CondCode::AE:      return "AE";
+        case CondCode::B:       return "B";
+        case CondCode::BE:      return "BE";
         default:                return "Unknown CondCode";
     }
 }

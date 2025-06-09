@@ -219,7 +219,8 @@ struct BinaryInst final : Inst {
     enum class Operator : u8 {
         Add, Sub, Mul,
         BitwiseAnd, BitwiseOr, BitwiseXor,
-        LeftShift, RightShift,
+        LeftShiftSigned, RightShiftSigned,
+        LeftShiftUnsigned, RightShiftUnsigned,
     };
     std::shared_ptr<Operand> lhs;
     std::shared_ptr<Operand> rhs;

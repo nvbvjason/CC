@@ -158,15 +158,15 @@ struct BinaryInst final : Instruction {
         LessThan, LessOrEqual, GreaterThan, GreaterOrEqual,
     };
     Operation operation;
-    std::shared_ptr<Value> source1;
-    std::shared_ptr<Value> source2;
+    std::shared_ptr<Value> lhs;
+    std::shared_ptr<Value> rhs;
     std::shared_ptr<Value> destination;
     BinaryInst(const Operation op,
                const std::shared_ptr<Value>& src1,
                const std::shared_ptr<Value>& src2,
                const std::shared_ptr<Value>& dst,
                const Type t)
-        : Instruction(Kind::Binary, t), operation(op), source1(src1), source2(src2), destination(dst) {}
+        : Instruction(Kind::Binary, t), operation(op), lhs(src1), rhs(src2), destination(dst) {}
 
     ~BinaryInst() override;
 

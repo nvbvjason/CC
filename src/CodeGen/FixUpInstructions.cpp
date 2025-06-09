@@ -64,13 +64,14 @@ void FixUpInstructions::visit(MoveZeroExtendInst& moveZero)
 {
     if (moveZero.dst->kind == Operand::Kind::Register) {
         auto first = std::make_unique<MoveInst>(
-            std::move(moveZero.src), std::move(moveZero.dst), moveZero.type);
+            std::move(moveZero.src), std::move(moveZero.dst), AssemblyType::LongWord);
         insert(std::move(first));
         return;
     }
-    auto reg11 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, moveZero.type);
-    auto first = std::make_unique<MoveInst>(moveZero.src, reg11, moveZero.type);
-    auto second = std::make_unique<MoveInst>(reg11, moveZero.dst, moveZero.type);
+    auto reg11L = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, AssemblyType::LongWord);
+    auto first = std::make_unique<MoveInst>(moveZero.src, reg11L, AssemblyType::LongWord);
+    auto reg11Q = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, AssemblyType::QuadWord);
+    auto second = std::make_unique<MoveInst>(reg11Q, moveZero.dst, AssemblyType::QuadWord);
     insert(std::move(first), std::move(second));
 }
 
@@ -139,7 +140,10 @@ void FixUpInstructions::visit(IdivInst& idivInst)
 
 void FixUpInstructions::visit(DivInst& div)
 {
-
+    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, div.type);
+    auto first = std::make_unique<MoveInst>(div.operand, regR10, div.type);
+    auto second = std::make_unique<DivInst>(regR10, div.type);
+    insert(std::move(first), std::move(second));
 }
 
 } // namespace CodeGen

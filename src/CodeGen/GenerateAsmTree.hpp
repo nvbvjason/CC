@@ -72,6 +72,7 @@ public:
     void genUnsignedBinaryRemainderInst(const Ir::BinaryInst& irBinary);
     void genBinaryCondInst(const Ir::BinaryInst& irBinary);
     void genBinaryBasicInst(const Ir::BinaryInst& irBinary);
+    void genBinaryShiftInst(const Ir::BinaryInst& irBinary);
 
     void genJumpInst(const Ir::JumpInst& irJump);
     void genJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZero);
@@ -87,10 +88,11 @@ public:
 
 std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable);
 
-std::shared_ptr<ImmOperand> getZeroImmOfType(Type type);
+std::shared_ptr<ImmOperand> getZeroImmOfType(AssemblyType type);
 i32 getStackPadding(size_t numArgs);
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
+BinaryInst::Operator getShiftOperator(Ir::BinaryInst::Operation type, bool isSigned);
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
 AssemblyType getAssemblyType(Type type);
 
@@ -100,7 +102,7 @@ void fixUpInstructions(Function& function, i32 stackAlloc);
 
 inline AssemblyType getAssemblyType(Type type)
 {
-    if (type == Type::I32)
+    if (type == Type::I32 || type == Type::U32)
         return AssemblyType::LongWord;
     return AssemblyType::QuadWord;
 }

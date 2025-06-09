@@ -156,7 +156,10 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
     if (binaryExpr.op == Oper::Equal || binaryExpr.op == Oper::NotEqual ||
         binaryExpr.op == Oper::LessThan || binaryExpr.op == Oper::LessOrEqual ||
         binaryExpr.op == Oper::GreaterThan || binaryExpr.op == Oper::GreaterOrEqual) {
-        binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
+        if (isSigned(commonType))
+            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
+        else
+            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::U32);
         return;
     }
     binaryExpr.type = std::make_unique<Parsing::VarType>(commonType);

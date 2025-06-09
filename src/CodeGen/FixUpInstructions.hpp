@@ -55,8 +55,10 @@ private:
 
 inline bool FixUpInstructions::isBinaryShift(const BinaryInst& binaryInst)
 {
-    return binaryInst.oper == BinaryInst::Operator::LeftShift ||
-           binaryInst.oper == BinaryInst::Operator::RightShift;
+    return binaryInst.oper == BinaryInst::Operator::LeftShiftSigned ||
+           binaryInst.oper == BinaryInst::Operator::RightShiftSigned ||
+           binaryInst.oper == BinaryInst::Operator::RightShiftUnsigned ||
+           binaryInst.oper == BinaryInst::Operator::LeftShiftUnsigned;
 }
 
 inline bool FixUpInstructions::areBothOnTheStack(MoveInst& moveInst)

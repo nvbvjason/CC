@@ -8,8 +8,6 @@
 #include <stdexcept>
 #include <sys/stat.h>
 
-#include "Frontend/AST/ASTBase.hpp"
-
 namespace {
 using RegType = CodeGen::RegisterOperand::Kind;
 const std::vector registerTypes = {RegType::DI, RegType::SI, RegType::DX,
@@ -186,7 +184,7 @@ void GenerateAsmTree::genJumpInst(const Ir::JumpInst& irJump)
 void GenerateAsmTree::genJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZero)
 {
     std::shared_ptr<Operand> condition = operand(jumpIfZero.condition);
-    std::shared_ptr<ImmOperand> zero = getZeroImmOfType(jumpIfZero.type);
+    std::shared_ptr<ImmOperand> zero = getZeroImmOfType(condition->type);
     insts.emplace_back(std::make_unique<CmpInst>(
         zero, condition, condition->type));
 
@@ -197,7 +195,7 @@ void GenerateAsmTree::genJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZero)
 void GenerateAsmTree::genJumpIfNotZeroInst(const Ir::JumpIfNotZeroInst& jumpIfNotZero)
 {
     std::shared_ptr<Operand> condition = operand(jumpIfNotZero.condition);
-    std::shared_ptr<ImmOperand> zero = getZeroImmOfType(jumpIfNotZero.type);
+    std::shared_ptr<ImmOperand> zero = getZeroImmOfType(condition->type);
     insts.emplace_back(std::make_unique<CmpInst>(
         zero, condition, condition->type));
     Identifier target(jumpIfNotZero.target.value);
@@ -233,7 +231,7 @@ void GenerateAsmTree::unaryInst(const Ir::UnaryInst& irUnary)
 void GenerateAsmTree::genUnaryNotInst(const Ir::UnaryInst& irUnary)
 {
     std::shared_ptr<Operand> src = operand(irUnary.source);
-    std::shared_ptr<ImmOperand> immOperand = getZeroImmOfType(irUnary.type);
+    std::shared_ptr<ImmOperand> immOperand = getZeroImmOfType(src->type);
     insts.emplace_back(std::make_unique<CmpInst>(immOperand, src, src->type));
 
     std::shared_ptr<Operand> dst = operand(irUnary.destination);
@@ -252,9 +250,11 @@ void GenerateAsmTree::genBinaryInst(const Ir::BinaryInst& irBinary)
         case IrOper::BitwiseAnd:
         case IrOper::BitwiseOr:
         case IrOper::BitwiseXor:
+            genBinaryBasicInst(irBinary);
+            break;
         case IrOper::LeftShift:
         case IrOper::RightShift:
-            genBinaryBasicInst(irBinary);
+            genBinaryShiftInst(irBinary);
             break;
         case IrOper::Divide:
             genBinaryDivideInst(irBinary);
@@ -298,14 +298,14 @@ void GenerateAsmTree::genTruncateInst(const Ir::TruncateInst& truncate)
 
 void GenerateAsmTree::genBinaryCondInst(const Ir::BinaryInst& irBinary)
 {
-    std::shared_ptr<Operand> src1 = operand(irBinary.source1);
-    std::shared_ptr<Operand> src2 = operand(irBinary.source2);
+    std::shared_ptr<Operand> src1 = operand(irBinary.lhs);
+    std::shared_ptr<Operand> src2 = operand(irBinary.rhs);
     insts.emplace_back(std::make_unique<CmpInst>(src2, src1, src1->type));
 
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
-    std::shared_ptr<Operand> imm = getZeroImmOfType(irBinary.type);
+    std::shared_ptr<Operand> imm = getZeroImmOfType(dst->type);
     insts.emplace_back(std::make_unique<MoveInst>(imm, dst, dst->type));
-    const bool isSigned = irBinary.type != Type::U32 && irBinary.type != Type::U64;
+    const bool isSigned = irBinary.type == Type::I32 || irBinary.type == Type::I64;
     BinaryInst::CondCode cc = condCode(irBinary.operation, isSigned);
     insts.emplace_back(std::make_unique<SetCCInst>(cc, dst));
 }
@@ -321,14 +321,14 @@ void GenerateAsmTree::genBinaryDivideInst(const Ir::BinaryInst& irBinary)
 
 void GenerateAsmTree::genSignedBinaryDivideInst(const Ir::BinaryInst& irBinary)
 {
-    std::shared_ptr<Operand> src1 = operand(irBinary.source1);
+    std::shared_ptr<Operand> src1 = operand(irBinary.lhs);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(
         RegType::AX, getAssemblyType(irBinary.type));
     insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
 
     insts.emplace_back(std::make_unique<CdqInst>(src1->type));
 
-    std::shared_ptr<Operand> src2 = operand(irBinary.source2);
+    std::shared_ptr<Operand> src2 = operand(irBinary.rhs);
     insts.emplace_back(std::make_unique<IdivInst>(src2, src1->type));
 
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
@@ -337,17 +337,17 @@ void GenerateAsmTree::genSignedBinaryDivideInst(const Ir::BinaryInst& irBinary)
 
 void GenerateAsmTree::genUnsignedBinaryDivideInst(const Ir::BinaryInst& irBinary)
 {
-    std::shared_ptr<Operand> src1 = operand(irBinary.source1);
+    std::shared_ptr<Operand> src1 = operand(irBinary.lhs);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(
         RegType::AX, getAssemblyType(irBinary.type));
     insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
 
-    const auto zero = getZeroImmOfType(irBinary.type);
+    const auto zero = getZeroImmOfType(src1->type);
     const auto regDX = std::make_shared<RegisterOperand>(
         RegType::DX, getAssemblyType(irBinary.type));
     insts.emplace_back(std::make_unique<MoveInst>(zero, regDX, src1->type));
 
-    std::shared_ptr<Operand> src2 = operand(irBinary.source2);
+    std::shared_ptr<Operand> src2 = operand(irBinary.rhs);
     insts.emplace_back(std::make_unique<DivInst>(src2, src1->type));
 
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
@@ -365,14 +365,14 @@ void GenerateAsmTree::genBinaryRemainderInst(const Ir::BinaryInst& irBinary)
 
 void GenerateAsmTree::genSignedBinaryRemainderInst(const Ir::BinaryInst& irBinary)
 {
-    std::shared_ptr<Operand> src1 = operand(irBinary.source1);
+    std::shared_ptr<Operand> src1 = operand(irBinary.lhs);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(
         RegType::AX, getAssemblyType(irBinary.type));
     insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
 
     insts.emplace_back(std::make_unique<CdqInst>(src1->type));
 
-    std::shared_ptr<Operand> src2 = operand(irBinary.source2);
+    std::shared_ptr<Operand> src2 = operand(irBinary.rhs);
     insts.emplace_back(std::make_unique<IdivInst>(src2, src1->type));
 
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
@@ -383,17 +383,17 @@ void GenerateAsmTree::genSignedBinaryRemainderInst(const Ir::BinaryInst& irBinar
 
 void GenerateAsmTree::genUnsignedBinaryRemainderInst(const Ir::BinaryInst& irBinary)
 {
-    std::shared_ptr<Operand> src1 = operand(irBinary.source1);
+    std::shared_ptr<Operand> src1 = operand(irBinary.lhs);
     std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(
         RegType::AX, getAssemblyType(irBinary.type));
     insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
 
-    const auto zero = getZeroImmOfType(irBinary.type);
+    const auto zero = getZeroImmOfType(src1->type);
     const auto regDX = std::make_shared<RegisterOperand>(
         RegType::DX, getAssemblyType(irBinary.type));
     insts.emplace_back(std::make_unique<MoveInst>(zero, regDX, src1->type));
 
-    std::shared_ptr<Operand> src2 = operand(irBinary.source2);
+    std::shared_ptr<Operand> src2 = operand(irBinary.rhs);
     insts.emplace_back(std::make_unique<DivInst>(src2, src1->type));
 
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
@@ -402,13 +402,25 @@ void GenerateAsmTree::genUnsignedBinaryRemainderInst(const Ir::BinaryInst& irBin
 
 void GenerateAsmTree::genBinaryBasicInst(const Ir::BinaryInst& irBinary)
 {
-    std::shared_ptr<Operand> src1 = operand(irBinary.source1);
+    std::shared_ptr<Operand> src1 = operand(irBinary.lhs);
     std::shared_ptr<Operand> dst = operand(irBinary.destination);
     insts.emplace_back(std::make_unique<MoveInst>(src1, dst, src1->type));
 
     BinaryInst::Operator oper = binaryOperator(irBinary.operation);
-    std::shared_ptr<Operand> src2 = operand(irBinary.source2);
+    std::shared_ptr<Operand> src2 = operand(irBinary.rhs);
     insts.emplace_back(std::make_unique<BinaryInst>(src2, dst, oper, src1->type));
+}
+
+void GenerateAsmTree::genBinaryShiftInst(const Ir::BinaryInst& irBinary)
+{
+    std::shared_ptr<Operand> lhs = operand(irBinary.lhs);
+    std::shared_ptr<Operand> dst = operand(irBinary.destination);
+    insts.emplace_back(std::make_unique<MoveInst>(lhs, dst, lhs->type));
+
+    const bool isSigned = irBinary.type == Type::I32 || irBinary.type == Type::I64;
+    BinaryInst::Operator oper = getShiftOperator(irBinary.operation, isSigned);
+    std::shared_ptr<Operand> rhs = operand(irBinary.rhs);
+    insts.emplace_back(std::make_unique<BinaryInst>(rhs, dst, oper, lhs->type));
 }
 
 void GenerateAsmTree::returnInst(const Ir::ReturnInst& returnInst)
@@ -510,20 +522,39 @@ BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
         case IrOper::BitwiseAnd:   return AsmOper::BitwiseAnd;
         case IrOper::BitwiseOr:    return AsmOper::BitwiseOr;
         case IrOper::BitwiseXor:   return AsmOper::BitwiseXor;
-
-        case IrOper::LeftShift:    return AsmOper::LeftShift;
-        case IrOper::RightShift:   return AsmOper::RightShift;
         default:
             throw std::invalid_argument("Invalid BinaryOperation type: " +
                 std::to_string(static_cast<int>(type)));
     }
 }
 
-BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const bool signedOper)
+BinaryInst::Operator getShiftOperator(const Ir::BinaryInst::Operation type, const bool isSigned)
+{
+    using IrOper = Ir::BinaryInst::Operation;
+    using AsmOper = BinaryInst::Operator;
+    if (isSigned) {
+        switch (type) {
+            case IrOper::LeftShift:    return AsmOper::LeftShiftSigned;
+            case IrOper::RightShift:   return AsmOper::RightShiftSigned;
+            default:
+                throw std::invalid_argument("Invalid BinaryOperation type: " +
+                    std::to_string(static_cast<int>(type)));
+        }
+    }
+    switch (type) {
+        case IrOper::LeftShift:    return AsmOper::LeftShiftUnsigned;
+        case IrOper::RightShift:   return AsmOper::RightShiftUnsigned;
+        default:
+            throw std::invalid_argument("Invalid BinaryOperation type: " +
+                std::to_string(static_cast<int>(type)));
+    }
+}
+
+BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const bool isSigned)
 {
     using IrOper = Ir::BinaryInst::Operation;
     using BinCond = BinaryInst::CondCode;
-    if (signedOper)
+    if (isSigned)
         switch (oper) {
             case IrOper::Equal:             return BinCond::E;
             case IrOper::NotEqual:          return BinCond::NE;
@@ -534,17 +565,16 @@ BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const bool s
             default:
                 throw std::invalid_argument("Invalid BinaryOperation type");
         }
-    else
-        switch (oper) {
-            case IrOper::Equal:             return BinCond::E;
-            case IrOper::NotEqual:          return BinCond::NE;
-            case IrOper::LessThan:          return BinCond::B;
-            case IrOper::LessOrEqual:       return BinCond::BE;
-            case IrOper::GreaterThan:       return BinCond::A;
-            case IrOper::GreaterOrEqual:    return BinCond::AE;
-            default:
-                    throw std::invalid_argument("Invalid BinaryOperation type");
-        }
+    switch (oper) {
+        case IrOper::Equal:             return BinCond::E;
+        case IrOper::NotEqual:          return BinCond::NE;
+        case IrOper::LessThan:          return BinCond::B;
+        case IrOper::LessOrEqual:       return BinCond::BE;
+        case IrOper::GreaterThan:       return BinCond::A;
+        case IrOper::GreaterOrEqual:    return BinCond::AE;
+        default:
+                throw std::invalid_argument("Invalid BinaryOperation type");
+    }
 }
 
 std::shared_ptr<Operand> GenerateAsmTree::operand(const std::shared_ptr<Ir::Value>& value)
@@ -618,16 +648,12 @@ void fixUpInstructions(Function& function, const i32 stackAlloc)
     fixUpInstructions.fixUp();
 }
 
-std::shared_ptr<ImmOperand> getZeroImmOfType(const Type type)
+std::shared_ptr<ImmOperand> getZeroImmOfType(const AssemblyType type)
 {
-    if (type == Type::I32)
+    if (type == AssemblyType::LongWord)
         return std::make_shared<ImmOperand>(0);
-    if (type == Type::U32)
-        return std::make_shared<ImmOperand>(0u);
-    if (type == Type::I64)
+    if (type == AssemblyType::QuadWord)
         return std::make_shared<ImmOperand>(0l);
-    if (type == Type::U64)
-        return std::make_shared<ImmOperand>(0ul);
     std::abort();
 }
 

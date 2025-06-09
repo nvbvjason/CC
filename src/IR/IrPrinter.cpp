@@ -99,9 +99,9 @@ void IrPrinter::print(const UnaryInst& inst)
 void IrPrinter::print(const BinaryInst& inst)
 {
     IndentGuard guard(m_indentLevel);
-    addLine(print(*inst.source1) + " " +
+    addLine(print(*inst.lhs) + " " +
             to_string(inst.operation) + " " +
-            print(*inst.source2) + " -> " +
+            print(*inst.rhs) + " -> " +
             print(*inst.destination));
 }
 

@@ -256,32 +256,36 @@ std::string asmBinaryOperator(const BinaryInst::Operator oper, const AssemblyTyp
     using Operator = BinaryInst::Operator;
     if (type == AssemblyType::LongWord) {
         switch (oper) {
-            case Operator::Mul:             return "imull";
-            case Operator::Add:             return "addl";
-            case Operator::Sub:             return "subl";
+            case Operator::Mul:                 return "imull";
+            case Operator::Add:                 return "addl";
+            case Operator::Sub:                 return "subl";
 
-            case Operator::BitwiseAnd:      return "andl";
-            case Operator::BitwiseOr:       return "orl";
-            case Operator::BitwiseXor:      return "xorl";
+            case Operator::BitwiseAnd:          return "andl";
+            case Operator::BitwiseOr:           return "orl";
+            case Operator::BitwiseXor:          return "xorl";
 
-            case Operator::LeftShift:       return "shll";
-            case Operator::RightShift:      return "sarl";
+            case Operator::LeftShiftSigned:     return "shll";
+            case Operator::LeftShiftUnsigned:   return "sall";
+            case Operator::RightShiftSigned:    return "sarl";
+            case Operator::RightShiftUnsigned:  return "shrl";
             default:
                 return "not set asmBinaryOperator";
         }
     }
     if (type == AssemblyType::QuadWord) {
         switch (oper) {
-            case Operator::Mul:             return "imulq";
-            case Operator::Add:             return "addq";
-            case Operator::Sub:             return "subq";
+            case Operator::Mul:                 return "imulq";
+            case Operator::Add:                 return "addq";
+            case Operator::Sub:                 return "subq";
 
-            case Operator::BitwiseAnd:      return "andq";
-            case Operator::BitwiseOr:       return "orq";
-            case Operator::BitwiseXor:      return "xorq";
+            case Operator::BitwiseAnd:          return "andq";
+            case Operator::BitwiseOr:           return "orq";
+            case Operator::BitwiseXor:          return "xorq";
 
-            case Operator::LeftShift:       return "shlq";
-            case Operator::RightShift:      return "sarq";
+            case Operator::LeftShiftSigned:     return "shlq";
+            case Operator::LeftShiftUnsigned:   return "salq";
+            case Operator::RightShiftSigned:    return "sarq";
+            case Operator::RightShiftUnsigned:  return "shrq";
             default:
                 return "not set asmBinaryOperator";
         }
