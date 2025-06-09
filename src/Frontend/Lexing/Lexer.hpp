@@ -3,6 +3,8 @@
 #ifndef CC_LEXING_LEXER_HPP
 #define CC_LEXING_LEXER_HPP
 
+#include <regex>
+
 #include "Token.hpp"
 
 #include <string>
@@ -39,6 +41,7 @@ class Lexer {
         {"long", Token::Type::LongKeyword},
         {"signed", Token::Type::Signed},
         {"unsigned", Token::Type::Unsigned},
+        {"double", Token::Type::DoubleKeyword},
     };
 public:
     explicit Lexer(const std::string& input)
@@ -52,12 +55,14 @@ private:
     bool match(char expected);
     bool match(const std::string& expected);
     char advance();
-    void integer();
+    void number();
+    void floating();
     void identifier();
     void scanToken();
     void addToken(Token::Type type);
 };
 
-}
+bool isValid(const std::string& input, const std::regex& regex);
 
+}
 #endif // CC_LEXING_LEXER_HPP

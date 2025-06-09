@@ -26,8 +26,9 @@ bool isSigned(const Type t)
         case Type::U64:
         case Type::U32:
             return false;
+        default: ;
+        std::unreachable();
     }
-    return false;
 }
 
 i32 getSize(const Type t)

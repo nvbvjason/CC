@@ -7,12 +7,9 @@
 
 #include <string>
 #include <utility>
-#include <ostream>
-#include <regex>
 #include <variant>
 
 namespace Lexing {
-
 
 struct Token {
     enum class Type : u16 {
@@ -60,6 +57,7 @@ struct Token {
         UnsignedIntegerLiteral,          // Unsigned Integer literals
         LongLiteral,                     // Long literal
         UnsignedLongLiteral,             // Unsigned long literals
+        DoubleLiteral,                   // Double literal
 
         // Assignment
         Equal,                           // =
@@ -79,10 +77,11 @@ struct Token {
         Colon,                           // :
 
         // Keywords
-        Return,                          // 'return'
-        Void,                            // 'void'
-        IntKeyword,                      // 'int'
-        LongKeyword,                     // 'long'
+        Return,                          // return
+        Void,                            // void
+        IntKeyword,                      // int
+        LongKeyword,                     // long
+        DoubleKeyword,                   // double
         If,                              // if
         Else,                            // else
         Do,                              // do
@@ -104,7 +103,7 @@ struct Token {
         NotAToken,                       // maybe bad design
         Invalid                          // Invalid token
     };
-    std::variant<i32, i64, u32, u64> m_data;
+    std::variant<i32, i64, u32, u64, double> m_data;
     i32 m_line;
     u16 m_column;
     Type m_type;
@@ -117,11 +116,11 @@ struct Token {
     [[nodiscard]] u32 getU32Value() const { return std::get<u32>(m_data); }
     [[nodiscard]] i64 getI64Value() const { return std::get<i64>(m_data); }
     [[nodiscard]] u64 getU64Value() const { return std::get<u64>(m_data); }
+    [[nodiscard]] u64 getDoubleValue() const { return std::get<double>(m_data); }
     [[nodiscard]] std::string getTypeName() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Token& token);
-bool isValid(const std::string& input, const std::regex& regex);
 bool operator==(const Token& lhs, const Token& rhs);
 
 }

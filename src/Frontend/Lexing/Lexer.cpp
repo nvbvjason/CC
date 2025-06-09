@@ -2,7 +2,6 @@
 
 #include <string>
 #include <cctype>
-#include <algorithm>
 #include <climits>
 
 namespace Lexing {
@@ -188,7 +187,9 @@ void Lexer::scanToken()
             break;
         default:
             if (isdigit(ch))
-                integer();
+                number();
+            else if (ch == '.')
+                floating();
             else if (isalpha(ch) || ch == '_')
                 identifier();
             else
@@ -243,10 +244,16 @@ char Lexer::advance()
     return c_source[m_current++];
 }
 
-void Lexer::integer()
+
+
+void Lexer::number()
 {
-    while (isdigit(peek()))
+    while (!isAtEnd() && isdigit(peek()))
         advance();
+    if (peek() == '.' || tolower(peek()) == 'e') {
+        floating();
+        return;
+    }
     while (!isAtEnd() && isalpha(peek()))
         advance();
     const i32 ahead = m_current - m_start;
@@ -280,6 +287,21 @@ void Lexer::integer()
     addToken(Token::Type::Invalid);
 }
 
+void Lexer::floating()
+{
+    while (!isAtEnd() && (peek() == '_' || peek() == '.' || peek() == '+' || peek() == '-' ||
+        isalpha(peek()) || isdigit(peek())))
+        advance();
+    const i32 ahead = m_current - m_start;
+    const std::string text = c_source.substr(m_start, ahead);
+    static const std::regex patternDouble(R"(^([0-9]*\.[0-9]+|[0-9]+\.?)[Ee][+-]?[0-9]+|[0-9]*\.[0-9]+|[0-9]+\.$)");
+    if (std::regex_match(text, patternDouble)) {
+        addToken(Token::Type::DoubleLiteral);
+        return;
+    }
+    addToken(Token::Type::Invalid);
+}
+
 void Lexer::identifier()
 {
     while (isalnum(peek()) || peek() == '_')
@@ -307,6 +329,14 @@ void Lexer::addToken(const Token::Type type)
         m_tokens.back().m_data = std::stoul(text);
     if (type == Token::Type::UnsignedIntegerLiteral)
         m_tokens.back().m_data = static_cast<u32>(std::stoull(text));
+    if (type == Token::Type::DoubleLiteral) {
+        try {
+            double value = std::stod(text);
+            m_tokens.back().m_data = value;
+        } catch (const std::out_of_range&) {
+            m_tokens.back().m_data = 0.0; // Or handle differently (e.g., mark token as invalid)
+        }
+    }
 }
 
 bool isValid(const std::string& input, const std::regex& regex)

@@ -1,5 +1,7 @@
 #include "Token.hpp"
 
+#include <ostream>
+
 namespace Lexing {
 
 std::string Token::getTypeName() const
@@ -51,6 +53,7 @@ std::string Token::getTypeName() const
         case Type::UnsignedIntegerLiteral:  return "Unsigned Integer";
         case Type::LongLiteral:             return "Long";
         case Type::UnsignedLongLiteral:     return "Unsigned Long";
+        case Type::DoubleLiteral:           return "Double";
 
         // Assignment
         case Type::Equal:                   return "Assign";
@@ -74,6 +77,7 @@ std::string Token::getTypeName() const
         case Type::Void:                    return "Void";
         case Type::IntKeyword:              return "Int";
         case Type::LongKeyword:             return "Long";
+        case Type::DoubleKeyword:           return "Double";
         case Type::If:                      return "If";
         case Type::Else:                    return "Else";
         case Type::Do:                      return "Do";

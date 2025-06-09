@@ -17,27 +17,27 @@ namespace Semantics {
 template<typename TargetType>
 void processSwitchCase(const Parsing::ConstExpr* constantExpr,
                        std::unordered_map<std::string,
-                           std::vector<std::variant<i32, i64, u32, u64>>>& switchCases,
-                        const std::string& switchLabel,
-                        Parsing::CaseStmt& caseStmt, bool& valid)
+                       std::vector<std::variant<i32, i64, u32, u64>>>& switchCases,
+                       const std::string& switchLabel,
+                       Parsing::CaseStmt& caseStmt, bool& valid)
 {
-        TargetType value = 0;
-        if (constantExpr->type->kind == Type::I32)
-            value = std::get<i32>(constantExpr->value);
-        if (constantExpr->type->kind == Type::I64)
-            value = std::get<i64>(constantExpr->value);
-        if (constantExpr->type->kind == Type::U32)
-            value = std::get<u32>(constantExpr->value);
-        if (constantExpr->type->kind == Type::U64)
-            value = std::get<u64>(constantExpr->value);
-        const auto it = switchCases.find(switchLabel);
-        for (const auto& v : it->second)
-            if (value == std::get<TargetType>(v)) {
-                valid = false;
-                return;
-            }
-        it->second.emplace_back(value);
-        caseStmt.identifier += std::to_string(value);
+    TargetType value = 0;
+    if (constantExpr->type->kind == Type::I32)
+        value = std::get<i32>(constantExpr->value);
+    else if (constantExpr->type->kind == Type::I64)
+        value = std::get<i64>(constantExpr->value);
+    else if (constantExpr->type->kind == Type::U32)
+        value = std::get<u32>(constantExpr->value);
+    else if (constantExpr->type->kind == Type::U64)
+        value = std::get<u64>(constantExpr->value);
+    const auto it = switchCases.find(switchLabel);
+    for (const std::variant<i32, i64, u32, u64>& v : it->second)
+        if (value == std::get<TargetType>(v)) {
+            valid = false;
+            return;
+        }
+    it->second.emplace_back(value);
+    caseStmt.identifier += std::to_string(value);
 }
 
 class LoopLabeling : public Parsing::ASTTraverser {

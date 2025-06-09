@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "CompilerDriver.hpp"
-#include "Frontend/Lexing/Lexer.hpp"
-#include "Frontend/Parsing/Parser.hpp"
+#include "../src/Frontend/Lexing/Lexer.hpp"
+#include "../src/Frontend/Parsing/Parser.hpp"
 #include "../src/Frontend/Semantics/VariableResolution.hpp"
 #include "GotoLabelsUnique.hpp"
 #include "FrontendDriver.hpp"
@@ -714,6 +714,26 @@ TEST(Chapter12_Unsigned, invalidLabels)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter13_Doubles, validLexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_13/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter13_Doubles, inValidLexingValid)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_13/invalid_lex";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_NE(0, getLexerErrors(path)) << path.path().string();
     }
 }
 

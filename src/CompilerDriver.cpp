@@ -20,7 +20,7 @@ static bool fileExists(const std::filesystem::path& name);
 static bool isCommandLineArgumentValid(const std::string& argument);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
 static void makeLib(const std::string& asmFile, const std::string& outputFile);
-void fixAsm(CodeGen::Program& codegenProgram);
+void fixAsm(const CodeGen::Program& codegenProgram);
 static void cleanUp();
 
 i32 CompilerDriver::run()
@@ -140,12 +140,12 @@ void printIr(const Ir::Program& irProgram)
     std::cout << printer.print(irProgram);
 }
 
-void fixAsm(CodeGen::Program& codegenProgram)
+void fixAsm(const CodeGen::Program& codegenProgram)
 {
     for (auto& topLevel : codegenProgram.topLevels) {
         if (topLevel->type == CodeGen::TopLevel::Type::StaticVariable)
             continue;
-        auto function = dynamic_cast<CodeGen::Function*>(topLevel.get());
+        const auto function = dynamic_cast<CodeGen::Function*>(topLevel.get());
         const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function);
         CodeGen::fixUpInstructions(*function, stackAlloc);
     }

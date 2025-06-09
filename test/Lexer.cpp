@@ -149,6 +149,11 @@ TEST(LexerTests, Unsigned)
     TestSingleTokenLexing("unsigned", TokenType::Unsigned);
 }
 
+TEST(LexerTests, Double)
+{
+    TestSingleTokenLexing("double", TokenType::DoubleKeyword);
+}
+
 TEST(LexerTests, Percent)
 {
     TestSingleTokenLexing("%", TokenType::Percent);

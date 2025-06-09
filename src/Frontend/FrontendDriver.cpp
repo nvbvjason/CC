@@ -12,11 +12,11 @@
 #include "LoopLabeling.hpp"
 #include "ValidateReturn.hpp"
 #include "TypeResolution.hpp"
+#include "DeSugarCompoundAssign.hpp"
 
 #include <fstream>
 #include <iostream>
 
-#include "DeSugarCompoundAssign.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
@@ -28,8 +28,12 @@ static std::string getSourceCode(const std::filesystem::path& inputFile);
 std::tuple<Ir::Program, ErrorCode> FrontendDriver::run() const
 {
     std::vector<Lexing::Token> tokens;
-    if (lex(tokens, m_inputFile) != 0)
+    if (lex(tokens, m_inputFile) != 0) {
+        if (m_arg == "--printTokens")
+            for (const auto& token : tokens)
+                std::cout << token << '\n';
         return {std::move(Ir::Program()), ErrorCode::Lexer};
+    }
     if (m_arg == "--lex")
         return {Ir::Program(), ErrorCode::OK};
     if (m_arg == "--printTokens") {

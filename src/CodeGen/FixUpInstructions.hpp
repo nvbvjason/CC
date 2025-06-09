@@ -22,7 +22,7 @@ public:
     void visit(MoveSXInst& moveSXInst) override;
     void visit(MoveZeroExtendInst& moveZero) override;
     void visit(BinaryInst& binary) override;
-    void visit(CmpInst& cmp) override;
+    void visit(CmpInst& cmpInst) override;
     void visit(IdivInst& idiv) override;
     void visit(DivInst& div) override;
     void visit(PushInst&) override {}

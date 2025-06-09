@@ -5,8 +5,6 @@
 
 #include <cassert>
 #include <random>
-#include <stdexcept>
-#include <sys/stat.h>
 
 namespace {
 using RegType = CodeGen::RegisterOperand::Kind;
@@ -271,8 +269,9 @@ void GenerateAsmTree::genBinaryInst(const Ir::BinaryInst& irBinary)
             genBinaryCondInst(irBinary);
             break;
         default:
-            throw std::runtime_error("Unsupported binary operation");
+            assert("Unsupported binary operation");
     }
+    std::unreachable();
 }
 
 void GenerateAsmTree::genZeroExtendInst(const Ir::ZeroExtendInst& zeroExtend)
