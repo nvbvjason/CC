@@ -28,7 +28,7 @@ public:
     void genBlock(const Parsing::Block& block);
     void genBlockItem(const Parsing::BlockItem& blockItem);
     void genDeclaration(const Parsing::Declaration& decl);
-    void genDeclarationStaticLocal(const Parsing::VarDecl& varDecl);
+    void genStaticLocal(const Parsing::VarDecl& varDecl);
     void genForInit(const Parsing::ForInit& forInit);
     void genStmt(const Parsing::Stmt& stmt);
     void genIfStmt(const Parsing::IfStmt& ifStmt);

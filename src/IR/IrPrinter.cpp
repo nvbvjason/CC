@@ -88,6 +88,30 @@ void IrPrinter::print(const TruncateInst& inst)
     addLine("Truncate " + print(*inst.src) + " -> " + print(*inst.dst));
 }
 
+void IrPrinter::print(const DoubleToIntInst& inst)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("DoubleToInt " + print(*inst.src) + " -> " + print(*inst.dst));
+}
+
+void IrPrinter::print(const DoubleToUIntInst& inst)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("DoubleToUInt " + print(*inst.src) + " -> " + print(*inst.dst));
+}
+
+void IrPrinter::print(const IntToDoubleInst& inst)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("IntToDouble " + print(*inst.src) + " -> " + print(*inst.dst));
+}
+
+void IrPrinter::print(const UIntToDoubleInst& inst)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("UIntToDouble " + print(*inst.src) + " -> " + print(*inst.dst));
+}
+
 void IrPrinter::print(const UnaryInst& inst)
 {
     IndentGuard guard(m_indentLevel);

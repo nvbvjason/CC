@@ -36,6 +36,10 @@ private:
     void print(const SignExtendInst& inst);
     void print(const ZeroExtendInst& inst);
     void print(const TruncateInst& inst);
+    void print(const DoubleToIntInst& inst);
+    void print(const DoubleToUIntInst& inst);
+    void print(const IntToDoubleInst& inst);
+    void print(const UIntToDoubleInst& inst);
     void print(const UnaryInst& inst);
     void print(const BinaryInst& inst);
     void print(const CopyInst& inst);

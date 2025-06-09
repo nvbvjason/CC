@@ -137,7 +137,7 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
     if (decl.kind == Parsing::Declaration::Kind::VarDecl) {
         const auto varDecl = dynamic_cast<const Parsing::VarDecl*>(&decl);
         if (varDecl->storage == Storage::Static)
-            return genDeclarationStaticLocal(*varDecl);
+            return genStaticLocal(*varDecl);
         if (varDecl->init == nullptr)
             return;
         std::shared_ptr<Value> value = genInst(*varDecl->init);
@@ -149,7 +149,7 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
     }
 }
 
-void GenerateIr::genDeclarationStaticLocal(const Parsing::VarDecl& varDecl)
+void GenerateIr::genStaticLocal(const Parsing::VarDecl& varDecl)
 {
     std::shared_ptr<Value> value;
     const bool defined = varDecl.init != nullptr;
@@ -455,6 +455,14 @@ std::shared_ptr<Value> GenerateIr::genCastInst(const Parsing::Expr& parsingExpr)
     auto dst = std::make_shared<ValueVar>(iden, type);
     if (getSize(type) == getSize(innerType))
         m_instructions.emplace_back(std::make_unique<CopyInst>(result, dst, type));
+    else if (type == Type::Double && !isSigned(innerType))
+        m_instructions.emplace_back(std::make_unique<DoubleToUIntInst>(result, dst, type));
+    else if (type == Type::Double && isSigned(innerType))
+        m_instructions.emplace_back(std::make_unique<DoubleToIntInst>(result, dst, type));
+    else if (!isSigned(type) && innerType == Type::Double)
+        m_instructions.emplace_back(std::make_unique<UIntToDoubleInst>(result, dst, type));
+    else if (isSigned(type) && innerType == Type::Double)
+        m_instructions.emplace_back(std::make_unique<IntToDoubleInst>(result, dst, type));
     else if (getSize(type) < getSize(innerType))
         m_instructions.emplace_back(std::make_unique<TruncateInst>(result, dst, innerType));
     else if (isSigned(innerType))
