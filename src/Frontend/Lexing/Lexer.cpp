@@ -264,21 +264,17 @@ void Lexer::integer()
         return;
     }
     if (isValid(text, patternU)) {
-        const u64 num = std::stoull(text);
-        if (UINT_MAX < num)
+        if (const u64 num = std::stoul(text); UINT_MAX < num)
             addToken(Token::Type::UnsignedLongLiteral);
         else
             addToken(Token::Type::UnsignedIntegerLiteral);
         return;
     }
     if (isValid(text, patternI)) {
-        try {
-            int num = std::stoi(text);
-            addToken(Token::Type::IntegerLiteral);
-        }
-        catch (const std::out_of_range&) {
+        if (const i64 num = std::stol(text); INT_MAX < num)
             addToken(Token::Type::LongLiteral);
-        }
+        else
+            addToken(Token::Type::IntegerLiteral);
         return;
     }
     addToken(Token::Type::Invalid);

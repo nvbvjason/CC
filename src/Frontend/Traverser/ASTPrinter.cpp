@@ -266,7 +266,10 @@ void ASTPrinter::visit(const SwitchStmt& switchStmt)
 void ASTPrinter::visit(const UnaryExpr& unaryExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("Unary " + unaryOpToString(unaryExpr.op) + " " + varTypeToString(unaryExpr.type->kind));
+    if (unaryExpr.type)
+        addLine("Unary " + unaryOpToString(unaryExpr.op) + " " + varTypeToString(unaryExpr.type->kind));
+    else
+        addLine("Unary " + unaryOpToString(unaryExpr.op));
     ConstASTTraverser::visit(unaryExpr);
 }
 
@@ -280,7 +283,10 @@ void ASTPrinter::visit(const CastExpr& castExpr)
 void ASTPrinter::visit(const BinaryExpr& binaryExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("Binary " + binaryOpToString(binaryExpr.op) + " " + varTypeToString(binaryExpr.type->kind));
+    if (binaryExpr.type)
+        addLine("Binary " + binaryOpToString(binaryExpr.op) + " " + varTypeToString(binaryExpr.type->kind));
+    else
+        addLine("Binary " + binaryOpToString(binaryExpr.op));
     ConstASTTraverser::visit(binaryExpr);
 }
 
@@ -300,6 +306,10 @@ void ASTPrinter::visit(const ConstExpr& constExpr)
         addLine(std::to_string(std::get<i32>(constExpr.value)) + ' ' + varTypeToString(Type::I32));
     else if (constExpr.type->kind == Type::I64)
         addLine(std::to_string(std::get<i64>(constExpr.value)) + ' ' + varTypeToString(Type::I64));
+    else if (constExpr.type->kind == Type::U32)
+        addLine(std::to_string(std::get<u32>(constExpr.value)) + ' ' + varTypeToString(Type::U32));
+    else if (constExpr.type->kind == Type::U64)
+        addLine(std::to_string(std::get<u64>(constExpr.value)) + ' ' + varTypeToString(Type::U64));
     ConstASTTraverser::visit(constExpr);
 }
 

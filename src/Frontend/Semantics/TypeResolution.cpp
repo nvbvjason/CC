@@ -1,7 +1,5 @@
 #include "TypeResolution.hpp"
-
 #include "ASTIr.hpp"
-#include "ASTTypes.hpp"
 #include "TypeConversion.hpp"
 
 namespace Semantics {
@@ -100,18 +98,17 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     }
     if (varDecl.init == nullptr)
         return;
-    if (varDecl.init->kind == Parsing::Expr::Kind::Constant) {
+    if (varDecl.init->kind == Parsing::Expr::Kind::Constant &&
+        varDecl.type->kind != varDecl.init->type->kind) {
         const auto constExpr = static_cast<const Parsing::ConstExpr*>(varDecl.init.get());
-        if (varDecl.type->kind == Type::I64 && varDecl.init->type->kind == Type::I32) {
-            varDecl.init = std::make_unique<Parsing::ConstExpr>(
-                static_cast<i64>(std::get<i32>(constExpr->value)),
-                std::make_unique<Parsing::VarType>(varDecl.type->kind));
-        }
-        if (varDecl.type->kind == Type::I32 && varDecl.init->type->kind == Type::I64) {
-            varDecl.init = std::make_unique<Parsing::ConstExpr>(
-                static_cast<i32>(std::get<i64>(constExpr->value)),
-                std::make_unique<Parsing::VarType>(varDecl.type->kind));
-        }
+        if (varDecl.type->kind == Type::U32)
+            convertConstantExpr<u32, Type::U32>(varDecl, *constExpr);
+        else if (varDecl.type->kind == Type::U64)
+            convertConstantExpr<u64, Type::U64>(varDecl, *constExpr);
+        else if (varDecl.type->kind == Type::I32)
+            convertConstantExpr<i32, Type::I32>(varDecl, *constExpr);
+        else if (varDecl.type->kind == Type::I64)
+            convertConstantExpr<i64, Type::I64>(varDecl, *constExpr);
     }
     else {
         if (varDecl.type->kind != varDecl.init->type->kind) {

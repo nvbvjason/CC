@@ -37,6 +37,12 @@ void PseudoRegisterReplacer::visit(MoveSXInst& moveSX)
     replaceIfPseudo(moveSX.dst);
 }
 
+void PseudoRegisterReplacer::visit(MoveZeroExtendInst& moveZero)
+{
+    replaceIfPseudo(moveZero.src);
+    replaceIfPseudo(moveZero.dst);
+}
+
 void PseudoRegisterReplacer::visit(UnaryInst& unary)
 {
     replaceIfPseudo(unary.destination);
@@ -51,6 +57,11 @@ void PseudoRegisterReplacer::visit(BinaryInst& binary)
 void PseudoRegisterReplacer::visit(IdivInst& idiv)
 {
     replaceIfPseudo(idiv.operand);
+}
+
+void PseudoRegisterReplacer::visit(DivInst& div)
+{
+    replaceIfPseudo(div.operand);
 }
 
 void PseudoRegisterReplacer::visit(CmpInst& cmpInst)

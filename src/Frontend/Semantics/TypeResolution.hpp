@@ -5,12 +5,30 @@
 
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
+#include "ASTTypes.hpp"
 
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
  namespace Semantics {
+
+template<typename TargetType, Type TargetKind>
+void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
+{
+    TargetType value;
+    if (constExpr.type->kind == Type::I32)
+        value = std::get<i32>(constExpr.value);
+    else if (constExpr.type->kind == Type::I64)
+        value = std::get<i64>(constExpr.value);
+    else if (constExpr.type->kind == Type::U32)
+        value = std::get<u32>(constExpr.value);
+    else if (constExpr.type->kind == Type::U64)
+        value = std::get<u64>(constExpr.value);
+    varDecl.init = std::make_unique<Parsing::ConstExpr>(
+        value, std::make_unique<Parsing::VarType>(TargetKind)
+    );
+}
 
 class TypeResolution : public Parsing::ASTTraverser {
     struct FuncEntry {

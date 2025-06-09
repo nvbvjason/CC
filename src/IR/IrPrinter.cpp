@@ -76,6 +76,12 @@ void IrPrinter::print(const SignExtendInst& inst)
     addLine("SignExtend " + print(*inst.src) + " -> " + print(*inst.dst));
 }
 
+void IrPrinter::print(const ZeroExtendInst& inst)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("ZeroExtend " + print(*inst.src) + " -> " + print(*inst.dst));
+}
+
 void IrPrinter::print(const TruncateInst& inst)
 {
     IndentGuard guard(m_indentLevel);
@@ -153,6 +159,10 @@ std::string IrPrinter::print(const ValueConst& val)
         return "Const(" + std::to_string(std::get<i32>(val.value)) + ") i32";
     if (val.type == Type::I64)
         return "Const(" + std::to_string(std::get<i64>(val.value)) + ") i64";
+    if (val.type == Type::U32)
+        return "Const(" + std::to_string(std::get<u32>(val.value)) + ") u32";
+    if (val.type == Type::U64)
+        return "Const(" + std::to_string(std::get<u64>(val.value)) + ") u64";
     std::unreachable();
 }
 

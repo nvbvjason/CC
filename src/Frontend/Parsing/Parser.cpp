@@ -497,7 +497,7 @@ std::unique_ptr<Expr> Parser::factorParse()
         }
         case TokenType::UnsignedLongLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.getU64Value(), std::make_unique<VarType>(Type::U32));
+                lexeme.getU64Value(), std::make_unique<VarType>(Type::U64));
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;

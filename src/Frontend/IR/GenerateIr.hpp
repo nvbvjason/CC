@@ -30,7 +30,7 @@ public:
     void generateDeclaration(const Parsing::Declaration& decl);
     void generateDeclarationStaticLocal(const Parsing::VarDecl& varDecl);
     void generateForInit(const Parsing::ForInit& forInit);
-    void generateStmt(const Parsing::Stmt& stmts);
+    void generateStmt(const Parsing::Stmt& stmt);
     void generateIfStmt(const Parsing::IfStmt& ifStmt);
     void generateIfElseStmt(const Parsing::IfStmt& ifStmt);
     void generateGotoStmt(const Parsing::GotoStmt& gotoStmt);

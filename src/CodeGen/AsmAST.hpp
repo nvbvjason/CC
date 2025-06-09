@@ -25,6 +25,7 @@ instruction = Mov(assembly_type, operand src, operand dst)
             | Binary(binary_operator, assembly_type, operand, operand)
             | Cmp(operand, operand)
             | Idiv(assembly_type, operand)
+            | Div(assembly_type, operand)
             | Cdq(assembly_type)
             | Jmp(identifier)
             | JmpCC(cond_code, identifier)
@@ -42,7 +43,7 @@ operand = Imm(int)
         | Pseudo(identifier)
         | Stack(int)
         | Data(identifier)
-cond_code = E | NE | G | GE | L | LE
+cond_code = E | NE | G | GE | L | LE | A | AE | B | BE
 reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP
 
 */
@@ -67,29 +68,30 @@ struct Operand {
     };
     Kind kind;
     AssemblyType type;
+    const bool isSigned = true;
 
     virtual ~Operand() = default;
 
     Operand() = delete;
 protected:
-    explicit Operand(const Kind k)
-        : kind(k) {}
     Operand(const Kind k, const AssemblyType t)
-    : kind(k), type(t) {}
+      : kind(k), type(t) {}
+
+    Operand(const Kind k, const AssemblyType t, const bool isSigned)
+        : kind(k), type(t), isSigned(isSigned) {}
 };
 
 struct ImmOperand final : Operand {
     std::variant<i32, i64, u32, u64> value;
 
     explicit ImmOperand(const i64 value)
-        : Operand(Kind::Imm, AssemblyType::QuadWord), value(value) {}
+        : Operand(Kind::Imm, AssemblyType::QuadWord, true), value(value) {}
     explicit ImmOperand(const i32 value)
-        : Operand(Kind::Imm, AssemblyType::LongWord), value(value) {}
+        : Operand(Kind::Imm, AssemblyType::LongWord, true), value(value) {}
     explicit ImmOperand(const u64 value)
-        : Operand(Kind::Imm, AssemblyType::QuadWord), value(value) {}
+        : Operand(Kind::Imm, AssemblyType::QuadWord, false), value(value) {}
     explicit ImmOperand(const u32 value)
-        : Operand(Kind::Imm, AssemblyType::LongWord), value(value) {}
-
+        : Operand(Kind::Imm, AssemblyType::LongWord, false), value(value) {}
 
     ImmOperand() = delete;
 };
@@ -133,11 +135,11 @@ struct DataOperand final : Operand {
 
 struct Inst {
     enum class Kind : u8 {
-        Move, MoveSX, Unary, Binary, Cmp, Idiv, Cdq, Jmp, JmpCC, SetCC, Label,
+        Move, MoveSX, MovZeroExtend, Unary, Binary, Cmp, Idiv, Div, Cdq, Jmp, JmpCC, SetCC, Label,
         Push, Call, Ret
     };
     enum class CondCode : u8 {
-        E, NE, G, GE, L, LE
+        E, NE, G, GE, L, LE, A, AE, B, BE
     };
     Kind kind;
 
@@ -179,6 +181,22 @@ struct MoveInst final : Inst {
     void accept(InstVisitor& visitor) override;
 
     MoveInst() = delete;
+};
+
+struct MoveZeroExtendInst final : Inst {
+    std::shared_ptr<Operand> src;
+    std::shared_ptr<Operand> dst;
+    AssemblyType type;
+
+    MoveZeroExtendInst(
+        std::shared_ptr<Operand> src,
+        std::shared_ptr<Operand> dst,
+        const AssemblyType t)
+        : Inst(Kind::MovZeroExtend), src(std::move(src)), dst(std::move(dst)), type(t) {}
+
+    void accept(InstVisitor& visitor) override;
+
+    MoveZeroExtendInst() = delete;
 };
 
 struct UnaryInst final : Inst {
@@ -240,6 +258,18 @@ struct IdivInst final : Inst {
     void accept(InstVisitor& visitor) override;
 
     IdivInst() = delete;
+};
+
+struct DivInst final : Inst {
+    std::shared_ptr<Operand> operand;
+    AssemblyType type;
+
+    DivInst(std::shared_ptr<Operand> operand, const AssemblyType ty)
+        : Inst(Kind::Div), operand(std::move(operand)), type(ty) {}
+
+    void accept(InstVisitor& visitor) override;
+
+    DivInst() = delete;
 };
 
 struct CdqInst final : Inst {
@@ -365,10 +395,12 @@ struct InstVisitor {
 
     virtual void visit(MoveInst&) = 0;
     virtual void visit(MoveSXInst&) = 0;
+    virtual void visit(MoveZeroExtendInst&) = 0;
     virtual void visit(UnaryInst&) = 0;
     virtual void visit(BinaryInst&) = 0;
     virtual void visit(CmpInst&) = 0;
     virtual void visit(IdivInst&) = 0;
+    virtual void visit(DivInst&) = 0;
     virtual void visit(CdqInst&) = 0;
     virtual void visit(JmpInst&) = 0;
     virtual void visit(JmpCCInst&) = 0;
@@ -381,10 +413,12 @@ struct InstVisitor {
 
 inline void MoveInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void MoveSXInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
+inline void MoveZeroExtendInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void UnaryInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void BinaryInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void CmpInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void IdivInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
+inline void DivInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void CdqInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void JmpInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void JmpCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }

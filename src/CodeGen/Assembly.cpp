@@ -110,6 +110,14 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
                 result += asmFormatInstruction("idivq", asmOperand(idivInst->operand));
             return;
         }
+        case Inst::Kind::Div: {
+            const auto divInst = dynamic_cast<DivInst*>(instruction.get());
+            if (divInst->type == AssemblyType::LongWord)
+                result += asmFormatInstruction("divl", asmOperand(divInst->operand));
+            if (divInst->type == AssemblyType::QuadWord)
+                result += asmFormatInstruction("divq", asmOperand(divInst->operand));
+            return;
+        }
         case Inst::Kind::Ret: {
             result += asmFormatInstruction("movq", "%rbp, %rsp");
             result += asmFormatInstruction("popq", "%rbp");
@@ -172,9 +180,13 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
             return "invalid pseudo";
         case Operand::Kind::Imm: {
             const auto immOperand = dynamic_cast<ImmOperand*>(operand.get());
-            if (immOperand->type == AssemblyType::LongWord)
+            if (immOperand->type == AssemblyType::LongWord && immOperand->isSigned)
                 return "$" + std::to_string(std::get<i32>(immOperand->value));
-            return "$" + std::to_string(std::get<i64>(immOperand->value));
+            if (immOperand->type == AssemblyType::QuadWord && immOperand->isSigned)
+                return "$" + std::to_string(std::get<i64>(immOperand->value));
+            if (immOperand->type == AssemblyType::LongWord && !immOperand->isSigned)
+                return "$" + std::to_string(std::get<u32>(immOperand->value));
+            return "$" + std::to_string(std::get<u64>(immOperand->value));
         }
         case Operand::Kind::Stack: {
             const auto stackOperand = dynamic_cast<StackOperand*>(operand.get());
@@ -236,6 +248,7 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper, AssemblyType type)
             default:                 return "not set asmUnaryOperator";
         }
     }
+    std::abort();
 }
 
 std::string asmBinaryOperator(const BinaryInst::Operator oper, const AssemblyType type)
@@ -273,6 +286,7 @@ std::string asmBinaryOperator(const BinaryInst::Operator oper, const AssemblyTyp
                 return "not set asmBinaryOperator";
         }
     }
+    std::abort();
 }
 
 std::string asmFormatLabel(const std::string& name)
@@ -287,19 +301,18 @@ std::string createLabel(const std::string& name)
 
 std::string condCode(const BinaryInst::CondCode condCode)
 {
+    using CondCode = BinaryInst::CondCode;
     switch (condCode) {
-        case BinaryInst::CondCode::E:
-            return "e";
-        case BinaryInst::CondCode::NE:
-            return "ne";
-        case BinaryInst::CondCode::L:
-            return "l";
-        case BinaryInst::CondCode::LE:
-            return "le";
-        case BinaryInst::CondCode::G:
-            return "g";
-        case BinaryInst::CondCode::GE:
-            return "ge";
+        case CondCode::E:   return "e";
+        case CondCode::NE:  return "ne";
+        case CondCode::L:   return "l";
+        case CondCode::LE:  return "le";
+        case CondCode::G:   return "g";
+        case CondCode::GE:  return "ge";
+        case CondCode::A:   return "a";
+        case CondCode::AE:  return "ae";
+        case CondCode::B:   return "b";
+        case CondCode::BE:  return "be";
         default:
             return "not set condCode";
     }

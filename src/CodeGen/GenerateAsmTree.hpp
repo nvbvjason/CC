@@ -49,6 +49,7 @@ Var(identifier)         Pseudo(identifier)
 
 namespace CodeGen {
 class GenerateAsmTree {
+    using RegType = RegisterOperand::Kind;
     std::vector<std::unique_ptr<Inst>> insts;
 public:
     void generateProgram(const Ir::Program &program, Program &programCodegen);
@@ -56,22 +57,27 @@ public:
     std::unique_ptr<TopLevel> generateFunction(const Ir::Function& function);
     void transformInst(const std::unique_ptr<Ir::Instruction>& inst);
     void unaryInst(const Ir::UnaryInst& irUnary);
-    void generateUnaryNotInst(const Ir::UnaryInst& irUnary);
+    void genUnaryNotInst(const Ir::UnaryInst& irUnary);
 
-    void binaryInst(const Ir::BinaryInst& irBinary);
+    void genBinaryInst(const Ir::BinaryInst& irBinary);
 
-    void generateSignExtendInst(const Ir::SignExtendInst& signExtend);
-    void generateTruncateInst(const Ir::TruncateInst& truncate);
-    void generateBinaryDivideInst(const Ir::BinaryInst& irBinary);
-    void generateBinaryRemainderInst(const Ir::BinaryInst& irBinary);
-    void generateBinaryCondInst(const Ir::BinaryInst& irBinary);
-    void generateBinaryBasicInst(const Ir::BinaryInst& irBinary);
+    void genZeroExtendInst(const Ir::ZeroExtendInst& zeroExtend);
+    void genSignExtendInst(const Ir::SignExtendInst& signExtend);
+    void genTruncateInst(const Ir::TruncateInst& truncate);
+    void genBinaryDivideInst(const Ir::BinaryInst& irBinary);
+    void genSignedBinaryDivideInst(const Ir::BinaryInst& irBinary);
+    void genUnsignedBinaryDivideInst(const Ir::BinaryInst& irBinary);
+    void genBinaryRemainderInst(const Ir::BinaryInst& irBinary);
+    void genSignedBinaryRemainderInst(const Ir::BinaryInst& irBinary);
+    void genUnsignedBinaryRemainderInst(const Ir::BinaryInst& irBinary);
+    void genBinaryCondInst(const Ir::BinaryInst& irBinary);
+    void genBinaryBasicInst(const Ir::BinaryInst& irBinary);
 
-    void generateJumpInst(const Ir::JumpInst& irJump);
-    void generateJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZero);
-    void generateJumpIfNotZeroInst(const Ir::JumpIfNotZeroInst& jumpIfNotZero);
-    void generateCopyInst(const Ir::CopyInst& type);
-    void generateLabelInst(const Ir::LabelInst& irLabel);
+    void genJumpInst(const Ir::JumpInst& irJump);
+    void genJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZero);
+    void genJumpIfNotZeroInst(const Ir::JumpIfNotZeroInst& jumpIfNotZero);
+    void genCopyInst(const Ir::CopyInst& type);
+    void genLabelInst(const Ir::LabelInst& irLabel);
     void returnInst(const Ir::ReturnInst& returnInst);
 
     void pushFunCallArgs(const Ir::FunCallInst& funcCall);
@@ -81,10 +87,11 @@ public:
 
 std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable);
 
+std::shared_ptr<ImmOperand> getZeroImmOfType(Type type);
 i32 getStackPadding(size_t numArgs);
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
-BinaryInst::CondCode condCode(Ir::BinaryInst::Operation type);
+BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
 AssemblyType getAssemblyType(Type type);
 
 

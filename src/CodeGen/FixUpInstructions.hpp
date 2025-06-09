@@ -19,10 +19,12 @@ public:
         : m_insts(insts), stackAlloc(stackAlloc) {}
 
     void visit(MoveInst& moveInst) override;
-    void visit(MoveSXInst&) override;
+    void visit(MoveSXInst& moveSXInst) override;
+    void visit(MoveZeroExtendInst& moveZero) override;
     void visit(BinaryInst& binary) override;
     void visit(CmpInst& cmp) override;
     void visit(IdivInst& idiv) override;
+    void visit(DivInst& div) override;
     void visit(PushInst&) override {}
     void visit(CallInst&) override {}
 
