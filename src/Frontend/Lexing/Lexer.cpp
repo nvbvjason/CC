@@ -164,21 +164,7 @@ void Lexer::scanToken()
             addToken(Token::Type::Minus);
             break;
         case '/':
-            if (match('=')) {
-                addToken(Token::Type::DivideAssign);
-                break;
-            }
-            if (match('/'))
-                while (peek() != '\n' && !isAtEnd())
-                    advance();
-            else if (match('*')) {
-                while (c_source.substr(m_current, 2) != "*/" && !isAtEnd())
-                    advance();
-                advance();
-                advance();
-            }
-            else
-                addToken(Token::Type::ForwardSlash);
+            forwardSlash();
             break;
         case ' ':
         case '\t':
@@ -196,6 +182,25 @@ void Lexer::scanToken()
                 addToken(Token::Type::Invalid);
             break;
     }
+}
+
+void Lexer::forwardSlash()
+{
+    if (match('=')) {
+        addToken(Token::Type::DivideAssign);
+        return;
+    }
+    if (match('/'))
+        while (peek() != '\n' && !isAtEnd())
+            advance();
+    else if (match('*')) {
+        while (c_source.substr(m_current, 2) != "*/" && !isAtEnd())
+            advance();
+        advance();
+        advance();
+    }
+    else
+        addToken(Token::Type::ForwardSlash);
 }
 
 bool Lexer::match(const char expected)
@@ -244,8 +249,6 @@ char Lexer::advance()
     return c_source[m_current++];
 }
 
-
-
 void Lexer::number()
 {
     while (!isAtEnd() && isdigit(peek()))
@@ -254,30 +257,29 @@ void Lexer::number()
         floating();
         return;
     }
+    const i32 endNumbers = m_current;
     while (!isAtEnd() && isalpha(peek()))
         advance();
+    if (endNumbers + 2 < m_current)
+        addToken(Token::Type::Invalid);
     const i32 ahead = m_current - m_start;
     const std::string text = c_source.substr(m_start, ahead);
-    static const std::regex patternUL(R"(^[0-9]+([lL][uU]|[uU][lL])$)");
-    static const std::regex patternL(R"(^[0-9]+[lL]$)");
-    static const std::regex patternU(R"(^[0-9]+([Uu])$)");
-    static const std::regex patternI(R"(^[0-9]+$)");
-    if (isValid(text, patternUL)) {
+    if (matchesUL(text, endNumbers, m_current)) {
         addToken(Token::Type::UnsignedLongLiteral);
         return;
     }
-    if (isValid(text, patternL)) {
+    if (tolower(text.back()) == 'l' && endNumbers + 1 == m_current) {
         addToken(Token::Type::LongLiteral);
         return;
     }
-    if (isValid(text, patternU)) {
+    if (tolower(text.back()) == 'u' && endNumbers + 1 == m_current) {
         if (const u64 num = std::stoul(text); UINT_MAX < num)
             addToken(Token::Type::UnsignedLongLiteral);
         else
             addToken(Token::Type::UnsignedIntegerLiteral);
         return;
     }
-    if (isValid(text, patternI)) {
+    if (endNumbers == m_current) {
         if (const i64 num = std::stol(text); INT_MAX < num)
             addToken(Token::Type::LongLiteral);
         else

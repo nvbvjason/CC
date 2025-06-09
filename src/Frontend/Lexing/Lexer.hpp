@@ -54,15 +54,26 @@ private:
 
     bool match(char expected);
     bool match(const std::string& expected);
+    void scanToken();
     char advance();
+    void addToken(Token::Type type);
+
+    void forwardSlash();
+    void identifier();
     void number();
     void floating();
-    void identifier();
-    void scanToken();
-    void addToken(Token::Type type);
 };
 
 bool isValid(const std::string& input, const std::regex& regex);
+inline bool matchesUL(const std::string& text, const i32 endNumbers, const i32 current)
+{
+    if (endNumbers + 2 != current)
+        return false;
+    return (tolower(text[text.size() - 2]) == 'l' &&
+            tolower(text.back()) == 'u') ||
+           (tolower(text[text.size() - 2]) == 'u' &&
+            tolower(text.back()) == 'l');
+}
 
 }
 #endif // CC_LEXING_LEXER_HPP
