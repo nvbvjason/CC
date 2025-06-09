@@ -9,7 +9,7 @@
     <variable_declaration>  ::= { <specifier> }+ <identifier> [ "=" <exp> ] ";"
     <function_declaration>  ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
     <param-list>            ::= "void" | { <type-specifier> }+ <identifier> { "," { <type-specifier> }+ <identifier> }
-    <type-specifier>        ::= "int" | "long" | "unsigned" | "signed"
+    <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double"
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
     <block_item>            ::= <statement> | <declaration>
@@ -47,12 +47,13 @@
                               | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
                               | "+=" | "-=" | "*=" | "/=" | "%="
                               | "&=" | "|=" | "^=" | "<<=" | ">>="
-    <const>                 ::= <int> | <long>
+    <const>                 ::= <int> | <long> | <uint> | <ulong> | <double>
     <identifier>            ::= ? An identifier token ?
     <int>                   ::= ? A int token ?
     <long>                  ::= ? A int or long token ?
     <uint>                  ::= ? An unsigned int token ?
     <ulong>                 ::= ? An unsigned int or unsigned long token ?
+    <double>                ::= ? A floating-point constant token ?
 */
 
 #include "ASTParser.hpp"

@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#include "CompilerDriver.hpp"
 #include "../src/Frontend/Lexing/Lexer.hpp"
 #include "../src/Frontend/Parsing/Parser.hpp"
 #include "../src/Frontend/Semantics/VariableResolution.hpp"
@@ -697,16 +696,6 @@ TEST(Chapter12_Unsigned, invalidTypes)
     }
 }
 
-TEST(Chapter12_Unsigned, invalidParse)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_12/invalid_parse";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
-        if (!path.is_regular_file() || path.path().extension() != ".c")
-            continue;
-        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
-    }
-}
-
 TEST(Chapter12_Unsigned, invalidLabels)
 {
     const fs::path invalidPath = testsFolderPath / "chapter_12/invalid_labels";
@@ -734,6 +723,26 @@ TEST(Chapter13_Doubles, inValidLexingValid)
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_NE(0, getLexerErrors(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter13_Doubles, parsingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_13/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter13_Doubles, parsingInvalid)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_13/invalid_parse";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
     }
 }
 

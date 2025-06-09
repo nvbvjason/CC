@@ -78,7 +78,7 @@ constexpr BinaryExpr::Operator binaryOperator(const TokenType type)
     }
 }
 
-constexpr AssignmentExpr::Operator assignOperator(TokenType type)
+constexpr AssignmentExpr::Operator assignOperator(const TokenType type)
 {
     using Operator = AssignmentExpr::Operator;
     switch (type) {
@@ -165,7 +165,7 @@ constexpr bool isAssignmentOperator(TokenType type)
 
 constexpr i32 precedence(const TokenType type)
 {
-    constexpr i32 precedenceMult = 1024;
+    constexpr i32 precedenceMult = 1 << 10;
     constexpr i32 precedenceLevels = 16;
     if (type == TokenType::QuestionMark || type == TokenType::Colon)
         return (precedenceLevels - 13) * precedenceMult;
@@ -247,6 +247,7 @@ constexpr bool isSpecifier(const TokenType type)
         case TokenType::Extern:
         case TokenType::IntKeyword:
         case TokenType::LongKeyword:
+        case TokenType::DoubleKeyword:
         case TokenType::Signed:
         case TokenType::Unsigned:
             return true;
@@ -273,6 +274,7 @@ constexpr bool isType(const TokenType type)
         case TokenType::LongKeyword:
         case TokenType::Signed:
         case TokenType::Unsigned:
+        case TokenType::DoubleKeyword:
             return true;
         default:
             return false;

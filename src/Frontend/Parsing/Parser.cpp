@@ -1,9 +1,8 @@
 #include "Parser.hpp"
+#include "ASTTypes.hpp"
 
 #include <algorithm>
 #include <cassert>
-
-#include "ASTTypes.hpp"
 
 namespace Parsing {
 
@@ -509,6 +508,13 @@ std::unique_ptr<Expr> Parser::factorParse()
                 return nullptr;
             return constantExpr;
         }
+        case TokenType::DoubleLiteral: {
+            auto constantExpr = std::make_unique<ConstExpr>(
+                lexeme.getDoubleValue(), std::make_unique<VarType>(Type::Double));
+            if (advance().m_type == TokenType::EndOfFile)
+                return nullptr;
+            return constantExpr;
+        }
         case TokenType::Identifier: {
             advance();
             if (!expect(TokenType::OpenParen))
@@ -591,6 +597,10 @@ Type Parser::typeParse()
 
 Type Parser::typeResolve(std::vector<TokenType>& tokens)
 {
+    if (tokens.size() == 1 && tokens.front() == TokenType::DoubleKeyword)
+        return Type::Double;
+    if (std::ranges::find(tokens, TokenType::DoubleKeyword) != tokens.end())
+        return Type::Invalid;
     if (tokens.empty())
         return Type::Invalid;
     if (containsSameTwice(tokens))
