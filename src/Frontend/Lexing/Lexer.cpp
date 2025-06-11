@@ -251,8 +251,12 @@ char Lexer::advance()
 
 void Lexer::number()
 {
-    while (!isAtEnd() && isdigit(peek()))
+    u64 num = c_source[m_start] - '0';
+    while (!isAtEnd() && isdigit(peek())) {
+        num *= 10;
+        num += peek() - '0';
         advance();
+    }
     if (peek() == '.' || tolower(peek()) == 'e') {
         floating();
         return;
@@ -265,25 +269,35 @@ void Lexer::number()
     const i32 ahead = m_current - m_start;
     const std::string text = c_source.substr(m_start, ahead);
     if (matchesUL(text, endNumbers, m_current)) {
-        addToken(Token::Type::UnsignedLongLiteral);
+        m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::UnsignedLongLiteral, text);
+        m_tokens.back().m_data = num;
         return;
     }
     if (tolower(text.back()) == 'l' && endNumbers + 1 == m_current) {
-        addToken(Token::Type::LongLiteral);
+        m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::LongLiteral, text);
+        m_tokens.back().m_data = static_cast<i64>(num);
         return;
     }
     if (tolower(text.back()) == 'u' && endNumbers + 1 == m_current) {
-        if (const u64 num = std::stoul(text); UINT_MAX < num)
-            addToken(Token::Type::UnsignedLongLiteral);
-        else
-            addToken(Token::Type::UnsignedIntegerLiteral);
+        if (UINT_MAX < num) {
+            m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::UnsignedLongLiteral, text);
+            m_tokens.back().m_data = num;
+        }
+        else {
+            m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::UnsignedIntegerLiteral, text);
+            m_tokens.back().m_data = static_cast<u32>(num);
+        }
         return;
     }
     if (endNumbers == m_current) {
-        if (const i64 num = std::stol(text); INT_MAX < num)
-            addToken(Token::Type::LongLiteral);
-        else
-            addToken(Token::Type::IntegerLiteral);
+        if (INT_MAX < num) {
+            m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::LongLiteral, text);
+            m_tokens.back().m_data = static_cast<i64>(num);
+        }
+        else {
+            m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::IntegerLiteral, text);
+            m_tokens.back().m_data = static_cast<i32>(num);
+        }
         return;
     }
     addToken(Token::Type::Invalid);
@@ -332,14 +346,6 @@ void Lexer::addToken(const Token::Type type)
     const i32 ahead = m_current - m_start;
     std::string text = c_source.substr(m_start, ahead);
     m_tokens.emplace_back(m_line, m_column - ahead, type, text);
-    if (type == Token::Type::IntegerLiteral)
-        m_tokens.back().m_data = std::stoi(text);
-    if (type == Token::Type::LongLiteral)
-        m_tokens.back().m_data = std::stol(text);
-    if (type == Token::Type::UnsignedLongLiteral)
-        m_tokens.back().m_data = std::stoul(text);
-    if (type == Token::Type::UnsignedIntegerLiteral)
-        m_tokens.back().m_data = static_cast<u32>(std::stoull(text));
     if (type == Token::Type::DoubleLiteral) {
         try {
             double value = std::stod(text);

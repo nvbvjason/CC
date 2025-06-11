@@ -126,7 +126,7 @@ void IrPrinter::print(const BinaryInst& inst)
     addLine(print(*inst.lhs) + " " +
             to_string(inst.operation) + " " +
             print(*inst.rhs) + " -> " +
-            print(*inst.destination));
+            print(*inst.dst));
 }
 
 void IrPrinter::print(const CopyInst& inst)

@@ -11,8 +11,8 @@ void FixUpInstructions::fixUp()
         allocationSize += 16 - allocationSize % 16;
         m_copy.emplace_back(std::make_unique<BinaryInst>(
             std::make_shared<ImmOperand>(allocationSize),
-            std::make_shared<RegisterOperand>(RegisterOperand::Kind::SP, AssemblyType::QuadWord),
-            BinaryInst::Operator::Sub, AssemblyType::QuadWord));
+            std::make_shared<RegisterOperand>(RegisterOperand::Kind::SP, AsmType::QuadWord),
+            BinaryInst::Operator::Sub, AsmType::QuadWord));
     }
     while (!m_insts.empty()) {
         auto inst = std::move(m_insts.front());
@@ -31,6 +31,10 @@ void FixUpInstructions::fixUp()
             visit(*static_cast<IdivInst*>(inst.get()));
         else if (inst->kind == Inst::Kind::Div)
             visit(*static_cast<DivInst*>(inst.get()));
+        else if (inst->kind == Inst::Kind::Cvttsd2si)
+            visit(*static_cast<DivInst*>(inst.get()));
+        else if (inst->kind == Inst::Kind::Cvtsi2sd)
+            visit(*static_cast<DivInst*>(inst.get()));
         else
             m_copy.push_back(std::move(inst));
     }
@@ -40,23 +44,19 @@ void FixUpInstructions::fixUp()
 void FixUpInstructions::visit(MoveInst& moveInst)
 {
     if (areBothOnTheStack(moveInst)) {
-        auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, moveInst.type);
-        auto first = std::make_unique<MoveInst>(moveInst.src, regR10, moveInst.type);
-        auto second = std::make_unique<MoveInst>(regR10, moveInst.dst, moveInst.type);
+        auto first = std::make_unique<MoveInst>(moveInst.src, genSrcOperand(moveInst.type), moveInst.type);
+        auto second = std::make_unique<MoveInst>(genSrcOperand(moveInst.type), moveInst.dst, moveInst.type);
         insert(std::move(first), std::move(second));
+        return;
     }
-    else
-        insert(std::make_unique<MoveInst>(moveInst));
+    insert(std::make_unique<MoveInst>(moveInst));
 }
 
 void FixUpInstructions::visit(MoveSXInst& moveSXInst)
 {
-    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, AssemblyType::LongWord);
-    auto first = std::make_unique<MoveInst>(moveSXInst.src, regR10, AssemblyType::LongWord);
-    auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, AssemblyType::QuadWord);
-    auto second = std::make_unique<MoveSXInst>(regR10, regR11);
-    auto third = std::make_unique<MoveInst>(regR11, moveSXInst.dst, AssemblyType::QuadWord);
-
+    auto first = std::make_unique<MoveInst>(moveSXInst.src, genSrcOperand(AsmType::LongWord), AsmType::LongWord);
+    auto second = std::make_unique<MoveSXInst>(genSrcOperand(AsmType::LongWord), genDstOperand(AsmType::QuadWord));
+    auto third = std::make_unique<MoveInst>(genDstOperand(AsmType::QuadWord), moveSXInst.dst, AsmType::QuadWord);
     insert(std::move(first), std::move(second), std::move(third));
 }
 
@@ -64,14 +64,13 @@ void FixUpInstructions::visit(MoveZeroExtendInst& moveZero)
 {
     if (moveZero.dst->kind == Operand::Kind::Register) {
         auto first = std::make_unique<MoveInst>(
-            std::move(moveZero.src), std::move(moveZero.dst), AssemblyType::LongWord);
+            std::move(moveZero.src), std::move(moveZero.dst), AsmType::LongWord);
         insert(std::move(first));
         return;
     }
-    auto reg11L = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, AssemblyType::LongWord);
-    auto first = std::make_unique<MoveInst>(moveZero.src, reg11L, AssemblyType::LongWord);
-    auto reg11Q = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, AssemblyType::QuadWord);
-    auto second = std::make_unique<MoveInst>(reg11Q, moveZero.dst, AssemblyType::QuadWord);
+    auto first = std::make_unique<MoveInst>(moveZero.src, genDstOperand(AsmType::LongWord), AsmType::LongWord);
+    auto reg11Q = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, AsmType::QuadWord);
+    auto second = std::make_unique<MoveInst>( genDstOperand(AsmType::QuadWord), moveZero.dst, AsmType::QuadWord);
     insert(std::move(first), std::move(second));
 }
 
@@ -88,7 +87,7 @@ void FixUpInstructions::visit(BinaryInst& binary)
 void FixUpInstructions::binaryShift(BinaryInst& binaryInst)
 {
     auto regCX = std::make_shared<RegisterOperand>(RegisterOperand::Kind::CX, binaryInst.type);
-    auto regCL = std::make_shared<RegisterOperand>(RegisterOperand::Kind::CX, AssemblyType::Byte);
+    auto regCL = std::make_shared<RegisterOperand>(RegisterOperand::Kind::CX, AsmType::Byte);
     auto first = std::make_unique<MoveInst>(binaryInst.lhs, regCX, binaryInst.type);
     auto second = std::make_unique<BinaryInst>(regCL, binaryInst.rhs, binaryInst.oper, binaryInst.type);
     insert(std::move(first), std::move(second));
@@ -96,33 +95,31 @@ void FixUpInstructions::binaryShift(BinaryInst& binaryInst)
 
 void FixUpInstructions::binaryMul(BinaryInst& binaryInst)
 {
-    auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, binaryInst.type);
-    auto first = std::make_unique<MoveInst>(binaryInst.rhs, regR11, binaryInst.type);
-    auto second = std::make_unique<BinaryInst>(binaryInst.lhs, regR11, binaryInst.oper, binaryInst.type);
-    auto third = std::make_unique<MoveInst>(regR11, binaryInst.rhs, binaryInst.type);
+    auto first = std::make_unique<MoveInst>(binaryInst.rhs, genDstOperand(binaryInst.type), binaryInst.type);
+    auto second = std::make_unique<BinaryInst>(
+        binaryInst.lhs, genDstOperand(binaryInst.type), binaryInst.oper, binaryInst.type);
+    auto third = std::make_unique<MoveInst>(genDstOperand(binaryInst.type), binaryInst.rhs, binaryInst.type);
     insert(std::move(first), std::move(second), std::move(third));
 }
 
 void FixUpInstructions::binaryOthers(BinaryInst& binaryInst)
 {
-    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, binaryInst.type);
-    auto first = std::make_unique<MoveInst>(binaryInst.lhs, regR10, binaryInst.type);
-    auto second = std::make_unique<BinaryInst>(regR10, binaryInst.rhs, binaryInst.oper, binaryInst.type);
+    auto first = std::make_unique<MoveInst>(binaryInst.lhs, genSrcOperand(binaryInst.type), binaryInst.type);
+    auto second = std::make_unique<BinaryInst>(
+        genSrcOperand(binaryInst.type), binaryInst.rhs, binaryInst.oper, binaryInst.type);
     insert(std::move(first), std::move(second));
 }
 
 void FixUpInstructions::visit(CmpInst& cmpInst)
 {
     if (areBothOnTheStack(cmpInst)) {
-        auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, cmpInst.type);
-        auto first = std::make_unique<MoveInst>(cmpInst.lhs, regR10, cmpInst.type);
-        auto second = std::make_unique<CmpInst>(regR10, cmpInst.rhs, cmpInst.type);
+        auto first = std::make_unique<MoveInst>(cmpInst.lhs, genSrcOperand(cmpInst.type), cmpInst.type);
+        auto second = std::make_unique<CmpInst>(genSrcOperand(cmpInst.type), cmpInst.rhs, cmpInst.type);
         insert(std::move(first), std::move(second));
     }
     else if (cmpInst.rhs->kind == Operand::Kind::Imm) {
-        auto regR11 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, cmpInst.type);
-        auto first = std::make_unique<MoveInst>(cmpInst.rhs, regR11, cmpInst.type);
-        auto second = std::make_unique<CmpInst>(cmpInst.lhs, regR11, cmpInst.type);
+        auto first = std::make_unique<MoveInst>(cmpInst.rhs, genDstOperand(cmpInst.type), cmpInst.type);
+        auto second = std::make_unique<CmpInst>(cmpInst.lhs, genDstOperand(cmpInst.type), cmpInst.type);
         insert(std::move(first), std::move(second));
     }
     else
@@ -131,19 +128,47 @@ void FixUpInstructions::visit(CmpInst& cmpInst)
 
 void FixUpInstructions::visit(IdivInst& idivInst)
 {
-    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, idivInst.type);
-    auto first = std::make_unique<MoveInst>(idivInst.operand, regR10, idivInst.type);
-    auto second = std::make_unique<IdivInst>(regR10, idivInst.type);
+    auto first = std::make_unique<MoveInst>(idivInst.operand, genSrcOperand(idivInst.type), idivInst.type);
+    auto second = std::make_unique<IdivInst>(genSrcOperand(idivInst.type), idivInst.type);
     insert(std::move(first), std::move(second));
 }
 
 
 void FixUpInstructions::visit(DivInst& div)
 {
-    auto regR10 = std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, div.type);
-    auto first = std::make_unique<MoveInst>(div.operand, regR10, div.type);
-    auto second = std::make_unique<DivInst>(regR10, div.type);
+    auto first = std::make_unique<MoveInst>(div.operand, genSrcOperand(div.type), div.type);
+    auto second = std::make_unique<DivInst>(genSrcOperand(div.type), div.type);
     insert(std::move(first), std::move(second));
 }
 
+void FixUpInstructions::visit(Cvttsd2siInst& cvttsd2si)
+{
+    auto first = std::make_unique<Cvttsd2siInst>(
+        cvttsd2si.src, genSrcOperand(cvttsd2si.dstType), cvttsd2si.dstType);
+    auto second = std::make_unique<MoveInst>(genDstOperand(cvttsd2si.dstType), cvttsd2si.dst, cvttsd2si.dstType);
+    insert(std::move(first), std::move(second));
+}
+
+void FixUpInstructions::visit(Cvtsi2sdInst& cvtsi2sd)
+{
+    auto first = std::make_unique<MoveInst>(cvtsi2sd.src, genSrcOperand(cvtsi2sd.srcType), cvtsi2sd.srcType);
+    auto second = std::make_unique<Cvtsi2sdInst>(
+        genSrcOperand(cvtsi2sd.srcType), genDstOperand(cvtsi2sd.srcType), cvtsi2sd.srcType);
+    auto third = std::make_unique<MoveInst>(genDstOperand(cvtsi2sd.srcType), cvtsi2sd.dst, cvtsi2sd.srcType);
+    insert(std::move(first), std::move(second), std::move(third));
+}
+
+std::shared_ptr<RegisterOperand> FixUpInstructions::genSrcOperand(AsmType type)
+{
+    if (type == AsmType::Double)
+        return std::make_shared<RegisterOperand>(RegisterOperand::Kind::XMM14, type);
+    return std::make_shared<RegisterOperand>(RegisterOperand::Kind::R10, type);
+}
+
+std::shared_ptr<RegisterOperand> FixUpInstructions::genDstOperand(AsmType type)
+{
+    if (type == AsmType::Double)
+        return std::make_shared<RegisterOperand>(RegisterOperand::Kind::XMM15, type);
+    return std::make_shared<RegisterOperand>(RegisterOperand::Kind::R11, type);
+}
 } // namespace CodeGen

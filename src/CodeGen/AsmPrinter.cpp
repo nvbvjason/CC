@@ -17,7 +17,7 @@ std::string AsmPrinter::printProgram(const Program &program)
 
 void AsmPrinter::add(const TopLevel& topLevel)
 {
-    using Type = TopLevel::Type;
+    using Type = TopLevel::Kind;
     IndentGuard indent(m_indentLevel);
     switch (topLevel.type) {
         case Type::Function:
@@ -217,9 +217,9 @@ std::string to_string(const Operand& operand)
 
 std::string to_string(const ImmOperand& immOperand)
 {
-    if (immOperand.type == AssemblyType::QuadWord)
+    if (immOperand.type == AsmType::QuadWord)
         return "ImmOperand(" + std::to_string(std::get<i64>(immOperand.value)) + ", " + to_string(immOperand.type) + ")";
-    if (immOperand.type == AssemblyType::LongWord)
+    if (immOperand.type == AsmType::LongWord)
         return "ImmOperand(" + std::to_string(std::get<i32>(immOperand.value)) + ", " + to_string(immOperand.type) + ")";
     std::unreachable();
 }
@@ -306,11 +306,11 @@ std::string to_string(const Inst::CondCode& condCode)
     }
 }
 
-std::string to_string(const AssemblyType type)
+std::string to_string(const AsmType type)
 {
     switch (type) {
-        case AssemblyType::QuadWord: return "QuadWord";
-        case AssemblyType::LongWord: return "LongWord";
+        case AsmType::QuadWord: return "QuadWord";
+        case AsmType::LongWord: return "LongWord";
         default:                return "Unknown AssemblyType";
     }
 }

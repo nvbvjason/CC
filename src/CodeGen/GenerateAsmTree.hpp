@@ -4,53 +4,27 @@
 #define CC_CONCRETE_TREE_HPP
 
 #include "AsmAST.hpp"
-//#include "Frontend/SymbolTable.hpp"
-#include "IR/ASTIr.hpp"
+#include "ASTIr.hpp"
 
-/*
-=== Top-Level ===
-
-Program(function_definition)  Program(function_definition)
-Function(name, instructions)  Function(name, instructions)
-
-
-=== Instructions ===
-
-Return(val)                          Mov(val, Reg(AX))
-                                     Ret
-Unary(unary_operator, src, dst)      Mov(src, dst)
-                                     Unary(unary_operator, dst)
-Binary(Divide, src1, src2, dst)      Mov(src1, Reg(AX))
-                                     Cdq
-                                     Idiv(src2)
-                                     Mov(Reg(AX), dst)
-Binary(Remainder, src1, src2, dst)   Mov(src1, Reg(AX))
-                                     Cdq
-                                     Idiv(src2)
-                                     Mov(Reg(DX), dst)
-Binary(binary_operator, src1,        Mov(src1, dst)
-        src2, dst)                   Binary(binary_operator, src2, dst)
-
-
-=== Arithmetic Operators ===
-
-Complement              Not
-Negate                  Neg
-Add                     Add
-Subtract                Sub
-Multiply                Mult
-
-=== Operands ===
-
-Constant(int)           Imm(int)
-Var(identifier)         Pseudo(identifier)
-
-*/
+#include <cmath>
+#include <unordered_set>
 
 namespace CodeGen {
 class GenerateAsmTree {
+    struct DoubleHash {
+        size_t operator()(const double d) const noexcept {
+            return std::hash<u64>{}(std::bit_cast<u64>(d));
+        }
+    };
+    struct DoubleEqual {
+        bool operator()(const double a, const double b) const noexcept {
+            if (std::isnan(a)) return std::isnan(b);
+            return std::bit_cast<u64>(a) == std::bit_cast<u64>(b);
+        }
+    };
     using RegType = RegisterOperand::Kind;
     std::vector<std::unique_ptr<Inst>> insts;
+    std::unordered_set<double, DoubleHash, DoubleEqual> numbers;
 public:
     void generateProgram(const Ir::Program &program, Program &programCodegen);
     std::unique_ptr<TopLevel> generateTopLevel(const Ir::TopLevel& topLevel);
@@ -61,10 +35,18 @@ public:
 
     void genBinaryInst(const Ir::BinaryInst& irBinary);
 
-    void genZeroExtendInst(const Ir::ZeroExtendInst& zeroExtend);
+    void returnInst(const Ir::ReturnInst& returnInst);
     void genSignExtendInst(const Ir::SignExtendInst& signExtend);
     void genTruncateInst(const Ir::TruncateInst& truncate);
+    void genZeroExtendInst(const Ir::ZeroExtendInst& zeroExtend);
+
+    void genDoubleToIntInst(const Ir::DoubleToIntInst& doubleToInt);
+    void genDoubleToUIntInst(const Ir::DoubleToUIntInst& doubleToUInt);
+    void genIntToDoubleInst(const Ir::IntToDoubleInst& intToDouble);
+    void genUIntToDoubleInst(const Ir::UIntToDoubleInst& uintToDouble);
+
     void genBinaryDivideInst(const Ir::BinaryInst& irBinary);
+    void genBinaryDivideDoubleInst(const Ir::BinaryInst& irBinary);
     void genSignedBinaryDivideInst(const Ir::BinaryInst& irBinary);
     void genUnsignedBinaryDivideInst(const Ir::BinaryInst& irBinary);
     void genBinaryRemainderInst(const Ir::BinaryInst& irBinary);
@@ -76,10 +58,11 @@ public:
 
     void genJumpInst(const Ir::JumpInst& irJump);
     void genJumpIfZeroInst(const Ir::JumpIfZeroInst& jumpIfZero);
+    void genJumpIfZeroDoubleInst(const Ir::JumpIfZeroInst& jumpIfZero);
+    void genJumpIfZeroIntegerInst(const Ir::JumpIfZeroInst& jumpIfZero);
     void genJumpIfNotZeroInst(const Ir::JumpIfNotZeroInst& jumpIfNotZero);
     void genCopyInst(const Ir::CopyInst& type);
     void genLabelInst(const Ir::LabelInst& irLabel);
-    void returnInst(const Ir::ReturnInst& returnInst);
 
     void pushFunCallArgs(const Ir::FunCallInst& funcCall);
     void generateFunCallInst(const Ir::FunCallInst& funcCall);
@@ -88,23 +71,23 @@ public:
 
 std::unique_ptr<TopLevel> generateStaticVariable(const Ir::StaticVariable& staticVariable);
 
-std::shared_ptr<ImmOperand> getZeroImmOfType(AssemblyType type);
+std::shared_ptr<ImmOperand> getZeroImmOfType(AsmType type);
 i32 getStackPadding(size_t numArgs);
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
 BinaryInst::Operator getShiftOperator(Ir::BinaryInst::Operation type, bool isSigned);
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
-AssemblyType getAssemblyType(Type type);
+AsmType getAssemblyType(Type type);
 
 
 [[nodiscard]] i32 replacingPseudoRegisters(const Function& function);
 void fixUpInstructions(Function& function, i32 stackAlloc);
 
-inline AssemblyType getAssemblyType(Type type)
+inline AsmType getAssemblyType(Type type)
 {
     if (type == Type::I32 || type == Type::U32)
-        return AssemblyType::LongWord;
-    return AssemblyType::QuadWord;
+        return AsmType::LongWord;
+    return AsmType::QuadWord;
 }
 
 std::string makeTemporaryPseudoName();

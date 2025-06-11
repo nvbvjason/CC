@@ -143,7 +143,7 @@ void printIr(const Ir::Program& irProgram)
 void fixAsm(const CodeGen::Program& codegenProgram)
 {
     for (auto& topLevel : codegenProgram.topLevels) {
-        if (topLevel->type == CodeGen::TopLevel::Type::StaticVariable)
+        if (topLevel->type == CodeGen::TopLevel::Kind::StaticVariable)
             continue;
         const auto function = dynamic_cast<CodeGen::Function*>(topLevel.get());
         const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function);

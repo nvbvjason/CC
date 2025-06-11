@@ -4,7 +4,6 @@
 #define CC_CODEGEN_PSEUDO_REGISTER_REPLACER_HPP
 
 #include "AsmAST.hpp"
-//#include "Frontend/SymbolTable.hpp"
 
 #include <unordered_map>
 
@@ -26,6 +25,8 @@ public:
     void visit(CmpInst& cmpInst) override;
     void visit(SetCCInst& setCCInst) override;
     void visit(PushInst& pushInst) override;
+    void visit(Cvttsd2siInst&) override;
+    void visit(Cvtsi2sdInst&) override;
 
     void visit(CallInst&) override {}
     void visit(CdqInst&) override {}
@@ -38,11 +39,5 @@ private:
     static bool isStatic(const std::string& iden);
 };
 
-inline bool PseudoRegisterReplacer::isStatic(const std::string& iden)
-{
-    return iden.contains(".s.");
-}
-
 } // CodeGen
-
 #endif // CC_CODEGEN_PSEUDO_REGISTER_REPLACER_HPP

@@ -205,13 +205,13 @@ struct BinaryInst final : Instruction {
     Operation operation;
     std::shared_ptr<Value> lhs;
     std::shared_ptr<Value> rhs;
-    std::shared_ptr<Value> destination;
+    std::shared_ptr<Value> dst;
     BinaryInst(const Operation op,
                const std::shared_ptr<Value>& src1,
                const std::shared_ptr<Value>& src2,
                const std::shared_ptr<Value>& dst,
                const Type t)
-        : Instruction(Kind::Binary, t), operation(op), lhs(src1), rhs(src2), destination(dst) {}
+        : Instruction(Kind::Binary, t), operation(op), lhs(src1), rhs(src2), dst(dst) {}
 
     ~BinaryInst() override;
 

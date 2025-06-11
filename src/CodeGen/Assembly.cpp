@@ -16,7 +16,7 @@ std::string asmProgram(const Program& program)
 {
     std::string result;
     for (const std::unique_ptr<TopLevel>& topLevel : program.topLevels) {
-        if (topLevel->type == TopLevel::Type::StaticVariable) {
+        if (topLevel->type == TopLevel::Kind::StaticVariable) {
             const auto var = static_cast<const StaticVariable*>(topLevel.get());
             asmStaticVariable(result, *var);
             continue;
@@ -36,18 +36,18 @@ void asmStaticVariable(std::string& result, const StaticVariable& variable)
         result += asmFormatInstruction(".bss");
     else
         result += asmFormatInstruction(".data");
-    if (variable.type == AssemblyType::LongWord)
+    if (variable.type == AsmType::LongWord)
         result += asmFormatInstruction(".align","4");
-    if (variable.type == AssemblyType::QuadWord)
+    if (variable.type == AsmType::QuadWord)
         result += asmFormatInstruction(".align","8");
     result += asmFormatLabel(variable.name);
-    if (variable.init == 0 && variable.type == AssemblyType::LongWord)
+    if (variable.init == 0 && variable.type == AsmType::LongWord)
         result += asmFormatInstruction(".zero 4");
-    if (variable.init != 0 && variable.type == AssemblyType::LongWord)
+    if (variable.init != 0 && variable.type == AsmType::LongWord)
         result += asmFormatInstruction(".long " + std::to_string(variable.init));
-    if (variable.init == 0 && variable.type == AssemblyType::QuadWord)
+    if (variable.init == 0 && variable.type == AsmType::QuadWord)
         result += asmFormatInstruction(".zero 8");
-    if (variable.init != 0 && variable.type == AssemblyType::QuadWord)
+    if (variable.init != 0 && variable.type == AsmType::QuadWord)
         result += asmFormatInstruction(".quad " + std::to_string(variable.init));
     result += '\n';
 }
@@ -71,9 +71,9 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Move: {
             const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
             std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
-            if (moveInst->type == AssemblyType::LongWord)
+            if (moveInst->type == AsmType::LongWord)
                 result += asmFormatInstruction("movl", operand);
-            if (moveInst->type == AssemblyType::QuadWord)
+            if (moveInst->type == AsmType::QuadWord)
                 result += asmFormatInstruction("movq", operand);;
             return;
         }
@@ -96,25 +96,25 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Cdq: {
             const auto cdqInst = dynamic_cast<CdqInst*>(instruction.get());
-            if (cdqInst->type == AssemblyType::LongWord)
+            if (cdqInst->type == AsmType::LongWord)
                 result += asmFormatInstruction("cdq");
-            if (cdqInst->type == AssemblyType::QuadWord)
+            if (cdqInst->type == AsmType::QuadWord)
                 result += asmFormatInstruction("cqo");
             return;
         }
         case Inst::Kind::Idiv: {
             const auto idivInst = dynamic_cast<IdivInst*>(instruction.get());
-            if (idivInst->type == AssemblyType::LongWord)
+            if (idivInst->type == AsmType::LongWord)
                 result += asmFormatInstruction("idivl", asmOperand(idivInst->operand));
-            if (idivInst->type == AssemblyType::QuadWord)
+            if (idivInst->type == AsmType::QuadWord)
                 result += asmFormatInstruction("idivq", asmOperand(idivInst->operand));
             return;
         }
         case Inst::Kind::Div: {
             const auto divInst = dynamic_cast<DivInst*>(instruction.get());
-            if (divInst->type == AssemblyType::LongWord)
+            if (divInst->type == AsmType::LongWord)
                 result += asmFormatInstruction("divl", asmOperand(divInst->operand));
-            if (divInst->type == AssemblyType::QuadWord)
+            if (divInst->type == AsmType::QuadWord)
                 result += asmFormatInstruction("divq", asmOperand(divInst->operand));
             return;
         }
@@ -127,9 +127,9 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Cmp: {
             const auto cmpInst = dynamic_cast<CmpInst*>(instruction.get());
             const std::string operands = asmOperand(cmpInst->lhs) + ", " + asmOperand(cmpInst->rhs);
-            if (cmpInst->lhs->type == AssemblyType::LongWord)
+            if (cmpInst->lhs->type == AsmType::LongWord)
                 result += asmFormatInstruction("cmpl", operands);
-            if (cmpInst->lhs->type == AssemblyType::QuadWord)
+            if (cmpInst->lhs->type == AsmType::QuadWord)
                 result += asmFormatInstruction("cmpq", operands);
             return;
         }
@@ -180,11 +180,11 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
             return "invalid pseudo";
         case Operand::Kind::Imm: {
             const auto immOperand = dynamic_cast<ImmOperand*>(operand.get());
-            if (immOperand->type == AssemblyType::LongWord && immOperand->isSigned)
+            if (immOperand->type == AsmType::LongWord && immOperand->isSigned)
                 return "$" + std::to_string(std::get<i32>(immOperand->value));
-            if (immOperand->type == AssemblyType::QuadWord && immOperand->isSigned)
+            if (immOperand->type == AsmType::QuadWord && immOperand->isSigned)
                 return "$" + std::to_string(std::get<i64>(immOperand->value));
-            if (immOperand->type == AssemblyType::LongWord && !immOperand->isSigned)
+            if (immOperand->type == AsmType::LongWord && !immOperand->isSigned)
                 return "$" + std::to_string(std::get<u32>(immOperand->value));
             return "$" + std::to_string(std::get<u64>(immOperand->value));
         }
@@ -223,25 +223,25 @@ std::string asmRegister(const RegisterOperand* reg)
 
     const auto& names = it->second;
     switch (reg->type) {
-        case AssemblyType::Byte:     return names[0];
-        case AssemblyType::Word:     return names[1];
-        case AssemblyType::LongWord: return names[2];
-        case AssemblyType::QuadWord: return names[3];
+        case AsmType::Byte:     return names[0];
+        case AsmType::Word:     return names[1];
+        case AsmType::LongWord: return names[2];
+        case AsmType::QuadWord: return names[3];
         default: return "invalid_size";
     }
 }
 
-std::string asmUnaryOperator(const UnaryInst::Operator oper, AssemblyType type)
+std::string asmUnaryOperator(const UnaryInst::Operator oper, AsmType type)
 {
     using Operator = UnaryInst::Operator;
-    if (type == AssemblyType::LongWord) {
+    if (type == AsmType::LongWord) {
         switch (oper) {
             case Operator::Neg:      return "negl";
             case Operator::Not:      return "notl";
             default:                 return "not set asmUnaryOperator";
         }
     }
-    if (type == AssemblyType::QuadWord) {
+    if (type == AsmType::QuadWord) {
         switch (oper) {
             case Operator::Neg:      return "negq";
             case Operator::Not:      return "notq";
@@ -251,10 +251,10 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper, AssemblyType type)
     std::abort();
 }
 
-std::string asmBinaryOperator(const BinaryInst::Operator oper, const AssemblyType type)
+std::string asmBinaryOperator(const BinaryInst::Operator oper, const AsmType type)
 {
     using Operator = BinaryInst::Operator;
-    if (type == AssemblyType::LongWord) {
+    if (type == AsmType::LongWord) {
         switch (oper) {
             case Operator::Mul:                 return "imull";
             case Operator::Add:                 return "addl";
@@ -272,7 +272,7 @@ std::string asmBinaryOperator(const BinaryInst::Operator oper, const AssemblyTyp
                 return "not set asmBinaryOperator";
         }
     }
-    if (type == AssemblyType::QuadWord) {
+    if (type == AsmType::QuadWord) {
         switch (oper) {
             case Operator::Mul:                 return "imulq";
             case Operator::Add:                 return "addq";

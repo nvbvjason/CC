@@ -59,7 +59,7 @@ std::string to_string(const UnaryInst::Operator& oper);
 std::string to_string(const RegisterOperand::Kind& oper);
 std::string to_string(const BinaryInst::Operator& oper);
 std::string to_string(const Inst::CondCode& condCode);
-std::string to_string(AssemblyType type);
+std::string to_string(AsmType type);
 } // CodeGen
 
 #endif // CC_CODEGEN_ASM_PRINTER_HPP

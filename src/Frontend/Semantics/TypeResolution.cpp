@@ -111,6 +111,8 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
             convertConstantExpr<i32, Type::I32>(varDecl, *constExpr);
         else if (varDecl.type->kind == Type::I64)
             convertConstantExpr<i64, Type::I64>(varDecl, *constExpr);
+        else if (varDecl.type->kind == Type::Double)
+            convertConstantExpr<double, Type::Double>(varDecl, *constExpr);
     }
     else {
         if (varDecl.type->kind != varDecl.init->type->kind) {

@@ -23,12 +23,13 @@ public:
     void visit(MoveZeroExtendInst& moveZero) override;
     void visit(BinaryInst& binary) override;
     void visit(CmpInst& cmpInst) override;
-    void visit(IdivInst& idiv) override;
+    void visit(IdivInst& idivInst) override;
     void visit(DivInst& div) override;
+    void visit(Cvttsd2siInst& cvttsd2si) override;
+    void visit(Cvtsi2sdInst& cvtsi2sd) override;
+
     void visit(PushInst&) override {}
     void visit(CallInst&) override {}
-
-    // Unchanged instructions handled in fixUp
     void visit(UnaryInst&) override {}
     void visit(SetCCInst&) override {}
     void visit(CdqInst&) override {}
@@ -47,10 +48,12 @@ private:
     void binaryShift(BinaryInst& binaryInst);
     void binaryMul(BinaryInst& binaryInst);
     void binaryOthers(BinaryInst& binaryInst);
+    std::shared_ptr<RegisterOperand> genSrcOperand(AsmType type);
+    std::shared_ptr<RegisterOperand> genDstOperand(AsmType type);
 
     static inline bool isBinaryShift(const BinaryInst& binaryInst);
-    static inline bool areBothOnTheStack(MoveInst& moveInst);
-    static inline bool areBothOnTheStack(CmpInst& cmpInst);
+    static inline bool areBothOnTheStack(const MoveInst& moveInst);
+    static inline bool areBothOnTheStack(const CmpInst& cmpInst);
 };
 
 inline bool FixUpInstructions::isBinaryShift(const BinaryInst& binaryInst)
@@ -61,7 +64,7 @@ inline bool FixUpInstructions::isBinaryShift(const BinaryInst& binaryInst)
            binaryInst.oper == BinaryInst::Operator::LeftShiftUnsigned;
 }
 
-inline bool FixUpInstructions::areBothOnTheStack(MoveInst& moveInst)
+inline bool FixUpInstructions::areBothOnTheStack(const MoveInst& moveInst)
 {
     using Kind = Operand::Kind;
     return moveInst.src->kind == Kind::Data ||
@@ -70,7 +73,7 @@ inline bool FixUpInstructions::areBothOnTheStack(MoveInst& moveInst)
            moveInst.dst->kind == Kind::Data;
 }
 
-inline bool FixUpInstructions::areBothOnTheStack(CmpInst& cmpInst)
+inline bool FixUpInstructions::areBothOnTheStack(const CmpInst& cmpInst)
 {
     using Kind = Operand::Kind;
     return cmpInst.lhs->kind == Kind::Data ||

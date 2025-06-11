@@ -23,6 +23,9 @@ Type getCommonType(const Type t1, const Type t2)
 
 bool isSigned(const Type t)
 {
+    assert(t != Type::Invalid);
+    assert(t != Type::Function);
+    assert(t != Type::Double);
     switch (t) {
         case Type::I64:
         case Type::I32:
@@ -37,6 +40,8 @@ bool isSigned(const Type t)
 
 i32 getSize(const Type t)
 {
+    assert(t != Type::Invalid);
+    assert(t != Type::Function);
     switch (t) {
         case Type::I64:
         case Type::U64:
@@ -48,4 +53,19 @@ i32 getSize(const Type t)
             assert("getSize");
     }
     std::unreachable();
+}
+
+bool isInteger(const Type t)
+{
+    assert(t != Type::Function);
+    assert(t != Type::Invalid);
+    switch (t) {
+        case Type::I32:
+        case Type::I64:
+        case Type::U32:
+        case Type::U64:
+            return true;
+        default:
+            return false;
+    }
 }

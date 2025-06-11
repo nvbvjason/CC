@@ -11,13 +11,11 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
             return;
         }
         if (!m_pseudoMap.contains(pseudo->identifier)) {
-            if (pseudo->type == AssemblyType::LongWord)
+            if (pseudo->type == AsmType::LongWord)
                 m_stackPtr -= 4;
-            if (pseudo->type == AssemblyType::QuadWord) {
-                if (m_stackPtr % 8 == 0)
-                    m_stackPtr -= 8;
-                else
-                    m_stackPtr -= 12;
+            if (pseudo->type == AsmType::QuadWord ||
+                pseudo->type == AsmType::Double) {
+                m_stackPtr -= 8 - (8 - m_stackPtr % 8);
             }
             m_pseudoMap[pseudo->identifier] = m_stackPtr;
         }
@@ -78,5 +76,17 @@ void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 void PseudoRegisterReplacer::visit(PushInst& pushInst)
 {
     replaceIfPseudo(pushInst.operand);
+}
+
+void PseudoRegisterReplacer::visit(Cvttsd2siInst& cvttsd2siInst)
+{
+    replaceIfPseudo(cvttsd2siInst.src);
+    replaceIfPseudo(cvttsd2siInst.dst);
+}
+
+void PseudoRegisterReplacer::visit(Cvtsi2sdInst& cvtsi2sdInst)
+{
+    replaceIfPseudo(cvtsi2sdInst.src);
+    replaceIfPseudo(cvtsi2sdInst.dst);
 }
 } // namespace CodeGen
