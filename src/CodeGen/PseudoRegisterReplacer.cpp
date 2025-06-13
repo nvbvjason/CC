@@ -10,16 +10,16 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
             operand = std::make_shared<DataOperand>(pseudo->identifier, pseudo->type);
             return;
         }
-        if (!m_pseudoMap.contains(pseudo->identifier)) {
+        if (!m_pseudoMap.contains(pseudo->identifier.value)) {
             if (pseudo->type == AsmType::LongWord)
                 m_stackPtr -= 4;
             if (pseudo->type == AsmType::QuadWord ||
                 pseudo->type == AsmType::Double) {
                 m_stackPtr -= 8 - (8 - m_stackPtr % 8);
             }
-            m_pseudoMap[pseudo->identifier] = m_stackPtr;
+            m_pseudoMap[pseudo->identifier.value] = m_stackPtr;
         }
-        operand = std::make_shared<StackOperand>(m_pseudoMap.at(pseudo->identifier), operand->type);
+        operand = std::make_shared<StackOperand>(m_pseudoMap.at(pseudo->identifier.value), operand->type);
     }
 }
 

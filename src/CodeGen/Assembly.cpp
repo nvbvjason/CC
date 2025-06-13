@@ -194,7 +194,7 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
         }
         case Operand::Kind::Data: {
             const auto dataOperand = dynamic_cast<DataOperand*>(operand.get());
-            return dataOperand->identifier + "(%rip)";
+            return dataOperand->identifier.value + "(%rip)";
         }
         default:
             return "not set asmOperand";
@@ -204,6 +204,20 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
 std::string asmRegister(const RegisterOperand* reg)
 {
     using Type = RegisterOperand::Kind;
+    switch (reg->kind) {
+        case Type::XMM0: return "%xmm0";
+        case Type::XMM1: return "%xmm1";
+        case Type::XMM2: return "%xmm2";
+        case Type::XMM3: return "%xmm3";
+        case Type::XMM4: return "%xmm4";
+        case Type::XMM5: return "%xmm5";
+        case Type::XMM6: return "%xmm6";
+        case Type::XMM7: return "%xmm7";
+        case Type::XMM14: return "%xmm14";
+        case Type::XMM15: return "%xmm15";
+            default:
+            break;
+    }
     static const std::unordered_map<Type, std::array<const char*, 4>> registerMap = {
         {Type::AX,  {"%al",   "%ax",   "%eax",  "%rax"}},
         {Type::CX,  {"%cl",   "%cx",   "%ecx",  "%rcx"}},
@@ -217,7 +231,7 @@ std::string asmRegister(const RegisterOperand* reg)
         {Type::SP,  {"%rsp",  "%rsp",  "%rsp",  "%rsp"}}
     };
 
-    auto it = registerMap.find(reg->kind);
+    const auto it = registerMap.find(reg->kind);
     if (it == registerMap.end())
         return "invalid_register";
 
@@ -260,8 +274,8 @@ std::string asmBinaryOperator(const BinaryInst::Operator oper, const AsmType typ
             case Operator::Add:                 return "addl";
             case Operator::Sub:                 return "subl";
 
-            case Operator::BitwiseAnd:          return "andl";
-            case Operator::BitwiseOr:           return "orl";
+            case Operator::AndBitwise:          return "andl";
+            case Operator::OrBitwise:           return "orl";
             case Operator::BitwiseXor:          return "xorl";
 
             case Operator::LeftShiftSigned:     return "shll";
@@ -278,8 +292,8 @@ std::string asmBinaryOperator(const BinaryInst::Operator oper, const AsmType typ
             case Operator::Add:                 return "addq";
             case Operator::Sub:                 return "subq";
 
-            case Operator::BitwiseAnd:          return "andq";
-            case Operator::BitwiseOr:           return "orq";
+            case Operator::AndBitwise:          return "andq";
+            case Operator::OrBitwise:           return "orq";
             case Operator::BitwiseXor:          return "xorq";
 
             case Operator::LeftShiftSigned:     return "shlq";

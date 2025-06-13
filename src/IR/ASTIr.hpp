@@ -219,10 +219,10 @@ struct BinaryInst final : Instruction {
 };
 
 struct CopyInst final : Instruction {
-    std::shared_ptr<Value> source;
-    std::shared_ptr<Value> destination;
+    std::shared_ptr<Value> src;
+    std::shared_ptr<Value> dst;
     CopyInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Copy, t), source(std::move(src)), destination(std::move(dst)) {}
+        : Instruction(Kind::Copy, t), src(std::move(src)), dst(std::move(dst)) {}
 
     ~CopyInst() override;
 

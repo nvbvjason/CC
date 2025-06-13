@@ -40,11 +40,11 @@ void IrPrinter::print(const Function& function)
         addLine("is Global");
     else
         addLine("is not Global");
-    IndentGuard guard2(m_indentLevel);
     std::string args;
     for (const auto& arg : function.args)
         args += print(arg) + ", ";
     addLine("args: " + args);
+    IndentGuard guard2(m_indentLevel);
     for (const auto& inst : function.insts)
         print(*inst);
 }
@@ -72,96 +72,83 @@ void IrPrinter::print(const ReturnInst& inst)
 
 void IrPrinter::print(const SignExtendInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("SignExtend " + print(*inst.src) + " -> " + print(*inst.dst));
+    addLine("SignExtend " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const ZeroExtendInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("ZeroExtend " + print(*inst.src) + " -> " + print(*inst.dst));
+    addLine("ZeroExtend " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const TruncateInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("Truncate " + print(*inst.src) + " -> " + print(*inst.dst));
+    addLine("Truncate " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const DoubleToIntInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("DoubleToInt " + print(*inst.src) + " -> " + print(*inst.dst));
+    addLine("DoubleToInt " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const DoubleToUIntInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("DoubleToUInt " + print(*inst.src) + " -> " + print(*inst.dst));
+    addLine("DoubleToUInt " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const IntToDoubleInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("IntToDouble " + print(*inst.src) + " -> " + print(*inst.dst));
+    addLine("IntToDouble " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const UIntToDoubleInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("UIntToDouble " + print(*inst.src) + " -> " + print(*inst.dst));
+    addLine("UIntToDouble " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const UnaryInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
     addLine(to_string(inst.operation) + " " +
             print(*inst.source) + " -> " +
-            print(*inst.destination));
+            print(*inst.destination) + " " +
+            to_string(inst.type));
 }
 
 void IrPrinter::print(const BinaryInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
     addLine(print(*inst.lhs) + " " +
             to_string(inst.operation) + " " +
             print(*inst.rhs) + " -> " +
-            print(*inst.dst));
+            print(*inst.dst) + " " +
+            to_string(inst.type));
 }
 
 void IrPrinter::print(const CopyInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("Copy " + print(*inst.source) + " -> " + print(*inst.destination));
+    addLine("Copy " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const JumpInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
     addLine("Jump " + print(inst.target));
 }
 
 void IrPrinter::print(const JumpIfZeroInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("JumpIfZero " + print(*inst.condition) + ", " + print(inst.target));
+    addLine("JumpIfZero " + print(*inst.condition) + ", " + print(inst.target) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const JumpIfNotZeroInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
-    addLine("JumpIfNotZero " + print(*inst.condition) + ", " + print(inst.target));
+    addLine("JumpIfNotZero " + print(*inst.condition) + ", " + print(inst.target) + " " + to_string(inst.type));
 }
 
 void IrPrinter::print(const LabelInst& inst)
 {
-    IndentGuard guard(m_indentLevel);
     addLine("Label " +print(inst.target));
 }
 
 void IrPrinter::print(const FunCallInst &inst)
 {
-    IndentGuard guard(m_indentLevel);
     addLine("FunCall: " + inst.funName.value);
     IndentGuard guard2(m_indentLevel);
     std::string args;
@@ -225,6 +212,19 @@ std::string to_string(BinaryInst::Operation op)
         case Operation::GreaterOrEqual: return "GreaterOrEqual";
     }
     return "UnknownBinaryOp";
+}
+
+std::string to_string(const Type type)
+{
+    switch (type) {
+        case Type::I32: return "i32";
+        case Type::I64: return "i64";
+        case Type::U32: return "u32";
+        case Type::U64: return "u64";
+        case Type::Double: return "double";
+        default:
+            std::unreachable();
+    }
 }
 
 void IrPrinter::print(const Instruction& instruction) {

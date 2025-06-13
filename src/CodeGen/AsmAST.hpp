@@ -114,9 +114,9 @@ struct RegisterOperand final : Operand {
 };
 
 struct PseudoOperand final : Operand {
-    std::string identifier;
+    Identifier identifier;
     ReferingTo referingTo = ReferingTo::Local;
-    PseudoOperand(std::string identifier, const ReferingTo referingTo, const AsmType t)
+    PseudoOperand(Identifier identifier, const ReferingTo referingTo, const AsmType t)
         : Operand(Kind::Pseudo, t), identifier(std::move(identifier)), referingTo(referingTo) {}
 
     PseudoOperand() = delete;
@@ -131,8 +131,8 @@ struct StackOperand final : Operand {
 };
 
 struct DataOperand final : Operand {
-    std::string identifier;
-    DataOperand(std::string iden, const AsmType t)
+    Identifier identifier;
+    DataOperand(Identifier iden, const AsmType t)
         : Operand(Kind::Data, t), identifier(std::move(iden)) {}
 
     DataOperand() = delete;
@@ -160,20 +160,6 @@ protected:
         : kind(k) {}
 };
 
-struct MoveSXInst final : Inst {
-    std::shared_ptr<Operand> src;
-    std::shared_ptr<Operand> dst;
-
-    MoveSXInst(
-        std::shared_ptr<Operand> src,
-        std::shared_ptr<Operand> dst)
-        : Inst(Kind::MoveSX), src(std::move(src)), dst(std::move(dst)) {}
-
-    void accept(InstVisitor& visitor) override;
-
-    MoveSXInst() = delete;
-};
-
 struct MoveInst final : Inst {
     std::shared_ptr<Operand> src;
     std::shared_ptr<Operand> dst;
@@ -188,6 +174,20 @@ struct MoveInst final : Inst {
     void accept(InstVisitor& visitor) override;
 
     MoveInst() = delete;
+};
+
+struct MoveSXInst final : Inst {
+    std::shared_ptr<Operand> src;
+    std::shared_ptr<Operand> dst;
+
+    MoveSXInst(
+        std::shared_ptr<Operand> src,
+        std::shared_ptr<Operand> dst)
+        : Inst(Kind::MoveSX), src(std::move(src)), dst(std::move(dst)) {}
+
+    void accept(InstVisitor& visitor) override;
+
+    MoveSXInst() = delete;
 };
 
 struct MoveZeroExtendInst final : Inst {
@@ -240,7 +240,7 @@ struct Cvtsi2sdInst final : Inst {
 
 struct UnaryInst final : Inst {
     enum class Operator : u8 {
-        Neg, Not
+        Neg, Not, Shr
     };
     std::shared_ptr<Operand> destination;
     Operator oper;
@@ -257,7 +257,7 @@ struct UnaryInst final : Inst {
 struct BinaryInst final : Inst {
     enum class Operator : u8 {
         Add, Sub, Mul,
-        BitwiseAnd, BitwiseOr, BitwiseXor,
+        AndBitwise, OrBitwise, BitwiseXor,
         LeftShiftSigned, RightShiftSigned,
         LeftShiftUnsigned, RightShiftUnsigned,
         DivDouble,
@@ -421,18 +421,18 @@ struct StaticVariable : TopLevel {
     i64 init;
     AsmType type;
     const bool global;
-    StaticVariable(std::string name, const i64 init, const AsmType type, const bool isGlobal)
-        : TopLevel(Kind::StaticVariable), name(std::move(name)), init(init), type(type), global(isGlobal) {}
+    StaticVariable(std::string name, const AsmType type, const bool isGlobal)
+        : TopLevel(Kind::StaticVariable), name(std::move(name)), type(type), global(isGlobal) {}
 
     StaticVariable() = delete;
 };
 
 struct ConstVariable : TopLevel {
-    std::string name;
+    Identifier name;
     i32 alignment;
     double staticInit;
 
-    ConstVariable(std::string name, const i32 alignment, const double staticInit)
+    ConstVariable(Identifier name, const i32 alignment, const double staticInit)
         : TopLevel(Kind::StaticConstant), name(std::move(name)), alignment(alignment), staticInit(staticInit) {}
 
     ConstVariable() = delete;

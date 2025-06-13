@@ -1,10 +1,8 @@
 #include "AsmPrinter.hpp"
-
-#include <cassert>
-#include <iomanip>
-
 #include "Assembly.hpp"
 #include "ASTIr.hpp"
+
+#include <iomanip>
 
 namespace CodeGen {
 std::string AsmPrinter::printProgram(const Program &program)
@@ -43,6 +41,7 @@ void AsmPrinter::add(const StaticVariable& staticVariable)
 
 void AsmPrinter::add(const Function& function)
 {
+    IndentGuard indent(m_indentLevel);
     std::string global;
     if (function.isGlobal)
         global = "is global";
@@ -91,104 +90,98 @@ void AsmPrinter::add(const Inst& inst)
     }
 }
 
-void AsmPrinter::add(const MoveInst& moveInst)
+void AsmPrinter::add(const MoveInst& move)
 {
-    IndentGuard indent(m_indentLevel);
-    addLine("MoveInst: ", to_string(*moveInst.src) + " " + to_string(*moveInst.dst));
+    addLine("MoveInst: ", to_string(*move.src) + " " + to_string(*move.dst));
 }
 
-void AsmPrinter::add(const MoveSXInst& moveSXInst)
+void AsmPrinter::add(const MoveSXInst& moveSX)
 {
-    IndentGuard indent(m_indentLevel);
     addLine("MoveSXInst: ",
-        to_string(*moveSXInst.src) + " " +
-        to_string(*moveSXInst.dst));
+        to_string(*moveSX.src) + " " +
+        to_string(*moveSX.dst));
 }
 
-void AsmPrinter::add(const UnaryInst& unaryInst)
+void AsmPrinter::add(const UnaryInst& unary)
 {
-    IndentGuard indent(m_indentLevel);
     addLine("Unary: ",
-            to_string(unaryInst.oper) + " " +
-            to_string(*unaryInst.destination));
+            to_string(unary.oper) + " " +
+            to_string(*unary.destination));
 }
 
-void AsmPrinter::add(const BinaryInst& binaryInst)
+void AsmPrinter::add(const BinaryInst& binary)
 {
-    IndentGuard indent(m_indentLevel);
     addLine("Binary: ",
-            to_string(*binaryInst.lhs) + " " +
-            to_string(binaryInst.oper) + " " +
-            to_string(*binaryInst.rhs));
+            to_string(*binary.lhs) + " " +
+            to_string(binary.oper) + " " +
+            to_string(*binary.rhs));
 }
 
-void AsmPrinter::add(const CmpInst& cmpInst)
+void AsmPrinter::add(const CmpInst& cmp)
 {
-    IndentGuard indent(m_indentLevel);
     addLine("Cmp: ",
-            to_string(*cmpInst.lhs) + " " +
-            to_string(*cmpInst.rhs));
+            to_string(*cmp.lhs) + " " +
+            to_string(*cmp.rhs));
 }
 
-void AsmPrinter::add(const IdivInst& idivInst)
+void AsmPrinter::add(const IdivInst& idiv)
 {
-    IndentGuard indent(m_indentLevel);
-    addLine("Idiv: ",
-            to_string(*idivInst.operand));
+    addLine("Idiv: ", to_string(*idiv.operand));
 }
 
-void AsmPrinter::add(const CdqInst& cpqInst)
+void AsmPrinter::add(const CdqInst& cpq)
 {
-    IndentGuard indent(m_indentLevel);
     addLine("Cdq");
 }
 
-void AsmPrinter::add(const JmpInst& jmpInst)
+void AsmPrinter::add(const JmpInst& jmp)
 {
-    IndentGuard indent(m_indentLevel);
-    addLine("Jmp: ",
-            to_string(jmpInst.target));
+    addLine("Jmp: ", to_string(jmp.target));
 }
 
-void AsmPrinter::add(const JmpCCInst& jmpCCInst)
+void AsmPrinter::add(const JmpCCInst& jmpCC)
 {
-    IndentGuard indent(m_indentLevel);
     addLine("JmpCC: ",
-            to_string(jmpCCInst.target) + " " +
-            to_string(jmpCCInst.condition));
+            to_string(jmpCC.target) + " " +
+            to_string(jmpCC.condition));
 }
 
-void AsmPrinter::add(const SetCCInst& setCCInst)
+void AsmPrinter::add(const SetCCInst& setCC)
 {
-    IndentGuard indent(m_indentLevel);
     addLine("SetCC: ",
-            to_string(*setCCInst.operand) + " " +
-            to_string(setCCInst.condition));
+            to_string(*setCC.operand) + " " +
+            to_string(setCC.condition));
 }
 
-void AsmPrinter::add(const LabelInst& labelInst)
+void AsmPrinter::add(const LabelInst& label)
 {
-    IndentGuard indent(m_indentLevel);
     addLine("Label: ",
-            to_string(labelInst.target));
+            to_string(label.target));
 }
 
-void AsmPrinter::add(const PushInst& pushInst)
+void AsmPrinter::add(const PushInst& push)
 {
-    IndentGuard indent(m_indentLevel);
-    addLine("Push: " + to_string(*pushInst.operand));
+    addLine("Push: " + to_string(*push.operand));
 }
 
-void AsmPrinter::add(const CallInst& callInst)
+void AsmPrinter::add(const CallInst& call)
 {
-    IndentGuard indent(m_indentLevel);
-    addLine("Call: " + to_string(callInst.funName));
+    addLine("Call: " + to_string(call.funName));
 }
 
 void AsmPrinter::add(const ReturnInst& returnInst)
 {
-    IndentGuard indent(m_indentLevel);
     addLine("Return: ");
+}
+
+void AsmPrinter::add(const Cvtsi2sdInst& cvtsi2sd)
+{
+    addLine("Cvtsi2sd" + to_string(*cvtsi2sd.src) + to_string(*cvtsi2sd.dst) + to_string(cvtsi2sd.srcType));
+}
+
+void AsmPrinter::add(const Cvttsd2siInst& cvttsd2si)
+{
+    addLine("Cvttsd2si" + to_string(*cvttsd2si.src) + to_string(*cvttsd2si.dst) + to_string(cvttsd2si.dstType));
 }
 
 std::string to_string(const Identifier& identifier)
@@ -218,9 +211,11 @@ std::string to_string(const Operand& operand)
 std::string to_string(const ImmOperand& immOperand)
 {
     if (immOperand.type == AsmType::QuadWord)
-        return "ImmOperand(" + std::to_string(std::get<i64>(immOperand.value)) + ", " + to_string(immOperand.type) + ")";
+        return "ImmOperand(" + std::to_string(std::get<i64>(immOperand.value))
+            + ", " + to_string(immOperand.type) + ")";
     if (immOperand.type == AsmType::LongWord)
-        return "ImmOperand(" + std::to_string(std::get<i32>(immOperand.value)) + ", " + to_string(immOperand.type) + ")";
+        return "ImmOperand(" + std::to_string(std::get<i32>(immOperand.value))
+            + ", " + to_string(immOperand.type) + ")";
     std::unreachable();
 }
 
@@ -231,7 +226,7 @@ std::string to_string(const RegisterOperand& registerOperand)
 
 std::string to_string(const PseudoOperand& pseudoOperand)
 {
-    return "Pseudo(" + pseudoOperand.identifier + ", " + to_string(pseudoOperand.type) + ")";
+    return "Pseudo(" + pseudoOperand.identifier.value + ", " + to_string(pseudoOperand.type) + ")";
 }
 
 std::string to_string(const StackOperand& stackOperand)
@@ -241,7 +236,7 @@ std::string to_string(const StackOperand& stackOperand)
 
 std::string to_string(const DataOperand& dataOperand)
 {
-    return "Data(" + dataOperand.identifier + ", " + to_string(dataOperand.type) + ")";
+    return "Data(" + dataOperand.identifier.value + ", " + to_string(dataOperand.type) + ")";
 }
 
 std::string to_string(const RegisterOperand::Kind& type)
@@ -258,6 +253,16 @@ std::string to_string(const RegisterOperand::Kind& type)
         case Type::R10:   return "R10";
         case Type::R11:   return "R11";
         case Type::SP:    return "SP";
+        case Type::XMM0:  return "XMM0";
+        case Type::XMM1:  return "XMM1";
+        case Type::XMM2:  return "XMM2";
+        case Type::XMM3:  return "XMM3";
+        case Type::XMM4:  return "XMM4";
+        case Type::XMM5:  return "XMM5";
+        case Type::XMM6:  return "XMM6";
+        case Type::XMM7:  return "XMM7";
+        case Type::XMM14: return "XMM14";
+        case Type::XMM15: return "XMM15";
         default:          return "UnknownRegister";
     }
 }
@@ -276,15 +281,15 @@ std::string to_string(const BinaryInst::Operator& oper)
 {
     using Oper = BinaryInst::Operator;
     switch (oper) {
-        case Oper::Add:             return "+";
-        case Oper::Sub:             return "-";
-        case Oper::Mul:             return "*";
-        case Oper::BitwiseAnd:      return "&";
-        case Oper::BitwiseOr:       return "|";
-        case Oper::BitwiseXor:      return "^";
-        case Oper::LeftShiftSigned:       return "<<";
-        case Oper::RightShiftSigned:      return ">>";
-        default:                    return "Unknown BinaryOp";
+        case Oper::Add:              return "+";
+        case Oper::Sub:              return "-";
+        case Oper::Mul:              return "*";
+        case Oper::AndBitwise:       return "&";
+        case Oper::OrBitwise:        return "|";
+        case Oper::BitwiseXor:       return "^";
+        case Oper::LeftShiftSigned:  return "<<";
+        case Oper::RightShiftSigned: return ">>";
+        default:                     return "Unknown BinaryOp";
     }
 }
 
@@ -309,8 +314,10 @@ std::string to_string(const Inst::CondCode& condCode)
 std::string to_string(const AsmType type)
 {
     switch (type) {
-        case AsmType::QuadWord: return "QuadWord";
+        case AsmType::Byte:     return "Byte";
         case AsmType::LongWord: return "LongWord";
+        case AsmType::QuadWord: return "QuadWord";
+        case AsmType::Double:   return "Double";
         default:                return "Unknown AssemblyType";
     }
 }

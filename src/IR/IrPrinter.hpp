@@ -55,5 +55,6 @@ private:
 
 std::string to_string(UnaryInst::Operation op);
 std::string to_string(BinaryInst::Operation op);
+std::string to_string(Type type);
 
 } // namespace Ir

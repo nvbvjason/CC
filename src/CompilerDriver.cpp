@@ -155,7 +155,7 @@ CodeGen::Program codegen(const Ir::Program& irProgram)
 {
     CodeGen::Program codegenProgram;
     CodeGen::GenerateAsmTree generateAsmTree;
-    generateAsmTree.generateProgram(irProgram, codegenProgram);
+    generateAsmTree.genProgram(irProgram, codegenProgram);
     return codegenProgram;
 }
 
