@@ -65,11 +65,6 @@ ErrorCode CompilerDriver::wrappedRun()
         std::cout << printer.printProgram(codegenProgram);
         return ErrorCode::OK;
     }
-    if (argument == "--printAsm") {
-        CodeGen::AsmPrinter printer;
-        std::cout << printer.printProgram(codegenProgram);
-        return ErrorCode::OK;
-    }
     std::string output = CodeGen::asmProgram(codegenProgram);
     if (ErrorCode errorCode = writeAssmFile(inputFile, output, argument); errorCode != ErrorCode::OK)
         return errorCode;

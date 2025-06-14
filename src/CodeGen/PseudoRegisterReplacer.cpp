@@ -15,7 +15,9 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
                 m_stackPtr -= 4;
             if (pseudo->type == AsmType::QuadWord ||
                 pseudo->type == AsmType::Double) {
-                m_stackPtr -= 8 - (8 - m_stackPtr % 8);
+                m_stackPtr -= 8;
+                if (m_stackPtr % 8 != 0)
+                    m_stackPtr += -8 - (m_stackPtr % 8);
             }
             m_pseudoMap[pseudo->identifier.value] = m_stackPtr;
         }

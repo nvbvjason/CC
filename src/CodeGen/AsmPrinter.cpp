@@ -161,7 +161,7 @@ void AsmPrinter::add(const LabelInst& label)
 
 void AsmPrinter::add(const PushInst& push)
 {
-    addLine("Push: " + to_string(*push.operand));
+    addLine("Push: ",  to_string(*push.operand));
 }
 
 void AsmPrinter::add(const CallInst& call)
@@ -325,7 +325,7 @@ std::string to_string(const AsmType type)
 void AsmPrinter::addLine(const std::string& name,
                          const std::string& operands)
 {
-    constexpr i32 mnemonicWidth = 10;
+    constexpr i32 mnemonicWidth = 14;
     constexpr i32 operandsWidth = 50;
     std::ostringstream oss;
     oss << getIndent();

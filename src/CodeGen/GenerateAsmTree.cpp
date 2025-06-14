@@ -76,7 +76,7 @@ std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVari
     auto result = std::make_unique<StaticVariable>(
         staticVariable.name, getAsmType(staticVariable.type), staticVariable.global);
     if (type == Type::I32)
-        result->init = std::get<i64>(value->value);
+        result->init = std::get<i32>(value->value);
     if (type == Type::I64)
         result->init = std::get<i64>(value->value);
     if (type == Type::U32)
@@ -199,8 +199,10 @@ void GenerateAsmTree::genJump(const Ir::JumpInst& irJump)
 
 void GenerateAsmTree::genJumpIfZero(const Ir::JumpIfZeroInst& jumpIfZero)
 {
-    if (jumpIfZero.type != Type::Double)
+    if (jumpIfZero.type != Type::Double) {
         genJumpIfZeroInteger(jumpIfZero);
+        return;
+    }
     genJumpIfZeroDouble(jumpIfZero);
 }
 
@@ -228,10 +230,11 @@ void GenerateAsmTree::genJumpIfZeroInteger(const Ir::JumpIfZeroInst& jumpIfZero)
 
 void GenerateAsmTree::genJumpIfNotZero(const Ir::JumpIfNotZeroInst& jumpIfNotZero)
 {
-    if (jumpIfNotZero.type != Type::Double)
+    if (jumpIfNotZero.type != Type::Double) {
         genJumpIfNotZeroInteger(jumpIfNotZero);
-    else
-        genJumpIfNotZeroDouble(jumpIfNotZero);
+        return;
+    }
+    genJumpIfNotZeroDouble(jumpIfNotZero);
 }
 
 void GenerateAsmTree::genJumpIfNotZeroDouble(const Ir::JumpIfNotZeroInst& jumpIfNotZero)

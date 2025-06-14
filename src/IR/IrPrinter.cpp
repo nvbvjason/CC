@@ -72,44 +72,44 @@ void IrPrinter::print(const ReturnInst& inst)
 
 void IrPrinter::print(const SignExtendInst& inst)
 {
-    addLine("SignExtend " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
+    addLine("SignExtend " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const ZeroExtendInst& inst)
 {
-    addLine("ZeroExtend " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
+    addLine("ZeroExtend " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const TruncateInst& inst)
 {
-    addLine("Truncate " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
+    addLine("Truncate " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const DoubleToIntInst& inst)
 {
-    addLine("DoubleToInt " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
+    addLine("DoubleToInt " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const DoubleToUIntInst& inst)
 {
-    addLine("DoubleToUInt " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
+    addLine("DoubleToUInt " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const IntToDoubleInst& inst)
 {
-    addLine("IntToDouble " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
+    addLine("IntToDouble " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const UIntToDoubleInst& inst)
 {
-    addLine("UIntToDouble " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
+    addLine("UIntToDouble " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const UnaryInst& inst)
 {
     addLine(to_string(inst.operation) + " " +
             print(*inst.source) + " -> " +
-            print(*inst.destination) + " " +
+            print(*inst.destination) + ", " +
             to_string(inst.type));
 }
 
@@ -118,13 +118,13 @@ void IrPrinter::print(const BinaryInst& inst)
     addLine(print(*inst.lhs) + " " +
             to_string(inst.operation) + " " +
             print(*inst.rhs) + " -> " +
-            print(*inst.dst) + " " +
+            print(*inst.dst) + ", " +
             to_string(inst.type));
 }
 
 void IrPrinter::print(const CopyInst& inst)
 {
-    addLine("Copy " + print(*inst.src) + " -> " + print(*inst.dst) + " " + to_string(inst.type));
+    addLine("Copy " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const JumpInst& inst)
@@ -134,12 +134,12 @@ void IrPrinter::print(const JumpInst& inst)
 
 void IrPrinter::print(const JumpIfZeroInst& inst)
 {
-    addLine("JumpIfZero " + print(*inst.condition) + ", " + print(inst.target) + " " + to_string(inst.type));
+    addLine("JumpIfZero " + print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const JumpIfNotZeroInst& inst)
 {
-    addLine("JumpIfNotZero " + print(*inst.condition) + ", " + print(inst.target) + " " + to_string(inst.type));
+    addLine("JumpIfNotZero " + print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const LabelInst& inst)

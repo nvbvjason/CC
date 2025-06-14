@@ -114,10 +114,13 @@ void ASTPrinter::visit(const FunDecl& funDecl)
     IndentGuard guard(m_indentLevel);
     addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storage));
     auto type = static_cast<const Parsing::FuncType*>(funDecl.type.get());
-    addLine("Return " + varTypeToString(type->returnType->kind));
-    std::string args = "args:";
-    for (i64 i = 0; i < funDecl.params.size(); ++i)
-        args += " " + funDecl.params[i] + " " + varTypeToString(type->params[i]->kind);
+    addLine("ReturnType " + varTypeToString(type->returnType->kind));
+    std::string args = "args: ";
+    for (i64 i = 0; i < funDecl.params.size(); ++i) {
+        if (i != 0)
+            args += ", ";
+        args += varTypeToString(type->params[i]->kind) + " " + funDecl.params[i];
+    }
     addLine(args);
     ConstASTTraverser::visit(funDecl);
 }

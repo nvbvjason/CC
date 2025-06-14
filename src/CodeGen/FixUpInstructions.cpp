@@ -36,7 +36,7 @@ void FixUpInstructions::fixUp()
         else if (inst->kind == Inst::Kind::Cvtsi2sd)
             visit(*static_cast<DivInst*>(inst.get()));
         else
-            m_copy.push_back(std::move(inst));
+            m_copy.emplace_back(std::move(inst));
     }
     m_insts.swap(m_copy);
 }
