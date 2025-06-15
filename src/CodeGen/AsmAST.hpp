@@ -132,8 +132,9 @@ struct StackOperand final : Operand {
 
 struct DataOperand final : Operand {
     Identifier identifier;
-    DataOperand(Identifier iden, const AsmType t)
-        : Operand(Kind::Data, t), identifier(std::move(iden)) {}
+    bool isConst;
+    DataOperand(Identifier iden, const AsmType t, bool isConst)
+        : Operand(Kind::Data, t), identifier(std::move(iden)), isConst(isConst) {}
 
     DataOperand() = delete;
 };

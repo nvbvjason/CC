@@ -14,6 +14,7 @@ std::string varTypeToString(const Type kind)
         case Type::I64:    return "long";
         case Type::U32:    return "u int";
         case Type::U64:    return "u long";
+        case Type::Double: return "double";
         default:           return "unknown";
     }
 }
@@ -41,7 +42,7 @@ std::string binaryOpToString(const BinaryExpr::Operator op)
         case Operator::Subtract:        return "-";
         case Operator::Multiply:        return "*";
         case Operator::Divide:          return "/";
-        case Operator::Modulo:       return "%";
+        case Operator::Modulo:          return "%";
         case Operator::BitwiseAnd:      return "&";
         case Operator::BitwiseOr:       return "|";
         case Operator::BitwiseXor:      return "^";
@@ -313,6 +314,8 @@ void ASTPrinter::visit(const ConstExpr& constExpr)
         addLine(std::to_string(std::get<u32>(constExpr.value)) + ' ' + varTypeToString(Type::U32));
     else if (constExpr.type->kind == Type::U64)
         addLine(std::to_string(std::get<u64>(constExpr.value)) + ' ' + varTypeToString(Type::U64));
+    else if (constExpr.type->kind == Type::Double)
+        addLine(std::to_string(std::get<double>(constExpr.value)) + ' ' + varTypeToString(Type::U64));
     ConstASTTraverser::visit(constExpr);
 }
 

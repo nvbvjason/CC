@@ -27,6 +27,7 @@ public:
     void add(const TopLevel& topLevel);
     void add(const Function& function);
     void add(const StaticVariable& staticVariable);
+    void add(const ConstVariable& constVariable);
     void add(const Inst& inst);
     void add(const MoveInst& move);
     void add(const MoveSXInst& moveSX);

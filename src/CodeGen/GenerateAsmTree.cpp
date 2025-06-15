@@ -3,15 +3,16 @@
 #include "AsmAST.hpp"
 #include "FixUpInstructions.hpp"
 
+#include <array>
 #include <cassert>
 #include <random>
 
 namespace {
 using RegType = CodeGen::RegisterOperand::Kind;
-const std::vector intRegs = {RegType::DI, RegType::SI, RegType::DX,
-                             RegType::CX, RegType::R8, RegType::R9};
-const std::vector doubleRegs = {RegType::XMM0, RegType::XMM1, RegType::XMM2, RegType::XMM4,
-                                RegType::XMM4, RegType::XMM5, RegType::XMM6, RegType::XMM7};
+constexpr std::array intRegs = {RegType::DI, RegType::SI, RegType::DX,
+                                RegType::CX, RegType::R8, RegType::R9};
+constexpr std::array doubleRegs = {RegType::XMM0, RegType::XMM1, RegType::XMM2, RegType::XMM4,
+                                   RegType::XMM4, RegType::XMM5, RegType::XMM6, RegType::XMM7};
 }
 
 namespace CodeGen {
@@ -47,26 +48,44 @@ std::unique_ptr<TopLevel> GenerateAsmTree::genFunction(const Ir::Function& funct
 {
     auto functionCodeGen = std::make_unique<Function>(function.name, function.isGlobal);
     insts.clear();
-    i32 regIndex = 0;
-    for (; regIndex < function.args.size() && regIndex < intRegs.size(); ++regIndex) {
-        auto src = std::make_shared<RegisterOperand>(intRegs[regIndex], getAsmType(function.argTypes[regIndex]));
-        auto arg = std::make_shared<Ir::ValueVar>(function.args[regIndex], function.argTypes[regIndex]);
-        std::shared_ptr<Operand> dst = genOperand(arg);
-        insts.emplace_back(std::make_unique<MoveInst>(
-            src, dst, getAsmType(function.argTypes[regIndex])));
-    }
+    std::vector<bool> pushedIntoRegs = genFunctionPushIntoRegs(function);
     i32 stackPtr = 2;
-    for (; regIndex < function.args.size(); ++regIndex, ++stackPtr) {
-        auto stack = std::make_shared<StackOperand>(8 * stackPtr, getAsmType(function.argTypes[regIndex]));
-        auto arg = std::make_shared<Ir::ValueVar>(function.args[regIndex], function.argTypes[regIndex]);
+    for (i32 i = 0; i < function.args.size(); ++i) {
+        if (pushedIntoRegs[i])
+            continue;
+        constexpr i32 stackAlignment = 8;
+        auto stack = std::make_shared<StackOperand>(stackAlignment * stackPtr++, getAsmType(function.argTypes[i]));
+        auto arg = std::make_shared<Ir::ValueVar>(function.args[i], function.argTypes[i]);
         std::shared_ptr<Operand> dst = genOperand(arg);
         insts.emplace_back(std::make_unique<MoveInst>(
-            stack, dst, getAsmType(function.argTypes[regIndex])));
+            stack, dst, getAsmType(function.argTypes[i])));
     }
     for (const std::unique_ptr<Ir::Instruction>& inst : function.insts)
         genInst(inst);
     functionCodeGen->instructions = std::move(insts);
     return functionCodeGen;
+}
+
+std::vector<bool> GenerateAsmTree::genFunctionPushIntoRegs(const Ir::Function& function)
+{
+    std::vector pushedIntoRegs(function.args.size(), false);
+    i32 regIntIndex = 0;
+    i32 regDoubleInex = 0;
+    for (i32 i = 0; i < function.args.size() && i < intRegs.size(); ++i) {
+        const AsmType type = getAsmType(function.argTypes[i]);
+        std::shared_ptr<RegisterOperand> src;
+        if (type != AsmType::Double && regIntIndex < intRegs.size())
+            src = std::make_shared<RegisterOperand>(intRegs[regIntIndex++], type);
+        else if (type == AsmType::Double && regDoubleInex < doubleRegs.size())
+            src = std::make_shared<RegisterOperand>(doubleRegs[regDoubleInex++], type);
+        else
+            break;
+        auto arg = std::make_shared<Ir::ValueVar>(function.args[i], function.argTypes[i]);
+        std::shared_ptr<Operand> dst = genOperand(arg);
+        insts.emplace_back(std::make_unique<MoveInst>(src, dst, type));
+        pushedIntoRegs[i] = true;
+    }
+    return pushedIntoRegs;
 }
 
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable)
@@ -276,11 +295,31 @@ void GenerateAsmTree::genUnary(const Ir::UnaryInst& irUnary)
         genUnaryNot(irUnary);
         return;
     }
+    if (irUnary.operation == Ir::UnaryInst::Operation::Negate &&
+        irUnary.type == Type::Double) {
+        genNegateDouble(irUnary);
+        return;
+    }
     UnaryInst::Operator oper = unaryOperator(irUnary.operation);
     std::shared_ptr<Operand> src = genOperand(irUnary.source);
     std::shared_ptr<Operand> dst = genOperand(irUnary.destination);
     insts.emplace_back(std::make_unique<MoveInst>(src, dst, src->type));
     insts.emplace_back(std::make_unique<UnaryInst>(dst, oper, src->type));
+}
+
+void GenerateAsmTree::genNegateDouble(const Ir::UnaryInst& irUnary)
+{
+    std::shared_ptr<Operand> src = genOperand(irUnary.source);
+    std::shared_ptr<Operand> dst = genOperand(irUnary.destination);
+
+    constexpr double negativeOne = -0.0;
+    Identifier constLabel(makeTemporaryPseudoName());
+    std::shared_ptr<Operand> data = std::make_shared<DataOperand>(constLabel, AsmType::Double, true);
+    m_toplevel.emplace_back(std::make_unique<ConstVariable>(constLabel, 16, negativeOne));
+
+    insts.emplace_back(std::make_unique<MoveInst>(src, dst, src->type));
+    insts.emplace_back(std::make_unique<BinaryInst>(
+        data, dst, BinaryInst::Operator::BitwiseXor, AsmType::Double));
 }
 
 void GenerateAsmTree::genUnaryNot(const Ir::UnaryInst& irUnary)
@@ -365,7 +404,7 @@ void GenerateAsmTree::genDoubleToUIntQuad(const Ir::DoubleToUIntInst& doubleToUI
 {
     constexpr double upperBoundConst = 9223372036854775808.0;
     Identifier constLabel(makeTemporaryPseudoName());
-    auto upperBound = std::make_shared<DataOperand>(constLabel, AsmType::Double);
+    auto upperBound = std::make_shared<DataOperand>(constLabel, AsmType::Double, true);
     auto src = genOperand(doubleToUInt.src);
     auto dst = genOperand(doubleToUInt.dst);
     auto xmm0 = std::make_shared<RegisterOperand>(RegType::XMM0, AsmType::Double);
@@ -619,9 +658,8 @@ void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
     if (0 < bytesToRemove)
         insts.emplace_back(std::make_unique<BinaryInst>(
         std::make_shared<ImmOperand>(bytesToRemove),
-        std::make_shared<RegisterOperand>(RegType::SP, AsmType::QuadWord),
-        BinaryInst::Operator::Add,
-        AsmType::QuadWord));
+        std::make_shared<RegisterOperand>(
+         RegType::SP, AsmType::QuadWord), BinaryInst::Operator::Add, AsmType::QuadWord));
     std::shared_ptr<Operand> destination = genOperand(funcCall.destination);
     insts.emplace_back(std::make_unique<MoveInst>(
         std::make_shared<RegisterOperand>(RegType::AX, getAsmType(funcCall.type)),
@@ -631,16 +669,26 @@ void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
 
 void GenerateAsmTree::genFunCallPushArgs(const Ir::FunCallInst& funcCall)
 {
-    i32 regIndex = 0;
-    for (; regIndex < funcCall.args.size() && regIndex < intRegs.size(); ++regIndex) {
-        std::shared_ptr<Operand> src = genOperand(funcCall.args[regIndex]);
-        const AsmType type = getAsmType(funcCall.args[regIndex]->type);
+    i32 regIntIndex = 0;
+    i32 regDoubleIndex = 0;
+    std::vector pushedIntoRegs(funcCall.args.size(), false);
+    for (i32 i = 0; i < funcCall.args.size(); ++i) {
+        std::shared_ptr<Operand> src = genOperand(funcCall.args[i]);
+        const AsmType type = getAsmType(funcCall.args[i]->type);
+        std::shared_ptr<RegisterOperand> reg;
+        if (type != AsmType::Double && regIntIndex < intRegs.size())
+            reg = std::make_shared<RegisterOperand>(intRegs[regIntIndex++], type);
+        else if (type == AsmType::Double && regDoubleIndex < doubleRegs.size())
+            reg = std::make_shared<RegisterOperand>(doubleRegs[regDoubleIndex++], type);
+        else
+            break;
         insts.emplace_back(std::make_unique<MoveInst>(
-            src,
-            std::make_shared<RegisterOperand>(intRegs[regIndex], type),
-            type));
+            src, reg, type));
+        pushedIntoRegs[i] = true;
     }
-    for (i32 i = funcCall.args.size() - 1; regIndex <= i; --i) {
+    for (i32 i = funcCall.args.size() - 1; regIntIndex <= i; --i) {
+        if (pushedIntoRegs[i])
+            continue;
         std::shared_ptr<Operand> src = genOperand(funcCall.args[i]);
         if (src->kind == Operand::Kind::Imm ||
             src->kind == Operand::Kind::Register ||
@@ -650,8 +698,7 @@ void GenerateAsmTree::genFunCallPushArgs(const Ir::FunCallInst& funcCall)
         else {
             const AsmType type = getAsmType(funcCall.args[i]->type);
             insts.emplace_back(std::make_unique<MoveInst>(
-                src, std::make_shared<RegisterOperand>(RegType::AX, type),
-                type));
+                src, std::make_shared<RegisterOperand>(RegType::AX, type), type));
             insts.emplace_back(std::make_unique<PushInst>(
                 std::make_shared<RegisterOperand>(RegType::AX, AsmType::QuadWord)));
         }
@@ -756,12 +803,9 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
             const auto valueConst = static_cast<Ir::ValueConst*>(value.get());
             if (valueConst->type == Type::Double) {
                 Identifier constLabel(makeTemporaryPseudoName());
-                m_programCodegen.topLevels.emplace_back(std::make_unique<ConstVariable>(
+                m_toplevel.emplace_back(std::make_unique<ConstVariable>(
                     Identifier(constLabel), 8, std::get<double>(valueConst->value)));
-                auto data = std::make_shared<DataOperand>(constLabel, AsmType::Double);
-                auto pseudo = std::make_shared<PseudoOperand>(constLabel, ReferingTo::Local, AsmType::Double);
-                insts.emplace_back(std::make_unique<MoveInst>(data, pseudo, AsmType::Double));
-                return pseudo;
+                return std::make_shared<DataOperand>(constLabel, AsmType::Double, true);
             }
             if (valueConst->type == Type::U32) {
                 if (INT_MAX < std::get<u32>(valueConst->value)) {

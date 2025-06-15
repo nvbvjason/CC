@@ -24,6 +24,9 @@ void AsmPrinter::add(const TopLevel& topLevel)
         case Type::StaticVariable:
             add(static_cast<const StaticVariable&>(topLevel));
             break;
+        case Type::StaticConstant:
+            add(static_cast<const ConstVariable&>(topLevel));
+            break;
         default:
             addLine("Unknown Instruction");
     }
@@ -37,6 +40,12 @@ void AsmPrinter::add(const StaticVariable& staticVariable)
     else
         global = "is not global";
     addLine(staticVariable.name + " " + std::to_string(staticVariable.init) + " " + global);
+}
+
+void AsmPrinter::add(const ConstVariable& constVariable)
+{
+    addLine(constVariable.name.value + " " + std::to_string(constVariable.staticInit) + " " +
+            std::to_string(constVariable.alignment));
 }
 
 void AsmPrinter::add(const Function& function)

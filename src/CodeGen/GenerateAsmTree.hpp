@@ -16,8 +16,10 @@ public:
     void genProgram(const Ir::Program &program, Program &programCodegen);
     [[nodiscard]] std::unique_ptr<TopLevel> genTopLevel(const Ir::TopLevel& topLevel);
     [[nodiscard]] std::unique_ptr<TopLevel> genFunction(const Ir::Function& function);
+    [[nodiscard]] std::vector<bool> genFunctionPushIntoRegs(const Ir::Function& function);
     void genInst(const std::unique_ptr<Ir::Instruction>& inst);
     void genUnary(const Ir::UnaryInst& irUnary);
+    void genNegateDouble(const Ir::UnaryInst& irUnary);
     void genUnaryNot(const Ir::UnaryInst& irUnary);
 
     void genBinary(const Ir::BinaryInst& irBinary);
@@ -79,7 +81,9 @@ inline AsmType getAsmType(Type type)
 {
     if (type == Type::I32 || type == Type::U32)
         return AsmType::LongWord;
-    return AsmType::QuadWord;
+    if (type == Type::I64 || type == Type::U64)
+        return AsmType::QuadWord;
+    return AsmType::Double;
 }
 
 std::string makeTemporaryPseudoName();

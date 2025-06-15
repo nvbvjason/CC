@@ -21,6 +21,11 @@ std::string asmProgram(const Program& program)
             asmStaticVariable(result, *var);
             continue;
         }
+        if (topLevel->type == TopLevel::Kind::StaticConstant) {
+            const auto var = static_cast<const ConstVariable*>(topLevel.get());
+            asmStaticConstant(result, *var);
+            continue;
+        }
         const auto function = dynamic_cast<Function*>(topLevel.get());
         asmFunction(result, *function);
     }
@@ -52,6 +57,15 @@ void asmStaticVariable(std::string& result, const StaticVariable& variable)
     result += '\n';
 }
 
+void asmStaticConstant(std::string& result, const ConstVariable& variable)
+{
+    result += asmFormatInstruction(".section .rodata");
+    result += asmFormatInstruction(".align",std::to_string(variable.alignment));
+    result += asmFormatLabel(createLabel(variable.name.value));
+    result += asmFormatInstruction(".quad "+ std::to_string( std::bit_cast<uint64_t>(variable.staticInit)));
+    result += '\n';
+}
+
 void asmFunction(std::string& result, const Function& functionNode)
 {
     if (functionNode.isGlobal)
@@ -71,10 +85,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Move: {
             const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
             std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
-            if (moveInst->type == AsmType::LongWord)
-                result += asmFormatInstruction("movl", operand);
-            if (moveInst->type == AsmType::QuadWord)
-                result += asmFormatInstruction("movq", operand);;
+            result += asmFormatInstruction(addType("mov", moveInst->type), operand);
             return;
         }
         case Inst::Kind::MoveSX: {
@@ -85,7 +96,9 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Unary: {
             const auto unaryInst = dynamic_cast<UnaryInst*>(instruction.get());
-            result += asmFormatInstruction(asmUnaryOperator(unaryInst->oper, unaryInst->type), asmOperand(unaryInst->destination));
+            result += asmFormatInstruction(
+                asmUnaryOperator(unaryInst->oper, unaryInst->type),
+                asmOperand(unaryInst->destination));
             return;
         }
         case Inst::Kind::Binary: {
@@ -104,10 +117,8 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Idiv: {
             const auto idivInst = dynamic_cast<IdivInst*>(instruction.get());
-            if (idivInst->type == AsmType::LongWord)
-                result += asmFormatInstruction("idivl", asmOperand(idivInst->operand));
-            if (idivInst->type == AsmType::QuadWord)
-                result += asmFormatInstruction("idivq", asmOperand(idivInst->operand));
+            result += asmFormatInstruction(addType(
+                "idiv", idivInst->type), asmOperand(idivInst->operand));
             return;
         }
         case Inst::Kind::Div: {
@@ -127,10 +138,10 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Cmp: {
             const auto cmpInst = dynamic_cast<CmpInst*>(instruction.get());
             const std::string operands = asmOperand(cmpInst->lhs) + ", " + asmOperand(cmpInst->rhs);
-            if (cmpInst->lhs->type == AsmType::LongWord)
-                result += asmFormatInstruction("cmpl", operands);
-            if (cmpInst->lhs->type == AsmType::QuadWord)
-                result += asmFormatInstruction("cmpq", operands);
+            if (cmpInst->lhs->type == AsmType::Double)
+                result += asmFormatInstruction("cmoisd", operands);
+            else
+                result += asmFormatInstruction(addType("cmp", cmpInst->lhs->type), operands);
             return;
         }
         case Inst::Kind::Jmp: {
@@ -140,12 +151,14 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::JmpCC: {
             const auto jmpCCInst = dynamic_cast<JmpCCInst*>(instruction.get());
-            result += asmFormatInstruction("j" + condCode(jmpCCInst->condition), createLabel(jmpCCInst->target.value));
+            result += asmFormatInstruction(
+                "j" + condCode(jmpCCInst->condition), createLabel(jmpCCInst->target.value));
             return;
         }
         case Inst::Kind::SetCC: {
             const auto setCCInst = dynamic_cast<SetCCInst*>(instruction.get());
-            result += asmFormatInstruction("set" + condCode(setCCInst->condition), asmOperand(setCCInst->operand));
+            result += asmFormatInstruction(
+                "set" + condCode(setCCInst->condition), asmOperand(setCCInst->operand));
             return;
         }
         case Inst::Kind::Label: {
@@ -194,6 +207,8 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
         }
         case Operand::Kind::Data: {
             const auto dataOperand = dynamic_cast<DataOperand*>(operand.get());
+            if (dataOperand->isConst)
+                return createLabel(dataOperand->identifier.value) + "(%rip)";
             return dataOperand->identifier.value + "(%rip)";
         }
         default:
@@ -248,19 +263,10 @@ std::string asmRegister(const RegisterOperand* reg)
 std::string asmUnaryOperator(const UnaryInst::Operator oper, AsmType type)
 {
     using Operator = UnaryInst::Operator;
-    if (type == AsmType::LongWord) {
-        switch (oper) {
-            case Operator::Neg:      return "negl";
-            case Operator::Not:      return "notl";
-            default:                 return "not set asmUnaryOperator";
-        }
-    }
-    if (type == AsmType::QuadWord) {
-        switch (oper) {
-            case Operator::Neg:      return "negq";
-            case Operator::Not:      return "notq";
-            default:                 return "not set asmUnaryOperator";
-        }
+    switch (oper) {
+        case Operator::Neg:      return addType("neg", type);
+        case Operator::Not:      return addType("not", type);
+        default:                 return "not set asmUnaryOperator";
     }
     std::abort();
 }
@@ -268,41 +274,24 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper, AsmType type)
 std::string asmBinaryOperator(const BinaryInst::Operator oper, const AsmType type)
 {
     using Operator = BinaryInst::Operator;
-    if (type == AsmType::LongWord) {
-        switch (oper) {
-            case Operator::Mul:                 return "imull";
-            case Operator::Add:                 return "addl";
-            case Operator::Sub:                 return "subl";
-
-            case Operator::AndBitwise:          return "andl";
-            case Operator::OrBitwise:           return "orl";
-            case Operator::BitwiseXor:          return "xorl";
-
-            case Operator::LeftShiftSigned:     return "shll";
-            case Operator::LeftShiftUnsigned:   return "sall";
-            case Operator::RightShiftSigned:    return "sarl";
-            case Operator::RightShiftUnsigned:  return "shrl";
-            default:
-                return "not set asmBinaryOperator";
-        }
+    if (oper == Operator::BitwiseXor && type == AsmType::Double) {
+        return "xorpd";
     }
-    if (type == AsmType::QuadWord) {
-        switch (oper) {
-            case Operator::Mul:                 return "imulq";
-            case Operator::Add:                 return "addq";
-            case Operator::Sub:                 return "subq";
+    switch (oper) {
+        case Operator::Mul:                 return addType("imul", type);
+        case Operator::Add:                 return addType("add", type);
+        case Operator::Sub:                 return addType("sub", type);
 
-            case Operator::AndBitwise:          return "andq";
-            case Operator::OrBitwise:           return "orq";
-            case Operator::BitwiseXor:          return "xorq";
+        case Operator::AndBitwise:          return addType("and", type);
+        case Operator::OrBitwise:           return addType("or", type);
+        case Operator::BitwiseXor:          return addType("xor" ,type);
 
-            case Operator::LeftShiftSigned:     return "shlq";
-            case Operator::LeftShiftUnsigned:   return "salq";
-            case Operator::RightShiftSigned:    return "sarq";
-            case Operator::RightShiftUnsigned:  return "shrq";
-            default:
-                return "not set asmBinaryOperator";
-        }
+        case Operator::LeftShiftSigned:     return addType("shl", type);
+        case Operator::LeftShiftUnsigned:   return addType("sal", type);
+        case Operator::RightShiftSigned:    return addType("sar", type);
+        case Operator::RightShiftUnsigned:  return addType("shr", type);
+        default:
+            return "not set asmBinaryOperator";
     }
     std::abort();
 }
@@ -350,6 +339,20 @@ std::string asmFormatInstruction(const std::string& mnemonic,
         oss << "# " << comment;
     oss << "\n";
     return oss.str();
+}
+
+std::string addType(const std::string& instruction, const AsmType type)
+{
+    switch (type) {
+        case AsmType::LongWord:
+            return instruction + "l";
+        case AsmType::QuadWord:
+            return instruction + "q";
+        case AsmType::Double:
+            return instruction + "sd";
+        default:
+            return instruction + "not set addType";
+    }
 }
 
 } // CodeGen

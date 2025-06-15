@@ -116,7 +116,7 @@ struct Token {
     [[nodiscard]] u32 getU32Value() const { return std::get<u32>(m_data); }
     [[nodiscard]] i64 getI64Value() const { return std::get<i64>(m_data); }
     [[nodiscard]] u64 getU64Value() const { return std::get<u64>(m_data); }
-    [[nodiscard]] u64 getDoubleValue() const { return std::get<double>(m_data); }
+    [[nodiscard]] double getDoubleValue() const { return std::get<double>(m_data); }
     [[nodiscard]] std::string getTypeName() const;
 };
 

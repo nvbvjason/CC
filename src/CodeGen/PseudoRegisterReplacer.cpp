@@ -7,7 +7,7 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
         const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
         if (pseudo->referingTo == ReferingTo::Extern ||
             pseudo->referingTo == ReferingTo::Static) {
-            operand = std::make_shared<DataOperand>(pseudo->identifier, pseudo->type);
+            operand = std::make_shared<DataOperand>(pseudo->identifier, pseudo->type, false);
             return;
         }
         if (!m_pseudoMap.contains(pseudo->identifier.value)) {
@@ -16,9 +16,10 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
             if (pseudo->type == AsmType::QuadWord ||
                 pseudo->type == AsmType::Double) {
                 m_stackPtr -= 8;
-                if (m_stackPtr % 8 != 0)
-                    m_stackPtr += -8 - (m_stackPtr % 8);
             }
+            constexpr i32 requiredAlignment = 8;
+            if (m_stackPtr % requiredAlignment != 0)
+                m_stackPtr += -requiredAlignment - m_stackPtr % requiredAlignment;
             m_pseudoMap[pseudo->identifier.value] = m_stackPtr;
         }
         operand = std::make_shared<StackOperand>(m_pseudoMap.at(pseudo->identifier.value), operand->type);

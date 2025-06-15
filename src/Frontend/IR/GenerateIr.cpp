@@ -591,7 +591,9 @@ std::shared_ptr<Value> GenerateIr::genConstInst(const Parsing::Expr& parsingExpr
         return std::make_unique<ValueConst>(std::get<u32>(constant->value));
     if (constant->type->kind == Type::U64)
         return std::make_unique<ValueConst>(std::get<u64>(constant->value));
-    return std::make_unique<ValueConst>(std::get<i64>(constant->value));
+    if (constant->type->kind == Type::I64)
+        return std::make_unique<ValueConst>(std::get<i64>(constant->value));
+    return std::make_unique<ValueConst>(std::get<double>(constant->value));
 }
 
 std::shared_ptr<Value> GenerateIr::genTernaryInst(const Parsing::Expr& ternary)
