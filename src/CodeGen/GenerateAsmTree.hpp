@@ -6,8 +6,25 @@
 #include "AsmAST.hpp"
 #include "ASTIr.hpp"
 
+#include <cmath>
+#include <unordered_map>
+
 namespace CodeGen {
 class GenerateAsmTree {
+    struct DoubleHash {
+        size_t operator()(const double d) const noexcept {
+            return std::hash<u64>{}(std::bit_cast<u64>(d));
+        }
+    };
+
+    struct DoubleEqual {
+        bool operator()(const double a, const double b) const noexcept {
+            if (std::isnan(a)) return std::isnan(b);
+            return std::bit_cast<u64>(a) == std::bit_cast<u64>(b);
+        }
+    };
+
+    std::unordered_map<double, std::string, DoubleHash, DoubleEqual> m_constantDoubles;
     using RegType = RegisterOperand::Kind;
     std::vector<std::unique_ptr<Inst>> insts;
     Program m_programCodegen;
@@ -61,12 +78,14 @@ public:
 
     void genFunCall(const Ir::FunCallInst& funcCall);
     void genFunCallPushArgs(const Ir::FunCallInst& funcCall);
+
+    std::shared_ptr<Operand> genDoubleConst(double value);
     std::shared_ptr<Operand> genOperand(const std::shared_ptr<Ir::Value>& value);
+    std::shared_ptr<Operand> getZeroOperand(AsmType type);
 };
 
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
 
-std::shared_ptr<ImmOperand> getZeroImmOfType(AsmType type);
 i32 getStackPadding(size_t numArgs);
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
@@ -89,5 +108,4 @@ inline AsmType getAsmType(Type type)
 std::string makeTemporaryPseudoName();
 
 }
-
 #endif // CC_CONCRETE_TREE_HPP

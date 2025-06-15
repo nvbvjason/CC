@@ -47,6 +47,7 @@ private:
 
     void binaryShift(BinaryInst& binaryInst);
     void binaryMul(BinaryInst& binaryInst);
+    void binaryDoubleOthers(BinaryInst& binaryInst);
     void binaryOthers(BinaryInst& binaryInst);
     std::shared_ptr<RegisterOperand> genSrcOperand(AsmType type);
     std::shared_ptr<RegisterOperand> genDstOperand(AsmType type);

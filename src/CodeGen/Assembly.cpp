@@ -6,12 +6,6 @@
 
 namespace CodeGen {
 
-std::string makeTemporaryPseudoName()
-{
-    static i32 i = 0;
-    return std::to_string(i++) + "..";
-}
-
 std::string asmProgram(const Program& program)
 {
     std::string result;
@@ -139,7 +133,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             const auto cmpInst = dynamic_cast<CmpInst*>(instruction.get());
             const std::string operands = asmOperand(cmpInst->lhs) + ", " + asmOperand(cmpInst->rhs);
             if (cmpInst->lhs->type == AsmType::Double)
-                result += asmFormatInstruction("cmoisd", operands);
+                result += asmFormatInstruction("comisd", operands);
             else
                 result += asmFormatInstruction(addType("cmp", cmpInst->lhs->type), operands);
             return;

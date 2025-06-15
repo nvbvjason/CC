@@ -80,6 +80,8 @@ void FixUpInstructions::visit(BinaryInst& binary)
         binaryShift(binary);
     else if (binary.oper == BinaryInst::Operator::Mul)
         binaryMul(binary);
+    else if (binary.type == AsmType::Double)
+        binaryDoubleOthers(binary);
     else
         binaryOthers(binary);
 }
@@ -102,6 +104,18 @@ void FixUpInstructions::binaryMul(BinaryInst& binaryInst)
     insert(std::move(first), std::move(second), std::move(third));
 }
 
+void FixUpInstructions::binaryDoubleOthers(BinaryInst& binaryInst)
+{
+    if (binaryInst.rhs->kind != Operand::Kind::Register) {
+        auto first = std::make_unique<MoveInst>(binaryInst.rhs, genDstOperand(binaryInst.type), binaryInst.type);
+        auto second = std::make_unique<BinaryInst>(
+            binaryInst.lhs, genDstOperand(binaryInst.type), binaryInst.oper, binaryInst.type);
+        insert(std::move(first), std::move(second));
+    }
+    else
+        insert(std::make_unique<BinaryInst>(binaryInst));
+}
+
 void FixUpInstructions::binaryOthers(BinaryInst& binaryInst)
 {
     auto first = std::make_unique<MoveInst>(binaryInst.lhs, genSrcOperand(binaryInst.type), binaryInst.type);
@@ -112,7 +126,12 @@ void FixUpInstructions::binaryOthers(BinaryInst& binaryInst)
 
 void FixUpInstructions::visit(CmpInst& cmpInst)
 {
-    if (areBothOnTheStack(cmpInst)) {
+    if (cmpInst.rhs->kind != Operand::Kind::Register && cmpInst.type == AsmType::Double) {
+        auto first = std::make_unique<MoveInst>(cmpInst.rhs, genDstOperand(cmpInst.type), cmpInst.type);
+        auto second = std::make_unique<CmpInst>(cmpInst.lhs, genDstOperand(cmpInst.type), cmpInst.type);
+        insert(std::move(first), std::move(second));
+    }
+    else if (areBothOnTheStack(cmpInst)) {
         auto first = std::make_unique<MoveInst>(cmpInst.lhs, genSrcOperand(cmpInst.type), cmpInst.type);
         auto second = std::make_unique<CmpInst>(genSrcOperand(cmpInst.type), cmpInst.rhs, cmpInst.type);
         insert(std::move(first), std::move(second));
