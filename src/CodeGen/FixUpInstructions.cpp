@@ -32,9 +32,9 @@ void FixUpInstructions::fixUp()
         else if (inst->kind == Inst::Kind::Div)
             visit(*static_cast<DivInst*>(inst.get()));
         else if (inst->kind == Inst::Kind::Cvttsd2si)
-            visit(*static_cast<DivInst*>(inst.get()));
+            visit(*static_cast<Cvttsd2siInst*>(inst.get()));
         else if (inst->kind == Inst::Kind::Cvtsi2sd)
-            visit(*static_cast<DivInst*>(inst.get()));
+            visit(*static_cast<Cvtsi2sdInst*>(inst.get()));
         else
             m_copy.emplace_back(std::move(inst));
     }
@@ -110,7 +110,9 @@ void FixUpInstructions::binaryDoubleOthers(BinaryInst& binaryInst)
         auto first = std::make_unique<MoveInst>(binaryInst.rhs, genDstOperand(binaryInst.type), binaryInst.type);
         auto second = std::make_unique<BinaryInst>(
             binaryInst.lhs, genDstOperand(binaryInst.type), binaryInst.oper, binaryInst.type);
-        insert(std::move(first), std::move(second));
+        auto third = std::make_unique<MoveInst>(
+            genDstOperand(binaryInst.type), binaryInst.rhs, binaryInst.type);
+        insert(std::move(first), std::move(second), std::move(third));
     }
     else
         insert(std::make_unique<BinaryInst>(binaryInst));
@@ -163,18 +165,24 @@ void FixUpInstructions::visit(DivInst& div)
 void FixUpInstructions::visit(Cvttsd2siInst& cvttsd2si)
 {
     auto first = std::make_unique<Cvttsd2siInst>(
-        cvttsd2si.src, genSrcOperand(cvttsd2si.dstType), cvttsd2si.dstType);
+        cvttsd2si.src, genDstOperand(cvttsd2si.dstType), cvttsd2si.dstType);
     auto second = std::make_unique<MoveInst>(genDstOperand(cvttsd2si.dstType), cvttsd2si.dst, cvttsd2si.dstType);
     insert(std::move(first), std::move(second));
 }
 
 void FixUpInstructions::visit(Cvtsi2sdInst& cvtsi2sd)
 {
-    auto first = std::make_unique<MoveInst>(cvtsi2sd.src, genSrcOperand(cvtsi2sd.srcType), cvtsi2sd.srcType);
-    auto second = std::make_unique<Cvtsi2sdInst>(
-        genSrcOperand(cvtsi2sd.srcType), genDstOperand(cvtsi2sd.srcType), cvtsi2sd.srcType);
-    auto third = std::make_unique<MoveInst>(genDstOperand(cvtsi2sd.srcType), cvtsi2sd.dst, cvtsi2sd.srcType);
-    insert(std::move(first), std::move(second), std::move(third));
+    std::shared_ptr<Operand> src = cvtsi2sd.src;
+    if (src->kind == Operand::Kind::Imm) {
+        std::shared_ptr<Operand> srcReg = genSrcOperand(cvtsi2sd.dst->type);
+        auto moveSrc = std::make_unique<MoveInst>(src, srcReg, cvtsi2sd.dst->type);
+        insert(std::move(moveSrc));
+        src = srcReg;
+    }
+    auto first = std::make_unique<Cvtsi2sdInst>(
+        src, genDstOperand(AsmType::Double), cvtsi2sd.srcType);
+    auto second = std::make_unique<MoveInst>(genDstOperand(AsmType::Double), cvtsi2sd.dst, AsmType::Double);
+    insert(std::move(first), std::move(second));
 }
 
 std::shared_ptr<RegisterOperand> FixUpInstructions::genSrcOperand(AsmType type)

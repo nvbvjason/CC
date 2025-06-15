@@ -32,6 +32,7 @@ class GenerateAsmTree {
 public:
     void genProgram(const Ir::Program &program, Program &programCodegen);
     [[nodiscard]] std::unique_ptr<TopLevel> genTopLevel(const Ir::TopLevel& topLevel);
+    void genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs);
     [[nodiscard]] std::unique_ptr<TopLevel> genFunction(const Ir::Function& function);
     [[nodiscard]] std::vector<bool> genFunctionPushIntoRegs(const Ir::Function& function);
     void genInst(const std::unique_ptr<Ir::Instruction>& inst);
@@ -79,7 +80,7 @@ public:
     void genFunCall(const Ir::FunCallInst& funcCall);
     void genFunCallPushArgs(const Ir::FunCallInst& funcCall);
 
-    std::shared_ptr<Operand> genDoubleConst(double value);
+    std::shared_ptr<Operand> genDoubleConst(double value, i32 alignment);
     std::shared_ptr<Operand> genOperand(const std::shared_ptr<Ir::Value>& value);
     std::shared_ptr<Operand> getZeroOperand(AsmType type);
 };

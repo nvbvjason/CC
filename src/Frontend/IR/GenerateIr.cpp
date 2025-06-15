@@ -442,16 +442,16 @@ std::shared_ptr<Value> GenerateIr::genCastInst(const Parsing::Expr& parsingExpr)
     const Type innerType = castExpr->expr->type->kind;
     const Identifier iden(makeTemporaryName());
     auto dst = std::make_shared<ValueVar>(iden, type);
-    if (getSize(type) == getSize(innerType))
-        m_insts.emplace_back(std::make_unique<CopyInst>(result, dst, type));
-    else if (type == Type::Double && !isSigned(innerType))
-        m_insts.emplace_back(std::make_unique<DoubleToUIntInst>(result, dst, type));
-    else if (type == Type::Double && isSigned(innerType))
-        m_insts.emplace_back(std::make_unique<DoubleToIntInst>(result, dst, type));
-    else if (!isSigned(type) && innerType == Type::Double)
+    if (type == Type::Double && !isSigned(innerType))
         m_insts.emplace_back(std::make_unique<UIntToDoubleInst>(result, dst, type));
-    else if (isSigned(type) && innerType == Type::Double)
+    else if (type == Type::Double && isSigned(innerType))
         m_insts.emplace_back(std::make_unique<IntToDoubleInst>(result, dst, type));
+    else if (!isSigned(type) && innerType == Type::Double)
+        m_insts.emplace_back(std::make_unique<DoubleToUIntInst>(result, dst, type));
+    else if (isSigned(type) && innerType == Type::Double)
+        m_insts.emplace_back(std::make_unique<DoubleToIntInst>(result, dst, type));
+    else if (getSize(type) == getSize(innerType))
+        m_insts.emplace_back(std::make_unique<CopyInst>(result, dst, type));
     else if (getSize(type) < getSize(innerType))
         m_insts.emplace_back(std::make_unique<TruncateInst>(result, dst, innerType));
     else if (isSigned(innerType))

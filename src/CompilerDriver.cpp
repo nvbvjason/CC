@@ -19,6 +19,7 @@ static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::filesystem::path& name);
 static bool isCommandLineArgumentValid(const std::string& argument);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
+static void linkLib(const std::string& asmFile, const std::string& outputFile, const std::string& argument);
 static void makeLib(const std::string& asmFile, const std::string& outputFile);
 void fixAsm(const CodeGen::Program& codegenProgram);
 static void cleanUp();
@@ -72,6 +73,8 @@ ErrorCode CompilerDriver::wrappedRun()
         return ErrorCode::OK;
     if (argument == "-c")
         makeLib(m_outputFileName, inputFile.substr(0, inputFile.length() - 2));
+    else if (argument.starts_with("-l"))
+        linkLib(m_outputFileName, inputFile.substr(0, inputFile.length() - 2), argument);
     else
         assemble(m_outputFileName, inputFile.substr(0, inputFile.length() - 2));
     return ErrorCode::OK;
@@ -161,6 +164,8 @@ static bool fileExists(const std::filesystem::path& name)
 
 static bool isCommandLineArgumentValid(const std::string &argument)
 {
+    if (argument.starts_with("-l"))
+        return true;
     constexpr std::array validArguments = {"",  "--printAst","--help", "-h", "--version",
         "--lex", "--parse", "--tacky", "--codegen", "--printTacky", "--validate",
         "--assemble", "--printAsm", "--printAsmAfter", "-c", "--printAstAfter", "--printTokens"};
@@ -170,6 +175,12 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 void assemble(const std::string& asmFile, const std::string& outputFile)
 {
     const std::string command = "gcc " + asmFile + " -o " + outputFile;
+    std::system(command.c_str());
+}
+
+void linkLib(const std::string& asmFile, const std::string& outputFile, const std::string& argument)
+{
+    const std::string command = "gcc " + asmFile + " -o " + outputFile + " " + argument;
     std::system(command.c_str());
 }
 

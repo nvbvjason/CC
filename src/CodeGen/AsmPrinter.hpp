@@ -31,10 +31,13 @@ public:
     void add(const Inst& inst);
     void add(const MoveInst& move);
     void add(const MoveSXInst& moveSX);
+    void add(const Cvtsi2sdInst& cvtsi2SdInst);
+    void add(const Cvttsd2siInst& cvttsd2SiInst);
     void add(const UnaryInst& unary);
     void add(const BinaryInst& binary);
     void add(const CmpInst& cmp);
     void add(const IdivInst& idiv);
+    void add(const DivInst& div);
     void add(const CdqInst& cpq);
     void add(const JmpInst& jmp);
     void add(const JmpCCInst& jmpCC);
@@ -43,8 +46,6 @@ public:
     void add(const PushInst& push);
     void add(const CallInst& call);
     void add(const ReturnInst& returnInst);
-    void add(const Cvtsi2sdInst& cvtsi2sd);
-    void add(const Cvttsd2siInst& cvttsd2si);
 private:
     void addLine(const std::string& name, const std::string& operands = "");
     std::string getIndent() const;

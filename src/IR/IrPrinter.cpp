@@ -67,42 +67,42 @@ std::string IrPrinter::print(const Identifier& identifier)
 
 void IrPrinter::print(const ReturnInst& inst)
 {
-    addLine("Return " + print(*inst.returnValue));
+    addLine("Return: " + print(*inst.returnValue));
 }
 
 void IrPrinter::print(const SignExtendInst& inst)
 {
-    addLine("SignExtend " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("SignExtend: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const ZeroExtendInst& inst)
 {
-    addLine("ZeroExtend " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("ZeroExtend: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const TruncateInst& inst)
 {
-    addLine("Truncate " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("Truncate: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const DoubleToIntInst& inst)
 {
-    addLine("DoubleToInt " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("DoubleToInt: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const DoubleToUIntInst& inst)
 {
-    addLine("DoubleToUInt " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("DoubleToUInt: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const IntToDoubleInst& inst)
 {
-    addLine("IntToDouble " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("IntToDouble: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const UIntToDoubleInst& inst)
 {
-    addLine("UIntToDouble " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("UIntToDouble: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const UnaryInst& inst)
@@ -124,27 +124,27 @@ void IrPrinter::print(const BinaryInst& inst)
 
 void IrPrinter::print(const CopyInst& inst)
 {
-    addLine("Copy " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("Copy: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const JumpInst& inst)
 {
-    addLine("Jump " + print(inst.target));
+    addLine("Jump: " + print(inst.target));
 }
 
 void IrPrinter::print(const JumpIfZeroInst& inst)
 {
-    addLine("JumpIfZero " + print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
+    addLine("JumpIfZero: " + print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const JumpIfNotZeroInst& inst)
 {
-    addLine("JumpIfNotZero " + print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
+    addLine("JumpIfNotZero: " + print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const LabelInst& inst)
 {
-    addLine("Label " +print(inst.target));
+    addLine("Label: " +print(inst.target));
 }
 
 void IrPrinter::print(const FunCallInst &inst)
@@ -174,6 +174,8 @@ std::string IrPrinter::print(const ValueConst& val)
         return "Const(" + std::to_string(std::get<u32>(val.value)) + ") u32";
     if (val.type == Type::U64)
         return "Const(" + std::to_string(std::get<u64>(val.value)) + ") u64";
+    if (val.type == Type::Double)
+        return "Const(" + std::to_string(std::get<double>(val.value)) + ") double";
     std::unreachable();
 }
 
@@ -235,6 +237,14 @@ void IrPrinter::print(const Instruction& instruction) {
             print(static_cast<const SignExtendInst&>(instruction)); break;
         case Instruction::Kind::Truncate:
             print(static_cast<const TruncateInst&>(instruction)); break;
+        case Instruction::Kind::DoubleToInt:
+            print(static_cast<const DoubleToIntInst&>(instruction)); break;
+        case Instruction::Kind::DoubleToUInt:
+            print(static_cast<const DoubleToUIntInst&>(instruction)); break;
+        case Instruction::Kind::IntToDouble:
+            print(static_cast<const IntToDoubleInst&>(instruction)); break;
+        case Instruction::Kind::UIntToDouble:
+            print(static_cast<const UIntToDoubleInst&>(instruction)); break;
         case Instruction::Kind::Unary:
             print(static_cast<const UnaryInst&>(instruction)); break;
         case Instruction::Kind::Binary:

@@ -116,8 +116,11 @@ struct RegisterOperand final : Operand {
 struct PseudoOperand final : Operand {
     Identifier identifier;
     ReferingTo referingTo = ReferingTo::Local;
-    PseudoOperand(Identifier identifier, const ReferingTo referingTo, const AsmType t)
-        : Operand(Kind::Pseudo, t), identifier(std::move(identifier)), referingTo(referingTo) {}
+    bool isConst;
+    PseudoOperand(Identifier identifier, const ReferingTo referingTo,
+                  const AsmType t, const bool isConst)
+        : Operand(Kind::Pseudo, t), identifier(std::move(identifier)),
+                                      referingTo(referingTo), isConst(isConst) {}
 
     PseudoOperand() = delete;
 };
@@ -232,7 +235,7 @@ struct Cvtsi2sdInst final : Inst {
         std::shared_ptr<Operand> src,
         std::shared_ptr<Operand> dst,
         const AsmType srcType)
-        : Inst(Kind::Cvttsd2si), src(std::move(src)), dst(std::move(dst)), srcType(srcType) {}
+        : Inst(Kind::Cvtsi2sd), src(std::move(src)), dst(std::move(dst)), srcType(srcType) {}
 
     void accept(InstVisitor& visitor) override;
 

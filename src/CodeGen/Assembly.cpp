@@ -88,6 +88,26 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             result += asmFormatInstruction("movslq", operands);
             return;
         }
+        case Inst::Kind::MovZeroExtend: {
+            const auto moveZeroExtend = dynamic_cast<MoveZeroExtendInst*>(instruction.get());
+            const std::string operands = asmOperand(moveZeroExtend->src) + ", " + asmOperand(moveZeroExtend->dst);
+            result += asmFormatInstruction(addType("mov", moveZeroExtend->type), operands);
+            return;
+        }
+        case Inst::Kind::Cvtsi2sd: {
+            const auto cvtsi2sd = dynamic_cast<Cvtsi2sdInst*>(instruction.get());
+            const AsmType type = cvtsi2sd->srcType;
+            const std::string operands = asmOperand(cvtsi2sd->src) + ", " + asmOperand(cvtsi2sd->dst);
+            result += asmFormatInstruction(addType("cvtsi2sd", type), operands);
+            return;
+        }
+        case Inst::Kind::Cvttsd2si: {
+            const auto cvtsd2siInst = dynamic_cast<Cvttsd2siInst*>(instruction.get());
+            const AsmType type = cvtsd2siInst->dstType;
+            std::string operands = asmOperand(cvtsd2siInst->src) + ", " + asmOperand(cvtsd2siInst->dst);
+            result += asmFormatInstruction(addType("cvttsd2si", type), operands);
+            return;
+        }
         case Inst::Kind::Unary: {
             const auto unaryInst = dynamic_cast<UnaryInst*>(instruction.get());
             result += asmFormatInstruction(
@@ -268,9 +288,12 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper, AsmType type)
 std::string asmBinaryOperator(const BinaryInst::Operator oper, const AsmType type)
 {
     using Operator = BinaryInst::Operator;
-    if (oper == Operator::BitwiseXor && type == AsmType::Double) {
+    if (oper == Operator::BitwiseXor && type == AsmType::Double)
         return "xorpd";
-    }
+    if (oper == Operator::Mul && type == AsmType::Double)
+        return "mulsd";
+    if (oper == Operator::DivDouble && type == AsmType::Double)
+        return "divsd";
     switch (oper) {
         case Operator::Mul:                 return addType("imul", type);
         case Operator::Add:                 return addType("add", type);
@@ -323,7 +346,7 @@ std::string asmFormatInstruction(const std::string& mnemonic,
                       const std::string& operands,
                       const std::string& comment)
 {
-    constexpr int mnemonicWidth = 8;
+    constexpr int mnemonicWidth = 12;
     constexpr int operandsWidth = 16;
 
     std::ostringstream oss;

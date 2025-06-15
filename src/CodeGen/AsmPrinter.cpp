@@ -70,6 +70,10 @@ void AsmPrinter::add(const Inst& inst)
             add(static_cast<const MoveInst&>(inst)); break;
         case Kind::MoveSX:
             add(static_cast<const MoveSXInst&>(inst)); break;
+        case Kind::Cvtsi2sd:
+            add(static_cast<const Cvtsi2sdInst&>(inst)); break;
+        case Kind::Cvttsd2si:
+            add(static_cast<const Cvttsd2siInst&>(inst)); break;
         case Kind::Unary:
             add(static_cast<const UnaryInst&>(inst)); break;
         case Kind::Binary:
@@ -78,6 +82,8 @@ void AsmPrinter::add(const Inst& inst)
             add(static_cast<const CmpInst&>(inst)); break;
         case Kind::Idiv:
             add(static_cast<const IdivInst&>(inst)); break;
+        case Kind::Div:
+            add(static_cast<const DivInst&>(inst)); break;
         case Kind::Cdq:
             add(static_cast<const CdqInst&>(inst)); break;
         case Kind::Jmp:
@@ -138,6 +144,11 @@ void AsmPrinter::add(const IdivInst& idiv)
     addLine("Idiv: ", to_string(*idiv.operand));
 }
 
+void AsmPrinter::add(const DivInst& div)
+{
+    addLine("Div: ", to_string(*div.operand));
+}
+
 void AsmPrinter::add(const CdqInst& cpq)
 {
     addLine("Cdq");
@@ -175,7 +186,7 @@ void AsmPrinter::add(const PushInst& push)
 
 void AsmPrinter::add(const CallInst& call)
 {
-    addLine("Call: " + to_string(call.funName));
+    addLine("Call: ", to_string(call.funName));
 }
 
 void AsmPrinter::add(const ReturnInst& returnInst)
@@ -185,12 +196,18 @@ void AsmPrinter::add(const ReturnInst& returnInst)
 
 void AsmPrinter::add(const Cvtsi2sdInst& cvtsi2sd)
 {
-    addLine("Cvtsi2sd" + to_string(*cvtsi2sd.src) + to_string(*cvtsi2sd.dst) + to_string(cvtsi2sd.srcType));
+    addLine("Cvtsi2sd",
+    to_string(*cvtsi2sd.src) +  " " +
+            to_string(*cvtsi2sd.dst) + " " +
+            to_string(cvtsi2sd.srcType));
 }
 
 void AsmPrinter::add(const Cvttsd2siInst& cvttsd2si)
 {
-    addLine("Cvttsd2si" + to_string(*cvttsd2si.src) + to_string(*cvttsd2si.dst) + to_string(cvttsd2si.dstType));
+    addLine("Cvttsd2si",
+            to_string(*cvttsd2si.src) + " " +
+            to_string(*cvttsd2si.dst) + " " +
+            to_string(cvttsd2si.dstType));
 }
 
 std::string to_string(const Identifier& identifier)
@@ -219,11 +236,17 @@ std::string to_string(const Operand& operand)
 
 std::string to_string(const ImmOperand& immOperand)
 {
-    if (immOperand.type == AsmType::QuadWord)
+    if (immOperand.type == AsmType::QuadWord && immOperand.isSigned)
         return "ImmOperand(" + std::to_string(std::get<i64>(immOperand.value))
             + ", " + to_string(immOperand.type) + ")";
-    if (immOperand.type == AsmType::LongWord)
+    if (immOperand.type == AsmType::QuadWord && !immOperand.isSigned)
+        return "ImmOperand(" + std::to_string(std::get<u64>(immOperand.value))
+            + ", " + to_string(immOperand.type) + ")";
+    if (immOperand.type == AsmType::LongWord && immOperand.isSigned)
         return "ImmOperand(" + std::to_string(std::get<i32>(immOperand.value))
+            + ", " + to_string(immOperand.type) + ")";
+    if (immOperand.type == AsmType::LongWord && !immOperand.isSigned)
+        return "ImmOperand(" + std::to_string(std::get<u32>(immOperand.value))
             + ", " + to_string(immOperand.type) + ")";
     std::unreachable();
 }

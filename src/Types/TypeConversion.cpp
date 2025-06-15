@@ -45,6 +45,7 @@ i32 getSize(const Type t)
     switch (t) {
         case Type::I64:
         case Type::U64:
+        case Type::Double:
             return 8;
         case Type::I32:
         case Type::U32:
