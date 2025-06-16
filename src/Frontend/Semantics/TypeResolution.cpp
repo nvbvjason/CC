@@ -169,7 +169,7 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
     }
     if (isBinaryComparison(binaryExpr)) {
         if (commonType == Type::Double)
-            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::Double);
+            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         else if (isSigned(commonType))
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         else

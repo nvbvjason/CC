@@ -315,7 +315,7 @@ void ASTPrinter::visit(const ConstExpr& constExpr)
     else if (constExpr.type->kind == Type::U64)
         addLine(std::to_string(std::get<u64>(constExpr.value)) + ' ' + varTypeToString(Type::U64));
     else if (constExpr.type->kind == Type::Double)
-        addLine(std::to_string(std::get<double>(constExpr.value)) + ' ' + varTypeToString(Type::U64));
+        addLine(std::to_string(std::get<double>(constExpr.value)) + ' ' + varTypeToString(Type::Double));
     ConstASTTraverser::visit(constExpr);
 }
 

@@ -40,8 +40,6 @@ public:
     void genNegateDouble(const Ir::UnaryInst& irUnary);
     void genUnaryNot(const Ir::UnaryInst& irUnary);
 
-    void genBinary(const Ir::BinaryInst& irBinary);
-
     void genReturn(const Ir::ReturnInst& returnInst);
     void genSignExtend(const Ir::SignExtendInst& signExtend);
     void genTruncate(const Ir::TruncateInst& truncate);
@@ -56,6 +54,7 @@ public:
     void genUIntToDoubleLong(const Ir::UIntToDoubleInst& uintToDouble);
     void genUIntToDoubleQuad(const Ir::UIntToDoubleInst& uintToDouble);
 
+    void genBinary(const Ir::BinaryInst& irBinary);
     void genBinaryDivide(const Ir::BinaryInst& irBinary);
     void genBinaryDivideDouble(const Ir::BinaryInst& irBinary);
     void genBinaryDivideSigned(const Ir::BinaryInst& irBinary);
@@ -80,7 +79,7 @@ public:
     void genFunCall(const Ir::FunCallInst& funcCall);
     void genFunCallPushArgs(const Ir::FunCallInst& funcCall);
 
-    std::shared_ptr<Operand> genDoubleConst(double value, i32 alignment);
+    std::shared_ptr<Operand> genDoubleLocalConst(double value, i32 alignment);
     std::shared_ptr<Operand> genOperand(const std::shared_ptr<Ir::Value>& value);
     std::shared_ptr<Operand> getZeroOperand(AsmType type);
 };

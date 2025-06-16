@@ -316,6 +316,7 @@ std::string to_string(const BinaryInst::Operator& oper)
         case Oper::Add:              return "+";
         case Oper::Sub:              return "-";
         case Oper::Mul:              return "*";
+        case Oper::DivDouble:        return "/";
         case Oper::AndBitwise:       return "&";
         case Oper::OrBitwise:        return "|";
         case Oper::BitwiseXor:       return "^";

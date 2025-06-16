@@ -7,7 +7,7 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
         const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
         if (pseudo->referingTo == ReferingTo::Extern ||
             pseudo->referingTo == ReferingTo::Static) {
-            operand = std::make_shared<DataOperand>(pseudo->identifier, pseudo->type, pseudo->isConst);
+            operand = std::make_shared<DataOperand>(pseudo->identifier, pseudo->type, !pseudo->local);
             return;
         }
         if (!m_pseudoMap.contains(pseudo->identifier.value)) {

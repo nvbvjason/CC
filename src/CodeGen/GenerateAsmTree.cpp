@@ -102,7 +102,7 @@ std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVari
     if (type == Type::Double) {
         const Identifier identifier(staticVariable.name);
         const double init = std::get<double>(value->value);
-        return std::make_unique<ConstVariable>(identifier, 8, init);
+        return std::make_unique<ConstVariable>(identifier, 8, init, false);
     }
     auto result = std::make_unique<StaticVariable>(
         staticVariable.name, getAsmType(staticVariable.type), staticVariable.global);
@@ -252,9 +252,7 @@ void GenerateAsmTree::genJumpIfZeroInteger(const Ir::JumpIfZeroInst& jumpIfZero)
 {
     std::shared_ptr<Operand> condition = genOperand(jumpIfZero.condition);
     std::shared_ptr<Operand> zero = getZeroOperand(condition->type);
-    insts.emplace_back(std::make_unique<CmpInst>(
-        zero, condition, condition->type));
-
+    insts.emplace_back(std::make_unique<CmpInst>(zero, condition, condition->type));
     Identifier target(jumpIfZero.target.value);
     insts.emplace_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::E, target));
 }
@@ -323,7 +321,7 @@ void GenerateAsmTree::genNegateDouble(const Ir::UnaryInst& irUnary)
 {
     std::shared_ptr<Operand> src = genOperand(irUnary.source);
     std::shared_ptr<Operand> dst = genOperand(irUnary.destination);
-    std::shared_ptr<Operand> data = genDoubleConst(-0.0, 16);
+    std::shared_ptr<Operand> data = genDoubleLocalConst(-0.0, 16);
 
     insts.emplace_back(std::make_unique<MoveInst>(src, dst, src->type));
     insts.emplace_back(std::make_unique<BinaryInst>(
@@ -333,12 +331,11 @@ void GenerateAsmTree::genNegateDouble(const Ir::UnaryInst& irUnary)
 void GenerateAsmTree::genUnaryNot(const Ir::UnaryInst& irUnary)
 {
     std::shared_ptr<Operand> src = genOperand(irUnary.source);
-    std::shared_ptr<Operand> immOperand = getZeroOperand(src->type);
-    insts.emplace_back(std::make_unique<CmpInst>(immOperand, src, src->type));
-
+    std::shared_ptr<Operand> zero = getZeroOperand(src->type);
     std::shared_ptr<Operand> dst = genOperand(irUnary.destination);
-    insts.emplace_back(std::make_unique<MoveInst>(immOperand, dst, dst->type));
 
+    insts.emplace_back(std::make_unique<CmpInst>(zero, src, src->type));
+    insts.emplace_back(std::make_unique<MoveInst>(zero, dst, dst->type));
     insts.emplace_back(std::make_unique<SetCCInst>(BinaryInst::CondCode::E, dst));
 }
 
@@ -413,7 +410,7 @@ void GenerateAsmTree::genDoubleToUIntLong(const Ir::DoubleToUIntInst& doubleToUI
 void GenerateAsmTree::genDoubleToUIntQuad(const Ir::DoubleToUIntInst& doubleToUInt)
 {
     constexpr double upperBoundConst = 9223372036854775808.0;
-    std::shared_ptr<Operand> upperBound = genDoubleConst(upperBoundConst, 8);
+    std::shared_ptr<Operand> upperBound = genDoubleLocalConst(upperBoundConst, 8);
     std::shared_ptr<Operand> src = genOperand(doubleToUInt.src);
     std::shared_ptr<Operand> dst = genOperand(doubleToUInt.dst);
     auto xmm0 = std::make_shared<RegisterOperand>(RegType::XMM0, AsmType::Double);
@@ -442,46 +439,50 @@ void GenerateAsmTree::genIntToDouble(const Ir::IntToDoubleInst& intToDouble)
 
 void GenerateAsmTree::genUIntToDouble(const Ir::UIntToDoubleInst& uintToDouble)
 {
-    if (uintToDouble.type == Type::U32)
+    if (uintToDouble.src->type == Type::U32)
         genUIntToDoubleLong(uintToDouble);
-    if (uintToDouble.type == Type::U64)
+    if (uintToDouble.src->type == Type::U64)
         genUIntToDoubleQuad(uintToDouble);
 }
 
 void GenerateAsmTree::genUIntToDoubleLong(const Ir::UIntToDoubleInst& uintToDouble)
 {
     std::shared_ptr<Operand> src = genOperand(uintToDouble.src);
-    std::shared_ptr<Operand> ax = std::make_unique<RegisterOperand>(RegType::AX, AsmType::QuadWord);
-    insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, ax, getAsmType(uintToDouble.type)));
+    std::shared_ptr<Operand> eax = std::make_unique<RegisterOperand>(RegType::AX, AsmType::LongWord);
+    std::shared_ptr<Operand> rax = std::make_unique<RegisterOperand>(RegType::AX, AsmType::QuadWord);
+    insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, eax, getAsmType(uintToDouble.type)));
     std::shared_ptr<Operand> dst = genOperand(uintToDouble.dst);
-    insts.emplace_back(std::make_unique<Cvttsd2siInst>(ax, dst, AsmType::QuadWord));
+    insts.emplace_back(std::make_unique<Cvtsi2sdInst>(rax, dst, AsmType::QuadWord));
 }
 
 void GenerateAsmTree::genUIntToDoubleQuad(const Ir::UIntToDoubleInst& uintToDouble)
 {
+    using UnaryOper = UnaryInst::Operator;
+    using BinaryOper = BinaryInst::Operator;
     std::shared_ptr<Operand> zero = getZeroOperand(AsmType::QuadWord);
     std::shared_ptr<Operand> src = genOperand(uintToDouble.src);
-    Identifier labelOneIden(makeTemporaryPseudoName());
-    insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::L, labelOneIden));
+    Identifier labelOutOfRange(makeTemporaryPseudoName());
     std::shared_ptr<Operand> dst = genOperand(uintToDouble.dst);
-    insts.emplace_back(std::make_unique<Cvtsi2sdInst>(src, dst, AsmType::QuadWord));
-    Identifier labelTwoIden(makeTemporaryPseudoName());
-    insts.emplace_back(std::make_unique<JmpInst>(labelTwoIden));
-    insts.emplace_back(std::make_unique<LabelInst>(labelOneIden));
-    auto xmm0 = std::make_shared<RegisterOperand>(RegType::XMM0, AsmType::Double);
-    auto xmm1 = std::make_shared<RegisterOperand>(RegType::XMM1, AsmType::Double);
-    insts.emplace_back(std::make_unique<MoveInst>(src, xmm0, AsmType::QuadWord));
-    insts.emplace_back(std::make_unique<MoveInst>(xmm0, xmm1, AsmType::QuadWord));
-    insts.emplace_back(std::make_unique<UnaryInst>(
-        xmm0, UnaryInst::Operator::Shr, AsmType::QuadWord));
+    Identifier labelEnd(makeTemporaryPseudoName());
+    auto rax = std::make_shared<RegisterOperand>(RegType::AX, AsmType::QuadWord);
+    auto rdx = std::make_shared<RegisterOperand>(RegType::DX, AsmType::QuadWord);
     auto one = std::make_shared<ImmOperand>(1l);
+    insts.emplace_back(std::make_unique<CmpInst>(zero, src, AsmType::QuadWord));
+    insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::L, labelOutOfRange));
+    insts.emplace_back(std::make_unique<Cvtsi2sdInst>(src, dst, AsmType::QuadWord));
+    insts.emplace_back(std::make_unique<JmpInst>(labelEnd));
+    insts.emplace_back(std::make_unique<LabelInst>(labelOutOfRange));
+    insts.emplace_back(std::make_unique<MoveInst>(src, rdx, AsmType::QuadWord));
+    insts.emplace_back(std::make_unique<MoveInst>(rdx, rax, AsmType::QuadWord));
+    insts.emplace_back(std::make_unique<UnaryInst>(rdx, UnaryOper::Shr, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<BinaryInst>(
-        one, xmm0, BinaryInst::Operator::AndBitwise, AsmType::QuadWord));
+        one, rax, BinaryOper::AndBitwise, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<BinaryInst>(
-        xmm0, xmm1, BinaryInst::Operator::OrBitwise, AsmType::QuadWord));
-    insts.emplace_back(std::make_unique<Cvtsi2sdInst>(xmm1, dst, AsmType::QuadWord));
-    insts.emplace_back(std::make_unique<MoveInst>(dst, dst, AsmType::Double));
-    insts.emplace_back(std::make_unique<JmpInst>(labelTwoIden));
+        rax, rdx, BinaryOper::OrBitwise, AsmType::QuadWord));
+    insts.emplace_back(std::make_unique<Cvtsi2sdInst>(rdx, dst, AsmType::QuadWord));
+    insts.emplace_back(std::make_unique<BinaryInst>(
+        dst, dst, BinaryOper::Add, AsmType::Double));
+    insts.emplace_back(std::make_unique<LabelInst>(labelEnd));
 }
 
 void GenerateAsmTree::genSignExtend(const Ir::SignExtendInst& signExtend)
@@ -505,9 +506,9 @@ void GenerateAsmTree::genBinaryCond(const Ir::BinaryInst& irBinary)
     insts.emplace_back(std::make_unique<CmpInst>(src2, src1, src1->type));
 
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
-    std::shared_ptr<Operand> imm = getZeroOperand(dst->type);
-    insts.emplace_back(std::make_unique<MoveInst>(imm, dst, dst->type));
-    const bool isSigned = irBinary.type == Type::I32 || irBinary.type == Type::I64;
+    std::shared_ptr<Operand> zero = getZeroOperand(AsmType::LongWord);
+    insts.emplace_back(std::make_unique<MoveInst>(zero, dst, dst->type));
+    const bool isSigned = irBinary.lhs->type == Type::I32 || irBinary.lhs->type == Type::I64;
     BinaryInst::CondCode cc = condCode(irBinary.operation, isSigned);
     insts.emplace_back(std::make_unique<SetCCInst>(cc, dst));
 }
@@ -529,43 +530,38 @@ void GenerateAsmTree::genBinaryDivideDouble(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> lhs = genOperand(irBinary.lhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
+    std::shared_ptr<Operand> rhs = genOperand(irBinary.rhs);
+
     insts.emplace_back(std::make_unique<MoveInst>(lhs, dst, AsmType::Double));
-    std::shared_ptr<Operand> rhs = genOperand(irBinary.lhs);
     insts.emplace_back(std::make_unique<BinaryInst>(
-        lhs, rhs, BinaryInst::Operator::DivDouble, AsmType::Double));
+        rhs, dst, BinaryInst::Operator::DivDouble, AsmType::Double));
 }
 
 void GenerateAsmTree::genBinaryDivideSigned(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> src1 = genOperand(irBinary.lhs);
-    std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(
-        RegType::AX, getAsmType(irBinary.type));
-    insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
-
-    insts.emplace_back(std::make_unique<CdqInst>(src1->type));
-
+    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, getAsmType(irBinary.type));
     std::shared_ptr<Operand> src2 = genOperand(irBinary.rhs);
-    insts.emplace_back(std::make_unique<IdivInst>(src2, src1->type));
-
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
+
+    insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
+    insts.emplace_back(std::make_unique<CdqInst>(src1->type));
+    insts.emplace_back(std::make_unique<IdivInst>(src2, src1->type));
     insts.emplace_back(std::make_unique<MoveInst>(regAX, dst, src1->type));
 }
 
 void GenerateAsmTree::genUnsignedBinaryDivide(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> src1 = genOperand(irBinary.lhs);
-    std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(
-        RegType::AX, getAsmType(irBinary.type));
-    insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
-
     const auto zero = getZeroOperand(src1->type);
+    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, getAsmType(irBinary.type));
     const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, getAsmType(irBinary.type));
-    insts.emplace_back(std::make_unique<MoveInst>(zero, regDX, src1->type));
-
     std::shared_ptr<Operand> src2 = genOperand(irBinary.rhs);
-    insts.emplace_back(std::make_unique<DivInst>(src2, src1->type));
-
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
+
+    insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
+    insts.emplace_back(std::make_unique<MoveInst>(zero, regDX, src1->type));
+    insts.emplace_back(std::make_unique<DivInst>(src2, src1->type));
     insts.emplace_back(std::make_unique<MoveInst>(regAX, dst, src1->type));
 }
 
@@ -581,17 +577,14 @@ void GenerateAsmTree::genBinaryRemainder(const Ir::BinaryInst& irBinary)
 void GenerateAsmTree::genSignedBinaryRemainder(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> src1 = genOperand(irBinary.lhs);
-    std::shared_ptr<Operand> regAX = std::make_shared<RegisterOperand>(
-        RegType::AX, getAsmType(irBinary.type));
-    insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
-
-    insts.emplace_back(std::make_unique<CdqInst>(src1->type));
-
+    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, getAsmType(irBinary.type));
     std::shared_ptr<Operand> src2 = genOperand(irBinary.rhs);
-    insts.emplace_back(std::make_unique<IdivInst>(src2, src1->type));
-
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
     const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, getAsmType(irBinary.type));
+
+    insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
+    insts.emplace_back(std::make_unique<CdqInst>(src1->type));
+    insts.emplace_back(std::make_unique<IdivInst>(src2, src1->type));
     insts.emplace_back(std::make_unique<MoveInst>(regDX, dst, src1->type));
 }
 
@@ -616,13 +609,13 @@ void GenerateAsmTree::genUnsignedBinaryRemainder(const Ir::BinaryInst& irBinary)
 
 void GenerateAsmTree::genBinaryBasic(const Ir::BinaryInst& irBinary)
 {
-    std::shared_ptr<Operand> src1 = genOperand(irBinary.lhs);
+    std::shared_ptr<Operand> lhs = genOperand(irBinary.lhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
-    insts.emplace_back(std::make_unique<MoveInst>(src1, dst, src1->type));
-
     BinaryInst::Operator oper = binaryOperator(irBinary.operation);
-    std::shared_ptr<Operand> src2 = genOperand(irBinary.rhs);
-    insts.emplace_back(std::make_unique<BinaryInst>(src2, dst, oper, src1->type));
+    std::shared_ptr<Operand> rhs = genOperand(irBinary.rhs);
+
+    insts.emplace_back(std::make_unique<MoveInst>(lhs, dst, lhs->type));
+    insts.emplace_back(std::make_unique<BinaryInst>(rhs, dst, oper, lhs->type));
 }
 
 void GenerateAsmTree::genBinaryShift(const Ir::BinaryInst& irBinary)
@@ -808,7 +801,7 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             const auto valueConst = static_cast<Ir::ValueConst*>(value.get());
             if (valueConst->type == Type::Double)
-                return genDoubleConst(std::get<double>(valueConst->value), 8);
+                return genDoubleLocalConst(std::get<double>(valueConst->value), 8);
             if (valueConst->type == Type::U32) {
                 if (INT_MAX < std::get<u32>(valueConst->value)) {
                     const auto imm = std::make_shared<ImmOperand>(std::get<u32>(valueConst->value));
@@ -816,7 +809,8 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
                         RegType::R10, AsmType::QuadWord);
                     insts.emplace_back(std::make_unique<MoveInst>(imm, reg10, AsmType::QuadWord));
                     const auto pseudo = std::make_shared<PseudoOperand>(
-                        Identifier(makeTemporaryPseudoName()), ReferingTo::Local, AsmType::QuadWord, false);
+                        Identifier(makeTemporaryPseudoName()), ReferingTo::Local,
+                        AsmType::QuadWord, false);
                     insts.emplace_back(std::make_unique<MoveInst>(reg10, pseudo, AsmType::QuadWord));
                     return pseudo;
                 }
@@ -829,7 +823,8 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
                         RegType::R10, AsmType::QuadWord);
                     insts.emplace_back(std::make_unique<MoveInst>(imm, reg10, AsmType::QuadWord));
                     const auto pseudo = std::make_shared<PseudoOperand>(
-                        Identifier(makeTemporaryPseudoName()), ReferingTo::Local, AsmType::QuadWord, false);
+                        Identifier(makeTemporaryPseudoName()), ReferingTo::Local,
+                        AsmType::QuadWord, false);
                     insts.emplace_back(std::make_unique<MoveInst>(reg10, pseudo, AsmType::QuadWord));
                     return pseudo;
                 }
@@ -843,7 +838,8 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
                     RegType::R10, AsmType::QuadWord);
                 insts.emplace_back(std::make_unique<MoveInst>(imm, reg10, AsmType::QuadWord));
                 const auto pseudo = std::make_shared<PseudoOperand>(
-                    Identifier(makeTemporaryPseudoName()), ReferingTo::Local, AsmType::QuadWord, false);
+                    Identifier(makeTemporaryPseudoName()), ReferingTo::Local,
+                    AsmType::QuadWord, false);
                 insts.emplace_back(std::make_unique<MoveInst>(reg10, pseudo, AsmType::QuadWord));
                 return pseudo;
             }
@@ -862,13 +858,13 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
 }
 
 
-std::shared_ptr<Operand> GenerateAsmTree::genDoubleConst(double value, i32 alignment)
+std::shared_ptr<Operand> GenerateAsmTree::genDoubleLocalConst(double value, i32 alignment)
 {
     const auto it = m_constantDoubles.find(value);
     if (it != m_constantDoubles.end())
         return std::make_shared<DataOperand>(Identifier(it->second), AsmType::Double, true);
     Identifier constLabel(makeTemporaryPseudoName());
-    m_toplevel.emplace_back(std::make_unique<ConstVariable>(Identifier(constLabel), alignment, value));
+    m_toplevel.emplace_back(std::make_unique<ConstVariable>(Identifier(constLabel), alignment, value, true));
     m_constantDoubles.emplace_hint(it, value, constLabel.value);
     return std::make_shared<DataOperand>(constLabel, AsmType::Double, true);
 }
@@ -894,7 +890,7 @@ std::shared_ptr<Operand> GenerateAsmTree::getZeroOperand(const AsmType type)
     if (type == AsmType::QuadWord)
         return std::make_shared<ImmOperand>(0l);
     if (type == AsmType::Double)
-        return genDoubleConst(0.0, 8);
+        return genDoubleLocalConst(0.0, 8);
     std::abort();
 }
 

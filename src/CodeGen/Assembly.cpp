@@ -55,8 +55,12 @@ void asmStaticConstant(std::string& result, const ConstVariable& variable)
 {
     result += asmFormatInstruction(".section .rodata");
     result += asmFormatInstruction(".align",std::to_string(variable.alignment));
-    result += asmFormatLabel(createLabel(variable.name.value));
-    result += asmFormatInstruction(".quad "+ std::to_string( std::bit_cast<uint64_t>(variable.staticInit)));
+    if (variable.local)
+        result += asmFormatLabel(createLabel(variable.name.value));
+    else
+        result += asmFormatLabel(variable.name.value);
+    result += asmFormatInstruction(".quad "+ std::to_string( std::bit_cast<uint64_t>(variable.staticInit))
+                + " # " + std::to_string(variable.staticInit));
     result += '\n';
 }
 
@@ -221,7 +225,7 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
         }
         case Operand::Kind::Data: {
             const auto dataOperand = dynamic_cast<DataOperand*>(operand.get());
-            if (dataOperand->isConst)
+            if (dataOperand->local && dataOperand->type == AsmType::Double)
                 return createLabel(dataOperand->identifier.value) + "(%rip)";
             return dataOperand->identifier.value + "(%rip)";
         }
@@ -280,6 +284,7 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper, AsmType type)
     switch (oper) {
         case Operator::Neg:      return addType("neg", type);
         case Operator::Not:      return addType("not", type);
+        case Operator::Shr:      return addType("shr", type);
         default:                 return "not set asmUnaryOperator";
     }
     std::abort();

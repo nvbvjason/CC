@@ -3,6 +3,8 @@
 #include <string>
 #include <cctype>
 #include <climits>
+#include <cmath>
+#include <cfloat>
 
 namespace Lexing {
 
@@ -347,12 +349,17 @@ void Lexer::addToken(const Token::Type type)
     std::string text = c_source.substr(m_start, ahead);
     m_tokens.emplace_back(m_line, m_column - ahead, type, text);
     if (type == Token::Type::DoubleLiteral) {
-        try {
-            double value = std::stod(text);
-            m_tokens.back().m_data = value;
-        } catch (const std::out_of_range&) {
-            m_tokens.back().m_data = 0.0;
+        double value = std::strtod(text.c_str(), nullptr);
+        if (errno == ERANGE) {
+            if (value == HUGE_VAL)
+                m_tokens.back().m_data = std::numeric_limits<double>::infinity();
+            else if (0.0 == value)
+                m_tokens.back().m_data = 0.0;
+            else
+                m_tokens.back().m_data = DBL_MAX;
         }
+        else
+            m_tokens.back().m_data = value;
     }
 }
 }

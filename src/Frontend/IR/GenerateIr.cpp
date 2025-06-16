@@ -467,9 +467,13 @@ std::shared_ptr<Value> GenerateIr::genUnaryPostfixInst(const Parsing::UnaryExpr&
     auto tempNew = std::make_shared<ValueVar>(makeTemporaryName(), unaryExpr.type->kind);
     auto original = genInst(*unaryExpr.operand);
     m_insts.emplace_back(std::make_unique<CopyInst>(original, originalForReturn, unaryExpr.type->kind));
-    auto operation = std::make_shared<ValueConst>(1);
+    std::shared_ptr<ValueConst> one;
+    if (unaryExpr.type->kind == Type::Double)
+        one = std::make_shared<ValueConst>(1.0);
+    else
+        one = std::make_shared<ValueConst>(1);
     m_insts.emplace_back(std::make_unique<BinaryInst>(
-        getPostPrefixOperation(unaryExpr.op), originalForReturn, operation,
+        getPostPrefixOperation(unaryExpr.op), originalForReturn, one,
         tempNew, unaryExpr.type->kind));
     m_insts.emplace_back(std::make_unique<CopyInst>(tempNew, original, unaryExpr.type->kind));
     return originalForReturn;
@@ -478,10 +482,14 @@ std::shared_ptr<Value> GenerateIr::genUnaryPostfixInst(const Parsing::UnaryExpr&
 std::shared_ptr<Value> GenerateIr::genUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr)
 {
     auto original = genInst(*unaryExpr.operand);
+    std::shared_ptr<ValueConst> one;
+    if (unaryExpr.type->kind == Type::Double)
+        one = std::make_shared<ValueConst>(1.0);
+    else
+        one = std::make_shared<ValueConst>(1);
     auto temp = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), unaryExpr.type->kind);
     m_insts.emplace_back(std::make_unique<BinaryInst>(
-        getPostPrefixOperation(unaryExpr.op), original,
-        std::make_shared<ValueConst>(1), temp, unaryExpr.type->kind)
+        getPostPrefixOperation(unaryExpr.op), original, one, temp, unaryExpr.type->kind)
     );
     m_insts.emplace_back(std::make_unique<CopyInst>(temp, original, unaryExpr.type->kind));
     return temp;

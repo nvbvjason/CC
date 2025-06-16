@@ -116,11 +116,11 @@ struct RegisterOperand final : Operand {
 struct PseudoOperand final : Operand {
     Identifier identifier;
     ReferingTo referingTo = ReferingTo::Local;
-    bool isConst;
+    bool local;
     PseudoOperand(Identifier identifier, const ReferingTo referingTo,
-                  const AsmType t, const bool isConst)
+                  const AsmType t, const bool local)
         : Operand(Kind::Pseudo, t), identifier(std::move(identifier)),
-                                      referingTo(referingTo), isConst(isConst) {}
+                                      referingTo(referingTo), local(local) {}
 
     PseudoOperand() = delete;
 };
@@ -135,9 +135,9 @@ struct StackOperand final : Operand {
 
 struct DataOperand final : Operand {
     Identifier identifier;
-    bool isConst;
-    DataOperand(Identifier iden, const AsmType t, bool isConst)
-        : Operand(Kind::Data, t), identifier(std::move(iden)), isConst(isConst) {}
+    bool local;
+    DataOperand(Identifier iden, const AsmType t, const bool local)
+        : Operand(Kind::Data, t), identifier(std::move(iden)), local(local) {}
 
     DataOperand() = delete;
 };
@@ -435,9 +435,11 @@ struct ConstVariable : TopLevel {
     Identifier name;
     i32 alignment;
     double staticInit;
+    bool local;
 
-    ConstVariable(Identifier name, const i32 alignment, const double staticInit)
-        : TopLevel(Kind::StaticConstant), name(std::move(name)), alignment(alignment), staticInit(staticInit) {}
+    ConstVariable(Identifier name, const i32 alignment, const double staticInit, const bool local)
+        : TopLevel(Kind::StaticConstant), name(std::move(name)), alignment(alignment)
+                                          , staticInit(staticInit), local(local) {}
 
     ConstVariable() = delete;
 };

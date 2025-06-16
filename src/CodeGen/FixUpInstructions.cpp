@@ -154,7 +154,6 @@ void FixUpInstructions::visit(IdivInst& idivInst)
     insert(std::move(first), std::move(second));
 }
 
-
 void FixUpInstructions::visit(DivInst& div)
 {
     auto first = std::make_unique<MoveInst>(div.operand, genSrcOperand(div.type), div.type);
@@ -174,8 +173,8 @@ void FixUpInstructions::visit(Cvtsi2sdInst& cvtsi2sd)
 {
     std::shared_ptr<Operand> src = cvtsi2sd.src;
     if (src->kind == Operand::Kind::Imm) {
-        std::shared_ptr<Operand> srcReg = genSrcOperand(cvtsi2sd.dst->type);
-        auto moveSrc = std::make_unique<MoveInst>(src, srcReg, cvtsi2sd.dst->type);
+        std::shared_ptr<Operand> srcReg = genSrcOperand(cvtsi2sd.srcType);
+        auto moveSrc = std::make_unique<MoveInst>(src, srcReg, cvtsi2sd.srcType);
         insert(std::move(moveSrc));
         src = srcReg;
     }
