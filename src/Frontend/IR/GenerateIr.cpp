@@ -67,6 +67,8 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
         value = std::make_shared<ValueConst>(0u);
     else if (!entry.isSet(SymbolTable::State::Defined) && varDecl.type->kind == Type::U64)
         value = std::make_shared<ValueConst>(0ul);
+    else if (!entry.isSet(SymbolTable::State::Defined) && varDecl.type->kind == Type::Double)
+        value = std::make_shared<ValueConst>(0.0);
     else
         value = genInst(*varDecl.init);
     auto variable = std::make_unique<StaticVariable>(

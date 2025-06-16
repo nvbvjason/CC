@@ -25,6 +25,8 @@ void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& co
         value = std::get<u32>(constExpr.value);
     else if (constExpr.type->kind == Type::U64)
         value = std::get<u64>(constExpr.value);
+    else if (constExpr.type->kind == Type::Double)
+        value = std::get<double>(constExpr.value);
     varDecl.init = std::make_unique<Parsing::ConstExpr>(
         value, std::make_unique<Parsing::VarType>(TargetKind)
     );

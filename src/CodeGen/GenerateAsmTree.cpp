@@ -13,7 +13,7 @@ namespace {
 using RegType = CodeGen::RegisterOperand::Kind;
 constexpr std::array intRegs = {RegType::DI, RegType::SI, RegType::DX,
                                 RegType::CX, RegType::R8, RegType::R9};
-constexpr std::array doubleRegs = {RegType::XMM0, RegType::XMM1, RegType::XMM2, RegType::XMM4,
+constexpr std::array doubleRegs = {RegType::XMM0, RegType::XMM1, RegType::XMM2, RegType::XMM3,
                                    RegType::XMM4, RegType::XMM5, RegType::XMM6, RegType::XMM7};
 }
 
@@ -63,7 +63,7 @@ std::vector<bool> GenerateAsmTree::genFunctionPushIntoRegs(const Ir::Function& f
     std::vector pushedIntoRegs(function.args.size(), false);
     i32 regIntIndex = 0;
     i32 regDoubleInex = 0;
-    for (i32 i = 0; i < function.args.size() && i < intRegs.size(); ++i) {
+    for (i32 i = 0; i < function.args.size(); ++i) {
         const AsmType type = getAsmType(function.argTypes[i]);
         std::shared_ptr<RegisterOperand> src;
         if (type != AsmType::Double && regIntIndex < intRegs.size())
@@ -71,7 +71,7 @@ std::vector<bool> GenerateAsmTree::genFunctionPushIntoRegs(const Ir::Function& f
         else if (type == AsmType::Double && regDoubleInex < doubleRegs.size())
             src = std::make_shared<RegisterOperand>(doubleRegs[regDoubleInex++], type);
         else
-            break;
+            continue;
         auto arg = std::make_shared<Ir::ValueVar>(function.args[i], function.argTypes[i]);
         std::shared_ptr<Operand> dst = genOperand(arg);
         insts.emplace_back(std::make_unique<MoveInst>(src, dst, type));
@@ -667,7 +667,7 @@ void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
     insts.emplace_back(std::make_unique<MoveInst>(src, dst, getAsmType(funcCall.type)));
 }
 
-void GenerateAsmTree::genFunCallPushArgs(const Ir::FunCallInst& funcCall)
+std::vector<bool> GenerateAsmTree::genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall)
 {
     i32 regIntIndex = 0;
     i32 regDoubleIndex = 0;
@@ -681,11 +681,17 @@ void GenerateAsmTree::genFunCallPushArgs(const Ir::FunCallInst& funcCall)
         else if (type == AsmType::Double && regDoubleIndex < doubleRegs.size())
             reg = std::make_shared<RegisterOperand>(doubleRegs[regDoubleIndex++], type);
         else
-            break;
+            continue;
         insts.emplace_back(std::make_unique<MoveInst>(src, reg, type));
         pushedIntoRegs[i] = true;
     }
-    for (i32 i = funcCall.args.size() - 1; regIntIndex <= i; --i) {
+    return pushedIntoRegs;
+}
+
+void GenerateAsmTree::genFunCallPushArgs(const Ir::FunCallInst& funcCall)
+{
+    std::vector<bool> pushedIntoRegs = genFuncCallPushArgsRegs(funcCall);
+    for (i64 i = funcCall.args.size() - 1; 0 <= i; --i) {
         if (pushedIntoRegs[i])
             continue;
         std::shared_ptr<Operand> src = genOperand(funcCall.args[i]);

@@ -77,6 +77,7 @@ public:
     void genLabel(const Ir::LabelInst& irLabel);
 
     void genFunCall(const Ir::FunCallInst& funcCall);
+    std::vector<bool> genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall);
     void genFunCallPushArgs(const Ir::FunCallInst& funcCall);
 
     std::shared_ptr<Operand> genDoubleLocalConst(double value, i32 alignment);
