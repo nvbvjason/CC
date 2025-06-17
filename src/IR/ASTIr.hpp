@@ -184,10 +184,10 @@ struct UnaryInst final : Instruction {
         Complement, Negate, Not
     };
     Operation operation;
-    std::shared_ptr<Value> source;
-    std::shared_ptr<Value> destination;
+    std::shared_ptr<Value> src;
+    std::shared_ptr<Value> dst;
     UnaryInst(const Operation op, std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Unary, t), operation(op), source(std::move(src)), destination(std::move(dst)) {}
+        : Instruction(Kind::Unary, t), operation(op), src(std::move(src)), dst(std::move(dst)) {}
 
     ~UnaryInst() override;
 

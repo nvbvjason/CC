@@ -33,6 +33,8 @@ void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& co
 }
 
 class TypeResolution : public Parsing::ASTTraverser {
+    static constexpr auto s_boolType = Type::I32;
+
     struct FuncEntry {
         std::vector<Type> paramTypes;
         Type returnType;

@@ -1,5 +1,6 @@
 #include "Assembly.hpp"
 
+#include <array>
 #include <string>
 #include <iomanip>
 #include <unordered_map>
@@ -29,25 +30,56 @@ std::string asmProgram(const Program& program)
 
 void asmStaticVariable(std::string& result, const StaticVariable& variable)
 {
+    if (variable.type == AsmType::LongWord)
+        return asmStaticVariableLong(result, variable);
+    if (variable.type == AsmType::QuadWord)
+        return asmStaticVariableQuad(result, variable);
+    if (variable.type == AsmType::Double)
+        return asmStaticVariableDouble(result, variable);
+}
+
+void asmStaticVariableLong(std::string& result, const StaticVariable& variable)
+{
     if (variable.global)
         result += asmFormatInstruction(".globl", variable.name);
     if (variable.init == 0)
         result += asmFormatInstruction(".bss");
     else
         result += asmFormatInstruction(".data");
-    if (variable.type == AsmType::LongWord)
-        result += asmFormatInstruction(".align","4");
-    if (variable.type == AsmType::QuadWord)
-        result += asmFormatInstruction(".align","8");
+    result += asmFormatInstruction(".align","4");
     result += asmFormatLabel(variable.name);
-    if (variable.init == 0 && variable.type == AsmType::LongWord)
+    if (variable.init == 0)
         result += asmFormatInstruction(".zero 4");
-    if (variable.init != 0 && variable.type == AsmType::LongWord)
+    if (variable.init != 0)
         result += asmFormatInstruction(".long " + std::to_string(variable.init));
-    if (variable.init == 0 && variable.type == AsmType::QuadWord)
+    result += '\n';
+}
+
+void asmStaticVariableQuad(std::string& result, const StaticVariable& variable)
+{
+    if (variable.global)
+        result += asmFormatInstruction(".globl", variable.name);
+    if (variable.init == 0)
+        result += asmFormatInstruction(".bss");
+    else
+        result += asmFormatInstruction(".data");
+    result += asmFormatInstruction(".align","8");
+    result += asmFormatLabel(variable.name);
+    if (variable.init == 0)
         result += asmFormatInstruction(".zero 8");
-    if (variable.init != 0 && variable.type == AsmType::QuadWord)
+    if (variable.init != 0)
         result += asmFormatInstruction(".quad " + std::to_string(variable.init));
+    result += '\n';
+}
+
+void asmStaticVariableDouble(std::string& result, const StaticVariable& variable)
+{
+    if (variable.global)
+        result += asmFormatInstruction(".globl", variable.name);
+    result += asmFormatInstruction(".data");
+    result += asmFormatInstruction(".align","8");
+    result += asmFormatLabel(variable.name);
+    result += asmFormatInstruction(".quad " + std::to_string(variable.init));
     result += '\n';
 }
 
@@ -59,7 +91,7 @@ void asmStaticConstant(std::string& result, const ConstVariable& variable)
         result += asmFormatLabel(createLabel(variable.name.value));
     else
         result += asmFormatLabel(variable.name.value);
-    result += asmFormatInstruction(".quad "+ std::to_string( std::bit_cast<uint64_t>(variable.staticInit))
+    result += asmFormatInstruction(".quad "+ std::to_string( std::bit_cast<u64>(variable.staticInit))
                 + " # " + std::to_string(variable.staticInit));
     result += '\n';
 }
@@ -82,13 +114,13 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
     switch (instruction->kind) {
         case Inst::Kind::Move: {
             const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
-            std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
+            const std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
             result += asmFormatInstruction(addType("mov", moveInst->type), operand);
             return;
         }
         case Inst::Kind::MoveSX: {
             const auto moveSXInst = dynamic_cast<MoveSXInst*>(instruction.get());
-            std::string operands = asmOperand(moveSXInst->src) + ", " + asmOperand(moveSXInst->dst);
+            const std::string operands = asmOperand(moveSXInst->src) + ", " + asmOperand(moveSXInst->dst);
             result += asmFormatInstruction("movslq", operands);
             return;
         }
@@ -108,7 +140,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Cvttsd2si: {
             const auto cvtsd2siInst = dynamic_cast<Cvttsd2siInst*>(instruction.get());
             const AsmType type = cvtsd2siInst->dstType;
-            std::string operands = asmOperand(cvtsd2siInst->src) + ", " + asmOperand(cvtsd2siInst->dst);
+            const std::string operands = asmOperand(cvtsd2siInst->src) + ", " + asmOperand(cvtsd2siInst->dst);
             result += asmFormatInstruction(addType("cvttsd2si", type), operands);
             return;
         }
@@ -121,7 +153,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Binary: {
             const auto binaryInst = dynamic_cast<BinaryInst*>(instruction.get());
-            std::string operands = asmOperand(binaryInst->lhs) + ", " + asmOperand(binaryInst->rhs);
+            const std::string operands = asmOperand(binaryInst->lhs) + ", " + asmOperand(binaryInst->rhs);
             result += asmFormatInstruction(asmBinaryOperator(binaryInst->oper, binaryInst->type), operands);
             return;
         }
@@ -196,7 +228,6 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         default:
             result += asmFormatInstruction("not set asmInstruction");
-            return;
     }
 }
 
@@ -251,7 +282,7 @@ std::string asmRegister(const RegisterOperand* reg)
             default:
             break;
     }
-    static const std::unordered_map<Type, std::array<const char*, 4>> registerMap = {
+    static const std::unordered_map<Type, std::array<std::string, 4>> registerMap = {
         {Type::AX,  {"%al",   "%ax",   "%eax",  "%rax"}},
         {Type::CX,  {"%cl",   "%cx",   "%ecx",  "%rcx"}},
         {Type::DX,  {"%dl",   "%dx",   "%edx",  "%rdx"}},
@@ -278,7 +309,7 @@ std::string asmRegister(const RegisterOperand* reg)
     }
 }
 
-std::string asmUnaryOperator(const UnaryInst::Operator oper, AsmType type)
+std::string asmUnaryOperator(const UnaryInst::Operator oper, const AsmType type)
 {
     using Operator = UnaryInst::Operator;
     switch (oper) {
@@ -287,7 +318,6 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper, AsmType type)
         case Operator::Shr:      return addType("shr", type);
         default:                 return "not set asmUnaryOperator";
     }
-    std::abort();
 }
 
 std::string asmBinaryOperator(const BinaryInst::Operator oper, const AsmType type)
@@ -315,7 +345,6 @@ std::string asmBinaryOperator(const BinaryInst::Operator oper, const AsmType typ
         default:
             return "not set asmBinaryOperator";
     }
-    std::abort();
 }
 
 std::string asmFormatLabel(const std::string& name)

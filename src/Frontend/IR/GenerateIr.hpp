@@ -44,9 +44,11 @@ public:
     void genWhileStmt(const Parsing::WhileStmt& whileStmt);
     void genForStmt(const Parsing::ForStmt& forStmt);
     void genSwitchStmt(const Parsing::SwitchStmt& stmt);
+
     std::shared_ptr<Value> genInst(const Parsing::Expr& parsingExpr);
     std::shared_ptr<Value> genCastInst(const Parsing::Expr& parsingExpr);
     std::shared_ptr<Value> genUnaryInst(const Parsing::Expr& parsingExpr);
+    std::shared_ptr<Value> genUnaryBasicInst(const Parsing::UnaryExpr& unaryExpr);
     std::shared_ptr<Value> genUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr);
     std::shared_ptr<Value> genUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr);
     std::shared_ptr<Value> genBinaryInst(const Parsing::Expr& parsingExpr);

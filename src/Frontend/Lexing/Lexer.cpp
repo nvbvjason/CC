@@ -26,144 +26,144 @@ void Lexer::scanToken()
 {
     switch (const char ch = advance()) {
         case '(':
-            addToken(Token::Type::OpenParen);
+            addToken(Type::OpenParen);
             break;
         case ')':
-            addToken(Token::Type::CloseParen);
+            addToken(Type::CloseParen);
             break;
         case '{':
-            addToken(Token::Type::OpenBrace);
+            addToken(Type::OpenBrace);
             break;
         case '}':
-            addToken(Token::Type::CloseBrace);
+            addToken(Type::CloseBrace);
             break;
         case ';':
-            addToken(Token::Type::Semicolon);
+            addToken(Type::Semicolon);
             break;
         case '~':
-            addToken(Token::Type::Tilde);
+            addToken(Type::Tilde);
             break;
         case '?':
-            addToken(Token::Type::QuestionMark);
+            addToken(Type::QuestionMark);
             break;
         case ':':
-            addToken(Token::Type::Colon);
+            addToken(Type::Colon);
             break;
         case ',':
-            addToken(Token::Type::Comma);
+            addToken(Type::Comma);
             break;
         case '+': {
             if (match('+')) {
-                addToken(Token::Type::Increment);
+                addToken(Type::Increment);
                 break;
             }
             if (match('=')) {
-                addToken(Token::Type::PlusAssign);
+                addToken(Type::PlusAssign);
                 break;
             }
-            addToken(Token::Type::Plus);
+            addToken(Type::Plus);
             break;
         }
         case '%': {
             if (match('=')) {
-                addToken(Token::Type::ModuloAssign);
+                addToken(Type::ModuloAssign);
                 break;
             }
-            addToken(Token::Type::Percent);
+            addToken(Type::Percent);
             break;
         }
         case '*': {
             if (match('=')) {
-                addToken(Token::Type::MultiplyAssign);
+                addToken(Type::MultiplyAssign);
                 break;
             }
-            addToken(Token::Type::Asterisk);
+            addToken(Type::Asterisk);
             break;
         }
         case '^': {
             if (match('=')) {
-                addToken(Token::Type::BitwiseXorAssign);
+                addToken(Type::BitwiseXorAssign);
                 break;
             }
-            addToken(Token::Type::Circumflex);
+            addToken(Type::Circumflex);
             break;
         }
         case '!':
             if (match('=')) {
-                addToken(Token::Type::LogicalNotEqual);
+                addToken(Type::LogicalNotEqual);
                 break;
             }
-            addToken(Token::Type::ExclamationMark);
+            addToken(Type::ExclamationMark);
             break;
         case '=':
             if (match('=')) {
-                addToken(Token::Type::LogicalEqual);
+                addToken(Type::LogicalEqual);
                 break;
             }
-            addToken(Token::Type::Equal);
+            addToken(Type::Equal);
             break;
         case '&':
             if (match('&')) {
-                addToken(Token::Type::LogicalAnd);
+                addToken(Type::LogicalAnd);
                 break;
             }
             if (match('=')) {
-                addToken(Token::Type::BitwiseAndAssign);
+                addToken(Type::BitwiseAndAssign);
                 break;
             }
-            addToken(Token::Type::Ampersand);
+            addToken(Type::Ampersand);
             break;
         case '|':
             if (match('|')) {
-                addToken(Token::Type::LogicalOr);
+                addToken(Type::LogicalOr);
                 break;
             }
             if (match('=')) {
-                addToken(Token::Type::BitwiseOrAssign);
+                addToken(Type::BitwiseOrAssign);
                 break;
             }
-            addToken(Token::Type::Pipe);
+            addToken(Type::Pipe);
             break;
         case '>':
             if (match(">=")) {
-                addToken(Token::Type::RightShiftAssign);
+                addToken(Type::RightShiftAssign);
                 break;
             }
             if (match('>')) {
-                addToken(Token::Type::RightShift);
+                addToken(Type::RightShift);
                 break;
             }
             if (match('=')) {
-                addToken(Token::Type::GreaterOrEqual);
+                addToken(Type::GreaterOrEqual);
                 break;
             }
-            addToken(Token::Type::Greater);
+            addToken(Type::Greater);
             break;
         case '<':
             if (match("<=")) {
-                addToken(Token::Type::LeftShiftAssign);
+                addToken(Type::LeftShiftAssign);
                 break;
             }
             if (match('<')) {
-                addToken(Token::Type::LeftShift);
+                addToken(Type::LeftShift);
                 break;
             }
             if (match('=')) {
-                addToken(Token::Type::LessOrEqual);
+                addToken(Type::LessOrEqual);
                 break;
             }
-            addToken(Token::Type::Less);
+            addToken(Type::Less);
             break;
         case '-':
             if (match('=')) {
-                addToken(Token::Type::MinusAssign);
+                addToken(Type::MinusAssign);
                 break;
             }
             if (match('-')) {
-                addToken(Token::Type::Decrement);
+                addToken(Type::Decrement);
                 break;
             }
-            addToken(Token::Type::Minus);
+            addToken(Type::Minus);
             break;
         case '/':
             forwardSlash();
@@ -181,7 +181,7 @@ void Lexer::scanToken()
             else if (isalpha(ch) || ch == '_')
                 identifier();
             else
-                addToken(Token::Type::Invalid);
+                addToken(Type::Invalid);
             break;
     }
 }
@@ -189,7 +189,7 @@ void Lexer::scanToken()
 void Lexer::forwardSlash()
 {
     if (match('=')) {
-        addToken(Token::Type::DivideAssign);
+        addToken(Type::DivideAssign);
         return;
     }
     if (match('/'))
@@ -202,7 +202,7 @@ void Lexer::forwardSlash()
         advance();
     }
     else
-        addToken(Token::Type::ForwardSlash);
+        addToken(Type::ForwardSlash);
 }
 
 bool Lexer::match(const char expected)
@@ -267,37 +267,37 @@ void Lexer::number()
     while (!isAtEnd() && isalpha(peek()))
         advance();
     if (endNumbers + 2 < m_current)
-        addToken(Token::Type::Invalid);
+        addToken(Type::Invalid);
     const i32 ahead = m_current - m_start;
     const std::string text = c_source.substr(m_start, ahead);
     if (matchesUL(text, endNumbers, m_current)) {
-        m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::UnsignedLongLiteral, text);
+        m_tokens.emplace_back(m_line, m_column - ahead, Type::UnsignedLongLiteral, text);
         m_tokens.back().m_data = num;
         return;
     }
     if (tolower(text.back()) == 'l' && endNumbers + 1 == m_current) {
-        m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::LongLiteral, text);
+        m_tokens.emplace_back(m_line, m_column - ahead, Type::LongLiteral, text);
         m_tokens.back().m_data = static_cast<i64>(num);
         return;
     }
     if (tolower(text.back()) == 'u' && endNumbers + 1 == m_current) {
         if (UINT_MAX < num) {
-            m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::UnsignedLongLiteral, text);
+            m_tokens.emplace_back(m_line, m_column - ahead, Type::UnsignedLongLiteral, text);
             m_tokens.back().m_data = num;
         }
         else {
-            m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::UnsignedIntegerLiteral, text);
+            m_tokens.emplace_back(m_line, m_column - ahead, Type::UnsignedIntegerLiteral, text);
             m_tokens.back().m_data = static_cast<u32>(num);
         }
         return;
     }
     if (endNumbers == m_current) {
         if (INT_MAX < num) {
-            m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::LongLiteral, text);
+            m_tokens.emplace_back(m_line, m_column - ahead, Type::LongLiteral, text);
             m_tokens.back().m_data = static_cast<i64>(num);
         }
         else {
-            m_tokens.emplace_back(m_line, m_column - ahead, Token::Type::IntegerLiteral, text);
+            m_tokens.emplace_back(m_line, m_column - ahead, Type::IntegerLiteral, text);
             m_tokens.back().m_data = static_cast<i32>(num);
         }
         return;
@@ -316,17 +316,17 @@ void Lexer::floating()
         if (peek() == '+' || peek() == '-')
             advance();
         if (!isdigit(peek())) {
-            addToken(Token::Type::Invalid);
+            addToken(Type::Invalid);
             return;
         }
         while (!isAtEnd() && isdigit(peek()))
             advance();
     }
     if (peek() == '.' || isalnum(peek()) || peek() == '_') {
-        addToken(Token::Type::Invalid);
+        addToken(Type::Invalid);
         return;
     }
-    addToken(Token::Type::DoubleLiteral);
+    addToken(Type::DoubleLiteral);
 }
 
 void Lexer::identifier()
@@ -337,7 +337,7 @@ void Lexer::identifier()
     const std::string text = c_source.substr(m_start, ahead);
     const auto iden = keywords.find(text);
     if (iden == keywords.end()) {
-        addToken(Token::Type::Identifier);
+        addToken(Type::Identifier);
         return;
     }
     addToken(iden->second);
@@ -348,11 +348,13 @@ void Lexer::addToken(const Token::Type type)
     const i32 ahead = m_current - m_start;
     std::string text = c_source.substr(m_start, ahead);
     m_tokens.emplace_back(m_line, m_column - ahead, type, text);
-    if (type == Token::Type::DoubleLiteral) {
+    if (type == Type::DoubleLiteral) {
         double value = std::strtod(text.c_str(), nullptr);
         if (errno == ERANGE) {
             if (value == HUGE_VAL)
                 m_tokens.back().m_data = std::numeric_limits<double>::infinity();
+            else if (std::fpclassify(value) == FP_SUBNORMAL)
+                m_tokens.back().m_data = value;
             else if (0.0 == value)
                 m_tokens.back().m_data = 0.0;
             else

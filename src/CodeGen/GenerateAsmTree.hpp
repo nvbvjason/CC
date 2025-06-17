@@ -39,6 +39,8 @@ public:
     void genUnary(const Ir::UnaryInst& irUnary);
     void genNegateDouble(const Ir::UnaryInst& irUnary);
     void genUnaryNot(const Ir::UnaryInst& irUnary);
+    void genUnaryNotDouble(const Ir::UnaryInst& irUnary);
+    void genUnaryNotInteger(const Ir::UnaryInst& irUnary);
 
     void genReturn(const Ir::ReturnInst& returnInst);
     void genSignExtend(const Ir::SignExtendInst& signExtend);

@@ -15,6 +15,8 @@ namespace Lexing {
 
 
 class Lexer {
+    using Type = Token::Type;
+
     const std::string& c_source;
     i32 m_current = 0;
     i32 m_start = 0;
@@ -22,26 +24,26 @@ class Lexer {
     u16 m_column = 1;
     std::vector<Token> m_tokens;
     static inline std::unordered_map<std::string, Token::Type> keywords = {
-        { "return", Token::Type::Return },
-        { "int", Token::Type::IntKeyword },
-        { "void", Token::Type::Void },
-        { "if", Token::Type::If },
-        { "else", Token::Type::Else },
-        { "do", Token::Type::Do },
-        { "while", Token::Type::While },
-        { "for", Token::Type::For },
-        { "break", Token::Type::Break },
-        { "continue", Token::Type::Continue },
-        { "goto", Token::Type::Goto },
-        { "switch", Token::Type::Switch },
-        { "case", Token::Type::Case },
-        { "default", Token::Type::Default },
-        { "static", Token::Type::Static },
-        { "extern", Token::Type::Extern },
-        {"long", Token::Type::LongKeyword},
-        {"signed", Token::Type::Signed},
-        {"unsigned", Token::Type::Unsigned},
-        {"double", Token::Type::DoubleKeyword},
+        { "return", Type::Return },
+        { "int", Type::IntKeyword },
+        { "void", Type::Void },
+        { "if", Type::If },
+        { "else", Type::Else },
+        { "do", Type::Do },
+        { "while", Type::While },
+        { "for", Type::For },
+        { "break", Type::Break },
+        { "continue", Type::Continue },
+        { "goto", Type::Goto },
+        { "switch", Type::Switch },
+        { "case", Type::Case },
+        { "default", Type::Default },
+        { "static", Type::Static },
+        { "extern", Type::Extern },
+        {"long", Type::LongKeyword},
+        {"signed", Type::Signed},
+        {"unsigned", Type::Unsigned},
+        {"double", Type::DoubleKeyword},
     };
 public:
     explicit Lexer(const std::string& input)

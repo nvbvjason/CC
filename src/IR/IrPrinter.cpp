@@ -108,8 +108,8 @@ void IrPrinter::print(const UIntToDoubleInst& inst)
 void IrPrinter::print(const UnaryInst& inst)
 {
     addLine(to_string(inst.operation) + " " +
-            print(*inst.source) + " -> " +
-            print(*inst.destination) + ", " +
+            print(*inst.src) + " -> " +
+            print(*inst.dst) + ", " +
             to_string(inst.type));
 }
 

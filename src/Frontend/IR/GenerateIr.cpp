@@ -463,6 +463,28 @@ std::shared_ptr<Value> GenerateIr::genCastInst(const Parsing::Expr& parsingExpr)
     return dst;
 }
 
+std::shared_ptr<Value> GenerateIr::genUnaryInst(const Parsing::Expr& parsingExpr)
+{
+    const auto unaryParsingPtr = dynamic_cast<const Parsing::UnaryExpr*>(&parsingExpr);
+    if (isPostfixOp(unaryParsingPtr->op))
+        return genUnaryPostfixInst(*unaryParsingPtr);
+    if (isPrefixOp(unaryParsingPtr->op))
+        return genUnaryPrefixInst(*unaryParsingPtr);
+    if (unaryParsingPtr->op == Parsing::UnaryExpr::Operator::Plus)
+        return genInst(*unaryParsingPtr->operand);
+    return genUnaryBasicInst(*unaryParsingPtr);
+}
+
+std::shared_ptr<Value> GenerateIr::genUnaryBasicInst(const Parsing::UnaryExpr& unaryExpr)
+{
+    UnaryInst::Operation operation = convertUnaryOperation(unaryExpr.op);
+    auto source = genInst(*unaryExpr.operand);
+    auto destination = std::make_shared<ValueVar>(makeTemporaryName(), unaryExpr.type->kind);
+    m_insts.emplace_back(std::make_unique<UnaryInst>(
+        operation, source, destination, unaryExpr.type->kind));
+    return destination;
+}
+
 std::shared_ptr<Value> GenerateIr::genUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr)
 {
     auto originalForReturn = std::make_shared<ValueVar>(makeTemporaryName(), unaryExpr.type->kind);
@@ -495,23 +517,6 @@ std::shared_ptr<Value> GenerateIr::genUnaryPrefixInst(const Parsing::UnaryExpr& 
     );
     m_insts.emplace_back(std::make_unique<CopyInst>(temp, original, unaryExpr.type->kind));
     return temp;
-}
-
-std::shared_ptr<Value> GenerateIr::genUnaryInst(const Parsing::Expr& parsingExpr)
-{
-    const auto unaryParsingPtr = dynamic_cast<const Parsing::UnaryExpr*>(&parsingExpr);
-    if (isPostfixOp(unaryParsingPtr->op))
-        return genUnaryPostfixInst(*unaryParsingPtr);
-    if (isPrefixOp(unaryParsingPtr->op))
-        return genUnaryPrefixInst(*unaryParsingPtr);
-    if (unaryParsingPtr->op == Parsing::UnaryExpr::Operator::Plus)
-        return genInst(*unaryParsingPtr->operand);
-    UnaryInst::Operation operation = convertUnaryOperation(unaryParsingPtr->op);
-    auto source = genInst(*unaryParsingPtr->operand);
-    auto destination = std::make_shared<ValueVar>(makeTemporaryName(), parsingExpr.type->kind);
-    m_insts.emplace_back(std::make_unique<UnaryInst>(
-        operation, source, destination, unaryParsingPtr->type->kind));
-    return destination;
 }
 
 std::shared_ptr<Value> GenerateIr::genVarInst(const Parsing::Expr& parsingExpr)

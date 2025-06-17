@@ -138,7 +138,10 @@ void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
             return;
         }
     }
-    unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->kind);
+    if (unaryExpr.op == Parsing::UnaryExpr::Operator::Not)
+        unaryExpr.type = std::make_unique<Parsing::VarType>(s_boolType);
+    else
+        unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->kind);
 }
 
 void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
