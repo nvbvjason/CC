@@ -786,15 +786,18 @@ TEST(Chapter13_Doubles, validSemantics)
     }
 }
 
-void cleanUp()
+TEST(Chapter14_Pointers, validLexingValid)
 {
-    for (const auto& entry : std::filesystem::directory_iterator("/home/jason/src/CC/generated_files/"))
-        remove_all(entry.path());
+    const fs::path validPath = testsFolderPath / "chapter_14/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+    }
 }
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     const int result = RUN_ALL_TESTS();
-    cleanUp();
     return result;
 }
