@@ -11,9 +11,8 @@ class DeSugarCompoundAssign : public Parsing::ASTTraverser{
 public:
     void deSugar(Parsing::Program& program);
 
-    void visit(Parsing::AssignmentExpr& assignmentExpr);
+    void visit(Parsing::AssignmentExpr& assignmentExpr) override;
 };
-
 } // Semantics
 
 #endif // CC_SEMANTICS_DESUGAR_COMPOUND_ASSIGN_HPP

@@ -4,7 +4,7 @@
 #define CC_FRONTEND_DRIVER_HPP
 
 #include "ASTIr.hpp"
-#include "ErrorCodes.hpp"
+#include "StateCode.hpp"
 #include "ASTParser.hpp"
 #include "SymbolTable.hpp"
 

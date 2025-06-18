@@ -1,6 +1,8 @@
 #include "GotoLabelsUnique.hpp"
 #include "ASTParser.hpp"
 
+#include <ranges>
+
 namespace Semantics {
 bool GotoLabelsUnique::programValidate(Parsing::Program& program)
 {
@@ -16,8 +18,8 @@ void GotoLabelsUnique::visit(Parsing::FunDecl& funDecl)
     m_goto.clear();
     m_funName = funDecl.name;
     ASTTraverser::visit(funDecl);
-    for (auto& label : m_labels)
-        if (1 < label.second)
+    for (const i32 count: m_labels | std::views::values)
+        if (1 < count)
             m_valid = false;
     for (auto& gotoStmt : m_goto)
         if (!m_labels.contains(gotoStmt))

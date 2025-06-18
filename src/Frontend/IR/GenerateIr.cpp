@@ -59,11 +59,11 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
     if (!entry.isSet(SymbolTable::State::Defined) && varDecl.type->kind == Type::I32)
         value = std::make_shared<ValueConst>(0);
     else if (!entry.isSet(SymbolTable::State::Defined) && varDecl.type->kind == Type::I64)
-        value = std::make_shared<ValueConst>(0l);
+        value = std::make_shared<ValueConst>(static_cast<i64>(0l));
     else if (!entry.isSet(SymbolTable::State::Defined) && varDecl.type->kind == Type::U32)
         value = std::make_shared<ValueConst>(0u);
     else if (!entry.isSet(SymbolTable::State::Defined) && varDecl.type->kind == Type::U64)
-        value = std::make_shared<ValueConst>(0ul);
+        value = std::make_shared<ValueConst>(static_cast<u64>(0ul));
     else if (!entry.isSet(SymbolTable::State::Defined) && varDecl.type->kind == Type::Double)
         value = std::make_shared<ValueConst>(0.0);
     else
@@ -75,7 +75,8 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDecl& parsingFunction)
 {
-    bool global = !m_symbolTable.lookupFunc(parsingFunction.name).isSet(SymbolTable::State::InternalLinkage);
+    using State = SymbolTable::State;
+    bool global = !m_symbolTable.lookupFunc(parsingFunction.name).isSet(State::InternalLinkage);
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);
     m_global = true;;
     m_insts = std::move(functionTacky->insts);
@@ -170,72 +171,86 @@ void GenerateIr::genStmt(const Parsing::Stmt& stmt)
     using Kind = Parsing::Stmt::Kind;
     switch (stmt.kind) {
         case Kind::If: {
-            const auto ifStmt = dynamic_cast<const Parsing::IfStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto ifStmt = static_cast<const Parsing::IfStmt*>(&stmt);
             genIfStmt(*ifStmt);
             break;
         }
         case Kind::Return: {
-            const auto returnStmt = dynamic_cast<const Parsing::ReturnStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto returnStmt = static_cast<const Parsing::ReturnStmt*>(&stmt);
             genReturnStmt(*returnStmt);
             break;
         }
         case Kind::Expression: {
-            const auto stmtExpr = dynamic_cast<const Parsing::ExprStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto stmtExpr = static_cast<const Parsing::ExprStmt*>(&stmt);
             genInst(*stmtExpr->expr);
             break;
         }
         case Kind::Goto: {
-            const auto gotoStmt = dynamic_cast<const Parsing::GotoStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto gotoStmt = static_cast<const Parsing::GotoStmt*>(&stmt);
             genGotoStmt(*gotoStmt);
             break;
         }
         case Kind::Compound: {
-            const auto compoundStmtPtr = dynamic_cast<const Parsing::CompoundStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto compoundStmtPtr = static_cast<const Parsing::CompoundStmt*>(&stmt);
             genCompoundStmt(*compoundStmtPtr);
             break;
         }
         case Kind::Break: {
-            const auto breakStmtPtr = dynamic_cast<const Parsing::BreakStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto breakStmtPtr = static_cast<const Parsing::BreakStmt*>(&stmt);
             genBreakStmt(*breakStmtPtr);
             break;
         }
         case Kind::Continue: {
-            const auto continueStmtPtr = dynamic_cast<const Parsing::ContinueStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto continueStmtPtr = static_cast<const Parsing::ContinueStmt*>(&stmt);
             genContinueStmt(*continueStmtPtr);
             break;
         }
         case Kind::Label: {
-            const auto labelStmtPtr = dynamic_cast<const Parsing::LabelStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto labelStmtPtr = static_cast<const Parsing::LabelStmt*>(&stmt);
             genLabelStmt(*labelStmtPtr);
             break;
         }
         case Kind::Case: {
-            const auto caseStmtPtr = dynamic_cast<const Parsing::CaseStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto caseStmtPtr = static_cast<const Parsing::CaseStmt*>(&stmt);
             genCaseStmt(*caseStmtPtr);
             break;
         }
         case Kind::Default: {
-            const auto defaultStmtPtr = dynamic_cast<const Parsing::DefaultStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto defaultStmtPtr = static_cast<const Parsing::DefaultStmt*>(&stmt);
             genDefaultStmt(*defaultStmtPtr);
             break;
         }
         case Kind::DoWhile: {
-            const auto doWhileStmtPtr = dynamic_cast<const Parsing::DoWhileStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto doWhileStmtPtr = static_cast<const Parsing::DoWhileStmt*>(&stmt);
             genDoWhileStmt(*doWhileStmtPtr);
             break;
         }
         case Kind::While: {
-            const auto whileStmtPtr = dynamic_cast<const Parsing::WhileStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto whileStmtPtr = static_cast<const Parsing::WhileStmt*>(&stmt);
             genWhileStmt(*whileStmtPtr);
             break;
         }
         case Kind::For: {
-            const auto forStmtPtr = dynamic_cast<const Parsing::ForStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto forStmtPtr = static_cast<const Parsing::ForStmt*>(&stmt);
             genForStmt(*forStmtPtr);
             break;
         }
         case Kind::Switch: {
-            const auto switchStmtPtr = dynamic_cast<const Parsing::SwitchStmt*>(&stmt);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+            const auto switchStmtPtr = static_cast<const Parsing::SwitchStmt*>(&stmt);
             genSwitchStmt(*switchStmtPtr);
             break;
         }

@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "ErrorCodes.hpp"
+#include "StateCode.hpp"
 
 class CompilerDriver {
     std::vector<std::string> m_args;

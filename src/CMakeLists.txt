@@ -29,7 +29,7 @@ target_link_libraries(CompilerDriver PUBLIC
 # Add executable for the compiler
 add_executable(CC
         main.cpp
-        ErrorCodes.hpp
+        StateCode.hpp
 )
 
 # Specify include directories for the CC executable

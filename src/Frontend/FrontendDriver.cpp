@@ -2,7 +2,7 @@
 #include "VariableResolution.hpp"
 #include "ASTIr.hpp"
 #include "Token.hpp"
-#include "ErrorCodes.hpp"
+#include "StateCode.hpp"
 #include "ASTPrinter.hpp"
 #include "GenerateIr.hpp"
 #include "GotoLabelsUnique.hpp"

@@ -88,6 +88,11 @@ public:
     std::shared_ptr<Operand> genDoubleLocalConst(double value, i32 alignment);
     std::shared_ptr<Operand> genOperand(const std::shared_ptr<Ir::Value>& value);
     std::shared_ptr<Operand> getZeroOperand(AsmType type);
+
+    std::shared_ptr<ImmOperand> getImmOperandFromValue(const Ir::ValueConst& valueConst);
+
+private:
+    void zeroOutReg(const std::shared_ptr<RegisterOperand>& reg);
 };
 
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
