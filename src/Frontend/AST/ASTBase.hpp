@@ -13,9 +13,11 @@ namespace Parsing {
 
 struct TypeBase {
     Type kind;
+
     virtual ~TypeBase() = default;
     virtual void accept(ASTVisitor& visitor) = 0;
     virtual void accept(ConstASTVisitor& visitor) const = 0;
+
     TypeBase() = delete;
 protected:
     explicit TypeBase(const Type kind)
@@ -57,6 +59,7 @@ protected:
 struct Expr {
     enum class Kind {
         Constant, Var, Cast, Unary, Binary, Assignment, Conditional, FunctionCall,
+        Dereference, AddrOf
     };
     Kind kind;
     std::unique_ptr<TypeBase> type = nullptr;

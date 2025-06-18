@@ -10,11 +10,13 @@ namespace Parsing {
 /*
     program = Program(declaration*)
     declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
-    variable_declaration = (identifier name, exp? init,
-                            type var_type, storage_class?)
-    function_definition = (identifier name, identifier* params, block? body,
-                           type var_type, storage_class?)
-    type = Int | Long | FunType(type* params, type ret)
+
+    variable_declaration = (identifier name, exp? init, type var_type, storage_class?)
+    function_definition = (identifier name, identifier* params, block? body, type var_type, storage_class?)
+
+    type = Int | Long | UInt | ULong | Double |
+         | FunType(type* params, type ret)
+         | Pointer(type referenced)
     storage_class = Static | Extern
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
@@ -33,6 +35,7 @@ namespace Parsing {
               | DoWhile(statement body, exp condition, identifier label)
               | For(for_init init, exp? condition, exp? post, statement body, identifier label)
               | Switch(identifier, exp condition, statement body, expr cases*, bool hasDefault)
+              | FunctionCall(identifier, exp* args)
               | Null
     exp = Constant(const)
         | Var(identifier)
@@ -42,6 +45,8 @@ namespace Parsing {
         | Assignment(assign_operator, exp, exp)
         | Conditional(exp condition, exp, exp)
         | FunctionCall(identifier, exp* args)
+        | Dereference(exp)
+        | AddrOf(exp)
     unary_operator = Complement | Negate | Not | Plus
                    | PrefixIncrement | PostFixIncrement
                    | PrefixDecrement | PostFixDecrement
@@ -78,6 +83,7 @@ struct DeclBlockItem;
 struct TypeBase;
 struct VarType;
 struct FuncType;
+struct PointerType;
 
 // For loop initialization
 struct ForInit;
@@ -112,6 +118,8 @@ struct BinaryExpr;
 struct AssignmentExpr;
 struct TernaryExpr;
 struct FunCallExpr;
+struct DereferenceExpr;
+struct AddrOffExpr;
 } // Parsing
 
 #endif // CC_PARSING_AST_FWD_HPP

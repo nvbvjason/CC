@@ -154,6 +154,30 @@ struct FunCallExpr final : Expr {
 
     FunCallExpr() = delete;
 };
+
+struct DereferenceExpr : Expr {
+    std::unique_ptr<Expr> reference;
+
+    explicit DereferenceExpr(std::unique_ptr<Expr>&& reference)
+        : Expr(Kind::Dereference), reference(std::move(reference)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    DereferenceExpr() = delete;
+};
+
+struct AddrOffExpr : Expr {
+    std::unique_ptr<Expr> reference;
+
+    explicit AddrOffExpr(std::unique_ptr<Expr>&& reference)
+        : Expr(Kind::Dereference), reference(std::move(reference)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    AddrOffExpr() = delete;
+};
 } // Parsing
 
 #endif // CC_PARSING_EXPR_TREE_HPP

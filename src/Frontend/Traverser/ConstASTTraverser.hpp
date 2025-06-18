@@ -23,6 +23,7 @@ public:
     // Type
     void visit(const VarType& varType) override {}
     void visit(const FuncType& functionType) override;
+    void visit(const PointerType& pointerType) override;
 
     // ForInit
     void visit(const DeclForInit& declForInit) override;
@@ -54,6 +55,8 @@ public:
     void visit(const AssignmentExpr& assignmentExpr) override;
     void visit(const TernaryExpr& conditionalExpr) override;
     void visit(const FunCallExpr& functionCallExpr) override;
+    void visit(const DereferenceExpr& dereferenceExpr) override;
+    void visit(const AddrOffExpr& addrOffExpr) override;
 };
 
 } // Parsing

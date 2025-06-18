@@ -48,6 +48,11 @@ void ConstASTTraverser::visit(const FuncType& functionType)
         type->accept(*this);
 }
 
+void ConstASTTraverser::visit(const PointerType& pointerType)
+{
+    pointerType.referenced->accept(*this);
+}
+
 // ForInit
 void ConstASTTraverser::visit(const DeclForInit& declForInit)
 {
@@ -163,5 +168,15 @@ void ConstASTTraverser::visit(const FunCallExpr& functionCallExpr)
 {
     for (const std::unique_ptr<Expr>& expr : functionCallExpr.args)
         expr->accept(*this);
+}
+
+void ConstASTTraverser::visit(const DereferenceExpr& dereferenceExpr)
+{
+    dereferenceExpr.reference->accept(*this);
+}
+
+void ConstASTTraverser::visit(const AddrOffExpr& addrOffExpr)
+{
+    addrOffExpr.reference->accept(*this);
 }
 } // Parsing

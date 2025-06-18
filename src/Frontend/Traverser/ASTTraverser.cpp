@@ -47,6 +47,11 @@ void ASTTraverser::visit(FuncType& functionType)
         type->accept(*this);
 }
 
+void ASTTraverser::visit(PointerType& pointerType)
+{
+    pointerType.referenced->accept(*this);
+}
+
 // ForInit
 void ASTTraverser::visit(DeclForInit& declForInit)
 {
@@ -163,4 +168,15 @@ void ASTTraverser::visit(FunCallExpr& functionCallExpr)
     for (auto& expr : functionCallExpr.args)
         expr->accept(*this);
 }
+
+void ASTTraverser::visit(DereferenceExpr& functionCallExpr)
+{
+    functionCallExpr.reference->accept(*this);
+}
+
+void ASTTraverser::visit(AddrOffExpr& addrOffExpr)
+{
+    addrOffExpr.reference->accept(*this);
+}
+
 } // Parsing

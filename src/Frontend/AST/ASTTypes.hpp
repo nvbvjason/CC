@@ -23,7 +23,17 @@ struct FuncType : TypeBase {
     std::vector<std::unique_ptr<TypeBase>> params;
     std::unique_ptr<TypeBase> returnType;
     explicit FuncType(std::unique_ptr<TypeBase>&& rT, std::vector<std::unique_ptr<TypeBase>>&& params)
-        : TypeBase(Type::Function), returnType(std::move(rT)), params(std::move(params)) {}
+        : TypeBase(Type::Function), params(std::move(params)), returnType(std::move(rT)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
+
+struct PointerType : TypeBase {
+    std::unique_ptr<TypeBase> referenced;
+
+    explicit PointerType(std::unique_ptr<TypeBase>&& r, const Type kind)
+        : TypeBase(kind), referenced(std::move(r)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
