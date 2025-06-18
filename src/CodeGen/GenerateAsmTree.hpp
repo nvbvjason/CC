@@ -37,6 +37,7 @@ public:
     [[nodiscard]] std::vector<bool> genFunctionPushIntoRegs(const Ir::Function& function);
     void genInst(const std::unique_ptr<Ir::Instruction>& inst);
     void genUnary(const Ir::UnaryInst& irUnary);
+    void genUnaryBasic(const Ir::UnaryInst& irUnary);
     void genNegateDouble(const Ir::UnaryInst& irUnary);
     void genUnaryNot(const Ir::UnaryInst& irUnary);
     void genUnaryNotDouble(const Ir::UnaryInst& irUnary);

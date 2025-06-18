@@ -17,7 +17,6 @@
 #include <fstream>
 #include <iostream>
 
-
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
@@ -50,7 +49,8 @@ std::tuple<Ir::Program, ErrorCode> FrontendDriver::run() const
         printParsingAst(program);
         return {std::move(Ir::Program()), ErrorCode::OK};
     }
-    if (ErrorCode err = validateSemantics(program, m_symbolTable); err != ErrorCode::OK)
+    SymbolTable symbolTable;
+    if (ErrorCode err = validateSemantics(program, symbolTable); err != ErrorCode::OK)
         return {std::move(Ir::Program()), err};
     if (m_arg == "--validate")
         return {std::move(Ir::Program()), ErrorCode::OK};
@@ -58,7 +58,7 @@ std::tuple<Ir::Program, ErrorCode> FrontendDriver::run() const
         printParsingAst(program);
         return {std::move(Ir::Program()), ErrorCode::OK};
     }
-    Ir::Program irProgram = ir(program, m_symbolTable);
+    Ir::Program irProgram = ir(program, symbolTable);
     return {std::move(irProgram), ErrorCode::OK};
 }
 
@@ -133,7 +133,7 @@ static std::string preProcess(const std::filesystem::path& file)
 {
     const std::filesystem::path& inputFile(file);
     const std::filesystem::path generatedFilesDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";
-    const std::filesystem::path generatedFile = generatedFilesDir / (inputFile.stem().string() + ".i");
+    const std::filesystem::path generatedFile = inputFile.string() + ".i";
     std::string command = "gcc -E -P ";
     command += inputFile.string();
     command += " -o ";

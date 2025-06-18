@@ -22,11 +22,9 @@ static void assemble(const std::string& asmFile, const std::string& outputFile);
 static void linkLib(const std::string& asmFile, const std::string& outputFile, const std::string& argument);
 static void makeLib(const std::string& asmFile, const std::string& outputFile);
 void fixAsm(const CodeGen::Program& codegenProgram);
-static void cleanUp();
 
 i32 CompilerDriver::run()
 {
-    cleanUp();
     ErrorCode code = wrappedRun();
     if (code == ErrorCode::OK)
         return 0;
@@ -41,8 +39,7 @@ ErrorCode CompilerDriver::wrappedRun()
         return errorCode;
     const std::string inputFile = m_args.back();
     std::vector<Lexing::Token> tokens;
-    SymbolTable symbolTable;
-    FrontendDriver frontend(argument, inputFile, symbolTable);
+    FrontendDriver frontend(argument, inputFile);
     auto [irProgram, err] = frontend.run();
     if (err != ErrorCode::OK)
         return err;
@@ -112,24 +109,6 @@ ErrorCode CompilerDriver::validateAndSetArg(std::string& argument) const
         return ErrorCode::InvalidCommandlineArgs;
     }
     return ErrorCode::OK;
-}
-
-void cleanUp()
-{
-    const std::filesystem::path generatedDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";
-    for (const auto& entry : std::filesystem::directory_iterator(generatedDir)) {
-        if (entry.path().filename() == ".gitkeep")
-            continue;
-        try {
-            if (std::filesystem::is_directory(entry.path()))
-                std::filesystem::remove_all(entry.path());
-            else
-                std::filesystem::remove(entry.path());
-        }
-        catch (const std::filesystem::filesystem_error& e) {
-            std::cerr << "Error deleting " << entry.path() << ": " << e.what() << '\n';
-        }
-    }
 }
 
 void printIr(const Ir::Program& irProgram)
