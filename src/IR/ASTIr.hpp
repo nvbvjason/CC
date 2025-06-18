@@ -243,7 +243,7 @@ struct JumpIfZeroInst final : Instruction {
     std::shared_ptr<Value> condition;
     Identifier target;
     JumpIfZeroInst(std::shared_ptr<Value> condition, Identifier target)
-        : Instruction(Kind::JumpIfZero, Type::I32), condition(std::move(condition)), target(std::move(target)) {}
+        : Instruction(Kind::JumpIfZero, condition->type), condition(std::move(condition)), target(std::move(target)) {}
 
     ~JumpIfZeroInst() override;
 
@@ -254,7 +254,7 @@ struct JumpIfNotZeroInst final : Instruction {
     std::shared_ptr<Value> condition;
     Identifier target;
     JumpIfNotZeroInst(std::shared_ptr<Value> condition, Identifier target)
-        : Instruction(Kind::JumpIfNotZero, Type::I32), condition(std::move(condition)), target(std::move(target)) {}
+        : Instruction(Kind::JumpIfNotZero, condition->type), condition(std::move(condition)), target(std::move(target)) {}
 
     ~JumpIfNotZeroInst() override;
 

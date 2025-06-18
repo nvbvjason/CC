@@ -241,14 +241,17 @@ void GenerateAsmTree::genJumpIfZero(const Ir::JumpIfZeroInst& jumpIfZero)
 
 void GenerateAsmTree::genJumpIfZeroDouble(const Ir::JumpIfZeroInst& jumpIfZero)
 {
-    auto xmm0 = std::make_shared<RegisterOperand>(RegType::XMM0, AsmType::Double);
+   auto xmm0 = std::make_shared<RegisterOperand>(RegType::XMM0, AsmType::Double);
     std::shared_ptr<Operand> condition = genOperand(jumpIfZero.condition);
     Identifier target(jumpIfZero.target.value);
+    Identifier endLabel(makeTemporaryPseudoName());
 
     insts.emplace_back(std::make_unique<BinaryInst>(
         xmm0, xmm0, BinaryInst::Operator::BitwiseXor, AsmType::Double));
     insts.emplace_back(std::make_unique<CmpInst>(condition, xmm0, AsmType::Double));
+    insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::PF, endLabel));
     insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::E, target));
+    insts.emplace_back(std::make_unique<LabelInst>(endLabel));
 }
 
 void GenerateAsmTree::genJumpIfZeroInteger(const Ir::JumpIfZeroInst& jumpIfZero)
@@ -279,7 +282,8 @@ void GenerateAsmTree::genJumpIfNotZeroDouble(const Ir::JumpIfNotZeroInst& jumpIf
     insts.emplace_back(std::make_unique<BinaryInst>(
         xmm0, xmm0, BinaryInst::Operator::BitwiseXor, AsmType::Double));
     insts.emplace_back(std::make_unique<CmpInst>(condition, xmm0, AsmType::Double));
-    insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::E, target));
+    insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::PF, target));
+    insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::NE, target));
 }
 
 void GenerateAsmTree::genJumpIfNotZeroInteger(const Ir::JumpIfNotZeroInst& jumpIfNotZero)

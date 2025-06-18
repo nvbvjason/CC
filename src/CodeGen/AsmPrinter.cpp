@@ -191,7 +191,7 @@ void AsmPrinter::add(const CallInst& call)
 
 void AsmPrinter::add(const ReturnInst& returnInst)
 {
-    addLine("Return: ");
+    addLine("Return: \n");
 }
 
 void AsmPrinter::add(const Cvtsi2sdInst& cvtsi2sd)
@@ -303,8 +303,8 @@ std::string to_string(const UnaryInst::Operator& oper)
 {
     using Oper = UnaryInst::Operator;
     switch (oper) {
-        case Oper::Neg:     return "!";
-        case Oper::Not:     return "~";
+        case Oper::Neg:     return "-";
+        case Oper::Not:     return "!";
         default:            return "Unknown UnaryOp";
     }
 }
@@ -340,6 +340,7 @@ std::string to_string(const Inst::CondCode& condCode)
         case CondCode::AE:      return "AE";
         case CondCode::B:       return "B";
         case CondCode::BE:      return "BE";
+        case CondCode::PF:      return "PF";
         default:                return "Unknown CondCode";
     }
 }
