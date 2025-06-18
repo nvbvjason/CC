@@ -29,9 +29,11 @@ public:
     void genBlockItem(const Parsing::BlockItem& blockItem);
     void genDeclaration(const Parsing::Declaration& decl);
     void genStaticLocal(const Parsing::VarDecl& varDecl);
+    void genReturnStmt(const Parsing::ReturnStmt& returnStmt);
+    void genIfStmt(const Parsing::IfStmt& ifStmt);
     void genForInit(const Parsing::ForInit& forInit);
     void genStmt(const Parsing::Stmt& stmt);
-    void genIfStmt(const Parsing::IfStmt& ifStmt);
+    void genIfBasicStmt(const Parsing::IfStmt& ifStmt);
     void genIfElseStmt(const Parsing::IfStmt& ifStmt);
     void genGotoStmt(const Parsing::GotoStmt& gotoStmt);
     void genCompoundStmt(const Parsing::CompoundStmt& compoundStmt);

@@ -1,14 +1,11 @@
 #include "ASTParser.hpp"
 #include "GenerateIr.hpp"
-
-#include <algorithm>
-
+#include "Types/TypeConversion.hpp"
 #include "ASTTypes.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <stdexcept>
-
-#include "Types/TypeConversion.hpp"
 
 namespace Ir {
 static Identifier makeTemporaryName();
@@ -123,12 +120,12 @@ void GenerateIr::genBlockItem(const Parsing::BlockItem& blockItem)
 void GenerateIr::genForInit(const Parsing::ForInit& forInit)
 {
     if (forInit.kind == Parsing::ForInit::Kind::Declaration) {
-        auto decl = dynamic_cast<const Parsing::DeclForInit*>(&forInit);
+        const auto decl = dynamic_cast<const Parsing::DeclForInit*>(&forInit);
         genDeclaration(*decl->decl);
         return;
     }
     if (forInit.kind == Parsing::ForInit::Kind::Expression) {
-        auto expr = dynamic_cast<const Parsing::ExprForInit*>(&forInit);
+        const auto expr = dynamic_cast<const Parsing::ExprForInit*>(&forInit);
         if (expr->expression)
             genInst(*expr->expression);
     }
@@ -173,19 +170,13 @@ void GenerateIr::genStmt(const Parsing::Stmt& stmt)
     using Kind = Parsing::Stmt::Kind;
     switch (stmt.kind) {
         case Kind::If: {
-            const auto parseIffStmt = dynamic_cast<const Parsing::IfStmt*>(&stmt);
-            if (parseIffStmt->elseStmt == nullptr)
-                genIfStmt(*parseIffStmt);
-            else
-                genIfElseStmt(*parseIffStmt);
+            const auto ifStmt = dynamic_cast<const Parsing::IfStmt*>(&stmt);
+            genIfStmt(*ifStmt);
             break;
         }
         case Kind::Return: {
             const auto returnStmt = dynamic_cast<const Parsing::ReturnStmt*>(&stmt);
-            auto value = genInst(*returnStmt->expr);
-            if (value == nullptr)
-                break;
-            m_insts.push_back(std::make_unique<ReturnInst>(value, value->type));
+            genReturnStmt(*returnStmt);
             break;
         }
         case Kind::Expression: {
@@ -257,6 +248,14 @@ void GenerateIr::genStmt(const Parsing::Stmt& stmt)
 
 void GenerateIr::genIfStmt(const Parsing::IfStmt& ifStmt)
 {
+    if (ifStmt.elseStmt == nullptr)
+        genIfBasicStmt(ifStmt);
+    else
+        genIfElseStmt(ifStmt);
+}
+
+void GenerateIr::genIfBasicStmt(const Parsing::IfStmt& ifStmt)
+{
     auto condition = genInst(*ifStmt.condition);
     Identifier endLabelIden = makeTemporaryName();
     m_insts.emplace_back(std::make_unique<JumpIfZeroInst>(condition, endLabelIden));
@@ -275,6 +274,14 @@ void GenerateIr::genIfElseStmt(const Parsing::IfStmt& ifStmt)
     m_insts.emplace_back(std::make_unique<LabelInst>(elseStmtLabel));
     genStmt(*ifStmt.elseStmt);
     m_insts.emplace_back(std::make_unique<LabelInst>(endLabelIden));
+}
+
+void GenerateIr::genReturnStmt(const Parsing::ReturnStmt& returnStmt)
+{
+    auto value = genInst(*returnStmt.expr);
+    if (value == nullptr)
+        return;
+    m_insts.push_back(std::make_unique<ReturnInst>(value, value->type));
 }
 
 void GenerateIr::genGotoStmt(const Parsing::GotoStmt& gotoStmt)

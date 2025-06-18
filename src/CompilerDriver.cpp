@@ -25,59 +25,59 @@ void fixAsm(const CodeGen::Program& codegenProgram);
 
 i32 CompilerDriver::run()
 {
-    ErrorCode code = wrappedRun();
-    if (code == ErrorCode::OK)
+    StateCode code = wrappedRun();
+    if (code == StateCode::Done)
         return 0;
     std::cerr << to_string(code) << '\n' << std::flush;
     return static_cast<i32>(code);
 }
 
-ErrorCode CompilerDriver::wrappedRun()
+StateCode CompilerDriver::wrappedRun()
 {
     std::string argument;
-    if (ErrorCode errorCode = validateAndSetArg(argument); errorCode != ErrorCode::OK)
+    if (StateCode errorCode = validateAndSetArg(argument); errorCode != StateCode::Continue)
         return errorCode;
     const std::string inputFile = m_args.back();
     std::vector<Lexing::Token> tokens;
     FrontendDriver frontend(argument, inputFile);
     auto [irProgram, err] = frontend.run();
-    if (err != ErrorCode::OK)
+    if (err != StateCode::Continue)
         return err;
     if (argument == "--tacky")
-        return ErrorCode::OK;
+        return StateCode::Done;
     if (argument == "--printTacky") {
         printIr(irProgram);
-        return ErrorCode::OK;
+        return StateCode::Done;
     }
     CodeGen::Program codegenProgram = codegen(irProgram);
     if (argument == "--codegen")
-        return ErrorCode::OK;
+        return StateCode::Done;
     if (argument == "--printAsm") {
         CodeGen::AsmPrinter printer;
         std::cout << printer.printProgram(codegenProgram);
-        return ErrorCode::OK;
+        return StateCode::Done;
     }
     fixAsm(codegenProgram);
     if (argument == "--printAsmAfter") {
         CodeGen::AsmPrinter printer;
         std::cout << printer.printProgram(codegenProgram);
-        return ErrorCode::OK;
+        return StateCode::Done;
     }
     std::string output = CodeGen::asmProgram(codegenProgram);
-    if (ErrorCode errorCode = writeAssmFile(inputFile, output, argument); errorCode != ErrorCode::OK)
+    if (StateCode errorCode = writeAssmFile(inputFile, output, argument); errorCode != StateCode::Done)
         return errorCode;
     if (argument == "--assemble")
-        return ErrorCode::OK;
+        return StateCode::Done;
     if (argument == "-c")
         makeLib(m_outputFileName, inputFile.substr(0, inputFile.length() - 2));
     else if (argument.starts_with("-l"))
         linkLib(m_outputFileName, inputFile.substr(0, inputFile.length() - 2), argument);
     else
         assemble(m_outputFileName, inputFile.substr(0, inputFile.length() - 2));
-    return ErrorCode::OK;
+    return StateCode::Done;
 }
 
-ErrorCode CompilerDriver::writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument)
+StateCode CompilerDriver::writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument)
 {
     std::string stem = std::filesystem::path(inputFile).stem().string();
     const std::string inputFolder = std::filesystem::path(inputFile).parent_path().string();
@@ -85,30 +85,30 @@ ErrorCode CompilerDriver::writeAssmFile(const std::string& inputFile, const std:
     std::ofstream ofs(m_outputFileName);
     if (!ofs) {
         std::cerr << "Error: Could not open output file " << m_outputFileName << '\n';
-        return ErrorCode::AsmFileWrite;
+        return StateCode::AsmFileWrite;
     }
     ofs << output;
     ofs.close();
-    return ErrorCode::OK;
+    return StateCode::Done;
 }
 
-ErrorCode CompilerDriver::validateAndSetArg(std::string& argument) const
+StateCode CompilerDriver::validateAndSetArg(std::string& argument) const
 {
     if (m_args.size() < 2 || 3 < m_args.size()) {
         std::cerr << "Usage: <input_file> possible-argument" << '\n';
-        return ErrorCode::NoInputFile;
+        return StateCode::NoInputFile;
     }
     if (const std::filesystem::path m_inputFile(m_args.back()); !fileExists(m_inputFile)) {
         std::cerr << "File " << m_inputFile.string() << " not found" << '\n';
-        return ErrorCode::FileNotFound;
+        return StateCode::FileNotFound;
     }
     if (m_args.size() == 3)
         argument = m_args[1];
     if (!isCommandLineArgumentValid(argument)) {
         std::cerr << "Invalid argument: " << argument << '\n';
-        return ErrorCode::InvalidCommandlineArgs;
+        return StateCode::InvalidCommandlineArgs;
     }
-    return ErrorCode::OK;
+    return StateCode::Continue;
 }
 
 void printIr(const Ir::Program& irProgram)

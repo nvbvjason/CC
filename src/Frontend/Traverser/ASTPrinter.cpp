@@ -322,7 +322,10 @@ void ASTPrinter::visit(const ConstExpr& constExpr)
 void ASTPrinter::visit(const VarExpr& varExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine(varExpr.name + " " + varTypeToString(varExpr.type->kind));
+    if (varExpr.type)
+        addLine(varExpr.name + " " + varTypeToString(varExpr.type->kind));
+    else
+        addLine(varExpr.name);
     ConstASTTraverser::visit(varExpr);
 }
 

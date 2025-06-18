@@ -62,8 +62,8 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     if (!parser.programParse(program))
         return false;
     SymbolTable symbolTable;
-    const ErrorCode err = validateSemantics(program, symbolTable);
-    return err == ErrorCode::OK;
+    const StateCode err = validateSemantics(program, symbolTable);
+    return err == StateCode::Done;
 }
 
 TEST(Chapter1, lexingValid)

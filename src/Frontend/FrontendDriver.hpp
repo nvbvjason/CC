@@ -20,9 +20,9 @@ public:
     FrontendDriver(std::string arg, std::filesystem::path inputFile)
         : m_arg(std::move(arg)), m_inputFile(std::move(inputFile)) {}
 
-    [[nodiscard]] std::tuple<Ir::Program, ErrorCode> run() const;
+    [[nodiscard]] std::tuple<Ir::Program, StateCode> run() const;
 };
 
-ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable);
+StateCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable);
 
 #endif // CC_FRONTEND_DRIVER_HPP

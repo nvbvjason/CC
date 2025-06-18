@@ -24,42 +24,42 @@ static Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbo
 static std::string preProcess(const std::filesystem::path& file);
 static std::string getSourceCode(const std::filesystem::path& inputFile);
 
-std::tuple<Ir::Program, ErrorCode> FrontendDriver::run() const
+std::tuple<Ir::Program, StateCode> FrontendDriver::run() const
 {
     std::vector<Lexing::Token> tokens;
     if (lex(tokens, m_inputFile) != 0) {
         if (m_arg == "--printTokens")
             for (const auto& token : tokens)
                 std::cout << token << '\n';
-        return {std::move(Ir::Program()), ErrorCode::Lexer};
+        return {std::move(Ir::Program()), StateCode::Lexer};
     }
     if (m_arg == "--lex")
-        return {Ir::Program(), ErrorCode::OK};
+        return {Ir::Program(), StateCode::Done};
     if (m_arg == "--printTokens") {
         for (const auto& token : tokens)
             std::cout << token << '\n';
-        return {Ir::Program(), ErrorCode::OK};
+        return {Ir::Program(), StateCode::Done};
     }
     Parsing::Program program;
     if (!parse(tokens, program))
-        return {std::move(Ir::Program()), ErrorCode::Parser};
+        return {std::move(Ir::Program()), StateCode::Parser};
     if (m_arg == "--parse")
-        return {std::move(Ir::Program()), ErrorCode::OK};
+        return {std::move(Ir::Program()), StateCode::Done};
     if (m_arg == "--printAst") {
         printParsingAst(program);
-        return {std::move(Ir::Program()), ErrorCode::OK};
+        return {std::move(Ir::Program()), StateCode::Done};
     }
     SymbolTable symbolTable;
-    if (ErrorCode err = validateSemantics(program, symbolTable); err != ErrorCode::OK)
+    if (StateCode err = validateSemantics(program, symbolTable); err != StateCode::Done)
         return {std::move(Ir::Program()), err};
     if (m_arg == "--validate")
-        return {std::move(Ir::Program()), ErrorCode::OK};
+        return {std::move(Ir::Program()), StateCode::Done};
     if (m_arg == "--printAstAfter") {
         printParsingAst(program);
-        return {std::move(Ir::Program()), ErrorCode::OK};
+        return {std::move(Ir::Program()), StateCode::Done};
     }
     Ir::Program irProgram = ir(program, symbolTable);
-    return {std::move(irProgram), ErrorCode::OK};
+    return {std::move(irProgram), StateCode::Continue};
 }
 
 std::string getSourceCode(const std::filesystem::path& inputFile)
@@ -71,29 +71,29 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
     return source;
 }
 
-ErrorCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable)
+StateCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable)
 {
     Semantics::DeSugarCompoundAssign deSugarCompoundAssign;
     deSugarCompoundAssign.deSugar(programNode);
     Semantics::VariableResolution variableResolution(symbolTable);
     if (!variableResolution.resolve(programNode))
-        return ErrorCode::VariableResolution;
+        return StateCode::VariableResolution;
     Semantics::LvalueVerification lvalueVerification;
     if (!lvalueVerification.resolve(programNode))
-        return ErrorCode::LValueVerification;
+        return StateCode::LValueVerification;
     Semantics::TypeResolution typeResolution;
     if (!typeResolution.validate(programNode))
-        return ErrorCode::TypeResolution;
+        return StateCode::TypeResolution;
     Semantics::ValidateReturn validateReturn;
     if (!validateReturn.programValidate(programNode))
-        return ErrorCode::ValidateReturn;
+        return StateCode::ValidateReturn;
     Semantics::GotoLabelsUnique labelsUnique;
     if (!labelsUnique.programValidate(programNode))
-        return ErrorCode::LabelsUnique;
+        return StateCode::LabelsUnique;
     Semantics::LoopLabeling loopLabeling;
     if (!loopLabeling.programValidate(programNode))
-        return ErrorCode::LoopLabeling;
-    return ErrorCode::OK;
+        return StateCode::LoopLabeling;
+    return StateCode::Done;
 }
 
 void printParsingAst(const Parsing::Program& program)
@@ -127,7 +127,6 @@ Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable)
     generateIr.program(parsingProgram, irProgram);
     return irProgram;
 }
-
 
 static std::string preProcess(const std::filesystem::path& file)
 {
