@@ -65,6 +65,8 @@ public:
     void genSignedBinaryRemainder(const Ir::BinaryInst& irBinary);
     void genUnsignedBinaryRemainder(const Ir::BinaryInst& irBinary);
     void genBinaryCond(const Ir::BinaryInst& irBinary);
+    void genBinaryCondInteger(const Ir::BinaryInst& irBinary);
+    void genBinaryCondDouble(const Ir::BinaryInst& irBinary);
     void genBinaryBasic(const Ir::BinaryInst& irBinary);
     void genBinaryShift(const Ir::BinaryInst& irBinary);
 

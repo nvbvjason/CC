@@ -349,17 +349,9 @@ void Lexer::addToken(const Token::Type type)
     std::string text = c_source.substr(m_start, ahead);
     m_tokens.emplace_back(m_line, m_column - ahead, type, text);
     if (type == Type::DoubleLiteral) {
-        double value = std::strtod(text.c_str(), nullptr);
-        if (errno == ERANGE) {
-            if (value == HUGE_VAL)
-                m_tokens.back().m_data = std::numeric_limits<double>::infinity();
-            else if (std::fpclassify(value) == FP_SUBNORMAL)
-                m_tokens.back().m_data = value;
-            else if (0.0 == value)
-                m_tokens.back().m_data = 0.0;
-            else
-                m_tokens.back().m_data = DBL_MAX;
-        }
+        const double value = std::strtod(text.c_str(), nullptr);
+        if (errno == ERANGE && value == HUGE_VAL)
+            m_tokens.back().m_data = std::numeric_limits<double>::infinity();
         else
             m_tokens.back().m_data = value;
     }

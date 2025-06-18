@@ -255,8 +255,9 @@ void GenerateAsmTree::genJumpIfZeroInteger(const Ir::JumpIfZeroInst& jumpIfZero)
 {
     std::shared_ptr<Operand> condition = genOperand(jumpIfZero.condition);
     std::shared_ptr<Operand> zero = getZeroOperand(condition->type);
-    insts.emplace_back(std::make_unique<CmpInst>(zero, condition, condition->type));
     Identifier target(jumpIfZero.target.value);
+
+    insts.emplace_back(std::make_unique<CmpInst>(zero, condition, condition->type));
     insts.emplace_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::E, target));
 }
 
@@ -272,11 +273,12 @@ void GenerateAsmTree::genJumpIfNotZero(const Ir::JumpIfNotZeroInst& jumpIfNotZer
 void GenerateAsmTree::genJumpIfNotZeroDouble(const Ir::JumpIfNotZeroInst& jumpIfNotZero)
 {
     auto xmm0 = std::make_shared<RegisterOperand>(RegType::XMM0, AsmType::Double);
+    std::shared_ptr<Operand> condition = genOperand(jumpIfNotZero.condition);
+    Identifier target(jumpIfNotZero.target.value);
+
     insts.emplace_back(std::make_unique<BinaryInst>(
         xmm0, xmm0, BinaryInst::Operator::BitwiseXor, AsmType::Double));
-    std::shared_ptr<Operand> condition = genOperand(jumpIfNotZero.condition);
     insts.emplace_back(std::make_unique<CmpInst>(condition, xmm0, AsmType::Double));
-    Identifier target(jumpIfNotZero.target.value);
     insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::E, target));
 }
 
@@ -344,13 +346,21 @@ void GenerateAsmTree::genUnaryNotDouble(const Ir::UnaryInst& irUnary)
     std::shared_ptr<Operand> src = genOperand(irUnary.src);
     std::shared_ptr<Operand> dst = genOperand(irUnary.dst);
     auto zero = getZeroOperand(dst->type);
+    auto one = std::make_shared<ImmOperand>(1);
     auto xmm0 = std::make_shared<RegisterOperand>(RegType::XMM0, AsmType::Double);
+    Identifier nanLabel(makeTemporaryPseudoName() + "nanUnaryNot");
+    Identifier endLabel(makeTemporaryPseudoName());
 
     insts.emplace_back(std::make_unique<BinaryInst>(
         xmm0, xmm0, BinaryInst::Operator::BitwiseXor, AsmType::Double));
     insts.emplace_back(std::make_unique<CmpInst>(src, xmm0, AsmType::Double));
+    insts.emplace_back(std::make_unique<JmpCCInst>(BinaryInst::CondCode::PF, nanLabel));
     insts.emplace_back(std::make_unique<MoveInst>(zero, dst, dst->type));
     insts.emplace_back(std::make_unique<SetCCInst>(BinaryInst::CondCode::E, dst));
+    insts.emplace_back(std::make_unique<JmpInst>(endLabel));
+    insts.emplace_back(std::make_unique<LabelInst>(nanLabel));
+    insts.emplace_back(std::make_unique<MoveInst>(zero, dst, dst->type));
+    insts.emplace_back(std::make_unique<LabelInst>(endLabel));
 }
 
 void GenerateAsmTree::genUnaryNotInteger(const Ir::UnaryInst& irUnary)
@@ -492,6 +502,7 @@ void GenerateAsmTree::genUIntToDoubleQuad(const Ir::UIntToDoubleInst& uintToDoub
     auto rax = std::make_shared<RegisterOperand>(RegType::AX, AsmType::QuadWord);
     auto rdx = std::make_shared<RegisterOperand>(RegType::DX, AsmType::QuadWord);
     auto one = std::make_shared<ImmOperand>(1l);
+
     insts.emplace_back(std::make_unique<CmpInst>(zero, src, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::L, labelOutOfRange));
     insts.emplace_back(std::make_unique<Cvtsi2sdInst>(src, dst, AsmType::QuadWord));
@@ -526,16 +537,48 @@ void GenerateAsmTree::genTruncate(const Ir::TruncateInst& truncate)
 
 void GenerateAsmTree::genBinaryCond(const Ir::BinaryInst& irBinary)
 {
-    std::shared_ptr<Operand> src1 = genOperand(irBinary.lhs);
-    std::shared_ptr<Operand> src2 = genOperand(irBinary.rhs);
-    insts.emplace_back(std::make_unique<CmpInst>(src2, src1, src1->type));
+    if (irBinary.lhs->type == Type::Double) {
+        genBinaryCondDouble(irBinary);
+        return;
+    }
+    genBinaryCondInteger(irBinary);
+}
 
+void GenerateAsmTree::genBinaryCondInteger(const Ir::BinaryInst& irBinary)
+{
+    std::shared_ptr<Operand> lhs = genOperand(irBinary.lhs);
+    std::shared_ptr<Operand> rhs = genOperand(irBinary.rhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
     std::shared_ptr<Operand> zero = getZeroOperand(AsmType::LongWord);
-    insts.emplace_back(std::make_unique<MoveInst>(zero, dst, dst->type));
     const bool isSigned = irBinary.lhs->type == Type::I32 || irBinary.lhs->type == Type::I64;
     BinaryInst::CondCode cc = condCode(irBinary.operation, isSigned);
+
+    insts.emplace_back(std::make_unique<CmpInst>(rhs, lhs, lhs->type));
+    insts.emplace_back(std::make_unique<MoveInst>(zero, dst, dst->type));
     insts.emplace_back(std::make_unique<SetCCInst>(cc, dst));
+}
+
+void GenerateAsmTree::genBinaryCondDouble(const Ir::BinaryInst& irBinary)
+{
+    std::shared_ptr<Operand> lhs = genOperand(irBinary.lhs);
+    std::shared_ptr<Operand> rhs = genOperand(irBinary.rhs);
+    std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
+    std::shared_ptr<Operand> zero = getZeroOperand(AsmType::LongWord);
+    BinaryInst::CondCode cc = condCode(irBinary.operation, false);
+    Identifier nanLabel(makeTemporaryPseudoName());
+    Identifier endLabel(makeTemporaryPseudoName());
+
+    insts.emplace_back(std::make_unique<CmpInst>(rhs, lhs, lhs->type));
+    insts.emplace_back(std::make_unique<MoveInst>(zero, dst, dst->type));
+    insts.emplace_back(std::make_unique<JmpCCInst>(Inst::CondCode::PF, nanLabel));
+    insts.emplace_back(std::make_unique<SetCCInst>(cc, dst));
+    insts.emplace_back(std::make_unique<JmpInst>(endLabel));
+    insts.emplace_back(std::make_unique<LabelInst>(nanLabel));
+    if (cc == Inst::CondCode::NE) {
+        auto one = std::make_shared<ImmOperand>(1);
+        insts.emplace_back(std::make_unique<MoveInst>(one, dst, dst->type));
+    }
+    insts.emplace_back(std::make_unique<LabelInst>(endLabel));
 }
 
 void GenerateAsmTree::genBinaryDivide(const Ir::BinaryInst& irBinary)

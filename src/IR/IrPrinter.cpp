@@ -68,6 +68,7 @@ std::string IrPrinter::print(const Identifier& identifier)
 void IrPrinter::print(const ReturnInst& inst)
 {
     addLine("Return: " + print(*inst.returnValue));
+    addLine("");
 }
 
 void IrPrinter::print(const SignExtendInst& inst)

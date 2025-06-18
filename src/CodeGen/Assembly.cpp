@@ -371,6 +371,7 @@ std::string condCode(const BinaryInst::CondCode condCode)
         case CondCode::AE:  return "ae";
         case CondCode::B:   return "b";
         case CondCode::BE:  return "be";
+        case CondCode::PF:  return "p";
         default:
             return "not set condCode";
     }

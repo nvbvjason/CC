@@ -150,7 +150,7 @@ struct Inst {
         Push, Call, Ret
     };
     enum class CondCode : u8 {
-        E, NE, G, GE, L, LE, A, AE, B, BE
+        E, NE, G, GE, L, LE, A, AE, B, BE, PF
     };
     Kind kind;
 
