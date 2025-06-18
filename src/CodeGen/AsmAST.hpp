@@ -86,16 +86,10 @@ protected:
 };
 
 struct ImmOperand final : Operand {
-    std::variant<i32, i64, u32, u64> value;
+    u64 value;
 
-    explicit ImmOperand(const i64 value)
-        : Operand(Kind::Imm, AsmType::QuadWord, true), value(value) {}
-    explicit ImmOperand(const i32 value)
-        : Operand(Kind::Imm, AsmType::LongWord, true), value(value) {}
-    explicit ImmOperand(const u64 value)
-        : Operand(Kind::Imm, AsmType::QuadWord, false), value(value) {}
-    explicit ImmOperand(const u32 value)
-        : Operand(Kind::Imm, AsmType::LongWord, false), value(value) {}
+    explicit ImmOperand(const u64 value, const AsmType type)
+        : Operand(Kind::Imm, type, false), value(value) {}
 
     ImmOperand() = delete;
 };

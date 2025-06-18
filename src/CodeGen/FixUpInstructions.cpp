@@ -10,7 +10,7 @@ void FixUpInstructions::fixUp()
         i32 allocationSize = -stackAlloc;
         allocationSize += 16 - allocationSize % 16;
         m_copy.emplace_back(std::make_unique<BinaryInst>(
-            std::make_shared<ImmOperand>(allocationSize),
+            std::make_shared<ImmOperand>(allocationSize, AsmType::LongWord),
             std::make_shared<RegisterOperand>(RegisterOperand::Kind::SP, AsmType::QuadWord),
             BinaryInst::Operator::Sub, AsmType::QuadWord));
     }

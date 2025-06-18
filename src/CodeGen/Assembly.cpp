@@ -242,13 +242,7 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
             return "invalid pseudo";
         case Operand::Kind::Imm: {
             const auto immOperand = dynamic_cast<ImmOperand*>(operand.get());
-            if (immOperand->type == AsmType::LongWord && immOperand->isSigned)
-                return "$" + std::to_string(std::get<i32>(immOperand->value));
-            if (immOperand->type == AsmType::QuadWord && immOperand->isSigned)
-                return "$" + std::to_string(std::get<i64>(immOperand->value));
-            if (immOperand->type == AsmType::LongWord && !immOperand->isSigned)
-                return "$" + std::to_string(std::get<u32>(immOperand->value));
-            return "$" + std::to_string(std::get<u64>(immOperand->value));
+            return "$" + std::to_string(immOperand->value);
         }
         case Operand::Kind::Stack: {
             const auto stackOperand = dynamic_cast<StackOperand*>(operand.get());

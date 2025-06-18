@@ -236,19 +236,7 @@ std::string to_string(const Operand& operand)
 
 std::string to_string(const ImmOperand& immOperand)
 {
-    if (immOperand.type == AsmType::QuadWord && immOperand.isSigned)
-        return "ImmOperand(" + std::to_string(std::get<i64>(immOperand.value))
-            + ", " + to_string(immOperand.type) + ")";
-    if (immOperand.type == AsmType::QuadWord && !immOperand.isSigned)
-        return "ImmOperand(" + std::to_string(std::get<u64>(immOperand.value))
-            + ", " + to_string(immOperand.type) + ")";
-    if (immOperand.type == AsmType::LongWord && immOperand.isSigned)
-        return "ImmOperand(" + std::to_string(std::get<i32>(immOperand.value))
-            + ", " + to_string(immOperand.type) + ")";
-    if (immOperand.type == AsmType::LongWord && !immOperand.isSigned)
-        return "ImmOperand(" + std::to_string(std::get<u32>(immOperand.value))
-            + ", " + to_string(immOperand.type) + ")";
-    std::unreachable();
+    return "ImmOperand(" + std::to_string(immOperand.value) + ", " + to_string(immOperand.type) + ")";
 }
 
 std::string to_string(const RegisterOperand& registerOperand)
