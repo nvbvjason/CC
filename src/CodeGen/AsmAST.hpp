@@ -416,7 +416,7 @@ struct Function : TopLevel {
 
 struct StaticVariable : TopLevel {
     std::string name;
-    i64 init;
+    u64 init;
     AsmType type;
     const bool global;
     StaticVariable(std::string name, const AsmType type, const bool isGlobal)

@@ -114,7 +114,7 @@ std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVari
     if (type == Type::U32)
         result->init = std::get<u32>(value->value);
     if (type == Type::U64)
-        result->init = static_cast<u64>(std::get<u64>(value->value));
+        result->init = std::get<u64>(value->value);
     return result;
 }
 
@@ -885,20 +885,7 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
     switch (value->kind) {
         case Ir::Value::Kind::Constant: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto valueConst = static_cast<Ir::ValueConst*>(value.get());
-            if (valueConst->type == Type::Double)
-                return genDoubleLocalConst(std::get<double>(valueConst->value), 8);
-            std::shared_ptr<ImmOperand> imm = getImmOperandFromValue(*valueConst);
-            if (INT_MAX < imm->value) {
-                const auto reg10 = std::make_shared<RegisterOperand>(RegType::R10, AsmType::QuadWord);
-                insts.emplace_back(std::make_unique<MoveInst>(imm, reg10, AsmType::QuadWord));
-                Identifier pseudoName(makeTemporaryPseudoName());
-                const auto pseudo = std::make_shared<PseudoOperand>(
-                    pseudoName, ReferingTo::Local, AsmType::QuadWord, false);
-                insts.emplace_back(std::make_unique<MoveInst>(reg10, pseudo, AsmType::QuadWord));
-                return pseudo;
-            }
-            return imm;
+            return getOperandFromConstant(value);
         }
         case Ir::Value::Kind::Variable: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
@@ -912,6 +899,24 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
     }
 }
 
+std::shared_ptr<Operand> GenerateAsmTree::getOperandFromConstant(const std::shared_ptr<Ir::Value>& value)
+{
+    const auto valueConst = static_cast<Ir::ValueConst*>(value.get());
+    if (valueConst->type == Type::Double)
+        return genDoubleLocalConst(std::get<double>(valueConst->value), 8);
+    std::shared_ptr<ImmOperand> imm = getImmOperandFromValue(*valueConst);
+    if (INT_MAX < imm->value) {
+        Identifier pseudoName(makeTemporaryPseudoName());
+        const auto reg10 = std::make_shared<RegisterOperand>(RegType::R10, AsmType::QuadWord);
+        const auto pseudo = std::make_shared<PseudoOperand>(
+            pseudoName, ReferingTo::Local, AsmType::QuadWord, false);
+
+        insts.emplace_back(std::make_unique<MoveInst>(imm, reg10, AsmType::QuadWord));
+        insts.emplace_back(std::make_unique<MoveInst>(reg10, pseudo, AsmType::QuadWord));
+        return pseudo;
+    }
+    return imm;
+}
 
 std::shared_ptr<Operand> GenerateAsmTree::genDoubleLocalConst(double value, i32 alignment)
 {
@@ -919,7 +924,8 @@ std::shared_ptr<Operand> GenerateAsmTree::genDoubleLocalConst(double value, i32 
     if (it != m_constantDoubles.end())
         return std::make_shared<DataOperand>(Identifier(it->second), AsmType::Double, true);
     Identifier constLabel(makeTemporaryPseudoName());
-    m_toplevel.emplace_back(std::make_unique<ConstVariable>(Identifier(constLabel), alignment, value, true));
+    m_toplevel.emplace_back(std::make_unique<ConstVariable>(
+        Identifier(constLabel), alignment, value, true));
     m_constantDoubles.emplace_hint(it, value, constLabel.value);
     return std::make_shared<DataOperand>(constLabel, AsmType::Double, true);
 }

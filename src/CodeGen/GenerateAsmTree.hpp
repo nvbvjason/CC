@@ -86,6 +86,7 @@ public:
     void genFunCallPushArgs(const Ir::FunCallInst& funcCall);
 
     std::shared_ptr<Operand> genDoubleLocalConst(double value, i32 alignment);
+    std::shared_ptr<Operand> getOperandFromConstant(const std::shared_ptr<Ir::Value>& value);
     std::shared_ptr<Operand> genOperand(const std::shared_ptr<Ir::Value>& value);
     std::shared_ptr<Operand> getZeroOperand(AsmType type);
 
