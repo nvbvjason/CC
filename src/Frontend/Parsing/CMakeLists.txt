@@ -1,6 +1,8 @@
 add_library(Parsing STATIC
         Parser.cpp
         Operators.cpp
+        Declarator.cpp
+        Declarator.hpp
 )
 
 # Specify include directories for the Parsing library

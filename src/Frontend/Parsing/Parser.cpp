@@ -22,44 +22,36 @@ std::unique_ptr<Declaration> Parser::declarationParse()
     auto [type, storageClass] = specifierParse();
     if (type == Type::Invalid)
         return nullptr;
-    const Lexing::Token lexeme = advance();
-    if (lexeme.m_type != TokenType::Identifier)
+    const Declaration::StorageClass storage = getStorageClass(storageClass);
+    const std::unique_ptr<Declarator> declarator = declaratorParse();
+    if (declarator == nullptr)
         return nullptr;
-    const Storage storage = getStorageClass(storageClass);
-    if (peekTokenType() == TokenType::Equal || peekTokenType() == TokenType::Semicolon)
-        return varDeclParse(type, storage, lexeme.m_lexeme);
-    if (peekTokenType() == TokenType::OpenParen)
-        return funDeclParse(type, storage, lexeme.m_lexeme);
-    return nullptr;
+    if (declarator->kind == Declarator::Kind::Function) {
+        auto functionDeclarator = static_cast<FunctionDeclarator*>(declarator.get());
+        return funDeclParse(type, storage, *functionDeclarator);
+    }
+    return varDeclParse(type, storage, *declarator);
 }
 
 std::unique_ptr<VarDecl> Parser::varDeclParse(const Type type,
                                               const Storage storage,
-                                              const std::string& iden)
+                                              Declarator& declarator)
 {
-    std::unique_ptr<Expr> init;
-    if (expect(TokenType::Equal)) {
-        std::unique_ptr<Expr> expr = exprParse(0);
-        if (expr == nullptr)
-            return nullptr;
-        init = std::move(expr);
+    if (declarator.kind == Declarator::Kind::Identifier) {
+        auto idenDeclarator = static_cast<IdentifierDeclarator*>(&declarator);
+        auto typeExpr = std::make_unique<VarType>(type);
+        return std::make_unique<VarDecl>(storage, idenDeclarator->identifier, std::move(typeExpr));
     }
-    if (!expect(TokenType::Semicolon))
-        return nullptr;
-    auto varDecl = std::make_unique<VarDecl>(
-        storage, iden, std::make_unique<VarType>(type));
-    if (init)
-        varDecl->init = std::move(init);
-    return varDecl;
+
 }
 
 std::unique_ptr<FunDecl> Parser::funDeclParse(const Type type,
                                               const Storage storage,
-                                              const std::string& iden)
+                                              FunctionDeclarator& functionDeclarator)
 {
     if (!expect(TokenType::OpenParen))
         return nullptr;
-    const std::unique_ptr<ParamList> paramList = paramsListParse();
+    const std::unique_ptr<std::vector<ParamInfo>> paramList = paramsListParse();
     if (paramList == nullptr)
         return nullptr;
     if (!expect(TokenType::CloseParen))
@@ -84,31 +76,88 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(const Type type,
     return result;
 }
 
-std::unique_ptr<Parser::ParamList> Parser::paramsListParse()
+std::unique_ptr<Declarator> Parser::declaratorParse()
 {
-    std::vector<std::string> params;
-    std::vector<std::unique_ptr<TypeBase>> paramTypes;
-    if (expect(TokenType::Void))
-        return std::make_unique<ParamList>(std::move(params), std::move(paramTypes));
-    Type type = typeParse();
+    if (expect(TokenType::Asterisk)) {
+        std::unique_ptr<Declarator> result = declaratorParse();
+        if (result == nullptr)
+            return nullptr;
+        return std::make_unique<PointerDeclarator>(std::move(result));
+    }
+    return directDeclaratorParse();
+}
+
+std::unique_ptr<Declarator> Parser::directDeclaratorParse()
+{
+    std::unique_ptr<Declarator> result = simpleDeclaratorParse();
+    if (result == nullptr)
+        return nullptr;
+    if (peekTokenType() != TokenType::OpenParen)
+        return result;
+    const std::unique_ptr<std::vector<ParamInfo>> paramList = paramsListParse();
+    if (paramList == nullptr)
+        return nullptr;
+    return std::make_unique<FunctionDeclarator>(std::move(result), std::move(*paramList));
+}
+
+std::unique_ptr<Declarator> Parser::simpleDeclaratorParse()
+{
+    if (expect(TokenType::OpenParen)) {
+        std::unique_ptr<Declarator> result = declaratorParse();
+        if (peekTokenType() != TokenType::CloseParen)
+            return nullptr;
+        advance();
+        return result;
+    }
+    if (peekTokenType() != TokenType::Identifier)
+        return nullptr;
+    std::string iden = peek().m_lexeme;
+    advance();
+    return std::make_unique<IdentifierDeclarator>(std::move(iden));
+}
+
+std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> Parser::delaratorProcess(
+    std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase)
+{
+    switch (declarator->kind) {
+        case Declarator::Kind::Identifier:
+            auto iden = static_cast<IdentifierDeclarator*>(declarator.get());
+            return {iden->identifier, {}, {}};
+
+    }
+}
+
+std::unique_ptr<std::vector<ParamInfo>> Parser::paramsListParse()
+{
+    if (!expect(TokenType::OpenParen))
+        return nullptr;
+    std::vector<ParamInfo> params;
+    if (expect(TokenType::Void)) {
+        if (!expect(TokenType::CloseParen))
+            return nullptr;
+        return std::make_unique<std::vector<ParamInfo>>(params);
+    }
+    while (!expect(TokenType::Comma)) {
+        std::unique_ptr<ParamInfo> param;
+        if (param == nullptr)
+            return nullptr;
+        params.push_back(*param);
+    }
+    if (!expect(TokenType::CloseParen))
+        return nullptr;
+    return std::make_unique<std::vector<ParamInfo>>(params);
+}
+
+std::unique_ptr<ParamInfo> Parser::paramParse()
+{
+    const Type type = typeParse();
     if (type == Type::Invalid)
         return nullptr;
-    paramTypes.push_back(std::make_unique<VarType>(type));
-    Lexing::Token lexeme = advance();
-    if (lexeme.m_type != TokenType::Identifier)
+    std::unique_ptr<Declarator> declarator = declaratorParse();
+    if (declarator == nullptr)
         return nullptr;
-    params.push_back(lexeme.m_lexeme);
-    while (expect(TokenType::Comma)) {
-        type = typeParse();
-        if (type == Type::Invalid)
-            return nullptr;
-        paramTypes.push_back(std::make_unique<VarType>(type));
-        lexeme = advance();
-        if (lexeme.m_type != TokenType::Identifier)
-            return nullptr;
-        params.push_back(lexeme.m_lexeme);
-    }
-    return std::make_unique<ParamList>(std::move(params), std::move(paramTypes));
+    std::unique_ptr<TypeBase> typeExpr = std::make_unique<VarType>(type);
+    return std::make_unique<ParamInfo>(std::move(typeExpr), std::move(declarator));
 }
 
 std::unique_ptr<Block> Parser::blockParse()
@@ -145,7 +194,7 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
 {
     if (expect(TokenType::Semicolon))
         return {nullptr, false};
-    if (Operators::isSpecifier(peekTokenType())) {
+    if (Operators::isSpecifier(peekTokenType()))  {
         auto decl = declarationParse();
         if (decl == nullptr)
             return {nullptr, true};
@@ -455,12 +504,34 @@ std::unique_ptr<Expr> Parser::unaryExprParse()
 {
     if (!Operators::isUnaryOperator(peek().m_type))
         return exprPostfix();
+    if (peek().m_type == TokenType::Ampersand)
+        return addrOFExprParse();
+    if (peek().m_type == TokenType::Asterisk)
+        return dereferenceExprParse();
     UnaryExpr::Operator oper = Operators::unaryOperator(peek().m_type);
     advance();
     std::unique_ptr<Expr> expr = unaryExprParse();
     if (expr == nullptr)
         return nullptr;
     return std::make_unique<UnaryExpr>(oper, std::move(expr));
+}
+
+std::unique_ptr<Expr> Parser::addrOFExprParse()
+{
+    advance();
+    std::unique_ptr<Expr> expr = unaryExprParse();
+    if (expr == nullptr)
+        return nullptr;
+    return std::make_unique<AddrOffExpr>(std::move(expr));
+}
+
+std::unique_ptr<Expr> Parser::dereferenceExprParse()
+{
+    advance();
+    std::unique_ptr<Expr> expr = unaryExprParse();
+    if (expr == nullptr)
+        return nullptr;
+    return std::make_unique<DereferenceExpr>(std::move(expr));
 }
 
 std::unique_ptr<Expr> Parser::exprPostfix()

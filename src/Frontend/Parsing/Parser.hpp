@@ -6,14 +6,18 @@
 /*
     <program>               ::= { <declaration> }
     <declaration>           ::= <function_declaration> | <variable_declaration>
-    <variable_declaration>  ::= { <specifier> }+ <identifier> [ "=" <exp> ] ";"
-    <function_declaration>  ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
-    <param-list>            ::= "void" | { <type-specifier> }+ <identifier> { "," { <type-specifier> }+ <identifier> }
+    <variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
+    <function_declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
+    <declarator>            ::= "*" <declarator> | <direct-declarator>
+    <direct-declarator>     ::= <simple-declarator> [ <param-list> ]
+    <param-list>            ::= "(" "void ")" | "(" <param> [ "," <param> ] ")"
+    <param>                 ::= { <type-specifier> }+ <declarator>
+    <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
     <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double"
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
     <block_item>            ::= <statement> | <declaration>
-    <for-inti>              ::= <variable-declaration> | <exp> ";"
+    <for-init>              ::= <variable-declaration> | <exp> ";"
     <statement>             ::= "return" <exp> ";"
                               | <exp> ";"
                               | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
@@ -32,7 +36,7 @@
     <exp>                   ::= <unary_exp>
                               | <exp> <binop> <exp>
                               | <exp> "?" <exp> ":" <exp>
-    <cast-exp>              ::= "(" { <type-specifier> }+ ")" <cast-exp>
+    <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                               | <unary-exp>
     <unary-exp>             ::= <postfix-exp> | <unop> <unary-exp>
     <postfix-exp>           ::= <factor> | <postfix_exp> <postfixop>
@@ -41,7 +45,10 @@
                               | <identifier> "(" [ <argument-list> ] ")"
                               | "(" <exp> ")"
     <argument-list>         ::= <exp> { "," <exp> }
-    <unop>                  ::= "+" | "-" | "~" | "!" | "--" | "++"
+    <abstract-declarator>   ::= "*" [ <abstract-declarator> ]
+                              | <direct-abstract-declarator>
+    <direct-abstarct-declarator> ::= "(" <abstract-declarator> ")"
+    <unop>                  ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
     <postfixop>             ::= "--" | "++"
     <binop>                 ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
                               | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
@@ -59,19 +66,17 @@
 #include "ASTParser.hpp"
 #include "Operators.hpp"
 
+#include <utility>
 #include <vector>
+
+#include "Declarator.hpp"
 
 namespace Parsing {
 
 class Parser {
     using TokenType = Lexing::Token::Type;
     using Storage = Declaration::StorageClass;
-    struct ParamList {
-        std::vector<std::string> params;
-        std::vector<std::unique_ptr<TypeBase>> types;
-        ParamList(std::vector<std::string>&& params, std::vector<std::unique_ptr<TypeBase>>&& types)
-            :params(std::move(params)), types(std::move(types)) {}
-    };
+
     bool m_atFileScope = true;
     std::vector<Lexing::Token> c_tokens;
     size_t m_current = 0;
@@ -83,11 +88,17 @@ public:
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(Type type,
                                                         Storage storage,
-                                                        const std::string& iden);
+                                                        Declarator& declarator);
     [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(Type type,
                                                         Storage storage,
-                                                        const std::string& iden);
-    [[nodiscard]] std::unique_ptr<ParamList> paramsListParse();
+                                                        FunctionDeclarator& functionDeclarator);
+    [[nodiscard]] std::unique_ptr<Declarator> declaratorParse();
+    [[nodiscard]] std::unique_ptr<Declarator> directDeclaratorParse();
+    [[nodiscard]] std::unique_ptr<Declarator> simpleDeclaratorParse();
+    [[nodiscard]]std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+        delaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] std::unique_ptr<ParamInfo> paramParse();
+    [[nodiscard]] std::unique_ptr<std::vector<ParamInfo>> paramsListParse();
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
@@ -110,10 +121,12 @@ public:
     [[nodiscard]] std::unique_ptr<Stmt> nullStmtParse();
 
     [[nodiscard]] std::unique_ptr<Expr> exprParse(i32 minPrecedence);
+    [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
+    [[nodiscard]] std::unique_ptr<Expr> addrOFExprParse();
+    [[nodiscard]] std::unique_ptr<Expr> dereferenceExprParse();
     [[nodiscard]] std::unique_ptr<Expr> castExpr();
     [[nodiscard]] std::unique_ptr<Expr> exprPostfix();
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
-    [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
     [[nodiscard]] Type typeParse();

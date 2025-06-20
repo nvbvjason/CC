@@ -12,8 +12,8 @@
 namespace Parsing {
 
 struct VarType : TypeBase {
-    explicit VarType(const Type kind)
-        : TypeBase(kind) {}
+    explicit VarType(const Type type)
+        : TypeBase(type) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -32,8 +32,8 @@ struct FuncType : TypeBase {
 struct PointerType : TypeBase {
     std::unique_ptr<TypeBase> referenced;
 
-    explicit PointerType(std::unique_ptr<TypeBase>&& r, const Type kind)
-        : TypeBase(kind), referenced(std::move(r)) {}
+    explicit PointerType(std::unique_ptr<TypeBase>&& r)
+        : TypeBase(Type::Function), referenced(std::move(r)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

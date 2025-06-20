@@ -137,6 +137,8 @@ constexpr bool isUnaryOperator(const TokenType type)
         case TokenType::ExclamationMark:
         case TokenType::Increment:
         case TokenType::Decrement:
+        case TokenType::Ampersand:
+        case TokenType::Asterisk:
             return true;
         default:
             return false;
