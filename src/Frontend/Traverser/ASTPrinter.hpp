@@ -35,6 +35,7 @@ public:
     // Type
     void visit(const VarType& varType) override;
     void visit(const FuncType& functionType) override;
+    void visit(const PointerType& pointerType) override;
 
     // BlockItem
     void visit(const StmtBlockItem& stmtBlockItem) override;
@@ -70,6 +71,8 @@ public:
     void visit(const ConstExpr& constExpr) override;
     void visit(const VarExpr& varExpr) override;
     void visit(const TernaryExpr& conditionalExpr) override;
+    void visit(const AddrOffExpr& addrOffExpr) override;
+    void visit(const DereferenceExpr& dereferenceExpr) override;
 
     void visit(const FunCallExpr& functionCallExpr) override;
 

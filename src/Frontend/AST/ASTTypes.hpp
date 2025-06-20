@@ -33,7 +33,7 @@ struct PointerType : TypeBase {
     std::unique_ptr<TypeBase> referenced;
 
     explicit PointerType(std::unique_ptr<TypeBase>&& r)
-        : TypeBase(Type::Function), referenced(std::move(r)) {}
+        : TypeBase(Type::Pointer), referenced(std::move(r)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

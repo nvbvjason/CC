@@ -1,7 +1,8 @@
 #pragma once
 
-#ifndef DECLARATOR_HPP
-#define DECLARATOR_HPP
+#ifndef CC_PARSING_DECLARATOR_HPP
+#define CC_PARSING_DECLARATOR_HPP
+
 #include "ASTBase.hpp"
 #include "CodeGen/AsmAST.hpp"
 
@@ -27,10 +28,10 @@ struct IdentifierDeclarator : Declarator {
 };
 
 struct PointerDeclarator : Declarator {
-    std::unique_ptr<Declarator> declarator;
+    std::unique_ptr<Declarator> inner;
 
     explicit PointerDeclarator(std::unique_ptr<Declarator>&& declarator)
-        : Declarator(Kind::Pointer), declarator(std::move(declarator)) {}
+        : Declarator(Kind::Pointer), inner(std::move(declarator)) {}
 
     PointerDeclarator() = delete;
 };
@@ -55,6 +56,28 @@ struct FunctionDeclarator : Declarator {
     FunctionDeclarator() = delete;
 };
 
+struct AbstractDeclarator {
+    enum class Kind {
+        Pointer, Base
+    };
+    Kind kind;
+
+protected:
+    explicit AbstractDeclarator(const Kind kind)
+        : kind(kind) {}
+};
+
+struct AbstractPointer : AbstractDeclarator {
+    std::unique_ptr<AbstractDeclarator> inner;
+    explicit AbstractPointer(std::unique_ptr<AbstractDeclarator>&& i)
+        : AbstractDeclarator(Kind::Pointer), inner(std::move(i)) {}
+};
+
+struct AbstractBase : AbstractDeclarator {
+    explicit AbstractBase()
+        : AbstractDeclarator(Kind::Base) {}
+};
+
 } // Parsing
 
-#endif //DECLARATOR_HPP
+#endif // CC_PARSING_DECLARATOR_HPP

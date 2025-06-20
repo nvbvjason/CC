@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <tuple>
 
 namespace Parsing {
 
@@ -23,56 +24,50 @@ std::unique_ptr<Declaration> Parser::declarationParse()
     if (type == Type::Invalid)
         return nullptr;
     const Declaration::StorageClass storage = getStorageClass(storageClass);
-    const std::unique_ptr<Declarator> declarator = declaratorParse();
+    std::unique_ptr<Declarator> declarator = declaratorParse();
     if (declarator == nullptr)
         return nullptr;
-    if (declarator->kind == Declarator::Kind::Function) {
-        auto functionDeclarator = static_cast<FunctionDeclarator*>(declarator.get());
-        return funDeclParse(type, storage, *functionDeclarator);
-    }
-    return varDeclParse(type, storage, *declarator);
+    auto varType = std::make_unique<VarType>(type);
+    auto [iden, typeBase, params] =
+            declaratorProcess(std::move(declarator), std::move(varType));
+    if (iden.empty())
+        return nullptr;
+    if (typeBase->kind == Type::Function)
+        return funDeclParse(iden, std::move(typeBase), storage, std::move(params));
+    return varDeclParse(iden, std::move(typeBase), storage);
 }
 
-std::unique_ptr<VarDecl> Parser::varDeclParse(const Type type,
-                                              const Storage storage,
-                                              Declarator& declarator)
+std::unique_ptr<VarDecl> Parser::varDeclParse(const std::string& iden,
+                                              std::unique_ptr<TypeBase>&& type,
+                                              const Storage storage)
 {
-    if (declarator.kind == Declarator::Kind::Identifier) {
-        auto idenDeclarator = static_cast<IdentifierDeclarator*>(&declarator);
-        auto typeExpr = std::make_unique<VarType>(type);
-        return std::make_unique<VarDecl>(storage, idenDeclarator->identifier, std::move(typeExpr));
-    }
-
-}
-
-std::unique_ptr<FunDecl> Parser::funDeclParse(const Type type,
-                                              const Storage storage,
-                                              FunctionDeclarator& functionDeclarator)
-{
-    if (!expect(TokenType::OpenParen))
-        return nullptr;
-    const std::unique_ptr<std::vector<ParamInfo>> paramList = paramsListParse();
-    if (paramList == nullptr)
-        return nullptr;
-    if (!expect(TokenType::CloseParen))
-        return nullptr;
-    std::unique_ptr<Block> block = nullptr;
-    if (peekTokenType() == TokenType::OpenBrace) {
-        m_atFileScope = false;
-        block = blockParse();
-        m_atFileScope = true;
-        if (block == nullptr)
+    std::unique_ptr<Expr> init = nullptr;
+    if (expect(TokenType::Equal)) {
+        init = exprParse(0);
+        if (init == nullptr)
             return nullptr;
     }
-    else if (!expect(TokenType::Semicolon))
+    if (!expect(TokenType::Semicolon))
         return nullptr;
-    auto result = std::make_unique<FunDecl>(storage, iden);
-    if (block != nullptr)
-        result->body = std::move(block);
-    result->params = std::move(paramList->params);
-    result->type = std::make_unique<FuncType>(
-        std::make_unique<VarType>(type),
-        std::move(paramList->types));
+    auto varDecl = std::make_unique<VarDecl>(
+        storage, iden, std::move(type));
+    if (init)
+        varDecl->init = std::move(init);
+    return varDecl;
+}
+
+std::unique_ptr<FunDecl> Parser::funDeclParse(const std::string& iden,
+                                              std::unique_ptr<TypeBase>&& type,
+                                              const Storage storage,
+                                              std::vector<std::string>&& params)
+{
+    auto result = std::make_unique<FunDecl>(storage, iden, std::move(params), std::move(type));
+    if (expect(TokenType::Semicolon))
+        return result;
+    auto block = blockParse();
+    if (block == nullptr)
+        return nullptr;
+    result->body = std::move(block);
     return result;
 }
 
@@ -94,7 +89,7 @@ std::unique_ptr<Declarator> Parser::directDeclaratorParse()
         return nullptr;
     if (peekTokenType() != TokenType::OpenParen)
         return result;
-    const std::unique_ptr<std::vector<ParamInfo>> paramList = paramsListParse();
+    std::unique_ptr<std::vector<ParamInfo>> paramList = paramsListParse();
     if (paramList == nullptr)
         return nullptr;
     return std::make_unique<FunctionDeclarator>(std::move(result), std::move(*paramList));
@@ -116,15 +111,41 @@ std::unique_ptr<Declarator> Parser::simpleDeclaratorParse()
     return std::make_unique<IdentifierDeclarator>(std::move(iden));
 }
 
-std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> Parser::delaratorProcess(
+std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> Parser::declaratorProcess(
     std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase)
 {
     switch (declarator->kind) {
-        case Declarator::Kind::Identifier:
-            auto iden = static_cast<IdentifierDeclarator*>(declarator.get());
-            return {iden->identifier, {}, {}};
-
+        case Declarator::Kind::Identifier: {
+            const auto iden = static_cast<IdentifierDeclarator*>(declarator.get());
+            return std::make_tuple(std::move(iden->identifier),
+                                   std::move(typeBase),
+                                   std::move(std::vector<std::string>()));
+        }
+        case Declarator::Kind::Pointer: {
+            auto derivedType = std::make_unique<PointerType>(std::move(typeBase));
+            const auto pointerDecl = static_cast<PointerDeclarator*>(declarator.get());
+            return declaratorProcess(std::move(pointerDecl->inner), std::move(derivedType));
+        }
+        case Declarator::Kind::Function: {
+            const auto funcDecl = static_cast<FunctionDeclarator*>(declarator.get());
+            if (funcDecl->declarator->kind != Declarator::Kind::Identifier)
+                return {};
+            std::vector<std::unique_ptr<TypeBase>> paramTypes;
+            std::vector<std::string> params;
+            for (ParamInfo& param : funcDecl->params) {
+                auto [iden, typeBase, _] =
+                    declaratorProcess(std::move(param.declarator), std::move(param.type));
+                if (typeBase->kind == Type::Function)
+                    return {};
+                params.emplace_back(std::move(iden));
+                paramTypes.emplace_back(std::move(typeBase));
+            }
+            const auto idenDecl = static_cast<IdentifierDeclarator*>(funcDecl->declarator.get());
+            auto funcType = std::make_unique<FuncType>(std::move(typeBase), std::move(paramTypes));
+            return std::make_tuple(std::move(idenDecl->identifier), std::move(funcType), std::move(params));
+        }
     }
+    return std::make_tuple(std::string(), std::move(typeBase), std::vector<std::string>());
 }
 
 std::unique_ptr<std::vector<ParamInfo>> Parser::paramsListParse()
@@ -135,17 +156,17 @@ std::unique_ptr<std::vector<ParamInfo>> Parser::paramsListParse()
     if (expect(TokenType::Void)) {
         if (!expect(TokenType::CloseParen))
             return nullptr;
-        return std::make_unique<std::vector<ParamInfo>>(params);
+        return std::make_unique<std::vector<ParamInfo>>(std::move(params));
     }
-    while (!expect(TokenType::Comma)) {
-        std::unique_ptr<ParamInfo> param;
+    do {
+        std::unique_ptr<ParamInfo> param = paramParse();
         if (param == nullptr)
             return nullptr;
-        params.push_back(*param);
-    }
+        params.push_back(std::move(*param));
+    } while (expect(TokenType::Comma));
     if (!expect(TokenType::CloseParen))
         return nullptr;
-    return std::make_unique<std::vector<ParamInfo>>(params);
+    return std::make_unique<std::vector<ParamInfo>>(std::move(params));
 }
 
 std::unique_ptr<ParamInfo> Parser::paramParse()
@@ -482,12 +503,12 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
 
 std::unique_ptr<Expr> Parser::castExpr()
 {
-    if (peek().m_type == TokenType::OpenParen && Operators::isType(peekNextTokenType())) {
-        advance();
-        if (!Operators::isType(peek().m_type))
-            return nullptr;
+    if (Operators::isType(peekNextTokenType()) && expect(TokenType::OpenParen)) {
         const Type type = typeParse();
         if (type == Type::Invalid)
+            return nullptr;
+        std::unique_ptr<AbstractDeclarator> abstractDeclarator = abstractDeclaratorParse();
+        if (abstractDeclarator == nullptr)
             return nullptr;
         if (!expect(TokenType::CloseParen))
             return nullptr;
@@ -608,6 +629,31 @@ std::unique_ptr<Expr> Parser::factorParse()
         default:
             return nullptr;
     }
+}
+
+std::unique_ptr<AbstractDeclarator> Parser::abstractDeclaratorParse()
+{
+    if (peekTokenType() == TokenType::OpenParen)
+        return directAbstractDeclaratorParse();
+    auto base = std::make_unique<AbstractBase>();
+    if (!expect(TokenType::Asterisk))
+        return base;
+    std::unique_ptr<AbstractDeclarator> inner = abstractDeclaratorParse();
+    if (inner != nullptr)
+        return std::make_unique<AbstractPointer>(std::move(inner));
+    return std::make_unique<AbstractPointer>(std::move(base));
+}
+
+std::unique_ptr<AbstractDeclarator> Parser::directAbstractDeclaratorParse()
+{
+    if (!expect(TokenType::OpenParen))
+        return nullptr;
+    std::unique_ptr<AbstractDeclarator> abstractDeclarator = abstractDeclaratorParse();
+    if (abstractDeclarator == nullptr)
+        return nullptr;
+    if (!expect(TokenType::CloseParen))
+        return nullptr;
+    return abstractDeclarator;
 }
 
 std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()

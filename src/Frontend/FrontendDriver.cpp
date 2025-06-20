@@ -12,7 +12,7 @@
 #include "LoopLabeling.hpp"
 #include "ValidateReturn.hpp"
 #include "TypeResolution.hpp"
-#include "DeSugarCompoundAssign.hpp"
+#include "DeSugar.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -73,7 +73,7 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
 
 StateCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable)
 {
-    Semantics::DeSugarCompoundAssign deSugarCompoundAssign;
+    Semantics::DeSugar deSugarCompoundAssign;
     deSugarCompoundAssign.deSugar(programNode);
     Semantics::VariableResolution variableResolution(symbolTable);
     if (!variableResolution.resolve(programNode))

@@ -1,15 +1,15 @@
-#include "DeSugarCompoundAssign.hpp"
+#include "DeSugar.hpp"
 #include "ASTExpr.hpp"
 #include "ASTTypes.hpp"
 #include "Operators.hpp"
 
 namespace Semantics {
-void DeSugarCompoundAssign::deSugar(Parsing::Program& program)
+void DeSugar::deSugar(Parsing::Program& program)
 {
     ASTTraverser::visit(program);
 }
 
-void DeSugarCompoundAssign::visit(Parsing::AssignmentExpr& assignmentExpr)
+void DeSugar::visit(Parsing::AssignmentExpr& assignmentExpr)
 {
     if (assignmentExpr.op != Parsing::AssignmentExpr::Operator::Assign &&
         assignmentExpr.lhs->kind == Parsing::Expr::Kind::Var) {

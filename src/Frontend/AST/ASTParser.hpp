@@ -90,8 +90,14 @@ struct FunDecl final : Declaration {
     std::unique_ptr<Block> body = nullptr;
     std::unique_ptr<TypeBase> type = nullptr;
 
-    explicit FunDecl(const StorageClass storageClass, std::string name)
-        : Declaration(Kind::FuncDecl, storageClass), name(std::move(name)) {}
+    explicit FunDecl(const StorageClass storageClass,
+                     std::string name,
+                     std::vector<std::string>&& ps,
+                     std::unique_ptr<TypeBase>&& t)
+        : Declaration(Kind::FuncDecl, storageClass),
+            name(std::move(name)),
+            params(std::move(ps)),
+            type(std::move(t)){}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

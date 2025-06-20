@@ -7,7 +7,7 @@
 
 namespace Semantics {
 
-class DeSugarCompoundAssign : public Parsing::ASTTraverser{
+class DeSugar : public Parsing::ASTTraverser{
 public:
     void deSugar(Parsing::Program& program);
 

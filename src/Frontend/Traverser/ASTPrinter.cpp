@@ -144,6 +144,11 @@ void ASTPrinter::visit(const FuncType& functionType)
     ConstASTTraverser::visit(functionType);
 }
 
+void ASTPrinter::visit(const PointerType& pointerType)
+{
+    ConstASTTraverser::visit(pointerType);
+}
+
 void ASTPrinter::visit(const StmtBlockItem& stmtBlockItem)
 {
     IndentGuard guard(m_indentLevel);
@@ -351,6 +356,20 @@ void ASTPrinter::visit(const FunCallExpr& functionCallExpr)
     IndentGuard guard(m_indentLevel);
     addLine("Function Call: " + functionCallExpr.name);
     ConstASTTraverser::visit(functionCallExpr);
+}
+
+void ASTPrinter::visit(const AddrOffExpr& addrOffExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("AddressOf: " + varTypeToString(addrOffExpr.type->kind));
+    ConstASTTraverser::visit(addrOffExpr);
+}
+
+void ASTPrinter::visit(const DereferenceExpr& dereferenceExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("Dereference: " + varTypeToString(dereferenceExpr.type->kind));
+    ConstASTTraverser::visit(dereferenceExpr);
 }
 
 void ASTPrinter::addLine(const std::string& line)

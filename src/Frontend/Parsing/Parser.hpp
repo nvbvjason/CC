@@ -65,11 +65,9 @@
 
 #include "ASTParser.hpp"
 #include "Operators.hpp"
-
-#include <utility>
-#include <vector>
-
 #include "Declarator.hpp"
+
+#include <vector>
 
 namespace Parsing {
 
@@ -86,17 +84,18 @@ public:
         : c_tokens(c_tokens) {}
     bool programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
-    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(Type type,
+    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
+                                                        std::unique_ptr<TypeBase>&& type,
+                                                        Storage storage);
+    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(const std::string& iden,
+                                                        std::unique_ptr<TypeBase>&& type,
                                                         Storage storage,
-                                                        Declarator& declarator);
-    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(Type type,
-                                                        Storage storage,
-                                                        FunctionDeclarator& functionDeclarator);
+                                                        std::vector<std::string>&& params);
     [[nodiscard]] std::unique_ptr<Declarator> declaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> directDeclaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> simpleDeclaratorParse();
     [[nodiscard]]std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
-        delaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+        declaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
     [[nodiscard]] std::unique_ptr<ParamInfo> paramParse();
     [[nodiscard]] std::unique_ptr<std::vector<ParamInfo>> paramsListParse();
 
@@ -127,6 +126,9 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> castExpr();
     [[nodiscard]] std::unique_ptr<Expr> exprPostfix();
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
+
+    [[nodiscard]] std::unique_ptr<AbstractDeclarator> abstractDeclaratorParse();
+    [[nodiscard]] std::unique_ptr<AbstractDeclarator> directAbstractDeclaratorParse();
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
     [[nodiscard]] Type typeParse();

@@ -13,8 +13,12 @@ std::vector<Token> generateTokens(const std::vector<TokenType>& tokenTypes)
 {
     std::vector<Token> tokens;
     tokens.reserve(tokenTypes.size() + 1);
-    for (const auto& tokenType : tokenTypes)
-        tokens.emplace_back(1, 1, tokenType, "");
+    for (const TokenType tokenType : tokenTypes) {
+        if (tokenType == TokenType::Identifier)
+            tokens.emplace_back(1, 1, tokenType, "x");
+        else
+            tokens.emplace_back(1, 1, tokenType, "");
+    }
     tokens.emplace_back(1, 1, TokenType::EndOfFile, "");
     return tokens;
 }
@@ -52,7 +56,8 @@ TEST(ParserTests, BlockParseMissingOpenBrace)
 
 TEST(ParserTests, forInitParseSuccesInit)
 {
-    const std::vector tokenTypes{TokenType::IntKeyword, TokenType::Identifier, TokenType::Equal, TokenType::IntegerLiteral, TokenType::Semicolon};
+    const std::vector tokenTypes{
+        TokenType::IntKeyword, TokenType::Identifier, TokenType::Equal, TokenType::IntegerLiteral, TokenType::Semicolon};
     Parsing::Parser parser = createParser(tokenTypes);
     const auto [ptr, err] = parser.forInitParse();
     EXPECT_FALSE(err);
