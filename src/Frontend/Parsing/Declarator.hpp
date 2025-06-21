@@ -14,6 +14,7 @@ struct Declarator {
     };
     Kind kind;
 
+    Declarator() = delete;
 protected:
     explicit Declarator(const Kind kind)
         : kind(kind) {}
@@ -51,7 +52,7 @@ struct FunctionDeclarator : Declarator {
     std::unique_ptr<Declarator> declarator;
 
     explicit FunctionDeclarator(std::unique_ptr<Declarator>&& declarator, std::vector<ParamInfo>&& params)
-        : Declarator(Kind::Function), declarator(std::move(declarator)), params(std::move(params)) {}
+        : Declarator(Kind::Function), params(std::move(params)), declarator(std::move(declarator)) {}
 
     FunctionDeclarator() = delete;
 };

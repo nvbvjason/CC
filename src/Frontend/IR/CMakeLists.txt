@@ -1,5 +1,9 @@
 add_library(FrontendIR STATIC
         GenerateIr.cpp
+        AstToIrOperators.cpp
+        AstToIrOperators.hpp
+        ExprResult.cpp
+        ExprResult.hpp
 )
 
 target_include_directories(FrontendIR PUBLIC

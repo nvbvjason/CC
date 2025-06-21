@@ -43,6 +43,9 @@ private:
     void print(const UnaryInst& inst);
     void print(const BinaryInst& inst);
     void print(const CopyInst& inst);
+    void print(const GetAddressInst& inst);
+    void print(const LoadInst& inst);
+    void print(const StoreInst& inst);
     void print(const JumpInst& inst);
     void print(const JumpIfZeroInst& inst);
     void print(const JumpIfNotZeroInst& inst);

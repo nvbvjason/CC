@@ -109,9 +109,13 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     if (varDecl.init == nullptr)
         return;
     if (!Parsing::areEquivalent(*varDecl.type, *varDecl.init->type)) {
-        if (varDecl.type->kind == Type::Pointer && !canConvertToNullPtr(*varDecl.init)) {
-            m_valid = false;
-            return;
+        if (varDecl.type->kind == Type::Pointer) {
+            if (!canConvertToNullPtr(*varDecl.init)) {
+                m_valid = false;
+                return;
+            }
+            auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
+            varDecl.init = std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr));
         }
     }
     assignTypeToArithmeticUnaryExpr(varDecl);
@@ -202,8 +206,7 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
     ASTTraverser::visit(binaryExpr);
     if (!m_valid)
         return;
-    if (binaryExpr.op == Parsing::BinaryExpr::Operator::And ||
-        binaryExpr.op == Parsing::BinaryExpr::Operator::Or) {
+    if (binaryExpr.op == Operator::And || binaryExpr.op == Operator::Or) {
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         return;
     }

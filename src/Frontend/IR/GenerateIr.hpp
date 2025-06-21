@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef CC_IR_CONCRETE_TREE_HPP
-#define CC_IR_CONCRETE_TREE_HPP
+#ifndef CC_IR_GENERATE_IR_HPP
+#define CC_IR_GENERATE_IR_HPP
 
 #include "ASTIr.hpp"
 #include "ASTParser.hpp"
@@ -48,21 +48,24 @@ public:
     void genSwitchStmt(const Parsing::SwitchStmt& stmt);
 
     std::shared_ptr<Value> genInst(const Parsing::Expr& parsingExpr);
-    std::shared_ptr<Value> genCastInst(const Parsing::Expr& parsingExpr);
-    std::shared_ptr<Value> genUnaryInst(const Parsing::Expr& parsingExpr);
+
+    std::shared_ptr<Value> genCastInst(const Parsing::CastExpr& castExpr);
+    std::shared_ptr<Value> genUnaryInst(const Parsing::UnaryExpr& unaryExpr);
     std::shared_ptr<Value> genUnaryBasicInst(const Parsing::UnaryExpr& unaryExpr);
     std::shared_ptr<Value> genUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr);
     std::shared_ptr<Value> genUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr);
-    std::shared_ptr<Value> genBinaryInst(const Parsing::Expr& parsingExpr);
+    std::shared_ptr<Value> genBinaryInst(const Parsing::BinaryExpr& binaryExpr);
     std::shared_ptr<Value> genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr);
     std::shared_ptr<Value> genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr);
-    std::shared_ptr<Value> genAssignInst(const Parsing::Expr& binaryExpr);
-    std::shared_ptr<Value> genTernaryInst(const Parsing::Expr& ternary);
-    std::shared_ptr<Value> genFuncCallInst(const Parsing::Expr& parsingExpr);
-    static std::shared_ptr<Value> genConstInst(const Parsing::Expr& parsingExpr);
-    static std::shared_ptr<Value> genVarInst(const Parsing::Expr& parsingExpr);
+    std::shared_ptr<Value> genAssignInst(const Parsing::AssignmentExpr& assignmentExpr);
+    std::shared_ptr<Value> genTernaryInst(const Parsing::TernaryExpr& ternaryExpr);
+    std::shared_ptr<Value> genFuncCallInst(const Parsing::FunCallExpr& funcCallExpr);
+    std::shared_ptr<Value> genAddrOfInst(const Parsing::AddrOffExpr& addrOffExpr);
+    std::shared_ptr<Value> genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr);
+    static std::shared_ptr<Value> genConstInst(const Parsing::ConstExpr& constExpr);
+    static std::shared_ptr<Value> genVarInst(const Parsing::VarExpr& varExpr);
 };
 
 } // IR
 
-#endif // CC_IR_CONCRETE_TREE_HPP
+#endif // CC_IR_GENERATE_IR_HPP

@@ -28,6 +28,9 @@ instruction = Return(val)
             | Unary(unary_operator, val src, val dst)
             | Binary(binary_operator, val src1, val src2, val dst)
             | Copy(val src, val dst)
+            | GetAddress(val src, val dst)
+            | Load(val src, val dst)
+            | Store(val src, val dst)
             | Jump(identifier target)
             | JumpIfZero(val condition, identifier target)
             | JumpIfNotZero(val condition, identifier target)
@@ -95,7 +98,7 @@ struct Instruction {
         Return,
         SignExtend, Truncate, ZeroExtend,
         DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble,
-        Unary, Binary, Copy,
+        Unary, Binary, Copy, GetAddress, Load, Store,
         Jump, JumpIfZero, JumpIfNotZero, Label,
         FunCall
     };
@@ -227,6 +230,39 @@ struct CopyInst final : Instruction {
     ~CopyInst() override;
 
     CopyInst() = delete;
+};
+
+struct GetAddressInst final : Instruction {
+    std::shared_ptr<Value> src;
+    std::shared_ptr<Value> dst;
+    GetAddressInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
+        : Instruction(Kind::Copy, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    ~GetAddressInst() override;
+
+    GetAddressInst() = delete;
+};
+
+struct LoadInst final : Instruction {
+    std::shared_ptr<Value> src;
+    std::shared_ptr<Value> dst;
+    LoadInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
+        : Instruction(Kind::Copy, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    ~LoadInst() override;
+
+    LoadInst() = delete;
+};
+
+struct StoreInst final : Instruction {
+    std::shared_ptr<Value> src;
+    std::shared_ptr<Value> dst;
+    StoreInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
+        : Instruction(Kind::Copy, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    ~StoreInst() override;
+
+    StoreInst() = delete;
 };
 
 struct JumpInst final : Instruction {

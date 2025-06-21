@@ -128,6 +128,21 @@ void IrPrinter::print(const CopyInst& inst)
     addLine("Copy: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
+void IrPrinter::print(const GetAddressInst& inst)
+{
+    addLine("GetAddress: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+}
+
+void IrPrinter::print(const LoadInst& inst)
+{
+    addLine("Load: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+}
+
+void IrPrinter::print(const StoreInst& inst)
+{
+    addLine("Store: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+}
+
 void IrPrinter::print(const JumpInst& inst)
 {
     addLine("Jump: " + print(inst.target));

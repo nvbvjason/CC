@@ -12,7 +12,6 @@ public:
     void deSugar(Parsing::Program& program);
 
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
-    void visit(Parsing::AddrOffExpr& addrOffExpr) override;
 };
 } // Semantics
 
