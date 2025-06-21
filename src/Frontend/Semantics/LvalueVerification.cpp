@@ -29,7 +29,8 @@ void LvalueVerification::visit(const Parsing::UnaryExpr& unaryExpr)
 
 void LvalueVerification::visit(const Parsing::AssignmentExpr& assignmentExpr)
 {
-    if (assignmentExpr.lhs->kind != Parsing::Expr::Kind::Var)
+    if (assignmentExpr.lhs->kind != Parsing::Expr::Kind::Var &&
+        assignmentExpr.lhs->kind != Parsing::Expr::Kind::Dereference)
         m_valid = false;
     ConstASTTraverser::visit(assignmentExpr);
 }

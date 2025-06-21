@@ -69,3 +69,12 @@ bool isInteger(const Type t)
             return false;
     }
 }
+
+bool isArithmetic(const Type t)
+{
+    if (isInteger(t))
+        return true;
+    if (t == Type::Double)
+        return true;
+    return false;
+}

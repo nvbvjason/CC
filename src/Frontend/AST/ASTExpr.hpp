@@ -171,7 +171,7 @@ struct AddrOffExpr final : Expr {
     std::unique_ptr<Expr> reference;
 
     explicit AddrOffExpr(std::unique_ptr<Expr>&& reference)
-        : Expr(Kind::Dereference), reference(std::move(reference)) {}
+        : Expr(Kind::AddrOf), reference(std::move(reference)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

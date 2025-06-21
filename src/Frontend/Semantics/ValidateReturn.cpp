@@ -1,5 +1,7 @@
 #include "ValidateReturn.hpp"
 
+#include "Utils.hpp"
+
 namespace Semantics {
 bool ValidateReturn::programValidate(Parsing::Program& program)
 {
@@ -33,6 +35,14 @@ void ValidateReturn::visit(Parsing::FunDecl& funDecl)
     }
     const auto returnStmt = dynamic_cast<Parsing::ReturnStmt*>(stmtBlockItem->stmt.get());
     const auto funcType = static_cast<const Parsing::FuncType*>(funDecl.type.get());
+    if (funcType->returnType->kind == Type::Pointer && returnStmt->expr->type->kind != Type::Pointer) {
+        if (!canConvertToNullPtr(*returnStmt->expr)) {
+            m_hasValidReturns = false;
+            return;
+        }
+        returnStmt->expr = std::make_unique<Parsing::CastExpr>(
+            Parsing::deepCopy(*funcType->returnType), std::move(returnStmt->expr));
+    }
     if (funcType->returnType->kind == Type::Pointer || returnStmt->expr->type->kind == Type::Pointer) {
         if (!Parsing::areEquivalent(*funcType->returnType, *returnStmt->expr->type)) {
             m_hasValidReturns = false;

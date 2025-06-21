@@ -68,6 +68,7 @@ public:
     void visit(Parsing::DeclForInit& declForInit) override;
 
     void visit(Parsing::FunCallExpr& funCallExpr) override;
+    bool isIllegalVarDecl(const Parsing::VarDecl& varDecl) const;
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::UnaryExpr& unaryExpr) override;
     void visit(Parsing::BinaryExpr& binaryExpr) override;
@@ -76,11 +77,13 @@ public:
     void visit(Parsing::TernaryExpr& ternaryExpr) override;
     void visit(Parsing::AddrOffExpr& addrOffExpr) override;
     void visit(Parsing::DereferenceExpr& dereferenceExpr) override;
-    static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl);
-    static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
-    static void assignTypeToSimpleBinaryExpr(
+
+    static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
+    static void assignTypeToArithmeticBinaryExpr(
         Parsing::BinaryExpr& binaryExpr,
         Type leftType, Type rightType, Type commonType);
+    static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl);
+    static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 };
 
 inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
@@ -111,39 +114,16 @@ inline bool isBinaryComparison(const Parsing::BinaryExpr& binaryExpr)
            binaryExpr.op == Operator::GreaterThan || binaryExpr.op == Operator::GreaterOrEqual;
 }
 
-inline bool canConvertToNullPtr(const Parsing::ConstExpr& constExpr)
+inline bool isIllegalUnaryPointerOperator(const Parsing::UnaryExpr::Operator oper)
 {
-    const Type type  = constExpr.type->kind;
-    if (type == Type::I32)
-        return 0 == std::get<i32>(constExpr.value);
-    if (type == Type::U32)
-        return 0 == std::get<u32>(constExpr.value);
-    if (type == Type::I64)
-        return 0 == std::get<i64>(constExpr.value);
-    if (type == Type::U64)
-        return 0 == std::get<u64>(constExpr.value);
-    return false;
+    using Operator = Parsing::UnaryExpr::Operator;
+    return oper == Operator::Complement || oper == Operator::Negate ||
+           oper == Operator::PrefixDecrement || oper == Operator::PrefixIncrement ||
+           oper == Operator::PostFixDecrement || oper == Operator::PostFixIncrement;
 }
 
-inline bool canConvertToPtr(const Parsing::ConstExpr& constExpr)
-{
-    if (!isInteger(constExpr.type->kind))
-        return false;
-    return canConvertToNullPtr(constExpr);
-}
-
-inline bool canConvertToPtr(const Parsing::Expr& expr)
-{
-    if (expr.kind == Parsing::Expr::Kind::Constant) {
-        const auto constExpr = static_cast<const Parsing::ConstExpr*>(&expr);
-        return canConvertToPtr(*constExpr);
-    }
-    return expr.type->kind == Type::Pointer;
-}
-
-std::unique_ptr<Parsing::TypeBase> getCommonType(
-    const std::unique_ptr<Parsing::TypeBase>& leftType,
-    const std::unique_ptr<Parsing::TypeBase>& rightType);
-bool isIllegalAssignExpr(const Parsing::AssignmentExpr& assignmentExpr);
+bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
+bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr);
+bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
 } // Semantics
 #endif // CC_SEMANTICS_TYPE_RESOLUTION_HPP
