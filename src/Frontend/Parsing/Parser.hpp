@@ -91,13 +91,15 @@ public:
                                                         std::unique_ptr<TypeBase>&& type,
                                                         Storage storage,
                                                         std::vector<std::string>&& params);
+
     [[nodiscard]] std::unique_ptr<Declarator> declaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> directDeclaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> simpleDeclaratorParse();
-    [[nodiscard]]std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
-        declaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
     [[nodiscard]] std::unique_ptr<ParamInfo> paramParse();
     [[nodiscard]] std::unique_ptr<std::vector<ParamInfo>> paramsListParse();
+
+    [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+        declaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
@@ -129,6 +131,9 @@ public:
 
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> abstractDeclaratorParse();
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> directAbstractDeclaratorParse();
+
+    [[nodiscard]] static std::unique_ptr<TypeBase> abstractDeclaratorProcess(
+        std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, Type type);
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
     [[nodiscard]] Type typeParse();

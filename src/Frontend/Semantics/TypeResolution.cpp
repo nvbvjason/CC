@@ -24,7 +24,8 @@ void TypeResolution::visit(Parsing::FunDecl& funDecl)
         m_definedFunctions.insert(funDecl.name);
     m_global = false;
     const auto type = static_cast<Parsing::FuncType*>(funDecl.type.get());
-    FuncEntry funcEntry(type->params, type->returnType->kind, funDecl.storage, funDecl.body != nullptr);
+    FuncEntry funcEntry(type->params, type->returnType->kind, funDecl.storage,
+        funDecl.body != nullptr);
     m_functions.emplace_hint(it, funDecl.name, std::move(funcEntry));
     ASTTraverser::visit(funDecl);
     m_global = true;
@@ -39,7 +40,7 @@ bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::Fu
         return false;
     const auto funcType = static_cast<Parsing::FuncType*>(funDecl.type.get());
     for (size_t i = 0; i < funDecl.params.size(); ++i)
-        if (funcEntry.paramTypes[i] != funcType->params[i]->kind)
+        if (funcEntry.paramTypes[i]->kind != funcType->params[i]->kind)
             return false;
     if (funcType->returnType->kind != funcEntry.returnType)
         return false;
@@ -64,11 +65,18 @@ void TypeResolution::visit(Parsing::FunCallExpr& funCallExpr)
         m_valid = false;
         return;
     }
-    funCallExpr.type = std::make_unique<Parsing::VarType>(it->second.returnType);
     ASTTraverser::visit(funCallExpr);
+    if (!m_valid)
+        return;
     for (int i = 0; i < funCallExpr.args.size(); ++i) {
         const Type typeInner = funCallExpr.args[i]->type->kind;
-        const Type castTo = it->second.paramTypes[i];
+        const Type castTo = it->second.paramTypes[i]->kind;
+        if (typeInner == Type::Pointer || castTo == Type::Pointer) {
+            if (!Parsing::areEquivalent(*funCallExpr.args[i]->type, *it->second.paramTypes[i])) {
+                m_valid = false;
+                return;
+            }
+        }
         if (typeInner != castTo)
             funCallExpr.args[i] = std::make_unique<Parsing::CastExpr>(
                 std::make_unique<Parsing::VarType>(castTo), std::move(funCallExpr.args[i]));
@@ -100,6 +108,10 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     }
     if (varDecl.init == nullptr)
         return;
+    if (varDecl.type->kind == Type::Pointer && !canConvertToPtr(*varDecl.init)) {
+        m_valid = false;
+        return;
+    }
     if (varDecl.init->kind == Parsing::Expr::Kind::Constant &&
         varDecl.type->kind != varDecl.init->type->kind) {
         const auto constExpr = static_cast<const Parsing::ConstExpr*>(varDecl.init.get());
@@ -114,6 +126,8 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         else if (varDecl.type->kind == Type::Double)
             convertConstantExpr<double, Type::Double>(varDecl, *constExpr);
     }
+    else if (varDecl.type->kind == Type::Pointer)
+        return;
     else {
         if (varDecl.type->kind != varDecl.init->type->kind) {
             varDecl.init = std::make_unique<Parsing::CastExpr>(
@@ -131,33 +145,40 @@ void TypeResolution::visit(Parsing::VarExpr& varExpr)
 
 void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
 {
+    using Operator = Parsing::UnaryExpr::Operator;
     ASTTraverser::visit(unaryExpr);
+    if (!m_valid)
+        return;
     if (unaryExpr.operand->type->kind == Type::Double) {
-        if (unaryExpr.op == Parsing::UnaryExpr::Operator::Complement) {
+        if (unaryExpr.op == Operator::Complement) {
             m_valid = false;
             return;
         }
     }
-    if (unaryExpr.op == Parsing::UnaryExpr::Operator::Not)
+    if (unaryExpr.operand->type->kind == Type::Pointer) {
+        if (unaryExpr.op == Operator::Complement ||
+            unaryExpr.op == Operator::PrefixDecrement ||
+            unaryExpr.op == Operator::PrefixIncrement ||
+            unaryExpr.op == Operator::PostFixDecrement ||
+            unaryExpr.op == Operator::PostFixIncrement ||
+            unaryExpr.op == Operator::Negate) {
+            m_valid = false;
+            return;
+        }
+    }
+    if (unaryExpr.op == Operator::Not)
         unaryExpr.type = std::make_unique<Parsing::VarType>(s_boolType);
     else
         unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->kind);
 }
 
-void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
+void TypeResolution::assignTypeToSimpleBinaryExpr(
+    Parsing::BinaryExpr& binaryExpr,
+    const Type leftType, const Type rightType, const Type commonType)
 {
-    using Oper = Parsing::BinaryExpr::Operator;
-    ASTTraverser::visit(binaryExpr);
-    if (binaryExpr.op == Oper::And ||
-        binaryExpr.op == Oper::Or) {
+    if (binaryExpr.op == Parsing::BinaryExpr::Operator::And ||
+        binaryExpr.op == Parsing::BinaryExpr::Operator::Or) {
         binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
-        return;
-    }
-    const Type leftType = binaryExpr.lhs->type->kind;
-    const Type rightType = binaryExpr.rhs->type->kind;
-    const Type commonType = getCommonType(leftType, rightType);
-    if (commonType == Type::Double && (isBinaryBitwise(binaryExpr) || binaryExpr.op == Oper::Modulo)) {
-        m_valid = false;
         return;
     }
     if (commonType != leftType)
@@ -166,7 +187,8 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
     if (commonType != rightType)
         binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.rhs));
-    if (binaryExpr.op == Oper::LeftShift || binaryExpr.op == Oper::RightShift) {
+    if (binaryExpr.op == Parsing::BinaryExpr::Operator::LeftShift ||
+        binaryExpr.op == Parsing::BinaryExpr::Operator::RightShift) {
         binaryExpr.type = std::make_unique<Parsing::VarType>(leftType);
         return;
     }
@@ -182,6 +204,34 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
     binaryExpr.type = std::make_unique<Parsing::VarType>(commonType);
 }
 
+void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
+{
+    using Oper = Parsing::BinaryExpr::Operator;
+    ASTTraverser::visit(binaryExpr);
+    if (!m_valid)
+        return;
+    const Type leftType = binaryExpr.lhs->type->kind;
+    const Type rightType = binaryExpr.rhs->type->kind;
+    const Type commonType = getCommonType(leftType, rightType);
+    if (commonType == Type::Double && (isBinaryBitwise(binaryExpr) || binaryExpr.op == Oper::Modulo)) {
+        m_valid = false;
+        return;
+    }
+    if (leftType == Type::Pointer || rightType == Type::Pointer) {
+        if (binaryExpr.op == Oper::Modulo || binaryExpr.op == Oper::Multiply ||
+            binaryExpr.op == Oper::Divide ||
+            binaryExpr.op == Oper::BitwiseOr || binaryExpr.op == Oper::BitwiseXor) {
+            m_valid = false;
+            return;
+        }
+        // if (Parsing::areEquivalent(*binaryExpr.lhs->type, *binaryExpr.rhs->type))
+        //     return;
+        m_valid = false;
+        return;
+    }
+    assignTypeToSimpleBinaryExpr(binaryExpr, leftType, rightType, commonType);
+}
+
 void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
 {
     ASTTraverser::visit(assignmentExpr);
@@ -189,10 +239,41 @@ void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
         return;
     const Type leftType = assignmentExpr.lhs->type->kind;
     const Type rightType = assignmentExpr.rhs->type->kind;
+    if (isIllegalAssignExpr(assignmentExpr)) {
+        m_valid = false;
+        return;
+    }
     if (leftType != rightType)
         assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(leftType), std::move(assignmentExpr.rhs));
     assignmentExpr.type = std::make_unique<Parsing::VarType>(leftType);
+}
+
+void TypeResolution::visit(Parsing::CastExpr& castExpr)
+{
+    ASTTraverser::visit(castExpr);
+    if (!m_valid)
+        return;
+    const Type outerType = castExpr.type->kind;
+    const Type innerType = castExpr.expr->type->kind;
+    if ((outerType == Type::Double && innerType == Type::Pointer) ||
+        (outerType == Type::Pointer && innerType == Type::Double)) {
+        m_valid = false;
+        return;
+    }
+}
+
+bool isIllegalAssignExpr(const Parsing::AssignmentExpr& assignmentExpr)
+{
+    const Type leftType = assignmentExpr.lhs->type->kind;
+    const Type rightType = assignmentExpr.rhs->type->kind;
+    if (leftType == Type::Pointer && rightType == Type::I32)
+        return true;
+    if (leftType == Type::Pointer || rightType == Type::Pointer) {
+        if (!Parsing::areEquivalent(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type))
+            return true;
+    }
+    return false;
 }
 
 void TypeResolution::visit(Parsing::TernaryExpr& ternaryExpr)
@@ -201,6 +282,10 @@ void TypeResolution::visit(Parsing::TernaryExpr& ternaryExpr)
     const Type trueType = ternaryExpr.trueExpr->type->kind;
     const Type falseType = ternaryExpr.falseExpr->type->kind;
     const Type commonType = getCommonType(trueType, falseType);
+    if (trueType == Type::Pointer || falseType == Type::Pointer) {
+        m_valid = false;
+        return;
+    }
     if (commonType != trueType)
         ternaryExpr.trueExpr = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(commonType), std::move(ternaryExpr.trueExpr));
@@ -208,5 +293,37 @@ void TypeResolution::visit(Parsing::TernaryExpr& ternaryExpr)
         ternaryExpr.falseExpr = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(commonType), std::move(ternaryExpr.falseExpr));
     ternaryExpr.type = std::make_unique<Parsing::VarType>(commonType);
+}
+
+void TypeResolution::visit(Parsing::AddrOffExpr& addrOffExpr)
+{
+    ASTTraverser::visit(addrOffExpr);
+    if (!m_valid)
+        return;
+    if (addrOffExpr.reference->type->kind == Type::Pointer) {
+        m_valid = false;
+        return;
+    }
+    addrOffExpr.type = std::make_unique<Parsing::PointerType>(
+        Parsing::deepCopy(*addrOffExpr.reference->type));
+}
+
+void TypeResolution::visit(Parsing::DereferenceExpr& dereferenceExpr)
+{
+    ASTTraverser::visit(dereferenceExpr);
+    if (!m_valid)
+        return;
+    if (dereferenceExpr.reference->type->kind != Type::Pointer) {
+        m_valid = false;
+        return;
+    }
+    dereferenceExpr.type = Parsing::deepCopy(*dereferenceExpr.reference->type);
+}
+
+std::unique_ptr<Parsing::TypeBase> getCommonType(
+    const std::unique_ptr<Parsing::TypeBase>& leftType,
+    const std::unique_ptr<Parsing::TypeBase>& rightType)
+{
+    return {};
 }
 } // namespace Semantics

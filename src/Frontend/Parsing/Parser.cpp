@@ -510,13 +510,13 @@ std::unique_ptr<Expr> Parser::castExpr()
         std::unique_ptr<AbstractDeclarator> abstractDeclarator = abstractDeclaratorParse();
         if (abstractDeclarator == nullptr)
             return nullptr;
+        std::unique_ptr<TypeBase> typeBase = abstractDeclaratorProcess(std::move(abstractDeclarator), type);
         if (!expect(TokenType::CloseParen))
             return nullptr;
         auto innerExpr = castExpr();
         if (innerExpr == nullptr)
             return nullptr;
-        return std::make_unique<CastExpr>(
-            std::make_unique<VarType>(type), std::move(innerExpr));
+        return std::make_unique<CastExpr>(std::move(typeBase), std::move(innerExpr));
     }
     return unaryExprParse();
 }
@@ -654,6 +654,17 @@ std::unique_ptr<AbstractDeclarator> Parser::directAbstractDeclaratorParse()
     if (!expect(TokenType::CloseParen))
         return nullptr;
     return abstractDeclarator;
+}
+
+std::unique_ptr<TypeBase> Parser::abstractDeclaratorProcess(std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, Type type)
+{
+    std::unique_ptr<TypeBase> varType = std::make_unique<VarType>(type);
+    while (abstractDeclarator->kind == AbstractDeclarator::Kind::Pointer) {
+        varType = std::make_unique<PointerType>(std::move(varType));
+        const auto inner = static_cast<AbstractPointer*>(abstractDeclarator.get());
+        abstractDeclarator = std::move(inner->inner);
+    }
+    return varType;
 }
 
 std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()

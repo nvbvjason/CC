@@ -816,6 +816,36 @@ TEST(Chapter14_Pointers, parsingInvalid)
     }
 }
 
+TEST(Chapter14_Pointers, invalidTypes)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_14/invalid_types";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter14_Pointers, invalidDeclaration)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_14/invalid_declarations";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter14_Pointers, validSemantics)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_14/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     const int result = RUN_ALL_TESTS();

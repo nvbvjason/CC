@@ -78,12 +78,12 @@ StateCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTa
     Semantics::VariableResolution variableResolution(symbolTable);
     if (!variableResolution.resolve(programNode))
         return StateCode::VariableResolution;
-    Semantics::LvalueVerification lvalueVerification;
-    if (!lvalueVerification.resolve(programNode))
-        return StateCode::LValueVerification;
     Semantics::TypeResolution typeResolution;
     if (!typeResolution.validate(programNode))
         return StateCode::TypeResolution;
+    Semantics::LvalueVerification lvalueVerification;
+    if (!lvalueVerification.resolve(programNode))
+        return StateCode::LValueVerification;
     Semantics::ValidateReturn validateReturn;
     if (!validateReturn.programValidate(programNode))
         return StateCode::ValidateReturn;

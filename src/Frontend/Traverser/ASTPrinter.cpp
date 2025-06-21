@@ -361,14 +361,14 @@ void ASTPrinter::visit(const FunCallExpr& functionCallExpr)
 void ASTPrinter::visit(const AddrOffExpr& addrOffExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("AddressOf: " + varTypeToString(addrOffExpr.type->kind));
+    addLine("AddressOf" );
     ConstASTTraverser::visit(addrOffExpr);
 }
 
 void ASTPrinter::visit(const DereferenceExpr& dereferenceExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("Dereference: " + varTypeToString(dereferenceExpr.type->kind));
+    addLine("Dereference");
     ConstASTTraverser::visit(dereferenceExpr);
 }
 

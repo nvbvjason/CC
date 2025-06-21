@@ -17,8 +17,18 @@ public:
 
     void visit(const Parsing::UnaryExpr& unaryExpr) override;
     void visit(const Parsing::AssignmentExpr& assignmentExpr) override;
+    void visit(const Parsing::AddrOffExpr& addrOffExpr) override;
 };
 
-} // Semantics
+inline bool isNotAnLvalue(const Parsing::Expr::Kind kind)
+{
+    using Kind = Parsing::Expr::Kind;
+    return kind == Kind::Assignment ||
+           kind == Kind::Binary ||
+           kind == Kind::FunctionCall ||
+           kind == Kind::Constant ||
+           kind == Kind::Ternary;
+}
 
+} // Semantics
 #endif // CC_SEMANTICS_LVALUE_VERIFICATION_HPP

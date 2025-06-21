@@ -47,7 +47,7 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
 
 std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& varDecl)
 {
-    const auto entry = m_symbolTable.lookupVar(varDecl.name);
+    const auto entry = m_symbolTable.lookup(varDecl.name);
     if (varDecl.init == nullptr && entry.isSet(SymbolTable::State::Defined))
         return nullptr;
     if (!entry.isSet(SymbolTable::State::Defined) && varDecl.storage == Storage::Extern)
@@ -76,7 +76,7 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDecl& parsingFunction)
 {
     using State = SymbolTable::State;
-    bool global = !m_symbolTable.lookupFunc(parsingFunction.name).isSet(State::InternalLinkage);
+    bool global = !m_symbolTable.lookup(parsingFunction.name).isSet(State::InternalLinkage);
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);
     m_global = true;;
     m_insts = std::move(functionTacky->insts);
@@ -160,9 +160,9 @@ void GenerateIr::genStaticLocal(const Parsing::VarDecl& varDecl)
     auto variable = std::make_unique<StaticVariable>(
         varDecl.name, value, varDecl.type->kind, false);
     m_topLevels.push_back(std::move(variable));
-    m_symbolTable.addVarEntry(varDecl.name,
+    m_symbolTable.addEntry(varDecl.name,
                               varDecl.name,
-                              varDecl.type->kind,
+                              *varDecl.type,
                               true, false, false, defined);
 }
 
@@ -448,7 +448,7 @@ std::shared_ptr<Value> GenerateIr::genInst(const Parsing::Expr& parsingExpr)
             return genBinaryInst(parsingExpr);
         case ExprKind::Assignment:
             return genAssignInst(parsingExpr);
-        case ExprKind::Conditional:
+        case ExprKind::Ternary:
             return genTernaryInst(parsingExpr);
         case ExprKind::FunctionCall:
             return genFuncCallInst(parsingExpr);

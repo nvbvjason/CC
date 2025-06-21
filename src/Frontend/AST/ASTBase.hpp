@@ -58,7 +58,7 @@ protected:
 
 struct Expr {
     enum class Kind {
-        Constant, Var, Cast, Unary, Binary, Assignment, Conditional, FunctionCall,
+        Constant, Var, Cast, Unary, Binary, Assignment, Ternary, FunctionCall,
         Dereference, AddrOf
     };
     Kind kind;

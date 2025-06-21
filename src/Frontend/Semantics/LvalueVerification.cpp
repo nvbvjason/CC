@@ -11,15 +11,11 @@ bool LvalueVerification::resolve(Parsing::Program& program)
 
 void LvalueVerification::visit(const Parsing::UnaryExpr& unaryExpr)
 {
-    using ExprKind = Parsing::Expr::Kind;
     using Operator = Parsing::UnaryExpr::Operator;
     if (unaryExpr.op != Operator::PostFixDecrement && unaryExpr.op != Operator::PostFixIncrement &&
         unaryExpr.op != Operator::PrefixDecrement && unaryExpr.op != Operator::PrefixIncrement)
         return;
-    if (unaryExpr.operand->kind == ExprKind::Assignment ||
-        unaryExpr.operand->kind == ExprKind::Binary ||
-        unaryExpr.operand->kind == ExprKind::FunctionCall ||
-        unaryExpr.operand->kind == ExprKind::Constant) {
+    if (isNotAnLvalue(unaryExpr.operand->kind)) {
         m_valid = false;
         return;
     }
@@ -36,5 +32,23 @@ void LvalueVerification::visit(const Parsing::AssignmentExpr& assignmentExpr)
     if (assignmentExpr.lhs->kind != Parsing::Expr::Kind::Var)
         m_valid = false;
     ConstASTTraverser::visit(assignmentExpr);
+}
+
+void LvalueVerification::visit(const Parsing::AddrOffExpr& addrOffExpr)
+{
+    using Operator = Parsing::UnaryExpr::Operator;
+    if (isNotAnLvalue(addrOffExpr.reference->kind)) {
+        m_valid = false;
+        return;
+    }
+    if (addrOffExpr.reference->kind == Parsing::Expr::Kind::Unary) {
+        const auto unaryExpr = static_cast<Parsing::UnaryExpr*>(addrOffExpr.reference.get());
+        if (unaryExpr->op == Operator::PostFixDecrement || unaryExpr->op == Operator::PrefixDecrement
+            || unaryExpr->op == Operator::PrefixIncrement || unaryExpr->op == Operator::PostFixDecrement) {
+            m_valid = false;
+            return;
+        }
+    }
+    ConstASTTraverser::visit(addrOffExpr);
 }
 } // Semantics

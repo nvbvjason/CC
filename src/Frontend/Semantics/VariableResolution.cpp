@@ -25,18 +25,12 @@ bool VariableResolution::resolve(Parsing::Program& program)
 
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
 {
-    const SymbolTable::ReturnedFuncEntry prevEntry = m_symbolTable.lookupFunc(funDecl.name);
+    const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookup(funDecl.name);
     if (!isValidFuncDecl(funDecl, m_symbolTable, prevEntry)) {
         m_valid = false;
         return;
     }
-    bool global = !m_symbolTable.inFunc();
-    if (prevEntry.isSet(Flag::Contains) && prevEntry.isSet(Flag::Global))
-        global = true;
-    const bool defined = funDecl.body != nullptr;
-    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || funDecl.storage == Storage::Static;
-    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && funDecl.storage != Storage::Static;
-    m_symbolTable.addFuncEntry(funDecl.name, funDecl.params.size(), internal, external, global, defined);
+    addFuncToSymbolTable(funDecl, prevEntry);
     ScopeGuard scopeGuard(m_symbolTable);
     m_symbolTable.setArgs(funDecl);
     ASTTraverser::visit(funDecl);
@@ -45,7 +39,7 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
 
 bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
                      const SymbolTable& symbolTable,
-                     const SymbolTable::ReturnedFuncEntry& returnedEntry)
+                     const SymbolTable::ReturnedEntry& returnedEntry)
 {
     if (funDecl.storage == Storage::Static && symbolTable.inFunc())
         return false;
@@ -55,16 +49,19 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
         return false;
     if (!returnedEntry.isSet(Flag::Contains))
         return true;
-    if (returnedEntry.argSize != funDecl.params.size())
-        return false;
     if (returnedEntry.isSet(Flag::Defined) && funDecl.body != nullptr)
         return false;
-    if (returnedEntry.type != funDecl.type->kind && returnedEntry.isSet(Flag::FromCurrentScope))
+    if (returnedEntry.typeBase->kind != funDecl.type->kind && returnedEntry.isSet(Flag::FromCurrentScope))
         return false;
-    if (returnedEntry.type != funDecl.type->kind && returnedEntry.isSet(Flag::Global))
+    if (returnedEntry.typeBase->kind != funDecl.type->kind && returnedEntry.isSet(Flag::Global))
         return false;
     if (returnedEntry.isSet(Flag::ExternalLinkage) && funDecl.storage == Storage::Static)
         return false;
+    if (returnedEntry.typeBase->kind == Type::Function) {
+        const auto funcType = static_cast<const Parsing::FuncType*>(returnedEntry.typeBase.get());
+        if (funcType->params.size() != funDecl.params.size())
+            return false;
+    }
     return true;
 }
 
@@ -93,32 +90,17 @@ void VariableResolution::visit(Parsing::ForStmt& forStmt)
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    const SymbolTable::ReturnedVarEntry prevEntry = m_symbolTable.lookupVar(varDecl.name);
+    const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookup(varDecl.name);
     if (!isValidVarDecl(varDecl, m_symbolTable, prevEntry)) {
         m_valid = false;
         return;
     }
-    const bool global = !m_symbolTable.inFunc();
-    const bool defined = prevEntry.isSet(Flag::Defined) || varDecl.init != nullptr;
-    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || hasInternalLinkageVar(varDecl);
-    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && hasExternalLinkageVar(varDecl, !m_symbolTable.inFunc());
-    if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
-        m_symbolTable.addVarEntry(
-            varDecl.name, varDecl.name, varDecl.type->kind,
-            internal, external, global, defined);
-    }
-    else {
-        const std::string uniqueName = makeTemporaryName(varDecl.name);
-        m_symbolTable.addVarEntry(
-            varDecl.name, uniqueName, varDecl.type->kind,
-            internal, external, global, defined);
-        varDecl.name = uniqueName;
-    }
+    addVarToSymbolTable(varDecl, prevEntry);
     ASTTraverser::visit(varDecl);
 }
 
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable,
-                    const SymbolTable::ReturnedVarEntry prevEntry)
+                    const SymbolTable::ReturnedEntry& prevEntry)
 {
     if (prevEntry.isSet(Flag::InArgs))
         return false;
@@ -130,18 +112,18 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
         return false;
     if (varDecl.storage == Storage::Extern
         && prevEntry.isSet(Flag::ExternalLinkage)
-        && prevEntry.type != varDecl.type->kind)
+        && prevEntry.typeBase->kind != varDecl.type->kind)
         return false;
-    if (prevEntry.type != varDecl.type->kind &&
+    if (prevEntry.typeBase->kind != varDecl.type->kind &&
         prevEntry.isSet(Flag::FromCurrentScope) &&
         varDecl.storage != Storage::Extern)
         return false;
     return true;
 }
 
-bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry& prevEntry)
+bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry)
 {
-    if (prevEntry.type != varDecl.type->kind)
+    if (prevEntry.typeBase->kind != varDecl.type->kind)
         return false;
     if (varDecl.init != nullptr && prevEntry.isSet(Flag::Defined))
         return false;
@@ -154,7 +136,7 @@ bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::Re
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    const SymbolTable::ReturnedVarEntry returnedEntry = m_symbolTable.lookupVar(varExpr.name);
+    const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookup(varExpr.name);
     if (!isValidVarExpr(varExpr, returnedEntry)) {
         m_valid = false;
         return;
@@ -167,38 +149,78 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         varExpr.referingTo = ReferingTo::Extern;
     if (returnedEntry.isSet(Flag::InternalLinkage))
         varExpr.referingTo = ReferingTo::Static;
-    varExpr.type = std::make_unique<Parsing::VarType>(returnedEntry.type);
+    varExpr.type = Parsing::deepCopy(*returnedEntry.typeBase);
     ASTTraverser::visit(varExpr);
 }
 
-bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::ReturnedVarEntry returnedEntry)
+bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::ReturnedEntry& returnedEntry)
 {
     if (returnedEntry.isSet(Flag::InArgs))
         return true;
     if (!returnedEntry.isSet(Flag::Contains))
         return false;
-    if (returnedEntry.type == Type::Function)
+    if (returnedEntry.typeBase->kind == Type::Function)
         return false;
     return true;
 }
 
-void VariableResolution::visit(Parsing::FunCallExpr& funCallExpr)
+void VariableResolution::visit(Parsing::FunCallExpr& funcCallExpr)
 {
-    if (!isValidFuncCall(funCallExpr, m_symbolTable)) {
+    const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookup(funcCallExpr.name);
+    if (!isValidFuncCall(funcCallExpr, returnedEntry)) {
         m_valid = false;
         return;
     }
-    ASTTraverser::visit(funCallExpr);
+    const auto funcType = static_cast<const Parsing::FuncType*>(returnedEntry.typeBase.get());
+    funcCallExpr.type = Parsing::deepCopy(*funcType->returnType);
+    ASTTraverser::visit(funcCallExpr);
 }
 
-bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable)
+bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable::ReturnedEntry& returnedEntry)
 {
-    const SymbolTable::ReturnedFuncEntry returnedEntry = symbolTable.lookupFunc(funCallExpr.name);
     if (!returnedEntry.isSet(Flag::Contains))
         return false;
-    if (returnedEntry.type != Type::Function)
+    if (returnedEntry.typeBase->kind != Type::Function)
         return false;
     return true;
+}
+
+void VariableResolution::addFuncToSymbolTable(
+    const Parsing::FunDecl& funDecl,
+    const SymbolTable::ReturnedEntry& prevEntry) const
+{
+    bool global = !m_symbolTable.inFunc();
+    if (prevEntry.isSet(Flag::Contains) && prevEntry.isSet(Flag::Global))
+        global = true;
+    const bool defined = funDecl.body != nullptr;
+    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || funDecl.storage == Storage::Static;
+    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && funDecl.storage != Storage::Static;
+    m_symbolTable.addEntry(funDecl.name, funDecl.name,
+                           *Parsing::deepCopy(*funDecl.type), internal, external, global, defined);
+}
+
+
+void VariableResolution::addVarToSymbolTable(
+    Parsing::VarDecl& varDecl,
+    const SymbolTable::ReturnedEntry& prevEntry)
+{
+    const bool global = !m_symbolTable.inFunc();
+    const bool defined = prevEntry.isSet(Flag::Defined) || varDecl.init != nullptr;
+    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || hasInternalLinkageVar(varDecl);
+    const bool external = !prevEntry.isSet(Flag::InternalLinkage) &&
+                           hasExternalLinkageVar(varDecl, !m_symbolTable.inFunc());
+    if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
+        m_symbolTable.addEntry(
+            varDecl.name, varDecl.name, *varDecl.type,
+            internal, external, global, defined);
+    }
+    else {
+        const std::string uniqueName = makeTemporaryName(varDecl.name);
+        m_symbolTable.addEntry(
+            varDecl.name, uniqueName, *varDecl.type,
+            internal, external, global, defined);
+        varDecl.name = uniqueName;
+    }
 }
 
 std::string VariableResolution::makeTemporaryName(const std::string& name)

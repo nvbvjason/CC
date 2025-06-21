@@ -39,5 +39,15 @@ struct PointerType : TypeBase {
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
+[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase);
+[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const VarType& typeBase);
+[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType);
+[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const PointerType& pointerType);
+
+[[nodiscard]] bool areEquivalent(const TypeBase& left, const TypeBase& right);
+[[nodiscard]] bool areEquivalent(const VarType& left, const VarType& right);
+[[nodiscard]] bool areEquivalent(const FuncType& left, const FuncType& right);
+[[nodiscard]] bool areEquivalent(const PointerType& left, const PointerType& right);
+
 } // Parsing
 #endif // CC_PARSING_TYPES_TREE_HPP

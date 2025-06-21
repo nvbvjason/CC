@@ -24,7 +24,7 @@ void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
         return;
     }
     const auto constantExpr = static_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
-    if (constantExpr->type->kind == Type::Double) {
+    if (constantExpr->type->kind == Type::Double || constantExpr->type->kind == Type::Pointer) {
         valid = false;
         return;
     }
@@ -128,7 +128,7 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     breakLabel = switchStmt.identifier;
     switchLabel = switchStmt.identifier;
     conditionType = switchStmt.condition->type->kind;
-    if (conditionType == Type::Double) {
+    if (conditionType == Type::Double || conditionType == Type::Pointer) {
         valid = false;
         return;
     }

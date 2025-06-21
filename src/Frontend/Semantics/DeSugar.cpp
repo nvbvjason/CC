@@ -24,4 +24,13 @@ void DeSugar::visit(Parsing::AssignmentExpr& assignmentExpr)
     }
     ASTTraverser::visit(assignmentExpr);
 }
+
+void DeSugar::visit(Parsing::AddrOffExpr& addrOffExpr)
+{
+    // if (addrOffExpr.reference->kind == Parsing::Expr::Kind::Dereference) {
+    //     auto dereference = static_cast<Parsing::DereferenceExpr*>(addrOffExpr.reference.get());
+    //     addrOffExpr = std::move(*dereference->reference);
+    // }
+    ASTTraverser::visit(addrOffExpr);
+}
 } // Semantics

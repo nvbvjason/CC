@@ -55,7 +55,7 @@ public:
     void visit(AssignmentExpr& assignmentExpr) override;
     void visit(TernaryExpr& conditionalExpr) override;
     void visit(FunCallExpr& functionCallExpr) override;
-    void visit(DereferenceExpr& functionCallExpr) override;
+    void visit(DereferenceExpr& dereferenceExpr) override;
     void visit(AddrOffExpr& addrOffExpr) override;
 };
 

@@ -15,7 +15,6 @@ public:
 private:
     static void addReturnZero(Parsing::FunDecl& funDecl);
     void visit(Parsing::FunDecl& funDecl) override;
-    void visit(Parsing::StmtBlockItem& stmtBlockItem) override;
 };
 
 inline void ValidateReturn::addReturnZero(Parsing::FunDecl& funDecl)

@@ -5,13 +5,12 @@
 
 #include "ShortTypes.hpp"
 #include "Types/Type.hpp"
+#include "ASTParser.hpp"
 
 #include <string>
 #include <utility>
 #include <vector>
 #include <unordered_map>
-
-#include "ASTParser.hpp"
 
 class SymbolTable {
 public:
@@ -45,36 +44,9 @@ public:
             flags = State::None;
         }
     };
-    struct ReturnedFuncEntry : FlagBase<ReturnedFuncEntry>  {
-        Type type;
-        i32 argSize;
-        ReturnedFuncEntry(const Type type,
-                          const i32 argSize,
-                          const bool contains,
-                          const bool fromCurrentScope,
-                          const bool internal,
-                          const bool external,
-                          const bool isGlobal,
-                          const bool defined)
-            : type(type), argSize(argSize)
-        {
-            if (contains)
-                set(State::Contains);
-            if (fromCurrentScope)
-                set(State::FromCurrentScope);
-            if (internal)
-                set(State::InternalLinkage);
-            if (external)
-                set(State::ExternalLinkage);
-            if (isGlobal)
-                set(State::Global);
-            if (defined)
-                set(State::Defined);
-        }
-    };
-    struct ReturnedVarEntry : FlagBase<ReturnedVarEntry>  {
-        Type type;
-        ReturnedVarEntry(const Type t,
+    struct ReturnedEntry : FlagBase<ReturnedEntry>  {
+        std::unique_ptr<Parsing::TypeBase> typeBase;
+        ReturnedEntry(std::unique_ptr<Parsing::TypeBase>&& t,
                          const bool contains,
                          const bool inArgs,
                          const bool fromCurrentScope,
@@ -83,7 +55,7 @@ public:
                          const bool global,
                          const bool defined)
         {
-            type = t;
+            typeBase = std::move(t);
             if (contains)
                 set(State::Contains);
             if (inArgs)
@@ -104,15 +76,16 @@ private:
     struct Entry : FlagBase<Entry>  {
         std::string uniqueName;
         State returnFlag = State::None;
-        Type type;
+        std::unique_ptr<Parsing::TypeBase> varType;
         Entry(std::string uniqueName,
-              const Type type,
+              std::unique_ptr<Parsing::TypeBase>&& typeBase,
               const bool internal,
               const bool external,
               const bool global,
               const bool defined)
-            :uniqueName(std::move(uniqueName)), type(type)
+            : uniqueName(std::move(uniqueName))
         {
+            varType = std::move(typeBase);
             if (internal)
                 set(State::InternalLinkage);
             if (external)
@@ -126,20 +99,18 @@ private:
     std::vector<std::unordered_map<std::string, Entry>> m_entries;
     std::unordered_map<std::string, i32> m_funcs;
     std::vector<std::string> m_args;
-    std::vector<Type> m_argTypes;
+    std::vector<std::unique_ptr<Parsing::TypeBase>> m_argTypes;
 public:
     SymbolTable();
     [[nodiscard]] bool contains(const std::string& name) const;
-    [[nodiscard]] ReturnedVarEntry lookupVar(const std::string& uniqueName) const;
-    [[nodiscard]] ReturnedFuncEntry lookupFunc(const std::string& uniqueName) const;
+    [[nodiscard]] ReturnedEntry lookup(const std::string& uniqueName) const;
     std::string getUniqueName(const std::string& unique) const;
     void setArgs(const Parsing::FunDecl& funDecl);
     void clearArgs();
-    void addVarEntry(const std::string& name,
-                     const std::string& uniqueName,
-                     Type type,
-                     bool internal, bool external, bool global, bool defined);
-    void addFuncEntry(const std::string& name, i32 argsSize, bool internal, bool external, bool global, bool defined);
+    void addEntry(const std::string& name,
+                  const std::string& uniqueName,
+                  const Parsing::TypeBase& typeBase,
+                  bool internal, bool external, bool global, bool defined);
     void addScope();
     void removeScope();
 

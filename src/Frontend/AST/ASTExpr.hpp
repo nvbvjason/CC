@@ -133,7 +133,7 @@ struct TernaryExpr final : Expr {
     TernaryExpr(std::unique_ptr<Expr> condition,
                 std::unique_ptr<Expr> first,
                 std::unique_ptr<Expr> second)
-        : Expr(Kind::Conditional), condition(std::move(condition)),
+        : Expr(Kind::Ternary), condition(std::move(condition)),
           trueExpr(std::move(first)), falseExpr(std::move(second)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
@@ -155,7 +155,7 @@ struct FunCallExpr final : Expr {
     FunCallExpr() = delete;
 };
 
-struct DereferenceExpr : Expr {
+struct DereferenceExpr final : Expr {
     std::unique_ptr<Expr> reference;
 
     explicit DereferenceExpr(std::unique_ptr<Expr>&& reference)
@@ -167,7 +167,7 @@ struct DereferenceExpr : Expr {
     DereferenceExpr() = delete;
 };
 
-struct AddrOffExpr : Expr {
+struct AddrOffExpr final : Expr {
     std::unique_ptr<Expr> reference;
 
     explicit AddrOffExpr(std::unique_ptr<Expr>&& reference)

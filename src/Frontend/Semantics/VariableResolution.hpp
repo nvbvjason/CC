@@ -35,23 +35,29 @@ public:
 
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::FunCallExpr& functionCallExpr) override;
+
+    void addVarToSymbolTable(Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry);
+    void addFuncToSymbolTable(const Parsing::FunDecl& funDecl, const SymbolTable::ReturnedEntry& prevEntry) const;
 private:
     void reset();
     std::string makeTemporaryName(const std::string &name);
 };
 
-bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable, SymbolTable::ReturnedVarEntry prevEntry);
-bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry& prevEntry);
+bool isValidVarDecl(
+    const Parsing::VarDecl& varDecl,
+    const SymbolTable& symbolTable,
+    const SymbolTable::ReturnedEntry& prevEntry);
+bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry);
 
 bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
                      const SymbolTable& symbolTable,
-                     const SymbolTable::ReturnedFuncEntry& returnedEntry);
+                     const SymbolTable::ReturnedEntry& returnedEntry);
 
-bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable& symbolTable);
-bool isValidVarExpr(const Parsing::VarExpr& varExpr, SymbolTable::ReturnedVarEntry returnedEntry);
+bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable::ReturnedEntry& returnedEntry);
+bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::ReturnedEntry& returnedEntry);
 
 bool duplicatesInArgs(const std::vector<std::string>& args);
-inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedVarEntry prevEntry)
+inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry)
 {
     using Flag = SymbolTable::State;
     using Storage = Parsing::Declaration::StorageClass;

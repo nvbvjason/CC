@@ -10,77 +10,52 @@ SymbolTable::SymbolTable()
 
 bool SymbolTable::contains(const std::string& name) const
 {
-    for (i64 i = m_entries.size() - 1; 0 <= i; --i) {
-        const auto it = m_entries[i].find(name);
-        if (it == m_entries[i].end())
-            continue;
-        return true;
-    }
+    for (size_t i = m_entries.size(); 0 < i--;)
+        if (m_entries[i].contains(name))
+            return true;
     return false;
 }
 
-SymbolTable::ReturnedVarEntry SymbolTable::lookupVar(const std::string& uniqueName) const
+SymbolTable::ReturnedEntry SymbolTable::lookup(const std::string& uniqueName) const
 {
     const bool inArgs = isInArgs(uniqueName);
     if (inArgs) {
         for (i32 i = 0; i < m_argTypes.size(); ++i)
             if (uniqueName == m_args[i])
-                return {m_argTypes[i], true, true, false, false, false, false, false};
+                return {Parsing::deepCopy(*m_argTypes[i]), true, true, false, false, false, false, false};
     }
-    for (i64 i = m_entries.size() - 1; 0 <= i; --i) {
+    for (size_t i = m_entries.size(); 0 < i--;) {
         const auto it = m_entries[i].find(uniqueName);
         if (it == m_entries[i].end())
             continue;
-        const bool correctType = it->second.type != Type::Function;
         const bool fromCurrentScope = i == m_entries.size() - 1;
         const bool internal = it->second.isSet(State::InternalLinkage);
         const bool external = it->second.isSet(State::ExternalLinkage);
         const bool global = it->second.isSet(State::Global);
         const bool defined = it->second.isSet(State::Defined);
-        return {it->second.type, true, inArgs, fromCurrentScope, internal, external, global, defined};
+        return {Parsing::deepCopy(*it->second.varType), true, inArgs, fromCurrentScope, internal, external, global, defined};
     }
-    return {Type::I32, false, inArgs, false, false, false, false, false};
-}
-
-SymbolTable::ReturnedFuncEntry SymbolTable::lookupFunc(const std::string& uniqueName) const
-{
-    for (i64 i = m_entries.size() - 1; 0 <= i; --i) {
-        const auto it = m_entries[i].find(uniqueName);
-        if (it == m_entries[i].end())
-            continue;
-        const Type type = it->second.type;
-        const bool fromCurrentScope = i == m_entries.size() - 1;
-        const bool internal = it->second.isSet(State::InternalLinkage);
-        const bool external = it->second.isSet(State::ExternalLinkage);
-        const bool global = it->second.isSet(State::Global);
-        const bool defined = it->second.isSet(State::Defined);
-        i32 argsSize = 0;
-        if (m_funcs.contains(uniqueName))
-            argsSize = m_funcs.at(uniqueName);
-        return {type, argsSize, true, fromCurrentScope, internal, external, global, defined};
-    }
-    return {Type::I32, false, false, false, false, false, false, false};
+    return {nullptr, false, inArgs, false, false, false, false, false};
 }
 
 std::string SymbolTable::getUniqueName(const std::string& unique) const
 {
-    for (i64 i = m_entries.size() - 1; 0 <= i; --i) {
+    for (size_t i = m_entries.size(); 0 < i--;) {
         const auto it = m_entries[i].find(unique);
         if (it == m_entries[i].end())
             continue;
         return it->second.uniqueName;
     }
     assert(false && "Should always get called after contains never happen in SymbolTable::getUniqueName");
-    std::unreachable();
 }
 
 void SymbolTable::setArgs(const Parsing::FunDecl& funDecl)
 {
     m_args = funDecl.params;
     m_argTypes.clear();
-    auto funcType = static_cast<const Parsing::FuncType*>(funDecl.type.get());
-    for (const auto& param : funcType->params)
-        m_argTypes.emplace_back(param->kind);
+    const auto funcType = static_cast<const Parsing::FuncType*>(funDecl.type.get());
+    for (const std::unique_ptr<Parsing::TypeBase>& param : funcType->params)
+        m_argTypes.emplace_back(Parsing::deepCopy(*param));
 }
 
 void SymbolTable::clearArgs()
@@ -88,29 +63,19 @@ void SymbolTable::clearArgs()
     m_args.clear();
 }
 
-void SymbolTable::addVarEntry(const std::string& name,
-                              const std::string& uniqueName,
-                              const Type type,
-                              const bool internal,
-                              const bool external,
-                              const bool global,
-                              const bool defined)
+void SymbolTable::addEntry(const std::string& name,
+                           const std::string& uniqueName,
+                           const Parsing::TypeBase& typeBase,
+                           const bool internal,
+                           const bool external,
+                           const bool global,
+                           const bool defined)
 {
 
     m_entries.back().insert_or_assign(name,Entry(
-        uniqueName, type, internal, external, global, defined)
+        uniqueName, Parsing::deepCopy(typeBase),
+        internal, external, global, defined)
         );
-}
-
-void SymbolTable::addFuncEntry(const std::string& name,
-                               const i32 argsSize,
-                               const bool internal,
-                               const bool external,
-                               const bool global,
-                               const bool defined)
-{
-    m_entries.back().insert(std::make_pair(name, Entry(name, Type::Function, internal, external, global, defined)));
-    m_funcs.insert(std::make_pair(name, argsSize));
 }
 
 void SymbolTable::addScope()
@@ -128,5 +93,5 @@ bool SymbolTable::isFunc(const std::string& name) const
     const auto it = m_entries.front().find(name);
     if (it == m_entries.front().end())
         return false;
-    return it->second.type == Type::Function;
+    return it->second.varType->kind == Type::Function;
 }

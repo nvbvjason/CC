@@ -169,9 +169,9 @@ void ASTTraverser::visit(FunCallExpr& functionCallExpr)
         expr->accept(*this);
 }
 
-void ASTTraverser::visit(DereferenceExpr& functionCallExpr)
+void ASTTraverser::visit(DereferenceExpr& dereferenceExpr)
 {
-    functionCallExpr.reference->accept(*this);
+    dereferenceExpr.reference->accept(*this);
 }
 
 void ASTTraverser::visit(AddrOffExpr& addrOffExpr)

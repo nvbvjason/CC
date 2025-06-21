@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "TypeConversion.hpp"
+
  namespace Semantics {
 
 template<typename TargetType, Type TargetKind>
@@ -36,7 +38,7 @@ class TypeResolution : public Parsing::ASTTraverser {
     static constexpr auto s_boolType = Type::I32;
 
     struct FuncEntry {
-        std::vector<Type> paramTypes;
+        std::vector<std::unique_ptr<Parsing::TypeBase>> paramTypes;
         Type returnType;
         Parsing::Declaration::StorageClass storage;
         bool defined;
@@ -47,7 +49,7 @@ class TypeResolution : public Parsing::ASTTraverser {
             : returnType(returnType), storage(storage), defined(defined)
         {
             for (const auto& paramType : params)
-                paramTypes.emplace_back(paramType->kind);
+                paramTypes.emplace_back(std::move(Parsing::deepCopy(*paramType)));
         }
     };
     using Storage = Parsing::Declaration::StorageClass;
@@ -70,9 +72,15 @@ public:
     void visit(Parsing::UnaryExpr& unaryExpr) override;
     void visit(Parsing::BinaryExpr& binaryExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
+    void visit(Parsing::CastExpr& castExpr) override;
     void visit(Parsing::TernaryExpr& ternaryExpr) override;
+    void visit(Parsing::AddrOffExpr& addrOffExpr) override;
+    void visit(Parsing::DereferenceExpr& dereferenceExpr) override;
     static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
+    static void assignTypeToSimpleBinaryExpr(
+        Parsing::BinaryExpr& binaryExpr,
+        Type leftType, Type rightType, Type commonType);
 };
 
 inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
@@ -102,5 +110,40 @@ inline bool isBinaryComparison(const Parsing::BinaryExpr& binaryExpr)
            binaryExpr.op == Operator::LessThan || binaryExpr.op == Operator::LessOrEqual ||
            binaryExpr.op == Operator::GreaterThan || binaryExpr.op == Operator::GreaterOrEqual;
 }
+
+inline bool canConvertToNullPtr(const Parsing::ConstExpr& constExpr)
+{
+    const Type type  = constExpr.type->kind;
+    if (type == Type::I32)
+        return 0 == std::get<i32>(constExpr.value);
+    if (type == Type::U32)
+        return 0 == std::get<u32>(constExpr.value);
+    if (type == Type::I64)
+        return 0 == std::get<i64>(constExpr.value);
+    if (type == Type::U64)
+        return 0 == std::get<u64>(constExpr.value);
+    return false;
+}
+
+inline bool canConvertToPtr(const Parsing::ConstExpr& constExpr)
+{
+    if (!isInteger(constExpr.type->kind))
+        return false;
+    return canConvertToNullPtr(constExpr);
+}
+
+inline bool canConvertToPtr(const Parsing::Expr& expr)
+{
+    if (expr.kind == Parsing::Expr::Kind::Constant) {
+        const auto constExpr = static_cast<const Parsing::ConstExpr*>(&expr);
+        return canConvertToPtr(*constExpr);
+    }
+    return expr.type->kind == Type::Pointer;
+}
+
+std::unique_ptr<Parsing::TypeBase> getCommonType(
+    const std::unique_ptr<Parsing::TypeBase>& leftType,
+    const std::unique_ptr<Parsing::TypeBase>& rightType);
+bool isIllegalAssignExpr(const Parsing::AssignmentExpr& assignmentExpr);
 } // Semantics
 #endif // CC_SEMANTICS_TYPE_RESOLUTION_HPP
