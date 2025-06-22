@@ -8,7 +8,6 @@
 
 #include <memory>
 #include <utility>
-#include <variant>
 #include <vector>
 
 /*
@@ -21,6 +20,7 @@ top_level = Function(identifier name, bool global, instruction* instructions)
 instruction = Mov(assembly_type, operand src, operand dst)
             | MovSX(operand src, operand dst)
             | MoveZeroExtend(operand src, operand dst)
+            | Lea(operand src, operand dst)
             | Cvttsd2si(assembly_type, dst_type, operand src, operand dst)
             | Cvtsi2sd(assembly_type, src_type, operand src, operand dst)
             | Unary(unary_operator, assembly_type, operand)
@@ -44,10 +44,10 @@ binary_operator = Add | Sub | Mult |
 operand = Imm(int)
         | Reg(reg)
         | Pseudo(identifier)
-        | Stack(int)
+        | Memory(reg, int)
         | Data(identifier)
 cond_code = E | NE | G | GE | L | LE | A | AE | B | BE
-reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP | BP |
       XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 | XMM14 | XMM15
 
 */
@@ -68,7 +68,11 @@ struct Identifier {
 
 struct Operand {
     enum class Kind : u8 {
-        Imm, Register, Pseudo, Stack, Data
+        Imm, Register, Pseudo, Memory, Data
+    };
+    enum class RegKind : u8 {
+        AX, CX, DX, DI, SI, R8, R9, R10, R11, SP, BP,
+        XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM14, XMM15
     };
     Kind kind;
     AsmType type;
@@ -95,14 +99,10 @@ struct ImmOperand final : Operand {
 };
 
 struct RegisterOperand final : Operand {
-    enum class Kind : u8 {
-        AX, CX, DX, DI, SI, R8, R9, R10, R11, SP,
-        XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM14, XMM15
-    };
-    Kind kind;
+    RegKind regKind;
 
-    explicit RegisterOperand(const Kind k, const AsmType t)
-        : Operand(Operand::Kind::Register, t), kind(k) {}
+    explicit RegisterOperand(const RegKind rK, const AsmType t)
+        : Operand(Kind::Register, t), regKind(rK) {}
 
     RegisterOperand() = delete;
 };
@@ -119,12 +119,13 @@ struct PseudoOperand final : Operand {
     PseudoOperand() = delete;
 };
 
-struct StackOperand final : Operand {
+struct MemoryOperand final : Operand {
+    RegKind regKind;
     i32 value;
-    StackOperand(const i32 value, const AsmType type)
-        : Operand(Kind::Stack, type), value(value) {}
+    MemoryOperand(const RegKind rK, const i32 value, const AsmType type)
+        : Operand(Kind::Memory, type), regKind(rK), value(value) {}
 
-    StackOperand() = delete;
+    MemoryOperand() = delete;
 };
 
 struct DataOperand final : Operand {
@@ -138,7 +139,7 @@ struct DataOperand final : Operand {
 
 struct Inst {
     enum class Kind : u8 {
-        Move, MoveSX, MovZeroExtend,
+        Move, MoveSX, MovZeroExtend, Lea,
         Cvttsd2si, Cvtsi2sd,
         Unary, Binary, Cmp, Idiv, Div, Cdq, Jmp, JmpCC, SetCC, Label,
         Push, Call, Ret
@@ -202,6 +203,19 @@ struct MoveZeroExtendInst final : Inst {
     void accept(InstVisitor& visitor) override;
 
     MoveZeroExtendInst() = delete;
+};
+
+struct LeaInst final : Inst {
+    std::shared_ptr<Operand> src;
+    std::shared_ptr<Operand> dst;
+    AsmType type;
+
+    LeaInst(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst, const AsmType t)
+        : Inst(Kind::MovZeroExtend), src(std::move(src)), dst(std::move(dst)), type(t) {}
+
+    void accept(InstVisitor& visitor) override;
+
+    LeaInst() = delete;
 };
 
 struct Cvttsd2siInst final : Inst {
@@ -448,6 +462,7 @@ struct InstVisitor {
     virtual void visit(MoveInst&) = 0;
     virtual void visit(MoveSXInst&) = 0;
     virtual void visit(MoveZeroExtendInst&) = 0;
+    virtual void visit(LeaInst&) = 0;
     virtual void visit(Cvttsd2siInst&) = 0;
     virtual void visit(Cvtsi2sdInst&) = 0;
     virtual void visit(UnaryInst&) = 0;
@@ -468,6 +483,7 @@ struct InstVisitor {
 inline void MoveInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void MoveSXInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void MoveZeroExtendInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
+inline void LeaInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void Cvttsd2siInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void Cvtsi2sdInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void UnaryInst::accept(InstVisitor& visitor) { visitor.visit(*this); }

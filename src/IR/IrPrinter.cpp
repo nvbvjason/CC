@@ -135,12 +135,12 @@ void IrPrinter::print(const GetAddressInst& inst)
 
 void IrPrinter::print(const LoadInst& inst)
 {
-    addLine("Load: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("Load: " + print(*inst.ptr) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const StoreInst& inst)
 {
-    addLine("Store: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("Store: " + print(*inst.src) + " -> " + print(*inst.ptr) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const JumpInst& inst)
@@ -235,47 +235,57 @@ std::string to_string(BinaryInst::Operation op)
 std::string to_string(const Type type)
 {
     switch (type) {
-        case Type::I32: return "i32";
-        case Type::I64: return "i64";
-        case Type::U32: return "u32";
-        case Type::U64: return "u64";
-        case Type::Double: return "double";
+        case Type::I32:      return "i32";
+        case Type::I64:      return "i64";
+        case Type::U32:      return "u32";
+        case Type::U64:      return "u64";
+        case Type::Double:   return "double";
+        case Type::Pointer:  return "pointer";
         default:
             std::unreachable();
     }
 }
 
 void IrPrinter::print(const Instruction& instruction) {
+    using Kind = Instruction::Kind;
     switch (instruction.kind) {
-        case Instruction::Kind::Return:
+        case Kind::Return:
             print(static_cast<const ReturnInst&>(instruction)); break;
-        case Instruction::Kind::SignExtend:
+        case Kind::SignExtend:
             print(static_cast<const SignExtendInst&>(instruction)); break;
-        case Instruction::Kind::Truncate:
+        case Kind::ZeroExtend:
+            print(static_cast<const ZeroExtendInst&>(instruction)); break;
+        case Kind::Truncate:
             print(static_cast<const TruncateInst&>(instruction)); break;
-        case Instruction::Kind::DoubleToInt:
+        case Kind::DoubleToInt:
             print(static_cast<const DoubleToIntInst&>(instruction)); break;
-        case Instruction::Kind::DoubleToUInt:
+        case Kind::DoubleToUInt:
             print(static_cast<const DoubleToUIntInst&>(instruction)); break;
-        case Instruction::Kind::IntToDouble:
+        case Kind::IntToDouble:
             print(static_cast<const IntToDoubleInst&>(instruction)); break;
-        case Instruction::Kind::UIntToDouble:
+        case Kind::UIntToDouble:
             print(static_cast<const UIntToDoubleInst&>(instruction)); break;
-        case Instruction::Kind::Unary:
+        case Kind::Unary:
             print(static_cast<const UnaryInst&>(instruction)); break;
-        case Instruction::Kind::Binary:
+        case Kind::Binary:
             print(static_cast<const BinaryInst&>(instruction)); break;
-        case Instruction::Kind::Copy:
+        case Kind::Copy:
             print(static_cast<const CopyInst&>(instruction)); break;
-        case Instruction::Kind::Jump:
+        case Kind::GetAddress:
+            print(static_cast<const GetAddressInst&>(instruction)); break;
+        case Kind::Load:
+            print(static_cast<const LoadInst&>(instruction)); break;
+        case Kind::Store:
+            print(static_cast<const StoreInst&>(instruction)); break;
+        case Kind::Jump:
             print(static_cast<const JumpInst&>(instruction)); break;
-        case Instruction::Kind::JumpIfZero:
+        case Kind::JumpIfZero:
             print(static_cast<const JumpIfZeroInst&>(instruction)); break;
-        case Instruction::Kind::JumpIfNotZero:
+        case Kind::JumpIfNotZero:
             print(static_cast<const JumpIfNotZeroInst&>(instruction)); break;
-        case Instruction::Kind::Label:
+        case Kind::Label:
             print(static_cast<const LabelInst&>(instruction)); break;
-        case Instruction::Kind::FunCall:
+        case Kind::FunCall:
             print(static_cast<const FunCallInst&>(instruction)); break;
         default:
             m_oss << "Unknown Instruction\n";

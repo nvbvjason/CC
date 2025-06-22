@@ -70,6 +70,10 @@ void AsmPrinter::add(const Inst& inst)
             add(static_cast<const MoveInst&>(inst)); break;
         case Kind::MoveSX:
             add(static_cast<const MoveSXInst&>(inst)); break;
+        case Kind::MovZeroExtend:
+            add(static_cast<const MoveZeroExtendInst&>(inst)); break;
+        case Kind::Lea:
+            add(static_cast<const LeaInst&>(inst)); break;
         case Kind::Cvtsi2sd:
             add(static_cast<const Cvtsi2sdInst&>(inst)); break;
         case Kind::Cvttsd2si:
@@ -115,6 +119,18 @@ void AsmPrinter::add(const MoveSXInst& moveSX)
     addLine("MoveSXInst: ",
         to_string(*moveSX.src) + " " +
         to_string(*moveSX.dst));
+}
+
+void AsmPrinter::add(const MoveZeroExtendInst& moveZeroExtend)
+{
+    addLine("moveZeroExtendInst: ",
+            to_string(*moveZeroExtend.src) + " " +
+            to_string(*moveZeroExtend.dst));
+}
+
+void AsmPrinter::add(const LeaInst& lea)
+{
+    addLine("LeaInst: ", to_string(*lea.src) + " " + to_string(*lea.dst));
 }
 
 void AsmPrinter::add(const UnaryInst& unary)
@@ -225,8 +241,8 @@ std::string to_string(const Operand& operand)
             return to_string(static_cast<const RegisterOperand&>(operand));
         case Kind::Pseudo:
             return to_string(static_cast<const PseudoOperand&>(operand));
-        case Kind::Stack:
-            return to_string(static_cast<const StackOperand&>(operand));
+        case Kind::Memory:
+            return to_string(static_cast<const MemoryOperand&>(operand));
         case Kind::Data:
             return to_string(static_cast<const DataOperand&>(operand));
         default:
@@ -241,7 +257,7 @@ std::string to_string(const ImmOperand& immOperand)
 
 std::string to_string(const RegisterOperand& registerOperand)
 {
-    return "Register(" + to_string(registerOperand.kind) + ", " + to_string(registerOperand.type) + ")";
+    return "Register(" + to_string(registerOperand.regKind) + ", " + to_string(registerOperand.type) + ")";
 }
 
 std::string to_string(const PseudoOperand& pseudoOperand)
@@ -249,9 +265,9 @@ std::string to_string(const PseudoOperand& pseudoOperand)
     return "Pseudo(" + pseudoOperand.identifier.value + ", " + to_string(pseudoOperand.type) + ")";
 }
 
-std::string to_string(const StackOperand& stackOperand)
+std::string to_string(const MemoryOperand& memoryOperand)
 {
-    return "Stack(" + std::to_string(stackOperand.value) + ")";
+    return "Memory(" + std::to_string(memoryOperand.value) + ")";
 }
 
 std::string to_string(const DataOperand& dataOperand)
@@ -259,10 +275,10 @@ std::string to_string(const DataOperand& dataOperand)
     return "Data(" + dataOperand.identifier.value + ", " + to_string(dataOperand.type) + ")";
 }
 
-std::string to_string(const RegisterOperand::Kind& type)
+std::string to_string(const Operand::RegKind regType)
 {
-    using Type = RegisterOperand::Kind;
-    switch (type) {
+    using Type = Operand::RegKind;
+    switch (regType) {
         case Type::AX:    return "AX";
         case Type::CX:    return "CX";
         case Type::DX:    return "DX";
@@ -273,6 +289,7 @@ std::string to_string(const RegisterOperand::Kind& type)
         case Type::R10:   return "R10";
         case Type::R11:   return "R11";
         case Type::SP:    return "SP";
+        case Type::BP:    return "BP";
         case Type::XMM0:  return "XMM0";
         case Type::XMM1:  return "XMM1";
         case Type::XMM2:  return "XMM2";

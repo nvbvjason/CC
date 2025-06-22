@@ -130,6 +130,12 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             result += asmFormatInstruction(addType("mov", moveZeroExtend->type), operands);
             return;
         }
+        case Inst::Kind::Lea: {
+            const auto lea = dynamic_cast<const LeaInst*>(instruction.get());
+            const std::string operands = asmOperand(lea->src) + ", " + asmOperand(lea->dst);
+            result += asmFormatInstruction(addType("lea", lea->type), operands);
+            return;
+        }
         case Inst::Kind::Cvtsi2sd: {
             const auto cvtsi2sd = dynamic_cast<Cvtsi2sdInst*>(instruction.get());
             const AsmType type = cvtsi2sd->srcType;
@@ -244,9 +250,9 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
             const auto immOperand = dynamic_cast<ImmOperand*>(operand.get());
             return "$" + std::to_string(immOperand->value);
         }
-        case Operand::Kind::Stack: {
-            const auto stackOperand = dynamic_cast<StackOperand*>(operand.get());
-            return std::to_string(stackOperand->value) + "(%rbp)";
+        case Operand::Kind::Memory: {
+            const auto moveOperand = dynamic_cast<const MemoryOperand*>(operand.get());
+            return std::to_string(moveOperand->value) + "(%rbp)";
         }
         case Operand::Kind::Data: {
             const auto dataOperand = dynamic_cast<DataOperand*>(operand.get());
@@ -261,8 +267,8 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
 
 std::string asmRegister(const RegisterOperand* reg)
 {
-    using Type = RegisterOperand::Kind;
-    switch (reg->kind) {
+    using Type = Operand::RegKind;
+    switch (reg->regKind) {
         case Type::XMM0: return "%xmm0";
         case Type::XMM1: return "%xmm1";
         case Type::XMM2: return "%xmm2";
@@ -289,7 +295,7 @@ std::string asmRegister(const RegisterOperand* reg)
         {Type::SP,  {"%rsp",  "%rsp",  "%rsp",  "%rsp"}}
     };
 
-    const auto it = registerMap.find(reg->kind);
+    const auto it = registerMap.find(reg->regKind);
     if (it == registerMap.end())
         return "invalid_register";
 

@@ -18,6 +18,7 @@ public:
     void visit(MoveInst& move) override;
     void visit(MoveSXInst& moveSX) override;
     void visit(MoveZeroExtendInst& moveZero) override;
+    void visit(LeaInst& lea) override;
     void visit(UnaryInst& unary) override;
     void visit(BinaryInst& binary) override;
     void visit(IdivInst& idiv) override;

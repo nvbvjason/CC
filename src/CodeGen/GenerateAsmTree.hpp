@@ -25,7 +25,7 @@ class GenerateAsmTree {
     };
 
     std::unordered_map<double, std::string, DoubleHash, DoubleEqual> m_constantDoubles;
-    using RegType = RegisterOperand::Kind;
+    using RegType = Operand::RegKind;
     std::vector<std::unique_ptr<Inst>> insts;
     Program m_programCodegen;
     std::vector<std::unique_ptr<TopLevel>> m_toplevel;
@@ -78,7 +78,10 @@ public:
     void genJumpIfNotZero(const Ir::JumpIfNotZeroInst& jumpIfNotZero);
     void genJumpIfNotZeroDouble(const Ir::JumpIfNotZeroInst& jumpIfNotZero);
     void genJumpIfNotZeroInteger(const Ir::JumpIfNotZeroInst& jumpIfNotZero);
-    void genCopy(const Ir::CopyInst& type);
+    void genCopy(const Ir::CopyInst& copy);
+    void genGetAddress(const Ir::GetAddressInst& getAddress);
+    void genLoad(const Ir::LoadInst& load);
+    void genStore(const Ir::StoreInst& store);
     void genLabel(const Ir::LabelInst& irLabel);
 
     void genFunCall(const Ir::FunCallInst& funcCall);
@@ -90,7 +93,7 @@ public:
     std::shared_ptr<Operand> genOperand(const std::shared_ptr<Ir::Value>& value);
     std::shared_ptr<Operand> getZeroOperand(AsmType type);
 
-    std::shared_ptr<ImmOperand> getImmOperandFromValue(const Ir::ValueConst& valueConst);
+    static std::shared_ptr<ImmOperand> getImmOperandFromValue(const Ir::ValueConst& valueConst);
 
 private:
     void zeroOutReg(const std::shared_ptr<RegisterOperand>& reg);
@@ -112,7 +115,7 @@ inline AsmType getAsmType(Type type)
 {
     if (type == Type::I32 || type == Type::U32)
         return AsmType::LongWord;
-    if (type == Type::I64 || type == Type::U64)
+    if (type == Type::I64 || type == Type::U64 || type == Type::Pointer)
         return AsmType::QuadWord;
     return AsmType::Double;
 }

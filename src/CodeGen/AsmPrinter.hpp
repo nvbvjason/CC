@@ -31,6 +31,8 @@ public:
     void add(const Inst& inst);
     void add(const MoveInst& move);
     void add(const MoveSXInst& moveSX);
+    void add(const MoveZeroExtendInst& moveZeroExtend);
+    void add(const LeaInst& lea);
     void add(const Cvtsi2sdInst& cvtsi2SdInst);
     void add(const Cvttsd2siInst& cvttsd2SiInst);
     void add(const UnaryInst& unary);
@@ -55,12 +57,12 @@ std::string to_string(const Operand& operand);
 std::string to_string(const ImmOperand& immOperand);
 std::string to_string(const RegisterOperand& registerOperand);
 std::string to_string(const PseudoOperand& pseudoOperand);
-std::string to_string(const StackOperand& stackOperand);
+std::string to_string(const MemoryOperand& memoryOperand);
 std::string to_string(const DataOperand& stackOperand);
 
 std::string to_string(const UnaryInst::Kind& kind);
 std::string to_string(const UnaryInst::Operator& oper);
-std::string to_string(const RegisterOperand::Kind& oper);
+std::string to_string(Operand::RegKind regType);
 std::string to_string(const BinaryInst::Operator& oper);
 std::string to_string(const Inst::CondCode& condCode);
 std::string to_string(AsmType type);

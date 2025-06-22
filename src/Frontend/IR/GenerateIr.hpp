@@ -10,7 +10,6 @@
 
 #include <unordered_set>
 
-
 namespace Ir {
 class GenerateIr {
     using Storage = Parsing::Declaration::StorageClass;
@@ -27,14 +26,16 @@ public:
     std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
     std::unique_ptr<TopLevel> functionIr(const Parsing::FunDecl& parsingFunction);
     std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl);
+    std::shared_ptr<Value> genStaticVariableInit(const Parsing::VarDecl& varDecl, bool defined);
     void genBlock(const Parsing::Block& block);
     void genBlockItem(const Parsing::BlockItem& blockItem);
     void genDeclaration(const Parsing::Declaration& decl);
     void genStaticLocal(const Parsing::VarDecl& varDecl);
+
+    void genStmt(const Parsing::Stmt& stmt);
     void genReturnStmt(const Parsing::ReturnStmt& returnStmt);
     void genIfStmt(const Parsing::IfStmt& ifStmt);
     void genForInit(const Parsing::ForInit& forInit);
-    void genStmt(const Parsing::Stmt& stmt);
     void genIfBasicStmt(const Parsing::IfStmt& ifStmt);
     void genIfElseStmt(const Parsing::IfStmt& ifStmt);
     void genGotoStmt(const Parsing::GotoStmt& gotoStmt);
@@ -65,8 +66,8 @@ public:
     std::unique_ptr<ExprResult> genFuncCallInst(const Parsing::FunCallExpr& funcCallExpr);
     std::unique_ptr<ExprResult> genAddrOfInst(const Parsing::AddrOffExpr& addrOffExpr);
     std::unique_ptr<ExprResult> genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr);
-    std::unique_ptr<ExprResult> genConstInst(const Parsing::ConstExpr& constExpr);
-    std::unique_ptr<ExprResult> genVarInst(const Parsing::VarExpr& varExpr);
+    static std::unique_ptr<ExprResult> genConstInst(const Parsing::ConstExpr& constExpr);
+    static std::unique_ptr<ExprResult> genVarInst(const Parsing::VarExpr& varExpr);
 };
 
 } // IR

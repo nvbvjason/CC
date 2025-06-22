@@ -10,6 +10,8 @@
 namespace CodeGen {
 
 class FixUpInstructions final : public InstVisitor {
+    using RegType = Operand::RegKind;
+
     std::vector<std::unique_ptr<Inst>>& m_insts;
     std::vector<std::unique_ptr<Inst>> m_copy;
     i32 stackAlloc;
@@ -21,14 +23,15 @@ public:
     void visit(MoveInst& moveInst) override;
     void visit(MoveSXInst& moveSXInst) override;
     void visit(MoveZeroExtendInst& moveZero) override;
+    void visit(LeaInst& lea) override;
     void visit(BinaryInst& binary) override;
     void visit(CmpInst& cmpInst) override;
     void visit(IdivInst& idivInst) override;
     void visit(DivInst& div) override;
     void visit(Cvttsd2siInst& cvttsd2si) override;
     void visit(Cvtsi2sdInst& cvtsi2sd) override;
+    void visit(PushInst&) override;
 
-    void visit(PushInst&) override {}
     void visit(CallInst&) override {}
     void visit(UnaryInst&) override {}
     void visit(SetCCInst&) override {}
@@ -49,38 +52,38 @@ private:
     void binaryMul(BinaryInst& binaryInst);
     void binaryDoubleOthers(BinaryInst& binaryInst);
     void binaryOthers(BinaryInst& binaryInst);
-    std::shared_ptr<RegisterOperand> genSrcOperand(AsmType type);
-    std::shared_ptr<RegisterOperand> genDstOperand(AsmType type);
+    static std::shared_ptr<RegisterOperand> genSrcOperand(AsmType type);
+    static std::shared_ptr<RegisterOperand> genDstOperand(AsmType type);
 
     static inline bool isBinaryShift(const BinaryInst& binaryInst);
-    static inline bool areBothOnTheStack(const MoveInst& moveInst);
-    static inline bool areBothOnTheStack(const CmpInst& cmpInst);
+    static inline bool areBothOnTheStack(const MoveInst& move);
+    static inline bool areBothOnTheStack(const CmpInst& cmp);
+    static inline bool isOnTheStack(Operand::Kind kind);
 };
 
 inline bool FixUpInstructions::isBinaryShift(const BinaryInst& binaryInst)
 {
-    return binaryInst.oper == BinaryInst::Operator::LeftShiftSigned ||
-           binaryInst.oper == BinaryInst::Operator::RightShiftSigned ||
-           binaryInst.oper == BinaryInst::Operator::RightShiftUnsigned ||
-           binaryInst.oper == BinaryInst::Operator::LeftShiftUnsigned;
+    using Operator = BinaryInst::Operator;
+    return binaryInst.oper == Operator::LeftShiftSigned ||
+           binaryInst.oper == Operator::RightShiftSigned ||
+           binaryInst.oper == Operator::RightShiftUnsigned ||
+           binaryInst.oper == Operator::LeftShiftUnsigned;
 }
 
-inline bool FixUpInstructions::areBothOnTheStack(const MoveInst& moveInst)
+inline bool FixUpInstructions::areBothOnTheStack(const MoveInst& move)
 {
-    using Kind = Operand::Kind;
-    return moveInst.src->kind == Kind::Data ||
-           moveInst.dst->kind == Kind::Stack &&
-           moveInst.src->kind == Kind::Stack ||
-           moveInst.dst->kind == Kind::Data;
+    return isOnTheStack(move.src->kind) && isOnTheStack(move.dst->kind);
 }
 
-inline bool FixUpInstructions::areBothOnTheStack(const CmpInst& cmpInst)
+inline bool FixUpInstructions::areBothOnTheStack(const CmpInst& cmp)
+{
+    return isOnTheStack(cmp.lhs->kind) && isOnTheStack(cmp.rhs->kind);
+}
+
+inline bool FixUpInstructions::isOnTheStack(const Operand::Kind kind)
 {
     using Kind = Operand::Kind;
-    return cmpInst.lhs->kind == Kind::Data ||
-           cmpInst.rhs->kind == Kind::Stack &&
-           cmpInst.lhs->kind == Kind::Stack ||
-           cmpInst.rhs->kind == Kind::Data;
+    return kind == Kind::Data || kind == Kind::Memory;
 }
 
 } // namespace CodeGen

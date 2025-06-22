@@ -22,7 +22,8 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
                 m_stackPtr += -requiredAlignment - m_stackPtr % requiredAlignment;
             m_pseudoMap[pseudo->identifier.value] = m_stackPtr;
         }
-        operand = std::make_shared<StackOperand>(m_pseudoMap.at(pseudo->identifier.value), operand->type);
+        operand = std::make_shared<MemoryOperand>(
+            Operand::RegKind::BP, m_pseudoMap.at(pseudo->identifier.value), operand->type);
     }
 }
 
@@ -42,6 +43,12 @@ void PseudoRegisterReplacer::visit(MoveZeroExtendInst& moveZero)
 {
     replaceIfPseudo(moveZero.src);
     replaceIfPseudo(moveZero.dst);
+}
+
+void PseudoRegisterReplacer::visit(LeaInst& lea)
+{
+    replaceIfPseudo(lea.src);
+    replaceIfPseudo(lea.dst);
 }
 
 void PseudoRegisterReplacer::visit(UnaryInst& unary)
