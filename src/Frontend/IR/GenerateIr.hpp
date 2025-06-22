@@ -6,8 +6,10 @@
 #include "ASTIr.hpp"
 #include "ASTParser.hpp"
 #include "SymbolTable.hpp"
+#include "ExprResult.hpp"
 
 #include <unordered_set>
+
 
 namespace Ir {
 class GenerateIr {
@@ -47,23 +49,24 @@ public:
     void genForStmt(const Parsing::ForStmt& forStmt);
     void genSwitchStmt(const Parsing::SwitchStmt& stmt);
 
-    std::shared_ptr<Value> genInst(const Parsing::Expr& parsingExpr);
+    std::unique_ptr<ExprResult> genInst(const Parsing::Expr& parsingExpr);
+    std::shared_ptr<Value> genInstAndConvert(const Parsing::Expr& parsingExpr);
 
-    std::shared_ptr<Value> genCastInst(const Parsing::CastExpr& castExpr);
-    std::shared_ptr<Value> genUnaryInst(const Parsing::UnaryExpr& unaryExpr);
-    std::shared_ptr<Value> genUnaryBasicInst(const Parsing::UnaryExpr& unaryExpr);
-    std::shared_ptr<Value> genUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr);
-    std::shared_ptr<Value> genUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr);
-    std::shared_ptr<Value> genBinaryInst(const Parsing::BinaryExpr& binaryExpr);
-    std::shared_ptr<Value> genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr);
-    std::shared_ptr<Value> genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr);
-    std::shared_ptr<Value> genAssignInst(const Parsing::AssignmentExpr& assignmentExpr);
-    std::shared_ptr<Value> genTernaryInst(const Parsing::TernaryExpr& ternaryExpr);
-    std::shared_ptr<Value> genFuncCallInst(const Parsing::FunCallExpr& funcCallExpr);
-    std::shared_ptr<Value> genAddrOfInst(const Parsing::AddrOffExpr& addrOffExpr);
-    std::shared_ptr<Value> genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr);
-    static std::shared_ptr<Value> genConstInst(const Parsing::ConstExpr& constExpr);
-    static std::shared_ptr<Value> genVarInst(const Parsing::VarExpr& varExpr);
+    std::unique_ptr<ExprResult> genCastInst(const Parsing::CastExpr& castExpr);
+    std::unique_ptr<ExprResult> genUnaryInst(const Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<ExprResult> genUnaryBasicInst(const Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<ExprResult> genUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<ExprResult> genUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<ExprResult> genBinaryInst(const Parsing::BinaryExpr& binaryExpr);
+    std::unique_ptr<ExprResult> genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr);
+    std::unique_ptr<ExprResult> genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr);
+    std::unique_ptr<ExprResult> genAssignInst(const Parsing::AssignmentExpr& assignmentExpr);
+    std::unique_ptr<ExprResult> genTernaryInst(const Parsing::TernaryExpr& ternaryExpr);
+    std::unique_ptr<ExprResult> genFuncCallInst(const Parsing::FunCallExpr& funcCallExpr);
+    std::unique_ptr<ExprResult> genAddrOfInst(const Parsing::AddrOffExpr& addrOffExpr);
+    std::unique_ptr<ExprResult> genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr);
+    std::unique_ptr<ExprResult> genConstInst(const Parsing::ConstExpr& constExpr);
+    std::unique_ptr<ExprResult> genVarInst(const Parsing::VarExpr& varExpr);
 };
 
 } // IR

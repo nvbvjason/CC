@@ -965,6 +965,7 @@ std::shared_ptr<ImmOperand> GenerateAsmTree::getImmOperandFromValue(const Ir::Va
         return std::make_shared<ImmOperand>(std::get<i32>(valueConst.value), AsmType::LongWord);
     if (valueConst.type == Type::I64)
         return std::make_shared<ImmOperand>(std::get<i64>(valueConst.value), AsmType::QuadWord);
+    std::abort();
 }
 
 void GenerateAsmTree::zeroOutReg(const std::shared_ptr<RegisterOperand>& reg)

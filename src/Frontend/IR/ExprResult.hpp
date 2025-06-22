@@ -24,7 +24,7 @@ protected:
 struct PlainOperand : ExprResult {
     std::shared_ptr<Value> value;
 
-    explicit PlainOperand(std::shared_ptr<Value>&& value)
+    explicit PlainOperand(std::shared_ptr<Value> value)
         : ExprResult(Kind::PlainOperand), value(std::move(value)) {}
 
     PlainOperand() = delete;
@@ -32,7 +32,7 @@ struct PlainOperand : ExprResult {
 
 struct DereferencedPointer : ExprResult {
     std::shared_ptr<Value> value;
-    explicit DereferencedPointer(std::shared_ptr<Value>&& value)
+    explicit DereferencedPointer(std::shared_ptr<Value> value)
         : ExprResult(Kind::DereferencedPointer), value(std::move(value)) {}
 
     DereferencedPointer() = delete;

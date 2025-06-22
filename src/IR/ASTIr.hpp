@@ -236,7 +236,7 @@ struct GetAddressInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     GetAddressInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Copy, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Instruction(Kind::GetAddress, t), src(std::move(src)), dst(std::move(dst)) {}
 
     ~GetAddressInst() override;
 
@@ -247,7 +247,7 @@ struct LoadInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     LoadInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Copy, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Instruction(Kind::Load, t), src(std::move(src)), dst(std::move(dst)) {}
 
     ~LoadInst() override;
 
@@ -258,7 +258,7 @@ struct StoreInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     StoreInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Copy, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Instruction(Kind::Store, t), src(std::move(src)), dst(std::move(dst)) {}
 
     ~StoreInst() override;
 
