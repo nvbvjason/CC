@@ -211,7 +211,7 @@ struct LeaInst final : Inst {
     AsmType type;
 
     LeaInst(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst, const AsmType t)
-        : Inst(Kind::MovZeroExtend), src(std::move(src)), dst(std::move(dst)), type(t) {}
+        : Inst(Kind::Lea), src(std::move(src)), dst(std::move(dst)), type(t) {}
 
     void accept(InstVisitor& visitor) override;
 

@@ -74,7 +74,7 @@ public:
     void visit(const AddrOffExpr& addrOffExpr) override;
     void visit(const DereferenceExpr& dereferenceExpr) override;
 
-    void visit(const FunCallExpr& functionCallExpr) override;
+    void visit(const FuncCallExpr& functionCallExpr) override;
 
 private:
     void addLine(const std::string &line);

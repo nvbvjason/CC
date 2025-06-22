@@ -54,7 +54,7 @@ public:
     void visit(const BinaryExpr& binaryExpr) override;
     void visit(const AssignmentExpr& assignmentExpr) override;
     void visit(const TernaryExpr& conditionalExpr) override;
-    void visit(const FunCallExpr& functionCallExpr) override;
+    void visit(const FuncCallExpr& functionCallExpr) override;
     void visit(const DereferenceExpr& dereferenceExpr) override;
     void visit(const AddrOffExpr& addrOffExpr) override;
 };

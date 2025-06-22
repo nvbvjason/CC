@@ -482,7 +482,7 @@ std::unique_ptr<ExprResult> GenerateIr::genInst(const Parsing::Expr& parsingExpr
         }
         case ExprKind::FunctionCall: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto funcCallExpr = static_cast<const Parsing::FunCallExpr*>(&parsingExpr);
+            const auto funcCallExpr = static_cast<const Parsing::FuncCallExpr*>(&parsingExpr);
             return genFuncCallInst(*funcCallExpr);
         }
         case ExprKind::Dereference: {
@@ -514,10 +514,10 @@ std::shared_ptr<Value> GenerateIr::genInstAndConvert(const Parsing::Expr& parsin
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             const auto dereferencedPointer = static_cast<const DereferencedPointer*>(result.get());
             Identifier dstIden = makeTemporaryName();
-            std::shared_ptr<Value> dst = std::make_shared<ValueVar>(dstIden, dereferencedPointer->value->type);
+            std::shared_ptr<Value> dst = std::make_shared<ValueVar>(dstIden, dereferencedPointer->referredToType);
             m_insts.emplace_back(std::make_unique<LoadInst>(
-                dereferencedPointer->value, dst, dereferencedPointer->value->type));
-            return dereferencedPointer->value;
+                dereferencedPointer->ptr, dst, dereferencedPointer->referredToType));
+            return dst;
         }
     }
     std::unreachable();
@@ -643,9 +643,9 @@ std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentE
         case ExprResult::Kind::DereferencedPointer: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             const auto derefLhs = static_cast<const DereferencedPointer*>(lhs.get());
-            m_insts.emplace_back(std::make_unique<LoadInst>(
-                rhs, derefLhs->value, assignmentExpr.type->kind));
-            return std::make_unique<PlainOperand>(derefLhs->value);
+            m_insts.emplace_back(std::make_unique<StoreInst>(
+                rhs, derefLhs->ptr, assignmentExpr.type->kind));
+            return std::make_unique<PlainOperand>(derefLhs->ptr);
         }
     }
     std::unreachable();
@@ -654,10 +654,10 @@ std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentE
 std::unique_ptr<ExprResult> GenerateIr::genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr)
 {
     auto result = std::make_shared<ValueVar>(makeTemporaryName(), binaryExpr.type->kind);
-    auto lhs = genInstAndConvert(*binaryExpr.lhs);
+    std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
     Identifier falseLabelIden = makeTemporaryName();
     m_insts.emplace_back(std::make_unique<JumpIfZeroInst>(lhs, falseLabelIden));
-    auto rhs = genInstAndConvert(*binaryExpr.rhs);
+    std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
     m_insts.emplace_back(std::make_unique<JumpIfZeroInst>(rhs, falseLabelIden));
     auto oneVal = std::make_shared<ValueConst>(1);
     m_insts.emplace_back(std::make_unique<CopyInst>(oneVal, result, binaryExpr.type->kind));
@@ -729,7 +729,7 @@ std::unique_ptr<ExprResult> GenerateIr::genTernaryInst(const Parsing::TernaryExp
     return std::make_unique<PlainOperand>(result);
 }
 
-std::unique_ptr<ExprResult> GenerateIr::genFuncCallInst(const Parsing::FunCallExpr& funcCallExpr)
+std::unique_ptr<ExprResult> GenerateIr::genFuncCallInst(const Parsing::FuncCallExpr& funcCallExpr)
 {
     std::vector<std::shared_ptr<Value>> arguments;
     arguments.reserve(funcCallExpr.args.size());
@@ -750,21 +750,20 @@ std::unique_ptr<ExprResult> GenerateIr::genAddrOfInst(const Parsing::AddrOffExpr
         const auto deferenceExpr = static_cast<const Parsing::DereferenceExpr*>(addrOffExpr.reference.get());
         return genInst(*deferenceExpr->reference);
     }
-    std::unique_ptr<ExprResult> inner = genInst(*addrOffExpr.reference);
+    const std::unique_ptr<ExprResult> inner = genInst(*addrOffExpr.reference);
     switch (inner->kind) {
         case ExprResult::Kind::PlainOperand: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             const auto plainOperand = static_cast<const PlainOperand*>(inner.get());
-            const Type plainType = plainOperand->value->type;
             Identifier dstIden = makeTemporaryName();
-            std::shared_ptr<Value> dst = std::make_shared<ValueVar>(dstIden, plainType);
-            m_insts.emplace_back(std::make_unique<GetAddressInst>(plainOperand->value, dst, plainType));
+            std::shared_ptr<Value> dst = std::make_shared<ValueVar>(dstIden, Type::Pointer);
+            m_insts.emplace_back(std::make_unique<GetAddressInst>(plainOperand->value, dst, Type::Pointer));
             return std::make_unique<PlainOperand>(dst);
         }
         case ExprResult::Kind::DereferencedPointer: {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             const auto derefencedPoitner = static_cast<const DereferencedPointer*>(inner.get());
-            return std::make_unique<PlainOperand>(derefencedPoitner->value);
+            return std::make_unique<PlainOperand>(derefencedPoitner->ptr);
         }
     }
     std::unreachable();
@@ -773,7 +772,7 @@ std::unique_ptr<ExprResult> GenerateIr::genAddrOfInst(const Parsing::AddrOffExpr
 std::unique_ptr<ExprResult> GenerateIr::genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr)
 {
     std::shared_ptr<Value> result = genInstAndConvert(*dereferenceExpr.reference);
-    return std::make_unique<DereferencedPointer>(result);
+    return std::make_unique<DereferencedPointer>(result, dereferenceExpr.type->kind);
 }
 
 Identifier makeTemporaryName()

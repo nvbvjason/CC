@@ -164,7 +164,7 @@ void ConstASTTraverser::visit(const TernaryExpr& conditionalExpr)
     conditionalExpr.falseExpr->accept(*this);
 }
 
-void ConstASTTraverser::visit(const FunCallExpr& functionCallExpr)
+void ConstASTTraverser::visit(const FuncCallExpr& functionCallExpr)
 {
     for (const std::unique_ptr<Expr>& expr : functionCallExpr.args)
         expr->accept(*this);

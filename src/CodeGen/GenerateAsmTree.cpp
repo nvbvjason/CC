@@ -237,7 +237,7 @@ void GenerateAsmTree::genInst(const std::unique_ptr<Ir::Instruction>& inst)
             break;
         }
         default:
-            throw std::runtime_error("Unsupported instruction type");
+            std::abort();
     }
 }
 
@@ -324,15 +324,15 @@ void GenerateAsmTree::genGetAddress(const Ir::GetAddressInst& getAddress)
 {
     std::shared_ptr<Operand> src = genOperand(getAddress.src);
     std::shared_ptr<Operand> dst = genOperand(getAddress.dst);
-    insts.emplace_back(std::make_unique<LeaInst>(src, dst, src->type));
+    insts.emplace_back(std::make_unique<LeaInst>(src, dst, AsmType::QuadWord));
 }
 
 void GenerateAsmTree::genLoad(const Ir::LoadInst& load)
 {
     std::shared_ptr<Operand> ptr = genOperand(load.ptr);
     std::shared_ptr<Operand> dst = genOperand(load.dst);
-    auto rax = std::make_shared<RegisterOperand>(RegType::AX, AsmType::QuadWord);
-    auto memory = std::make_shared<MemoryOperand>(RegType::AX, 0, dst->type);
+    auto rax = std::make_shared<RegisterOperand>(RegType::DX, AsmType::QuadWord);
+    auto memory = std::make_shared<MemoryOperand>(RegType::DX, 0, AsmType::QuadWord);
 
     insts.emplace_back(std::make_unique<MoveInst>(ptr, rax, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<MoveInst>(memory, dst, dst->type));
@@ -342,8 +342,8 @@ void GenerateAsmTree::genStore(const Ir::StoreInst& store)
 {
     std::shared_ptr<Operand> src = genOperand(store.src);
     std::shared_ptr<Operand> ptr = genOperand(store.ptr);
-    auto rax = std::make_shared<RegisterOperand>(RegType::AX, AsmType::QuadWord);
-    auto memory = std::make_shared<MemoryOperand>(RegType::AX, 0, src->type);
+    auto rax = std::make_shared<RegisterOperand>(RegType::DX, AsmType::QuadWord);
+    auto memory = std::make_shared<MemoryOperand>(RegType::DX, 0, AsmType::QuadWord);
 
     insts.emplace_back(std::make_unique<MoveInst>(ptr, rax, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<MoveInst>(src, memory, src->type));

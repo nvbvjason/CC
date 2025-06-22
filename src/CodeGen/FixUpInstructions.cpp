@@ -96,8 +96,8 @@ void FixUpInstructions::visit(MoveZeroExtendInst& moveZero)
 void FixUpInstructions::visit(LeaInst& lea)
 {
     if (isOnTheStack(lea.dst->kind)) {
-        auto first = std::make_unique<MoveInst>(lea.dst, genDstOperand(lea.dst->type), lea.dst->type);
-        auto second = std::make_unique<LeaInst>(lea.src, genSrcOperand(lea.src->type), lea.src->type);
+        auto first = std::make_unique<LeaInst>(lea.src, genDstOperand(AsmType::QuadWord), AsmType::QuadWord);
+        auto second = std::make_unique<MoveInst>(genDstOperand(AsmType::QuadWord), lea.dst, AsmType::QuadWord);
         insert(std::move(first), std::move(second));
     }
     else

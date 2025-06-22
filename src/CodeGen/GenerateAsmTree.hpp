@@ -117,7 +117,9 @@ inline AsmType getAsmType(Type type)
         return AsmType::LongWord;
     if (type == Type::I64 || type == Type::U64 || type == Type::Pointer)
         return AsmType::QuadWord;
-    return AsmType::Double;
+    if (type == Type::Double)
+        return AsmType::Double;
+    std::abort();
 }
 
 std::string makeTemporaryPseudoName();

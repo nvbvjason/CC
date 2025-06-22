@@ -34,7 +34,7 @@ public:
     void visit(Parsing::VarDecl& varDecl) override;
 
     void visit(Parsing::VarExpr& varExpr) override;
-    void visit(Parsing::FunCallExpr& functionCallExpr) override;
+    void visit(Parsing::FuncCallExpr& funcCallExpr) override;
 
     void addVarToSymbolTable(Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry);
     void addFuncToSymbolTable(const Parsing::FunDecl& funDecl, const SymbolTable::ReturnedEntry& prevEntry) const;
@@ -53,7 +53,7 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
                      const SymbolTable& symbolTable,
                      const SymbolTable::ReturnedEntry& returnedEntry);
 
-bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable::ReturnedEntry& returnedEntry);
+bool isValidFuncCall(const Parsing::FuncCallExpr& funCallExpr, const SymbolTable::ReturnedEntry& returnedEntry);
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::ReturnedEntry& returnedEntry);
 
 bool duplicatesInArgs(const std::vector<std::string>& args);

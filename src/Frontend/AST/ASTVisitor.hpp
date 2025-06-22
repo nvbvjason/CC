@@ -56,7 +56,7 @@ public:
     virtual void visit(BinaryExpr&) = 0;
     virtual void visit(AssignmentExpr&) = 0;
     virtual void visit(TernaryExpr&) = 0;
-    virtual void visit(FunCallExpr&) = 0;
+    virtual void visit(FuncCallExpr&) = 0;
     virtual void visit(DereferenceExpr&) = 0;
     virtual void visit(AddrOffExpr&) = 0;
 };
@@ -110,7 +110,7 @@ public:
     virtual void visit(const BinaryExpr&) = 0;
     virtual void visit(const AssignmentExpr&) = 0;
     virtual void visit(const TernaryExpr&) = 0;
-    virtual void visit(const FunCallExpr&) = 0;
+    virtual void visit(const FuncCallExpr&) = 0;
     virtual void visit(const DereferenceExpr&) = 0;
     virtual void visit(const AddrOffExpr&) = 0;
 };

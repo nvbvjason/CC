@@ -117,7 +117,7 @@ struct UnaryExpr;
 struct BinaryExpr;
 struct AssignmentExpr;
 struct TernaryExpr;
-struct FunCallExpr;
+struct FuncCallExpr;
 struct DereferenceExpr;
 struct AddrOffExpr;
 } // Parsing

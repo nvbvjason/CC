@@ -55,7 +55,7 @@ void TypeResolution::visit(Parsing::DeclForInit& declForInit)
     ASTTraverser::visit(declForInit);
 }
 
-void TypeResolution::visit(Parsing::FunCallExpr& funCallExpr)
+void TypeResolution::visit(Parsing::FuncCallExpr& funCallExpr)
 {
     const auto it = m_functions.find(funCallExpr.name);
     if (it == m_functions.end()) {
@@ -373,8 +373,8 @@ void TypeResolution::visit(Parsing::DereferenceExpr& dereferenceExpr)
         m_valid = false;
         return;
     }
-    auto pointerType = static_cast<const Parsing::PointerType*>(dereferenceExpr.reference->type.get());
-    dereferenceExpr.type = Parsing::deepCopy(*pointerType->referenced);
+    const auto referencedPtrType = static_cast<const Parsing::PointerType*>(dereferenceExpr.reference->type.get());
+    dereferenceExpr.type = Parsing::deepCopy(*referencedPtrType->referenced);
 }
 
 bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl) const

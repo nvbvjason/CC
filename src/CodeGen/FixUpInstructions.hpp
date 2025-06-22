@@ -44,7 +44,8 @@ public:
     void fixUp();
 private:
     template<typename... InstPtrs>
-    void insert(InstPtrs&&... others) {
+    void insert(InstPtrs&&... others)
+    {
         (m_copy.push_back(std::forward<InstPtrs>(others)), ...);
     }
 

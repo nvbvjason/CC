@@ -242,7 +242,7 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
     switch (operand->kind) {
         case Operand::Kind::Register: {
             const auto registerOperand = dynamic_cast<RegisterOperand*>(operand.get());
-            return asmRegister(registerOperand);
+            return asmRegister(registerOperand->type, registerOperand->regKind);
         }
         case Operand::Kind::Pseudo:
             return "invalid pseudo";
@@ -252,7 +252,10 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
         }
         case Operand::Kind::Memory: {
             const auto moveOperand = dynamic_cast<const MemoryOperand*>(operand.get());
-            return std::to_string(moveOperand->value) + "(%rbp)";
+            if (moveOperand->value != 0)
+                return std::to_string(moveOperand->value) + "(" +
+                            asmRegister(moveOperand->type, moveOperand->regKind) + ")";
+            return "(" + asmRegister(moveOperand->type, moveOperand->regKind) + ")";
         }
         case Operand::Kind::Data: {
             const auto dataOperand = dynamic_cast<DataOperand*>(operand.get());
@@ -265,10 +268,12 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
     }
 }
 
-std::string asmRegister(const RegisterOperand* reg)
+std::string asmRegister(AsmType type, Operand::RegKind regKind)
 {
     using Type = Operand::RegKind;
-    switch (reg->regKind) {
+    if (regKind == Type::BP)
+        return "%rbp";
+    switch (regKind) {
         case Type::XMM0: return "%xmm0";
         case Type::XMM1: return "%xmm1";
         case Type::XMM2: return "%xmm2";
@@ -295,12 +300,12 @@ std::string asmRegister(const RegisterOperand* reg)
         {Type::SP,  {"%rsp",  "%rsp",  "%rsp",  "%rsp"}}
     };
 
-    const auto it = registerMap.find(reg->regKind);
+    const auto it = registerMap.find(regKind);
     if (it == registerMap.end())
         return "invalid_register";
 
     const auto& names = it->second;
-    switch (reg->type) {
+    switch (type) {
         case AsmType::Byte:     return names[0];
         case AsmType::Word:     return names[1];
         case AsmType::LongWord: return names[2];

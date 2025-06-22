@@ -31,9 +31,10 @@ struct PlainOperand : ExprResult {
 };
 
 struct DereferencedPointer : ExprResult {
-    std::shared_ptr<Value> value;
-    explicit DereferencedPointer(std::shared_ptr<Value> value)
-        : ExprResult(Kind::DereferencedPointer), value(std::move(value)) {}
+    std::shared_ptr<Value> ptr;
+    Type referredToType;
+    DereferencedPointer(std::shared_ptr<Value> p, const Type rt)
+        : ExprResult(Kind::DereferencedPointer), ptr(std::move(p)), referredToType(rt) {}
 
     DereferencedPointer() = delete;
 };

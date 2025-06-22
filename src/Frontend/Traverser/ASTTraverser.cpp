@@ -163,7 +163,7 @@ void ASTTraverser::visit(TernaryExpr& conditionalExpr)
     conditionalExpr.falseExpr->accept(*this);
 }
 
-void ASTTraverser::visit(FunCallExpr& functionCallExpr)
+void ASTTraverser::visit(FuncCallExpr& functionCallExpr)
 {
     for (auto& expr : functionCallExpr.args)
         expr->accept(*this);

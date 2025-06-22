@@ -352,7 +352,7 @@ void ASTPrinter::visit(const NullStmt& nullStmt)
     addLine("NullStmt (;)");
 }
 
-void ASTPrinter::visit(const FunCallExpr& functionCallExpr)
+void ASTPrinter::visit(const FuncCallExpr& functionCallExpr)
 {
     IndentGuard guard(m_indentLevel);
     addLine("Function Call: " + functionCallExpr.name);

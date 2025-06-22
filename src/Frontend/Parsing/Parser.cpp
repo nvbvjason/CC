@@ -479,8 +479,7 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
             if (second == nullptr)
                 return nullptr;
             left = std::make_unique<TernaryExpr>(
-                std::move(left), std::move(first), std::move(second)
-            );
+                std::move(left), std::move(first), std::move(second));
         }
         if (Operators::isAssignmentOperator(nextToken.m_type)) {
             AssignmentExpr::Operator op = Operators::assignOperator(nextToken.m_type);
@@ -616,7 +615,7 @@ std::unique_ptr<Expr> Parser::factorParse()
                 return nullptr;
             if (!expect(TokenType::CloseParen))
                 return nullptr;
-            return std::make_unique<FunCallExpr>(lexeme.m_lexeme, std::move(*arguments));
+            return std::make_unique<FuncCallExpr>(lexeme.m_lexeme, std::move(*arguments));
         }
         case TokenType::OpenParen: {
             if (advance().m_type == TokenType::EndOfFile)

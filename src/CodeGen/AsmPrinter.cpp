@@ -16,7 +16,6 @@ std::string AsmPrinter::printProgram(const Program &program)
 void AsmPrinter::add(const TopLevel& topLevel)
 {
     using Type = TopLevel::Kind;
-    IndentGuard indent(m_indentLevel);
     switch (topLevel.type) {
         case Type::Function:
             add(static_cast<const Function&>(topLevel));
@@ -267,7 +266,8 @@ std::string to_string(const PseudoOperand& pseudoOperand)
 
 std::string to_string(const MemoryOperand& memoryOperand)
 {
-    return "Memory(" + std::to_string(memoryOperand.value) + ")";
+    return "Memory(" + std::to_string(memoryOperand.value) + ", " + to_string(memoryOperand.regKind) + ", "
+            + to_string(memoryOperand.type) + ")";
 }
 
 std::string to_string(const DataOperand& dataOperand)

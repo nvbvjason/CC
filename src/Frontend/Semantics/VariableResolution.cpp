@@ -164,7 +164,7 @@ bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::Returned
     return true;
 }
 
-void VariableResolution::visit(Parsing::FunCallExpr& funcCallExpr)
+void VariableResolution::visit(Parsing::FuncCallExpr& funcCallExpr)
 {
     const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookup(funcCallExpr.name);
     if (!isValidFuncCall(funcCallExpr, returnedEntry)) {
@@ -176,7 +176,7 @@ void VariableResolution::visit(Parsing::FunCallExpr& funcCallExpr)
     ASTTraverser::visit(funcCallExpr);
 }
 
-bool isValidFuncCall(const Parsing::FunCallExpr& funCallExpr, const SymbolTable::ReturnedEntry& returnedEntry)
+bool isValidFuncCall(const Parsing::FuncCallExpr& funCallExpr, const SymbolTable::ReturnedEntry& returnedEntry)
 {
     if (!returnedEntry.isSet(Flag::Contains))
         return false;

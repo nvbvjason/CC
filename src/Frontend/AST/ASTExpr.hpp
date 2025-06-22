@@ -142,17 +142,17 @@ struct TernaryExpr final : Expr {
     TernaryExpr() = delete;
 };
 
-struct FunCallExpr final : Expr {
+struct FuncCallExpr final : Expr {
     std::string name;
     std::vector<std::unique_ptr<Expr>> args;
 
-    FunCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args)
+    FuncCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args)
         : Expr(Kind::FunctionCall), name(std::move(identifier)), args(std::move(args)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
-    FunCallExpr() = delete;
+    FuncCallExpr() = delete;
 };
 
 struct DereferenceExpr final : Expr {
