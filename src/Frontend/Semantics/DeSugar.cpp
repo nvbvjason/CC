@@ -23,8 +23,8 @@ void DeSugar::visit(Parsing::AssignmentExpr& assignmentExpr)
             op, std::move(leftCopy), std::move(assignmentExpr.rhs));
     }
     else if (assignmentExpr.op != Parsing::AssignmentExpr::Operator::Assign &&
-        assignmentExpr.lhs->kind == Parsing::Expr::Kind::Dereference) {
-        auto leftCopy = deepCopyDeref(*assignmentExpr.lhs);
+             assignmentExpr.lhs->kind == Parsing::Expr::Kind::Dereference) {
+        std::unique_ptr<Parsing::Expr> leftCopy = deepCopyDeref(*assignmentExpr.lhs);
         const Parsing::BinaryExpr::Operator op = Parsing::Operators::getBinaryOperator(assignmentExpr.op);
         assignmentExpr.op = Parsing::AssignmentExpr::Operator::Assign;
         assignmentExpr.rhs = std::make_unique<Parsing::BinaryExpr>(

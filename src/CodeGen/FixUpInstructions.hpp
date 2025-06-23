@@ -57,13 +57,13 @@ private:
     static std::shared_ptr<RegisterOperand> genSrcOperand(AsmType type);
     static std::shared_ptr<RegisterOperand> genDstOperand(AsmType type);
 
-    static inline bool isBinaryShift(const BinaryInst& binaryInst);
-    static inline bool areBothOnTheStack(const MoveInst& move);
-    static inline bool areBothOnTheStack(const CmpInst& cmp);
-    static inline bool isOnTheStack(Operand::Kind kind);
+    static constexpr bool isBinaryShift(const BinaryInst& binaryInst);
+    static constexpr bool areBothOnTheStack(const MoveInst& move);
+    static constexpr bool areBothOnTheStack(const CmpInst& cmp);
+    static constexpr bool isOnTheStack(Operand::Kind kind);
 };
 
-inline bool FixUpInstructions::isBinaryShift(const BinaryInst& binaryInst)
+constexpr bool FixUpInstructions::isBinaryShift(const BinaryInst& binaryInst)
 {
     using Operator = BinaryInst::Operator;
     return binaryInst.oper == Operator::LeftShiftSigned ||
@@ -72,17 +72,17 @@ inline bool FixUpInstructions::isBinaryShift(const BinaryInst& binaryInst)
            binaryInst.oper == Operator::LeftShiftUnsigned;
 }
 
-inline bool FixUpInstructions::areBothOnTheStack(const MoveInst& move)
+constexpr bool FixUpInstructions::areBothOnTheStack(const MoveInst& move)
 {
     return isOnTheStack(move.src->kind) && isOnTheStack(move.dst->kind);
 }
 
-inline bool FixUpInstructions::areBothOnTheStack(const CmpInst& cmp)
+constexpr bool FixUpInstructions::areBothOnTheStack(const CmpInst& cmp)
 {
     return isOnTheStack(cmp.lhs->kind) && isOnTheStack(cmp.rhs->kind);
 }
 
-inline bool FixUpInstructions::isOnTheStack(const Operand::Kind kind)
+constexpr bool FixUpInstructions::isOnTheStack(const Operand::Kind kind)
 {
     using Kind = Operand::Kind;
     return kind == Kind::Data || kind == Kind::Memory;

@@ -281,7 +281,7 @@ void GenerateIr::genIfStmt(const Parsing::IfStmt& ifStmt)
 
 void GenerateIr::genIfBasicStmt(const Parsing::IfStmt& ifStmt)
 {
-    auto condition = genInstAndConvert(*ifStmt.condition);
+    std::shared_ptr<Value> condition = genInstAndConvert(*ifStmt.condition);
     Identifier endLabelIden = makeTemporaryName();
     insts.emplace_back(std::make_unique<JumpIfZeroInst>(condition, endLabelIden));
     genStmt(*ifStmt.thenStmt);
@@ -290,7 +290,7 @@ void GenerateIr::genIfBasicStmt(const Parsing::IfStmt& ifStmt)
 
 void GenerateIr::genIfElseStmt(const Parsing::IfStmt& ifStmt)
 {
-    auto condition = genInstAndConvert(*ifStmt.condition);
+    std::shared_ptr<Value>  condition = genInstAndConvert(*ifStmt.condition);
     Identifier elseStmtLabel = makeTemporaryName();
     insts.emplace_back(std::make_unique<JumpIfZeroInst>(condition, elseStmtLabel));
     genStmt(*ifStmt.thenStmt);
@@ -303,7 +303,7 @@ void GenerateIr::genIfElseStmt(const Parsing::IfStmt& ifStmt)
 
 void GenerateIr::genReturnStmt(const Parsing::ReturnStmt& returnStmt)
 {
-    auto value = genInstAndConvert(*returnStmt.expr);
+    std::shared_ptr<Value>  value = genInstAndConvert(*returnStmt.expr);
     if (value == nullptr)
         return;
     insts.emplace_back(std::make_unique<ReturnInst>(value, value->type));
@@ -399,7 +399,7 @@ void GenerateIr::genForStmt(const Parsing::ForStmt& forStmt)
 
 void GenerateIr::genSwitchStmt(const Parsing::SwitchStmt& stmt)
 {
-    auto realValue = genInstAndConvert(*stmt.condition);
+    std::shared_ptr<Value>  realValue = genInstAndConvert(*stmt.condition);
     const Type conditionType = stmt.condition->type->kind;
     for (const std::variant<i32, i64, u32, u64>& caseValue : stmt.cases) {
         const auto dst = std::make_shared<ValueVar>(makeTemporaryName(), conditionType);
@@ -525,7 +525,7 @@ std::shared_ptr<Value> GenerateIr::genInstAndConvert(const Parsing::Expr& parsin
 
 std::unique_ptr<ExprResult> GenerateIr::genCastInst(const Parsing::CastExpr& castExpr)
 {
-    auto result = genInstAndConvert(*castExpr.expr);
+    std::shared_ptr<Value> result = genInstAndConvert(*castExpr.expr);
     const Type type = castExpr.type->kind;
     const Type innerType = castExpr.expr->type->kind;
     const Identifier iden(makeTemporaryName());
@@ -580,7 +580,7 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPostfixInst(const Parsing::Unary
         one = std::make_shared<ValueConst>(1.0);
     else
         one = std::make_shared<ValueConst>(1);
-    auto original = genInst(*unaryExpr.operand);
+    const std::shared_ptr<ExprResult> original = genInst(*unaryExpr.operand);
     switch (original->kind) {
         case ExprResult::Kind::PlainOperand: {
             const auto plainOriginal = static_cast<const PlainOperand*>(original.get());
@@ -680,7 +680,7 @@ std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentE
             const auto derefLhs = static_cast<const DereferencedPointer*>(lhs.get());
             insts.emplace_back(std::make_unique<StoreInst>(
                 rhs, derefLhs->ptr, assignmentExpr.type->kind));
-            return std::make_unique<PlainOperand>(derefLhs->ptr);
+            return std::make_unique<PlainOperand>(rhs);
         }
     }
     std::unreachable();
@@ -708,10 +708,10 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryAndInst(const Parsing::BinaryEx
 std::unique_ptr<ExprResult> GenerateIr::genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr)
 {
     auto result = std::make_shared<ValueVar>(makeTemporaryName(), binaryExpr.type->kind);
-    auto lhs = genInstAndConvert(*binaryExpr.lhs);
+    std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
     Identifier trueLabelIden = makeTemporaryName();
     insts.emplace_back(std::make_unique<JumpIfNotZeroInst>(lhs, trueLabelIden));
-    auto rhs = genInstAndConvert(*binaryExpr.rhs);
+    std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
     insts.emplace_back(std::make_unique<JumpIfNotZeroInst>(rhs, trueLabelIden));
     auto zeroVal = std::make_shared<ValueConst>(0);
     insts.emplace_back(std::make_unique<CopyInst>(zeroVal, result, binaryExpr.type->kind));
@@ -748,16 +748,16 @@ std::unique_ptr<ExprResult> GenerateIr::genTernaryInst(const Parsing::TernaryExp
     Identifier falseLabelName = makeTemporaryName();
 
     const auto conditionalExpr = dynamic_cast<const Parsing::TernaryExpr*>(&ternaryExpr);
-    auto condition = genInstAndConvert(*conditionalExpr->condition);
+    std::shared_ptr<Value> condition = genInstAndConvert(*conditionalExpr->condition);
 
     insts.emplace_back(std::make_unique<JumpIfZeroInst>(condition, falseLabelName));
 
-    auto trueValue = genInstAndConvert(*conditionalExpr->trueExpr);
+    std::shared_ptr<Value> trueValue = genInstAndConvert(*conditionalExpr->trueExpr);
     insts.emplace_back(std::make_unique<CopyInst>(trueValue, result, trueValue->type));
     insts.emplace_back(std::make_unique<JumpInst>(endLabelIden));
 
     insts.emplace_back(std::make_unique<LabelInst>(falseLabelName));
-    auto falseValue = genInstAndConvert(*conditionalExpr->falseExpr);
+    std::shared_ptr<Value> falseValue = genInstAndConvert(*conditionalExpr->falseExpr);
     insts.emplace_back(std::make_unique<CopyInst>(falseValue, result, falseValue->type));
 
     insts.emplace_back(std::make_unique<LabelInst>(endLabelIden));

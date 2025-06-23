@@ -2,7 +2,6 @@
 
 namespace CodeGen {
 
-
 void FixUpInstructions::fixUp()
 {
     using Inst = Inst::Kind;
