@@ -21,16 +21,17 @@ public:
         : m_insts(insts), stackAlloc(stackAlloc) {}
 
     void visit(MoveInst& moveInst) override;
-    void visit(MoveSXInst& moveSXInst) override;
+    void visit(MoveSXInst& moveSX) override;
     void visit(MoveZeroExtendInst& moveZero) override;
     void visit(LeaInst& lea) override;
     void visit(BinaryInst& binary) override;
     void visit(CmpInst& cmpInst) override;
-    void visit(IdivInst& idivInst) override;
+    void visit(IdivInst& idiv) override;
     void visit(DivInst& div) override;
     void visit(Cvttsd2siInst& cvttsd2si) override;
     void visit(Cvtsi2sdInst& cvtsi2sd) override;
-    void visit(PushInst&) override;
+
+    void visit(PushInst& push) override {}
 
     void visit(CallInst&) override {}
     void visit(UnaryInst&) override {}

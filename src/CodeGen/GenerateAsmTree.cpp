@@ -543,11 +543,10 @@ void GenerateAsmTree::genUIntToDouble(const Ir::UIntToDoubleInst& uintToDouble)
 void GenerateAsmTree::genUIntToDoubleLong(const Ir::UIntToDoubleInst& uintToDouble)
 {
     std::shared_ptr<Operand> src = genOperand(uintToDouble.src);
-    std::shared_ptr<Operand> eax = std::make_unique<RegisterOperand>(RegType::AX, AsmType::LongWord);
     std::shared_ptr<Operand> rax = std::make_unique<RegisterOperand>(RegType::AX, AsmType::QuadWord);
     std::shared_ptr<Operand> dst = genOperand(uintToDouble.dst);
 
-    insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, eax, getAsmType(uintToDouble.type)));
+    insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, rax, getAsmType(uintToDouble.type)));
     insts.emplace_back(std::make_unique<Cvtsi2sdInst>(rax, dst, AsmType::QuadWord));
 }
 

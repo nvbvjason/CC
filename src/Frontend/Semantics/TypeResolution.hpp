@@ -98,12 +98,12 @@ inline bool illegalNonConstInitialization(const Parsing::VarDecl& varDecl,
     return !isConst && (global || varDecl.storage ==  Parsing::Declaration::StorageClass::Static);
 }
 
-inline bool isBinaryBitwise(const Parsing::BinaryExpr& binaryExpr)
+inline bool isBinaryBitwise(const Parsing::BinaryExpr::Operator binOper)
 {
     using Operator = Parsing::BinaryExpr::Operator;
-    return binaryExpr.op == Operator::BitwiseAnd || binaryExpr.op == Operator::BitwiseOr ||
-           binaryExpr.op == Operator::BitwiseXor || binaryExpr.op == Operator::LeftShift ||
-           binaryExpr.op == Operator::RightShift;
+    return binOper == Operator::BitwiseAnd || binOper == Operator::BitwiseOr ||
+           binOper == Operator::BitwiseXor || binOper == Operator::LeftShift ||
+           binOper == Operator::RightShift;
 }
 
 inline bool isBinaryComparison(const Parsing::BinaryExpr& binaryExpr)

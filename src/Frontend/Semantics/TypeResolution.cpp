@@ -213,7 +213,7 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
     const Type leftType = binaryExpr.lhs->type->kind;
     const Type rightType = binaryExpr.rhs->type->kind;
     const Type commonType = getCommonType(leftType, rightType);
-    if (commonType == Type::Double && (isBinaryBitwise(binaryExpr) || binaryExpr.op == Operator::Modulo)) {
+    if (commonType == Type::Double && (isBinaryBitwise(binaryExpr.op) || binaryExpr.op == Operator::Modulo)) {
         m_valid = false;
         return;
     }

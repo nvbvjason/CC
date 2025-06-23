@@ -52,5 +52,4 @@ std::unique_ptr<Parsing::Expr> deepCopyDeref(const Parsing::Expr& expr)
     }
     return nullptr;
 }
-
 } // Semantics
