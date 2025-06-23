@@ -16,6 +16,6 @@ public:
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
 };
 
-std::unique_ptr<Parsing::Expr> deepCopyDeref(const Parsing::Expr& derefExpr);
+std::unique_ptr<Parsing::Expr> deepCopy(const Parsing::Expr& derefExpr);
 } // Semantics
 #endif // CC_SEMANTICS_DESUGAR_COMPOUND_ASSIGN_HPP
