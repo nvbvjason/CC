@@ -37,6 +37,12 @@ void Lexer::scanToken()
         case '}':
             addToken(Type::CloseBrace);
             break;
+        case '[':
+            addToken(Type::OpenSqBracket);
+            break;
+        case ']':
+            addToken(Type::CloseSqBracket);
+            break;
         case ';':
             addToken(Type::Semicolon);
             break;

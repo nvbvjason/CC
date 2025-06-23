@@ -16,6 +16,7 @@ struct Token {
         // Bracketing Symbols
         OpenParen,       CloseParen,     // (  )
         OpenBrace,       CloseBrace,     // {  }
+        OpenSqBracket,   CloseSqBracket, // [  ]
 
         // Punctuation & Symbols
         Semicolon,                       // ;

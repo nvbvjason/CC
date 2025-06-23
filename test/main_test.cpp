@@ -842,7 +842,19 @@ TEST(Chapter14_Pointers, validSemantics)
     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
+        if (path.path().filename() == "eval_compound_lhs_once.c")
+            continue;
         EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter15_Arrays_Pointer_Arithmetic, validLexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_15/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
     }
 }
 

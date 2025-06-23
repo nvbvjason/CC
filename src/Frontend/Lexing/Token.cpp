@@ -12,6 +12,8 @@ std::string Token::getTypeName() const
         case Type::CloseParen:              return "Close Paren";
         case Type::OpenBrace:               return "Open Brace";
         case Type::CloseBrace:              return "Close Brace";
+        case Type::OpenSqBracket:           return "Open SqBracket";
+        case Type::CloseSqBracket:          return "Close SqBracket";
 
         // Punctuation & Symbols
         case Type::Semicolon:               return "Semicolon";
