@@ -15,6 +15,10 @@ public:
     void visit(VarDecl& varDecl) override;
     void visit(FunDecl& funDecl) override;
 
+    // Initializer
+    void visit(SingleInit& singleInit) override;
+    void visit(CompoundInit& compoundInit) override;
+
     void visit(Block& block) override;
 
     void visit(StmtBlockItem& stmtBlockItem) override;
@@ -24,6 +28,7 @@ public:
     void visit(VarType& varType) override {}
     void visit(FuncType& functionType) override;
     void visit(PointerType& pointerType) override;
+    void visit(ArrayType& arrayType) override;
 
     // ForInit
     void visit(DeclForInit& declForInit) override;
@@ -57,6 +62,7 @@ public:
     void visit(FuncCallExpr& functionCallExpr) override;
     void visit(DereferenceExpr& dereferenceExpr) override;
     void visit(AddrOffExpr& addrOffExpr) override;
+    void visit(SubscriptExpr& subscriptExpr) override;
 };
 
 } // Parsing

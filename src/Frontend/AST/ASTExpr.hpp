@@ -167,6 +167,19 @@ struct AddrOffExpr final : Expr {
 
     AddrOffExpr() = delete;
 };
+
+struct SubscriptExpr final : Expr {
+    std::unique_ptr<Expr> reference;
+    std::unique_ptr<Expr> index;
+
+    SubscriptExpr(std::unique_ptr<Expr>&& reference, std::unique_ptr<Expr>&& index)
+        : Expr(Kind::Subscript), reference(std::move(reference)), index(std::move(index)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    SubscriptExpr() = delete;
+};
 } // Parsing
 
 #endif // CC_PARSING_EXPR_TREE_HPP

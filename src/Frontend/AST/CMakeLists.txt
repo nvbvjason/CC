@@ -5,6 +5,8 @@ add_library(AST STATIC
         ASTExpr.cpp
         ASTBase.cpp
         ASTTypes.cpp
+        ASTInitializer.cpp
+        ASTInitializer.hpp
 )
 
 target_include_directories(AST PUBLIC

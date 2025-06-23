@@ -59,7 +59,7 @@ protected:
 struct Expr {
     enum class Kind {
         Constant, Var, Cast, Unary, Binary, Assignment, Ternary, FunctionCall,
-        Dereference, AddrOf
+        Dereference, AddrOf, Subscript
     };
     Kind kind;
     std::unique_ptr<TypeBase> type = nullptr;
@@ -117,6 +117,23 @@ struct Declaration {
 protected:
     explicit Declaration(const Kind kind, const StorageClass storageClass)
         : kind(kind), storage(storageClass) {}
+};
+
+struct Initializer {
+    enum class Kind : u8 {
+        Single, Compound
+    };
+    Kind kind;
+
+    virtual ~Initializer() = default;
+
+    virtual void accept(ASTVisitor& visitor) = 0;
+    virtual void accept(ConstASTVisitor& visitor) const = 0;
+
+    Initializer() = delete;
+protected:
+    explicit Initializer(const Kind kind)
+        : kind(kind) {}
 };
 
 } // Parsing

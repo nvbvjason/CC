@@ -1,6 +1,8 @@
 #include "ASTTraverser.hpp"
+#include "ASTInitializer.hpp"
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
+
 
 namespace Parsing {
 
@@ -29,6 +31,18 @@ void ASTTraverser::visit(Block& block)
         blockItem->accept(*this);
 }
 
+// Initializer
+void ASTTraverser::visit(SingleInit& singleInit)
+{
+    singleInit.exp->accept(*this);
+}
+
+void ASTTraverser::visit(CompoundInit& compoundInit)
+{
+    for (std::unique_ptr<Initializer>& initializer : compoundInit.exp)
+        initializer->accept(*this);
+}
+
 // BlockItem
 void ASTTraverser::visit(StmtBlockItem& stmtBlockItem)
 {
@@ -50,6 +64,11 @@ void ASTTraverser::visit(FuncType& functionType)
 void ASTTraverser::visit(PointerType& pointerType)
 {
     pointerType.referenced->accept(*this);
+}
+
+void ASTTraverser::visit(ArrayType& arrayType)
+{
+    arrayType.elementType->accept(*this);
 }
 
 // ForInit
@@ -179,4 +198,9 @@ void ASTTraverser::visit(AddrOffExpr& addrOffExpr)
     addrOffExpr.reference->accept(*this);
 }
 
+void ASTTraverser::visit(SubscriptExpr& subscriptExpr)
+{
+    subscriptExpr.reference->accept(*this);
+    subscriptExpr.index->accept(*this);
+}
 } // Parsing

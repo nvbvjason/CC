@@ -39,6 +39,17 @@ struct PointerType : TypeBase {
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 };
 
+struct ArrayType : TypeBase {
+    std::unique_ptr<TypeBase> elementType;
+    u64 size;
+
+    ArrayType(std::unique_ptr<TypeBase>&& t, u64 size)
+        : TypeBase(Type::Array), elementType(std::move(t)), size(size) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+};
+
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const VarType& typeBase);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType);

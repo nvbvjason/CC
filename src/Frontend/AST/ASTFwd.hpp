@@ -11,12 +11,14 @@ namespace Parsing {
     program = Program(declaration*)
     declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
 
-    variable_declaration = (identifier name, exp? init, type var_type, storage_class?)
+    variable_declaration = (identifier name, initializer? init, type var_type, storage_class?)
     function_definition = (identifier name, identifier* params, block? body, type var_type, storage_class?)
+    initializer = SingleInit(exp) | CompoundInit(initializer*)
 
     type = Int | Long | UInt | ULong | Double |
          | FunType(type* params, type ret)
          | Pointer(type referenced)
+         | Array(type element, int size)
     storage_class = Static | Extern
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
@@ -47,6 +49,7 @@ namespace Parsing {
         | FunctionCall(identifier, exp* args)
         | Dereference(exp)
         | AddrOf(exp)
+        | Subscript(exp, exp)
     unary_operator = Complement | Negate | Not | Plus
                    | PrefixIncrement | PostFixIncrement
                    | PrefixDecrement | PostFixDecrement
@@ -72,6 +75,11 @@ struct Declaration;
 struct FunDecl;
 struct VarDecl;
 
+// Initializer
+struct Initializer;
+struct SingleInit;
+struct CompoundInit;
+
 struct Block;
 
 // Block items
@@ -84,6 +92,7 @@ struct TypeBase;
 struct VarType;
 struct FuncType;
 struct PointerType;
+struct ArrayType;
 
 // For loop initialization
 struct ForInit;
@@ -120,6 +129,7 @@ struct TernaryExpr;
 struct FuncCallExpr;
 struct DereferenceExpr;
 struct AddrOffExpr;
+struct SubscriptExpr;
 } // Parsing
 
 #endif // CC_PARSING_AST_FWD_HPP

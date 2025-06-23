@@ -16,6 +16,10 @@ public:
     void visit(const VarDecl& varDecl) override;
     void visit(const FunDecl& funDecl) override;
 
+    // Initializer
+    void visit(const SingleInit& singleInit) override;
+    void visit(const CompoundInit& compoundInit) override;
+
     // BlockItem
     void visit(const StmtBlockItem& stmtBlockItem) override;
     void visit(const DeclBlockItem& declBlockItem) override;
@@ -24,6 +28,7 @@ public:
     void visit(const VarType& varType) override {}
     void visit(const FuncType& functionType) override;
     void visit(const PointerType& pointerType) override;
+    void visit(const ArrayType& arrayType) override;
 
     // ForInit
     void visit(const DeclForInit& declForInit) override;
@@ -57,6 +62,7 @@ public:
     void visit(const FuncCallExpr& functionCallExpr) override;
     void visit(const DereferenceExpr& dereferenceExpr) override;
     void visit(const AddrOffExpr& addrOffExpr) override;
+    void visit(const SubscriptExpr& subscriptExpr) override;
 };
 
 } // Parsing
