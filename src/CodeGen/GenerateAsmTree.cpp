@@ -62,7 +62,7 @@ std::vector<bool> GenerateAsmTree::genFunctionPushIntoRegs(const Ir::Function& f
     std::vector pushedIntoRegs(function.args.size(), false);
     i32 regIntIndex = 0;
     i32 regDoubleInex = 0;
-    for (i32 i = 0; i < function.args.size(); ++i) {
+    for (size_t i = 0; i < function.args.size(); ++i) {
         const AsmType type = getAsmType(function.argTypes[i]);
         std::shared_ptr<RegisterOperand> src;
         if (type != AsmType::Double && regIntIndex < intRegs.size())
@@ -82,7 +82,7 @@ std::vector<bool> GenerateAsmTree::genFunctionPushIntoRegs(const Ir::Function& f
 void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs)
 {
     i32 stackPtr = 2;
-    for (i32 i = 0; i < function.args.size(); ++i) {
+    for (size_t i = 0; i < function.args.size(); ++i) {
         if (pushedIntoRegs[i])
             continue;
         constexpr i32 stackAlignment = 8;
@@ -113,7 +113,7 @@ std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVari
         result->init = std::get<i64>(value->value);
     if (type == Type::U32)
         result->init = std::get<u32>(value->value);
-    if (type == Type::U64)
+    if (type == Type::U64 || type == Type::Pointer)
         result->init = std::get<u64>(value->value);
     return result;
 }
