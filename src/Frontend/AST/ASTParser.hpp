@@ -16,7 +16,7 @@ namespace Parsing {
 
 struct VarDecl final : Declaration {
     std::string name;
-    std::unique_ptr<Expr> init = nullptr;
+    std::unique_ptr<Initializer> init = nullptr;
     std::unique_ptr<TypeBase> type;
 
     explicit VarDecl(const StorageClass storageClass, std::string name, std::unique_ptr<TypeBase>&& type)

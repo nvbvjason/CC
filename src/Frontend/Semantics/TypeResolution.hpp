@@ -6,14 +6,14 @@
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
 #include "ASTTypes.hpp"
+#include "ASTInitializer.hpp"
+#include "TypeConversion.hpp"
 
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "TypeConversion.hpp"
-
- namespace Semantics {
+namespace Semantics {
 
 template<typename TargetType, Type TargetKind>
 void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
@@ -29,9 +29,10 @@ void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& co
         value = std::get<u64>(constExpr.value);
     else if (constExpr.type->kind == Type::Double)
         value = std::get<double>(constExpr.value);
-    varDecl.init = std::make_unique<Parsing::ConstExpr>(
-        value, std::make_unique<Parsing::VarType>(TargetKind)
-    );
+    if (varDecl.init->kind != Parsing::Initializer::Kind::Single)
+        return;
+    varDecl.init = std::make_unique<Parsing::SingleInit>(std::make_unique<Parsing::ConstExpr>(
+        value, std::make_unique<Parsing::VarType>(TargetKind)));
 }
 
 class TypeResolution : public Parsing::ASTTraverser {

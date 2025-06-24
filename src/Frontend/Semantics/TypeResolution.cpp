@@ -1,4 +1,5 @@
 #include "TypeResolution.hpp"
+#include "ASTInitializer.hpp"
 #include "ASTIr.hpp"
 #include "TypeConversion.hpp"
 #include "Utils.hpp"
@@ -108,14 +109,20 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     }
     if (varDecl.init == nullptr)
         return;
-    if (!Parsing::areEquivalent(*varDecl.type, *varDecl.init->type)) {
+    if (varDecl.init->kind != Parsing::Initializer::Kind::Single) {
+        m_valid = false;
+        return;
+    }
+    auto init = static_cast<Parsing::SingleInit*>(varDecl.init.get());
+    if (!Parsing::areEquivalent(*varDecl.type, *init->exp->type)) {
         if (varDecl.type->kind == Type::Pointer) {
-            if (!canConvertToNullPtr(*varDecl.init)) {
+            if (!canConvertToNullPtr(*init->exp)) {
                 m_valid = false;
                 return;
             }
             auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
-            varDecl.init = std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr));
+            varDecl.init = std::make_unique<Parsing::SingleInit>(
+                std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr)));
         }
     }
     assignTypeToArithmeticUnaryExpr(varDecl);
@@ -178,9 +185,12 @@ void TypeResolution::assignTypeToArithmeticBinaryExpr(
 
 void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
 {
-    if (varDecl.init->kind == Parsing::Expr::Kind::Constant &&
-        varDecl.type->kind != varDecl.init->type->kind) {
-        const auto constExpr = static_cast<const Parsing::ConstExpr*>(varDecl.init.get());
+    if (varDecl.init->kind != Parsing::Initializer::Kind::Single)
+        return;
+    auto init = static_cast<Parsing::SingleInit*>(varDecl.init.get());
+    if (init->exp->kind == Parsing::Expr::Kind::Constant &&
+        varDecl.type->kind != init->exp->type->kind) {
+        const auto constExpr = static_cast<const Parsing::ConstExpr*>(init->exp.get());
         if (varDecl.type->kind == Type::U32)
             convertConstantExpr<u32, Type::U32>(varDecl, *constExpr);
         else if (varDecl.type->kind == Type::U64)
@@ -193,10 +203,10 @@ void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
             convertConstantExpr<double, Type::Double>(varDecl, *constExpr);
         return;
         }
-    if (varDecl.type->kind != varDecl.init->type->kind) {
-        varDecl.init = std::make_unique<Parsing::CastExpr>(
+    if (varDecl.type->kind != init->exp->type->kind) {
+        varDecl.init = std::make_unique<Parsing::SingleInit>(std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(varDecl.type->kind),
-            std::move(varDecl.init));
+            std::move(init->exp)));
     }
 }
 

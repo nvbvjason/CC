@@ -4,7 +4,6 @@
 #define CC_FRONTEND_SYMBOL_TABLE_HPP
 
 #include "ShortTypes.hpp"
-#include "Types/Type.hpp"
 #include "ASTParser.hpp"
 
 #include <string>
@@ -71,6 +70,13 @@ public:
             if (defined)
                 set(State::Defined);
         }
+        [[nodiscard]] bool contains() const noexcept { return isSet(State::Contains); }
+        [[nodiscard]] bool isFromCurrentScope() const noexcept { return isSet(State::FromCurrentScope); }
+        [[nodiscard]] bool hasInternalLinkage() const noexcept { return isSet(State::InternalLinkage); }
+        [[nodiscard]] bool hasExternalLinkage() const noexcept { return isSet(State::ExternalLinkage); }
+        [[nodiscard]] bool isGlobal() const noexcept { return isSet(State::Global); }
+        [[nodiscard]] bool isDefined() const noexcept { return isSet(State::Defined); }
+        [[nodiscard]] bool isInArgs() const noexcept { return isSet(State::InArgs); }
     };
 private:
     struct Entry : FlagBase<Entry>  {

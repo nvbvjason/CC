@@ -6,10 +6,11 @@
 /*
     <program>               ::= { <declaration> }
     <declaration>           ::= <function_declaration> | <variable_declaration>
-    <variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
+    <variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
     <function_declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
     <declarator>            ::= "*" <declarator> | <direct-declarator>
-    <direct-declarator>     ::= <simple-declarator> [ <param-list> ]
+    <direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
+    <declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
     <param-list>            ::= "(" "void ")" | "(" <param> [ "," <param> ] ")"
     <param>                 ::= { <type-specifier> }+ <declarator>
     <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
@@ -17,6 +18,7 @@
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
     <block_item>            ::= <statement> | <declaration>
+    <initializer>           ::= <exp> | "{" <initializer> { "," <initializer> } [ "," ] "}"
     <for-init>              ::= <variable-declaration> | <exp> ";"
     <statement>             ::= "return" <exp> ";"
                               | <exp> ";"
@@ -39,7 +41,9 @@
     <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                               | <unary-exp>
     <unary-exp>             ::= <postfix-exp> | <unop> <unary-exp>
-    <postfix-exp>           ::= <factor> | <postfix_exp> <postfixop>
+    <postfix-exp>           ::= <factor>
+                              | <postfix_exp> <postfixop>
+                              | <postfix-exp> "[" <exp> "]"
     <factor>                ::= <const>
                               | <identifier>
                               | <identifier> "(" [ <argument-list> ] ")"
@@ -47,7 +51,8 @@
     <argument-list>         ::= <exp> { "," <exp> }
     <abstract-declarator>   ::= "*" [ <abstract-declarator> ]
                               | <direct-abstract-declarator>
-    <direct-abstarct-declarator> ::= "(" <abstract-declarator> ")"
+    <direct-abstract-declarator> ::= "(" <abstract-declarator> ")" { "[" <const> "]" }
+                                   | { "[" <const> "]" }+
     <unop>                  ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
     <postfixop>             ::= "--" | "++"
     <binop>                 ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
@@ -84,9 +89,8 @@ public:
         : c_tokens(c_tokens) {}
     bool programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
-    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
-                                                        std::unique_ptr<TypeBase>&& type,
-                                                        Storage storage);
+    [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(
+        const std::string& iden, std::unique_ptr<TypeBase>&& type, Storage storage);
     [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(const std::string& iden,
                                                         std::unique_ptr<TypeBase>&& type,
                                                         Storage storage,
@@ -94,6 +98,8 @@ public:
 
     [[nodiscard]] std::unique_ptr<Declarator> declaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> directDeclaratorParse();
+    [[nodiscard]] std::unique_ptr<Declarator> suffixDeclaratorParse(
+        std::unique_ptr<Declarator>&& declarator);
     [[nodiscard]] std::unique_ptr<Declarator> simpleDeclaratorParse();
     [[nodiscard]] std::unique_ptr<ParamInfo> paramParse();
     [[nodiscard]] std::unique_ptr<std::vector<ParamInfo>> paramsListParse();
@@ -103,6 +109,7 @@ public:
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
+    [[nodiscard]] std::unique_ptr<Initializer> initializerParse();
     [[nodiscard]] std::tuple<std::unique_ptr<ForInit>, bool> forInitParse();
 
     [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
@@ -126,8 +133,10 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> addrOFExprParse();
     [[nodiscard]] std::unique_ptr<Expr> dereferenceExprParse();
     [[nodiscard]] std::unique_ptr<Expr> castExpr();
-    [[nodiscard]] std::unique_ptr<Expr> exprPostfix();
+    [[nodiscard]] std::unique_ptr<Expr> postfixExprParse();
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
+
+    [[nodiscard]] std::unique_ptr<ConstExpr> integerParse();
 
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> abstractDeclaratorParse();
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> directAbstractDeclaratorParse();
@@ -153,6 +162,8 @@ private:
 
 bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens);
 Declaration::StorageClass getStorageClass(Lexing::Token::Type tokenType);
+bool isAboveZero(const ConstExpr& constExpr);
+u64 getArraySize(const ConstExpr& constExpr);
 inline bool Parser::continuePrecedenceClimbing(const i32 minPrecedence, const TokenType nextToken)
 {
     return (Operators::isBinaryOperator(nextToken) ||

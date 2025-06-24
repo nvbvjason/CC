@@ -8,6 +8,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "ASTInitializer.hpp"
+
 namespace Ir {
 static Identifier makeTemporaryName();
 static std::string generateCaseLabelName(std::string before);
@@ -44,7 +46,7 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
 std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& varDecl)
 {
     const auto entry = m_symbolTable.lookup(varDecl.name);
-    const bool defined = entry.isSet(SymbolTable::State::Defined);
+    const bool defined = entry.isDefined();
     if (defined && varDecl.init == nullptr)
         return nullptr;
     if (!defined && varDecl.storage == Storage::Extern)
@@ -60,8 +62,9 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
 
 std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl& varDecl, const bool defined)
 {
+    auto init = static_cast<const Parsing::SingleInit*>(varDecl.init.get());
     if (defined)
-        return genInstAndConvert(*varDecl.init);
+        return genInstAndConvert(*init->exp);
     switch (varDecl.type->kind) {
         case Type::I32:
             return std::make_shared<ValueConst>(0);
@@ -81,8 +84,7 @@ std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl&
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDecl& parsingFunction)
 {
-    using State = SymbolTable::State;
-    bool global = !m_symbolTable.lookup(parsingFunction.name).isSet(State::InternalLinkage);
+    bool global = !m_symbolTable.lookup(parsingFunction.name).hasInternalLinkage();
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);
     m_global = true;;
     insts = std::move(functionTacky->insts);
@@ -155,7 +157,8 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
         return genStaticLocal(*varDecl);
     if (varDecl->init == nullptr)
         return;
-    std::shared_ptr<Value> value = genInstAndConvert(*varDecl->init);
+    const auto init = static_cast<const Parsing::SingleInit*>(varDecl->init.get());
+    std::shared_ptr<Value> value = genInstAndConvert(*init->exp);
     auto temporary = std::make_shared<ValueVar>(makeTemporaryName(), varDecl->type->kind);
     insts.push_back(std::make_unique<CopyInst>(value, temporary, varDecl->type->kind));
     const Identifier iden(varDecl->name);

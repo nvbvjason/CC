@@ -47,15 +47,15 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
         return false;
     if (symbolTable.inFunc() && funDecl.body != nullptr)
         return false;
-    if (!returnedEntry.isSet(Flag::Contains))
+    if (!returnedEntry.contains())
         return true;
-    if (returnedEntry.isSet(Flag::Defined) && funDecl.body != nullptr)
+    if (returnedEntry.isDefined() && funDecl.body != nullptr)
         return false;
-    if (returnedEntry.typeBase->kind != funDecl.type->kind && returnedEntry.isSet(Flag::FromCurrentScope))
+    if (returnedEntry.typeBase->kind != funDecl.type->kind && returnedEntry.isFromCurrentScope())
         return false;
-    if (returnedEntry.typeBase->kind != funDecl.type->kind && returnedEntry.isSet(Flag::Global))
+    if (returnedEntry.typeBase->kind != funDecl.type->kind && returnedEntry.isGlobal())
         return false;
-    if (returnedEntry.isSet(Flag::ExternalLinkage) && funDecl.storage == Storage::Static)
+    if (returnedEntry.hasExternalLinkage() && funDecl.storage == Storage::Static)
         return false;
     if (returnedEntry.typeBase->kind == Type::Function) {
         const auto funcType = static_cast<const Parsing::FuncType*>(returnedEntry.typeBase.get());
@@ -102,20 +102,20 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
 bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTable,
                     const SymbolTable::ReturnedEntry& prevEntry)
 {
-    if (prevEntry.isSet(Flag::InArgs))
+    if (prevEntry.isInArgs())
         return false;
-    if (!prevEntry.isSet(Flag::Contains))
+    if (!prevEntry.contains())
         return true;
     if (!symbolTable.inFunc())
         return isValidVarDeclGlobal(varDecl, prevEntry);
     if (isIllegalVarRedecl(varDecl, prevEntry))
         return false;
     if (varDecl.storage == Storage::Extern
-        && prevEntry.isSet(Flag::ExternalLinkage)
+        && prevEntry.hasExternalLinkage()
         && prevEntry.typeBase->kind != varDecl.type->kind)
         return false;
     if (prevEntry.typeBase->kind != varDecl.type->kind &&
-        prevEntry.isSet(Flag::FromCurrentScope) &&
+        prevEntry.isFromCurrentScope() &&
         varDecl.storage != Storage::Extern)
         return false;
     return true;
@@ -125,11 +125,11 @@ bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::Re
 {
     if (prevEntry.typeBase->kind != varDecl.type->kind)
         return false;
-    if (varDecl.init != nullptr && prevEntry.isSet(Flag::Defined))
+    if (varDecl.init != nullptr && prevEntry.isDefined())
         return false;
-    if (hasInternalLinkageVar(varDecl) && !prevEntry.isSet(Flag::InternalLinkage))
+    if (hasInternalLinkageVar(varDecl) && !prevEntry.hasInternalLinkage())
         return false;
-    if (varDecl.storage == Storage::None && prevEntry.isSet(Flag::InternalLinkage))
+    if (varDecl.storage == Storage::None && prevEntry.hasInternalLinkage())
         return false;
     return true;
 }
@@ -141,13 +141,13 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
         m_valid = false;
         return;
     }
-    if (returnedEntry.isSet(Flag::ExternalLinkage) && !returnedEntry.isSet(Flag::Global))
+    if (returnedEntry.hasExternalLinkage() && !returnedEntry.isGlobal())
         varExpr.referingTo = ReferingTo::Extern;
     else if (!returnedEntry.isSet(Flag::InArgs))
         varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
-    if (returnedEntry.isSet(Flag::ExternalLinkage))
+    if (returnedEntry.hasExternalLinkage())
         varExpr.referingTo = ReferingTo::Extern;
-    if (returnedEntry.isSet(Flag::InternalLinkage))
+    if (returnedEntry.hasInternalLinkage())
         varExpr.referingTo = ReferingTo::Static;
     varExpr.type = Parsing::deepCopy(*returnedEntry.typeBase);
     ASTTraverser::visit(varExpr);
@@ -155,9 +155,9 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
 
 bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::ReturnedEntry& returnedEntry)
 {
-    if (returnedEntry.isSet(Flag::InArgs))
+    if (returnedEntry.isInArgs())
         return true;
-    if (!returnedEntry.isSet(Flag::Contains))
+    if (!returnedEntry.contains())
         return false;
     if (returnedEntry.typeBase->kind == Type::Function)
         return false;
@@ -178,7 +178,7 @@ void VariableResolution::visit(Parsing::FuncCallExpr& funcCallExpr)
 
 bool isValidFuncCall(const Parsing::FuncCallExpr& funCallExpr, const SymbolTable::ReturnedEntry& returnedEntry)
 {
-    if (!returnedEntry.isSet(Flag::Contains))
+    if (!returnedEntry.contains())
         return false;
     if (returnedEntry.typeBase->kind != Type::Function)
         return false;
@@ -193,8 +193,8 @@ void VariableResolution::addFuncToSymbolTable(
     if (prevEntry.isSet(Flag::Contains) && prevEntry.isSet(Flag::Global))
         global = true;
     const bool defined = funDecl.body != nullptr;
-    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || funDecl.storage == Storage::Static;
-    const bool external = !prevEntry.isSet(Flag::InternalLinkage) && funDecl.storage != Storage::Static;
+    const bool internal = prevEntry.hasInternalLinkage() || funDecl.storage == Storage::Static;
+    const bool external = !prevEntry.hasInternalLinkage() && funDecl.storage != Storage::Static;
     m_symbolTable.addEntry(funDecl.name, funDecl.name,
                            *Parsing::deepCopy(*funDecl.type), internal, external, global, defined);
 }
@@ -205,9 +205,9 @@ void VariableResolution::addVarToSymbolTable(
     const SymbolTable::ReturnedEntry& prevEntry)
 {
     const bool global = !m_symbolTable.inFunc();
-    const bool defined = prevEntry.isSet(Flag::Defined) || varDecl.init != nullptr;
-    const bool internal = prevEntry.isSet(Flag::InternalLinkage) || hasInternalLinkageVar(varDecl);
-    const bool external = !prevEntry.isSet(Flag::InternalLinkage) &&
+    const bool defined = prevEntry.isDefined() || varDecl.init != nullptr;
+    const bool internal = prevEntry.hasInternalLinkage() || hasInternalLinkageVar(varDecl);
+    const bool external = !prevEntry.hasInternalLinkage() &&
                            hasExternalLinkageVar(varDecl, !m_symbolTable.inFunc());
     if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
         m_symbolTable.addEntry(

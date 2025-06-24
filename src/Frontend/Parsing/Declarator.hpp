@@ -10,7 +10,7 @@ namespace Parsing {
 
 struct Declarator {
     enum class Kind {
-        Identifier, Pointer, Function
+        Identifier, Pointer, Array, Function
     };
     Kind kind;
 
@@ -37,6 +37,16 @@ struct PointerDeclarator : Declarator {
     PointerDeclarator() = delete;
 };
 
+struct ArrayDeclarator : Declarator {
+    std::unique_ptr<Declarator> declarator;
+    u64 size;
+
+    explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, const u64 size)
+        : Declarator(Kind::Array), declarator(std::move(declarator)), size(size) {}
+
+    ArrayDeclarator() = delete;
+};
+
 struct ParamInfo {
     std::unique_ptr<TypeBase> type;
     std::unique_ptr<Declarator> declarator;
@@ -59,7 +69,7 @@ struct FunctionDeclarator : Declarator {
 
 struct AbstractDeclarator {
     enum class Kind {
-        Pointer, Base
+        Pointer, Array, Base
     };
     Kind kind;
 
@@ -72,6 +82,16 @@ struct AbstractPointer : AbstractDeclarator {
     std::unique_ptr<AbstractDeclarator> inner;
     explicit AbstractPointer(std::unique_ptr<AbstractDeclarator>&& i)
         : AbstractDeclarator(Kind::Pointer), inner(std::move(i)) {}
+};
+
+struct AbstractArray : AbstractDeclarator {
+    std::unique_ptr<AbstractDeclarator> inner;
+    size_t size;
+
+    explicit AbstractArray(std::unique_ptr<AbstractDeclarator>&& i, const size_t size)
+        : AbstractDeclarator(Kind::Array), inner(std::move(i)), size(size) {}
+
+    AbstractArray() = delete;
 };
 
 struct AbstractBase : AbstractDeclarator {

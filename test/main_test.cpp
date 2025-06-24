@@ -858,6 +858,26 @@ TEST(Chapter15_Arrays_Pointer_Arithmetic, validLexingValid)
     }
 }
 
+TEST(Chapter15_Arrays_Pointer_Arithmetic, parsingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_15/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter15_Arrays_Pointer_Arithmetic, parsingInvalid)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_15/invalid_parse";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     const int result = RUN_ALL_TESTS();
