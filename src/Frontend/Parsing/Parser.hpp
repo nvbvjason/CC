@@ -68,6 +68,11 @@
     <double>                ::= ? A floating-point constant token ?
 */
 
+#include <tuple>
+#include <tuple>
+#include <tuple>
+#include <tuple>
+
 #include "ASTParser.hpp"
 #include "Operators.hpp"
 #include "Declarator.hpp"
@@ -85,8 +90,8 @@ class Parser {
     size_t m_current = 0;
 public:
     Parser() = delete;
-    explicit Parser(const std::vector<Lexing::Token> &c_tokens)
-        : c_tokens(c_tokens) {}
+    explicit Parser(std::vector<Lexing::Token> c_tokens)
+        : c_tokens(std::move(c_tokens)) {}
     bool programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(
@@ -106,6 +111,14 @@ public:
 
     [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
         declaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+        declaratorFunctionProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+        declaratorArrayProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+        declaratorPointerProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+        declaratorIdentifierProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
@@ -140,9 +153,14 @@ public:
 
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> abstractDeclaratorParse();
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> directAbstractDeclaratorParse();
+    [[nodiscard]] static std::unique_ptr<TypeBase> abstarctDeclaratorPointerProcess(
+        std::unique_ptr<AbstractDeclarator>& abstractDeclarator, std::unique_ptr<TypeBase>& typeBase);
+    [[nodiscard]] static std::unique_ptr<TypeBase> abstractDeclaratorArrayProcess(
+        std::unique_ptr<AbstractDeclarator>& abstractDeclarator,
+        std::unique_ptr<TypeBase>& typeBase);
 
     [[nodiscard]] static std::unique_ptr<TypeBase> abstractDeclaratorProcess(
-        std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, Type type);
+        std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<TypeBase>&& typeBase);
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
     [[nodiscard]] Type typeParse();
@@ -150,7 +168,7 @@ public:
     [[nodiscard]] static Type typeResolve(std::vector<TokenType>& tokens);
 private:
     bool match(const TokenType& type);
-    Lexing::Token advance() { return c_tokens[m_current++]; }
+    Lexing::Token advance();
     [[nodiscard]] bool isAtEnd() const { return peekTokenType() == TokenType::EndOfFile; }
     [[nodiscard]] static bool continuePrecedenceClimbing(i32 minPrecedence, TokenType nextToken);
     [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }

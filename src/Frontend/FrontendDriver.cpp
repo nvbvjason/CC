@@ -115,9 +115,7 @@ i32 lex(std::vector<Lexing::Token> &lexemes, const std::filesystem::path& inputF
 bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode)
 {
     Parsing::Parser parser(tokens);
-    if (!parser.programParse(programNode))
-        return false;
-    return true;
+    return parser.programParse(programNode);
 }
 
 Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable)
