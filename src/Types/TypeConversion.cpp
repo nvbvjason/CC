@@ -7,6 +7,8 @@ Type getCommonType(const Type t1, const Type t2)
 {
     assert(t1 != Type::Function);
     assert(t2 != Type::Function);
+    assert(t1 != Type::Array);
+    assert(t2 != Type::Array);
     if (t1 == t2)
         return t1;
     if (t1 == Type::Double || t2 == Type::Double)
@@ -42,6 +44,7 @@ i32 getSize(const Type t)
 {
     assert(t != Type::Invalid);
     assert(t != Type::Function);
+    assert(t != Type::Array);
     switch (t) {
         case Type::I64:
         case Type::U64:

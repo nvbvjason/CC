@@ -26,8 +26,8 @@ void TypeResolution::visit(Parsing::FunDecl& funDecl)
         m_definedFunctions.insert(funDecl.name);
     m_global = false;
     const auto type = static_cast<Parsing::FuncType*>(funDecl.type.get());
-    FuncEntry funcEntry(type->params, type->returnType->kind, funDecl.storage,
-        funDecl.body != nullptr);
+    FuncEntry funcEntry(
+        type->params, type->returnType->kind, funDecl.storage, funDecl.body != nullptr);
     m_functions.emplace_hint(it, funDecl.name, std::move(funcEntry));
     ASTTraverser::visit(funDecl);
     m_global = true;
@@ -284,6 +284,12 @@ void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
 }
 
+bool TypeResolution::isCastFromPointerToAndFromDouble(const Type outerType, const Type innerType)
+{
+    return (outerType == Type::Double && innerType == Type::Pointer) ||
+           (outerType == Type::Pointer && innerType == Type::Double);
+}
+
 void TypeResolution::visit(Parsing::CastExpr& castExpr)
 {
     ASTTraverser::visit(castExpr);
@@ -291,8 +297,7 @@ void TypeResolution::visit(Parsing::CastExpr& castExpr)
         return;
     const Type outerType = castExpr.type->kind;
     const Type innerType = castExpr.expr->type->kind;
-    if ((outerType == Type::Double && innerType == Type::Pointer) ||
-        (outerType == Type::Pointer && innerType == Type::Double)) {
+    if (isCastFromPointerToAndFromDouble(outerType, innerType)) {
         m_valid = false;
         return;
     }

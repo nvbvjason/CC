@@ -74,6 +74,7 @@ public:
     void visit(Parsing::UnaryExpr& unaryExpr) override;
     void visit(Parsing::BinaryExpr& binaryExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
+    bool isCastFromPointerToAndFromDouble(Type outerType, Type innerType);
     void visit(Parsing::CastExpr& castExpr) override;
     void visit(Parsing::TernaryExpr& ternaryExpr) override;
     void visit(Parsing::AddrOffExpr& addrOffExpr) override;

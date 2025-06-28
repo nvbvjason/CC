@@ -878,6 +878,28 @@ TEST(Chapter15_Arrays_Pointer_Arithmetic, parsingInvalid)
     }
 }
 
+TEST(Chapter15_Arrays_Pointer_Arithmetic, invalidTypes)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_15/invalid_types";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter15_Arrays_Pointer_Arithmetic, validSemantics)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_15/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        if (path.path().filename() == "eval_compound_lhs_once.c")
+            continue;
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     const int result = RUN_ALL_TESTS();

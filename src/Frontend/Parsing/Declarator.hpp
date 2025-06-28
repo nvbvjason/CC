@@ -99,6 +99,24 @@ struct AbstractBase : AbstractDeclarator {
         : AbstractDeclarator(Kind::Base) {}
 };
 
+[[nodiscard]] std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+declaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+[[nodiscard]] std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+    declaratorFunctionProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+[[nodiscard]] std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+    declaratorArrayProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+[[nodiscard]] std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+    declaratorPointerProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+[[nodiscard]] std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+    declaratorIdentifierProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+
+[[nodiscard]] std::unique_ptr<TypeBase> abstarctDeclaratorPointerProcess(
+std::unique_ptr<AbstractDeclarator>& abstractDeclarator, std::unique_ptr<TypeBase>& typeBase);
+[[nodiscard]] std::unique_ptr<TypeBase> abstractDeclaratorArrayProcess(
+    std::unique_ptr<AbstractDeclarator>& abstractDeclarator, std::unique_ptr<TypeBase>& typeBase);
+[[nodiscard]] std::unique_ptr<TypeBase> abstractDeclaratorProcess(
+    std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<TypeBase>&& typeBase);
+
 } // Parsing
 
 #endif // CC_PARSING_DECLARATOR_HPP
