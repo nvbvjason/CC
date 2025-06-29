@@ -15,7 +15,6 @@
 #include <filesystem>
 #include <format>
 
-
 static void printIr(const Ir::Program& irProgram);
 static CodeGen::Program codegen(const Ir::Program& irProgram);
 static bool fileExists(const std::filesystem::path& name);
@@ -121,7 +120,7 @@ void printIr(const Ir::Program& irProgram)
 
 void fixAsm(const CodeGen::Program& codegenProgram)
 {
-    for (auto& topLevel : codegenProgram.topLevels) {
+    for (const std::unique_ptr<CodeGen::TopLevel>& topLevel : codegenProgram.topLevels) {
         if (topLevel->kind != CodeGen::TopLevel::Kind::Function)
             continue;
         const auto function = dyn_cast<CodeGen::Function>(topLevel.get());

@@ -1,11 +1,10 @@
 #include "Assembly.hpp"
+#include "DynCast.hpp"
 
 #include <array>
 #include <string>
 #include <iomanip>
 #include <unordered_map>
-
-#include "DynCast.hpp"
 
 namespace CodeGen {
 

@@ -105,7 +105,8 @@ std::string Token::getTypeName() const
 
 std::ostream& operator<<(std::ostream& os, const Token& token)
 {
-    os << "line: " << token.line() << " column: " << token.column() << " type: " << token.getTypeName() << " lexeme: " << token.m_lexeme;
+    os << "line: " << token.line() << " column: " << token.column() << " type: " <<
+        token.getTypeName() << " lexeme: " << token.m_lexeme;
     return os;
 }
 

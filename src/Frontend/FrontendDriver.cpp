@@ -62,6 +62,15 @@ std::tuple<Ir::Program, StateCode> FrontendDriver::run() const
     return {std::move(irProgram), StateCode::Continue};
 }
 
+i32 lex(std::vector<Lexing::Token> &lexemes, const std::filesystem::path& inputFile)
+{
+    const std::string source = preProcess(inputFile);
+    Lexing::Lexer lexer(source);
+    if (const i32 err = lexer.getLexemes(lexemes); err != 0)
+        return err;
+    return 0;
+}
+
 std::string getSourceCode(const std::filesystem::path& inputFile)
 {
     std::ifstream file(inputFile);
@@ -103,15 +112,6 @@ void printParsingAst(const Parsing::Program& program)
     std::cout << printer.getString();
 }
 
-i32 lex(std::vector<Lexing::Token> &lexemes, const std::filesystem::path& inputFile)
-{
-    const std::string source = preProcess(inputFile);
-    Lexing::Lexer lexer(source);
-    if (const i32 err = lexer.getLexemes(lexemes); err != 0)
-        return err;
-    return 0;
-}
-
 bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode)
 {
     Parsing::Parser parser(tokens);
@@ -129,7 +129,8 @@ Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable)
 static std::string preProcess(const std::filesystem::path& file)
 {
     const std::filesystem::path& inputFile(file);
-    const std::filesystem::path generatedFilesDir = std::filesystem::path(PROJECT_ROOT_DIR) / "generated_files";
+    const std::filesystem::path generatedFilesDir = std::filesystem::path(PROJECT_ROOT_DIR)
+    / "generated_files";
     const std::filesystem::path generatedFile = inputFile.string() + ".i";
     std::string command = "gcc -E -P ";
     command += inputFile.string();

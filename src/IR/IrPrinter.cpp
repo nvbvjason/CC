@@ -1,8 +1,7 @@
 #include "IrPrinter.hpp"
+#include "DynCast.hpp"
 
 #include <sstream>
-
-#include "DynCast.hpp"
 
 namespace Ir {
 

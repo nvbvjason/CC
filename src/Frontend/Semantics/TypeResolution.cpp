@@ -5,6 +5,8 @@
 #include "TypeConversion.hpp"
 #include "Utils.hpp"
 
+#include <cassert>
+
 namespace Semantics {
 bool TypeResolution::validate(Parsing::Program& program)
 {
@@ -363,6 +365,7 @@ bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternary
 
 void TypeResolution::visit(Parsing::AddrOffExpr& addrOffExpr)
 {
+    assert(addrOffExpr.reference && "AddrOfExpr has no reference!");
     ASTTraverser::visit(addrOffExpr);
     if (!m_valid)
         return;

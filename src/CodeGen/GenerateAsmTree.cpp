@@ -3,12 +3,11 @@
 #include "AsmAST.hpp"
 #include "FixUpInstructions.hpp"
 #include "Types/TypeConversion.hpp"
+#include "DynCast.hpp"
 
 #include <array>
 #include <cassert>
 #include <random>
-
-#include "DynCast.hpp"
 
 namespace {
 using RegType = CodeGen::Operand::RegKind;

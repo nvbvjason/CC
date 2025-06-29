@@ -38,6 +38,7 @@ class TypeResolution final : public Parsing::ASTTraverser {
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
+
     bool m_valid = true;
     bool m_isConst = true;
     bool m_global = true;
