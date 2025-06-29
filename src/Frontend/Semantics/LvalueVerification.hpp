@@ -13,7 +13,7 @@ class LvalueVerification : public Parsing::ConstASTTraverser {
 public:
     LvalueVerification() = default;
 
-    bool resolve(Parsing::Program& program);
+    bool resolve(const Parsing::Program& program);
 
     void visit(const Parsing::UnaryExpr& unaryExpr) override;
     void visit(const Parsing::AssignmentExpr& assignmentExpr) override;

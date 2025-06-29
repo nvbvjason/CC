@@ -1,6 +1,7 @@
 #include "LoopLabeling.hpp"
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
+#include "DynCast.hpp"
 
 #include <cassert>
 
@@ -23,8 +24,8 @@ void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
         valid = false;
         return;
     }
-    const auto constantExpr = static_cast<const Parsing::ConstExpr*>(caseStmt.condition.get());
-    if (constantExpr->type->kind == Type::Double || constantExpr->type->kind == Type::Pointer) {
+    const auto constantExpr = dyn_cast<const Parsing::ConstExpr>(caseStmt.condition.get());
+    if (constantExpr->type->type == Type::Double || constantExpr->type->type == Type::Pointer) {
         valid = false;
         return;
     }
@@ -127,7 +128,7 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     switchStmt.identifier = makeTemporary("switch");
     breakLabel = switchStmt.identifier;
     switchLabel = switchStmt.identifier;
-    conditionType = switchStmt.condition->type->kind;
+    conditionType = switchStmt.condition->type->type;
     if (conditionType == Type::Double || conditionType == Type::Pointer) {
         valid = false;
         return;

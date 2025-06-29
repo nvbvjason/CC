@@ -1,6 +1,6 @@
 #include "Declarator.hpp"
-
 #include "ASTTypes.hpp"
+#include "DynCast.hpp"
 
 namespace Parsing {
 std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> declaratorProcess(
@@ -24,28 +24,28 @@ std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> dec
 std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> declaratorFunctionProcess(
     std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase)
 {
-    const auto funcDecl = static_cast<FunctionDeclarator*>(declarator.get());
-    if (funcDecl->declarator->kind != Declarator::Kind::Identifier)
+    const auto functionDeclarator = dyn_cast<FunctionDeclarator>(declarator.get());
+    if (functionDeclarator->declarator->kind != Declarator::Kind::Identifier)
         return {};
     std::vector<std::unique_ptr<TypeBase>> paramTypes;
     std::vector<std::string> params;
-    for (ParamInfo& param : funcDecl->params) {
+    for (ParamInfo& param : functionDeclarator->params) {
         auto [iden, typeBase, _] =
                 declaratorProcess(std::move(param.declarator), std::move(param.type));
-        if (typeBase->kind == Type::Function)
+        if (typeBase->type == Type::Function)
             return {};
         params.emplace_back(std::move(iden));
         paramTypes.emplace_back(std::move(typeBase));
     }
-    const auto idenDecl = static_cast<IdentifierDeclarator*>(funcDecl->declarator.get());
+    const auto identifierDeclarator = dyn_cast<IdentifierDeclarator>(functionDeclarator->declarator.get());
     auto funcType = std::make_unique<FuncType>(std::move(typeBase), std::move(paramTypes));
-    return std::make_tuple(std::move(idenDecl->identifier), std::move(funcType), std::move(params));
+    return std::make_tuple(std::move(identifierDeclarator->identifier), std::move(funcType), std::move(params));
 }
 
 std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> declaratorArrayProcess(
     std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase)
 {
-    const auto arrayDeclarator = static_cast<ArrayDeclarator*>(declarator.get());
+    const auto arrayDeclarator = dyn_cast<ArrayDeclarator>(declarator.get());
     auto array = std::make_unique<ArrayType>(std::move(typeBase), arrayDeclarator->size);
     return declaratorProcess(std::move(arrayDeclarator->declarator), std::move(array));
 }
@@ -54,14 +54,14 @@ std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> dec
         std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase)
 {
     auto derivedType = std::make_unique<PointerType>(std::move(typeBase));
-    const auto pointerDecl = static_cast<PointerDeclarator*>(declarator.get());
+    const auto pointerDecl = dyn_cast<PointerDeclarator>(declarator.get());
     return declaratorProcess(std::move(pointerDecl->inner), std::move(derivedType));
 }
 
 std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> declaratorIdentifierProcess(
         std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase)
 {
-    const auto iden = static_cast<IdentifierDeclarator*>(declarator.get());
+    const auto iden = dyn_cast<IdentifierDeclarator>(declarator.get());
     return std::make_tuple(std::move(iden->identifier), std::move(typeBase), std::move(std::vector<std::string>()));
 }
 
@@ -85,7 +85,7 @@ std::unique_ptr<TypeBase> abstarctDeclaratorPointerProcess(
     std::unique_ptr<AbstractDeclarator>& abstractDeclarator, std::unique_ptr<TypeBase>& typeBase)
 {
     typeBase = std::make_unique<PointerType>(std::move(typeBase));
-    const auto inner = static_cast<AbstractPointer*>(abstractDeclarator.get());
+    const auto inner = dyn_cast<AbstractPointer>(abstractDeclarator.get());
     abstractDeclarator = std::move(inner->inner);
     return abstractDeclaratorProcess(std::move(abstractDeclarator), std::move(typeBase));
 }
@@ -93,7 +93,7 @@ std::unique_ptr<TypeBase> abstarctDeclaratorPointerProcess(
 std::unique_ptr<TypeBase> abstractDeclaratorArrayProcess(
     std::unique_ptr<AbstractDeclarator>& abstractDeclarator, std::unique_ptr<TypeBase>& typeBase)
 {
-    auto abstractArray = static_cast<AbstractArray*>(abstractDeclarator.get());
+    auto abstractArray = dyn_cast<AbstractArray>(abstractDeclarator.get());
     typeBase = std::make_unique<ArrayType>(std::move(typeBase), abstractArray->size);
     abstractDeclarator = std::move(abstractArray->inner);
     return abstractDeclaratorProcess(std::move(abstractDeclarator), std::move(typeBase));

@@ -15,7 +15,7 @@ class GenerateIr {
     using Storage = Parsing::Declaration::StorageClass;
 
     bool m_global = true;
-    std::vector<std::unique_ptr<Instruction>> insts;
+    std::vector<std::unique_ptr<Inst>> insts;
     SymbolTable& m_symbolTable;
     std::unordered_set<std::string> m_writtenGlobals;
     std::vector<std::unique_ptr<TopLevel>> m_topLevels;

@@ -8,6 +8,8 @@
 #include <cassert>
 #include <random>
 
+#include "DynCast.hpp"
+
 namespace {
 using RegType = CodeGen::Operand::RegKind;
 constexpr std::array intRegs = {RegType::DI, RegType::SI, RegType::DX,
@@ -29,15 +31,13 @@ void GenerateAsmTree::genProgram(const Ir::Program &program, Program &programCod
 std::unique_ptr<TopLevel> GenerateAsmTree::genTopLevel(const Ir::TopLevel& topLevel)
 {
     using Type = Ir::TopLevel::Kind;
-    switch (topLevel.type) {
+    switch (topLevel.kind) {
         case Type::Function: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto function = static_cast<const Ir::Function*>(&topLevel);
+            const auto function = dyn_cast<const Ir::Function>(&topLevel);
             return genFunction(*function);
         }
         case Type::StaticVariable: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto staticVariable = static_cast<const Ir::StaticVariable*>(&topLevel);
+            const auto staticVariable = dyn_cast<const Ir::StaticVariable>(&topLevel);
             return genStaticVariable(*staticVariable);
         }
         assert("generateTopLevel idk type");
@@ -51,7 +51,7 @@ std::unique_ptr<TopLevel> GenerateAsmTree::genFunction(const Ir::Function& funct
     insts.clear();
     const std::vector<bool> pushedIntoRegs = genFunctionPushIntoRegs(function);
     genFunctionPushOntoStack(function, pushedIntoRegs);
-    for (const std::unique_ptr<Ir::Instruction>& inst : function.insts)
+    for (const std::unique_ptr<Ir::Inst>& inst : function.insts)
         genInst(inst);
     functionCodeGen->instructions = std::move(insts);
     return functionCodeGen;
@@ -97,7 +97,7 @@ void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable)
 {
     const Type type = staticVariable.type;
-    const auto value = static_cast<const Ir::ValueConst*>(staticVariable.value.get());
+    const auto value = dyn_cast<const Ir::ValueConst>(staticVariable.value.get());
     if (type == Type::Double) {
         const Identifier identifier(staticVariable.name);
         auto staticVar = std::make_unique<StaticVariable>(staticVariable.name, AsmType::Double, staticVariable.global);
@@ -118,121 +118,102 @@ std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVari
     return result;
 }
 
-void GenerateAsmTree::genInst(const std::unique_ptr<Ir::Instruction>& inst)
+void GenerateAsmTree::genInst(const std::unique_ptr<Ir::Inst>& inst)
 {
-    using Kind = Ir::Instruction::Kind;
+    using Kind = Ir::Inst::Kind;
     switch (inst->kind) {
         case Kind::Return: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irReturn = static_cast<const Ir::ReturnInst*>(inst.get());
+            const auto irReturn = dyn_cast<const Ir::ReturnInst>(inst.get());
             genReturn(*irReturn);
             break;
         }
         case Kind::SignExtend: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto signExtend = static_cast<const Ir::SignExtendInst*>(inst.get());
+            const auto signExtend = dyn_cast<const Ir::SignExtendInst>(inst.get());
             genSignExtend(*signExtend);
             break;
         }
         case Kind::Truncate: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto truncate = static_cast<const Ir::TruncateInst*>(inst.get());
+            const auto truncate = dyn_cast<const Ir::TruncateInst>(inst.get());
             genTruncate(*truncate);
             break;
         }
         case Kind::ZeroExtend: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto zeroExtend = static_cast<const Ir::ZeroExtendInst*>(inst.get());
+            const auto zeroExtend = dyn_cast<const Ir::ZeroExtendInst>(inst.get());
             genZeroExtend(*zeroExtend);
             break;
         }
         case Kind::DoubleToInt: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto doubleToInt = static_cast<const Ir::DoubleToIntInst*>(inst.get());
+            const auto doubleToInt = dyn_cast<const Ir::DoubleToIntInst>(inst.get());
             genDoubleToInt(*doubleToInt);
             break;
         }
         case Kind::DoubleToUInt: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto doubleToUInt = static_cast<const Ir::DoubleToUIntInst*>(inst.get());
+            const auto doubleToUInt = dyn_cast<const Ir::DoubleToUIntInst>(inst.get());
             genDoubleToUInt(*doubleToUInt);
             break;
         }
         case Kind::IntToDouble: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto intToDouble = static_cast<const Ir::IntToDoubleInst*>(inst.get());
+            const auto intToDouble = dyn_cast<const Ir::IntToDoubleInst>(inst.get());
             genIntToDouble(*intToDouble);
             break;
         }
         case Kind::UIntToDouble: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto uIntToDouble = static_cast<const Ir::UIntToDoubleInst*>(inst.get());
+            const auto uIntToDouble = dyn_cast<const Ir::UIntToDoubleInst>(inst.get());
             genUIntToDouble(*uIntToDouble);
             break;
         }
         case Kind::Unary: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irUnary = static_cast<const Ir::UnaryInst*>(inst.get());
+            const auto irUnary = dyn_cast<const Ir::UnaryInst>(inst.get());
             genUnary(*irUnary);
             break;
         }
         case Kind::Binary: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irBinary = static_cast<const Ir::BinaryInst*>(inst.get());
+            const auto irBinary = dyn_cast<const Ir::BinaryInst>(inst.get());
             genBinary(*irBinary);
             break;
         }
         case Kind::Copy: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irCopy = static_cast<const Ir::CopyInst*>(inst.get());
+            const auto irCopy = dyn_cast<const Ir::CopyInst>(inst.get());
             genCopy(*irCopy);
             break;
         }
         case Kind::Jump: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irJump = static_cast<const Ir::JumpInst*>(inst.get());
+            const auto irJump = dyn_cast<const Ir::JumpInst>(inst.get());
             genJump(*irJump);
             break;
         }
         case Kind::JumpIfZero: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irJumpIfZero = static_cast<const Ir::JumpIfZeroInst*>(inst.get());
+            const auto irJumpIfZero = dyn_cast<const Ir::JumpIfZeroInst>(inst.get());
             genJumpIfZero(*irJumpIfZero);
             break;
         }
         case Kind::JumpIfNotZero: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irJumpIfNotZero = static_cast<const Ir::JumpIfNotZeroInst*>(inst.get());
+            const auto irJumpIfNotZero = dyn_cast<const Ir::JumpIfNotZeroInst>(inst.get());
             genJumpIfNotZero(*irJumpIfNotZero);
             break;
         }
         case Kind::Label: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irLabel = static_cast<const Ir::LabelInst*>(inst.get());
+            const auto irLabel = dyn_cast<const Ir::LabelInst>(inst.get());
             genLabel(*irLabel);
             break;
         }
         case Kind::FunCall: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irFunCall = static_cast<const Ir::FunCallInst*>(inst.get());
+            const auto irFunCall = dyn_cast<const Ir::FunCallInst>(inst.get());
             genFunCall(*irFunCall);
             break;
         }
         case Kind::Store: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irStore = static_cast<const Ir::StoreInst*>(inst.get());
+            const auto irStore = dyn_cast<const Ir::StoreInst>(inst.get());
             genStore(*irStore);
             break;
         }
         case Kind::Load: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irLoad = static_cast<const Ir::LoadInst*>(inst.get());
+            const auto irLoad = dyn_cast<const Ir::LoadInst>(inst.get());
             genLoad(*irLoad);
             break;
         }
         case Kind::GetAddress: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto irGetAddress = static_cast<const Ir::GetAddressInst*>(inst.get());
+            const auto irGetAddress = dyn_cast<const Ir::GetAddressInst>(inst.get());
             genGetAddress(*irGetAddress);
             break;
         }
@@ -873,7 +854,7 @@ BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
         case IrOper::BitwiseXor:   return AsmOper::BitwiseXor;
         default:
             throw std::invalid_argument("Invalid BinaryOperation type: " +
-                std::to_string(static_cast<int>(type)));
+                std::to_string(static_cast<i32>(type)));
     }
 }
 
@@ -887,7 +868,7 @@ BinaryInst::Operator getShiftOperator(const Ir::BinaryInst::Operation type, cons
             case IrOper::RightShift:   return AsmOper::RightShiftSigned;
             default:
                 throw std::invalid_argument("Invalid BinaryOperation type: " +
-                    std::to_string(static_cast<int>(type)));
+                    std::to_string(static_cast<i32>(type)));
         }
     }
     switch (type) {
@@ -895,7 +876,7 @@ BinaryInst::Operator getShiftOperator(const Ir::BinaryInst::Operation type, cons
         case IrOper::RightShift:   return AsmOper::RightShiftUnsigned;
         default:
             throw std::invalid_argument("Invalid BinaryOperation type: " +
-                std::to_string(static_cast<int>(type)));
+                std::to_string(static_cast<i32>(type)));
     }
 }
 
@@ -930,12 +911,10 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
 {
     switch (value->kind) {
         case Ir::Value::Kind::Constant: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             return getOperandFromConstant(value);
         }
         case Ir::Value::Kind::Variable: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto valueVar = static_cast<Ir::ValueVar*>(value.get());
+            const auto valueVar = dyn_cast<Ir::ValueVar>(value.get());
             const bool isConst = valueVar->type == Type::Double;
             return std::make_shared<PseudoOperand>(
                 Identifier(valueVar->value.value), valueVar->referingTo, getAsmType(valueVar->type), isConst);
@@ -947,8 +926,7 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
 
 std::shared_ptr<Operand> GenerateAsmTree::getOperandFromConstant(const std::shared_ptr<Ir::Value>& value)
 {
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    const auto valueConst = static_cast<Ir::ValueConst*>(value.get());
+    const auto valueConst = dyn_cast<Ir::ValueConst>(value.get());
     if (valueConst->type == Type::Double)
         return genDoubleLocalConst(std::get<double>(valueConst->value), 8);
     std::shared_ptr<ImmOperand> imm = getImmOperandFromValue(*valueConst);
@@ -980,7 +958,7 @@ std::shared_ptr<Operand> GenerateAsmTree::genDoubleLocalConst(double value, i32 
 i32 replacingPseudoRegisters(const Function& function)
 {
     PseudoRegisterReplacer pseudoRegisterReplacer;
-    for (const auto& inst : function.instructions)
+    for (const std::unique_ptr<Inst>& inst : function.instructions)
         inst->accept(pseudoRegisterReplacer);
     return pseudoRegisterReplacer.stackPointer();
 }

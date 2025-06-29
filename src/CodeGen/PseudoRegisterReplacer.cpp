@@ -1,10 +1,12 @@
 #include "PseudoRegisterReplacer.hpp"
 
+#include "DynCast.hpp"
+
 namespace CodeGen {
 void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
 {
     if (operand->kind == Operand::Kind::Pseudo && operand) {
-        const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
+        const auto pseudo = dyn_cast<PseudoOperand>(operand.get());
         if (pseudo->referingTo == ReferingTo::Extern ||
             pseudo->referingTo == ReferingTo::Static) {
             operand = std::make_shared<DataOperand>(pseudo->identifier, pseudo->type, !pseudo->local);

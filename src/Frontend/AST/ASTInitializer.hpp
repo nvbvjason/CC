@@ -17,6 +17,7 @@ struct SingleInit : Initializer {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Single; }
 
     SingleInit() = delete;
 };
@@ -28,6 +29,7 @@ struct CompoundInit : Initializer {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Compound; }
 
     CompoundInit() = delete;
 };

@@ -5,24 +5,34 @@
 #include <iomanip>
 #include <unordered_map>
 
+#include "DynCast.hpp"
+
 namespace CodeGen {
 
 std::string asmProgram(const Program& program)
 {
+    using Kind = TopLevel::Kind;
     std::string result;
     for (const std::unique_ptr<TopLevel>& topLevel : program.topLevels) {
-        if (topLevel->type == TopLevel::Kind::StaticVariable) {
-            const auto var = static_cast<const StaticVariable*>(topLevel.get());
-            asmStaticVariable(result, *var);
-            continue;
+        switch (topLevel->kind) {
+            case Kind::StaticVariable: {
+                const auto staticVariable = dyn_cast<const StaticVariable>(topLevel.get());
+                asmStaticVariable(result, *staticVariable);
+                continue;
+            }
+            case Kind::StaticConstant: {
+                const auto constVariable = dyn_cast<const ConstVariable>(topLevel.get());
+                asmStaticConstant(result, *constVariable);
+                continue;
+            }
+            case Kind::Function: {
+                const auto function = dyn_cast<Function>(topLevel.get());
+                asmFunction(result, *function);
+                continue;
+            }
+            default:
+                std::abort();
         }
-        if (topLevel->type == TopLevel::Kind::StaticConstant) {
-            const auto var = static_cast<const ConstVariable*>(topLevel.get());
-            asmStaticConstant(result, *var);
-            continue;
-        }
-        const auto function = dynamic_cast<Function*>(topLevel.get());
-        asmFunction(result, *function);
     }
     result += ".section .note.GNU-stack,\"\",@progbits\n";
     return result;
@@ -113,58 +123,58 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
 {
     switch (instruction->kind) {
         case Inst::Kind::Move: {
-            const auto moveInst = dynamic_cast<MoveInst*>(instruction.get());
+            const auto moveInst = dyn_cast<MoveInst>(instruction.get());
             const std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
             result += asmFormatInstruction(addType("mov", moveInst->type), operand);
             return;
         }
         case Inst::Kind::MoveSX: {
-            const auto moveSXInst = dynamic_cast<MoveSXInst*>(instruction.get());
+            const auto moveSXInst = dyn_cast<MoveSXInst>(instruction.get());
             const std::string operands = asmOperand(moveSXInst->src) + ", " + asmOperand(moveSXInst->dst);
             result += asmFormatInstruction("movslq", operands);
             return;
         }
         case Inst::Kind::MovZeroExtend: {
-            const auto moveZeroExtend = dynamic_cast<MoveZeroExtendInst*>(instruction.get());
+            const auto moveZeroExtend = dyn_cast<MoveZeroExtendInst>(instruction.get());
             const std::string operands = asmOperand(moveZeroExtend->src) + ", " + asmOperand(moveZeroExtend->dst);
             result += asmFormatInstruction(addType("mov", moveZeroExtend->type), operands);
             return;
         }
         case Inst::Kind::Lea: {
-            const auto lea = dynamic_cast<const LeaInst*>(instruction.get());
+            const auto lea = dyn_cast<const LeaInst>(instruction.get());
             const std::string operands = asmOperand(lea->src) + ", " + asmOperand(lea->dst);
             result += asmFormatInstruction(addType("lea", lea->type), operands);
             return;
         }
         case Inst::Kind::Cvtsi2sd: {
-            const auto cvtsi2sd = dynamic_cast<Cvtsi2sdInst*>(instruction.get());
+            const auto cvtsi2sd = dyn_cast<Cvtsi2sdInst>(instruction.get());
             const AsmType type = cvtsi2sd->srcType;
             const std::string operands = asmOperand(cvtsi2sd->src) + ", " + asmOperand(cvtsi2sd->dst);
             result += asmFormatInstruction(addType("cvtsi2sd", type), operands);
             return;
         }
         case Inst::Kind::Cvttsd2si: {
-            const auto cvtsd2siInst = dynamic_cast<Cvttsd2siInst*>(instruction.get());
+            const auto cvtsd2siInst = dyn_cast<Cvttsd2siInst>(instruction.get());
             const AsmType type = cvtsd2siInst->dstType;
             const std::string operands = asmOperand(cvtsd2siInst->src) + ", " + asmOperand(cvtsd2siInst->dst);
             result += asmFormatInstruction(addType("cvttsd2si", type), operands);
             return;
         }
         case Inst::Kind::Unary: {
-            const auto unaryInst = dynamic_cast<UnaryInst*>(instruction.get());
+            const auto unaryInst = dyn_cast<UnaryInst>(instruction.get());
             result += asmFormatInstruction(
                 asmUnaryOperator(unaryInst->oper, unaryInst->type),
                 asmOperand(unaryInst->destination));
             return;
         }
         case Inst::Kind::Binary: {
-            const auto binaryInst = dynamic_cast<BinaryInst*>(instruction.get());
+            const auto binaryInst = dyn_cast<BinaryInst>(instruction.get());
             const std::string operands = asmOperand(binaryInst->lhs) + ", " + asmOperand(binaryInst->rhs);
             result += asmFormatInstruction(asmBinaryOperator(binaryInst->oper, binaryInst->type), operands);
             return;
         }
         case Inst::Kind::Cdq: {
-            const auto cdqInst = dynamic_cast<CdqInst*>(instruction.get());
+            const auto cdqInst = dyn_cast<CdqInst>(instruction.get());
             if (cdqInst->type == AsmType::LongWord)
                 result += asmFormatInstruction("cdq");
             if (cdqInst->type == AsmType::QuadWord)
@@ -172,13 +182,13 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             return;
         }
         case Inst::Kind::Idiv: {
-            const auto idivInst = dynamic_cast<IdivInst*>(instruction.get());
+            const auto idivInst = dyn_cast<IdivInst>(instruction.get());
             result += asmFormatInstruction(addType(
                 "idiv", idivInst->type), asmOperand(idivInst->operand));
             return;
         }
         case Inst::Kind::Div: {
-            const auto divInst = dynamic_cast<DivInst*>(instruction.get());
+            const auto divInst = dyn_cast<DivInst>(instruction.get());
             if (divInst->type == AsmType::LongWord)
                 result += asmFormatInstruction("divl", asmOperand(divInst->operand));
             if (divInst->type == AsmType::QuadWord)
@@ -192,7 +202,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             return;
         }
         case Inst::Kind::Cmp: {
-            const auto cmpInst = dynamic_cast<CmpInst*>(instruction.get());
+            const auto cmpInst = dyn_cast<CmpInst>(instruction.get());
             const std::string operands = asmOperand(cmpInst->lhs) + ", " + asmOperand(cmpInst->rhs);
             if (cmpInst->lhs->type == AsmType::Double)
                 result += asmFormatInstruction("comisd", operands);
@@ -201,34 +211,34 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             return;
         }
         case Inst::Kind::Jmp: {
-            const auto jmpInst = dynamic_cast<JmpInst*>(instruction.get());
+            const auto jmpInst = dyn_cast<JmpInst>(instruction.get());
             result += asmFormatInstruction("jmp", createLabel(jmpInst->target.value));
             return;
         }
         case Inst::Kind::JmpCC: {
-            const auto jmpCCInst = dynamic_cast<JmpCCInst*>(instruction.get());
+            const auto jmpCCInst = dyn_cast<JmpCCInst>(instruction.get());
             result += asmFormatInstruction(
                 "j" + condCode(jmpCCInst->condition), createLabel(jmpCCInst->target.value));
             return;
         }
         case Inst::Kind::SetCC: {
-            const auto setCCInst = dynamic_cast<SetCCInst*>(instruction.get());
+            const auto setCCInst = dyn_cast<SetCCInst>(instruction.get());
             result += asmFormatInstruction(
                 "set" + condCode(setCCInst->condition), asmOperand(setCCInst->operand));
             return;
         }
         case Inst::Kind::Label: {
-            const auto labelInst = dynamic_cast<LabelInst*>(instruction.get());
+            const auto labelInst = dyn_cast<LabelInst>(instruction.get());
             result += asmFormatLabel(createLabel(labelInst->target.value));
             return;
         }
         case Inst::Kind::Push: {
-            const auto pushInst = dynamic_cast<PushInst*>(instruction.get());
+            const auto pushInst = dyn_cast<PushInst>(instruction.get());
             result += asmFormatInstruction("pushq", asmOperand(pushInst->operand));
             return;
         }
         case Inst::Kind::Call: {
-            const auto callInst = dynamic_cast<CallInst*>(instruction.get());
+            const auto callInst = dyn_cast<CallInst>(instruction.get());
             result += asmFormatInstruction("call", callInst->funName.value);
             return;
         }
@@ -241,24 +251,24 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
 {
     switch (operand->kind) {
         case Operand::Kind::Register: {
-            const auto registerOperand = dynamic_cast<RegisterOperand*>(operand.get());
+            const auto registerOperand = dyn_cast<RegisterOperand>(operand.get());
             return asmRegister(registerOperand->type, registerOperand->regKind);
         }
         case Operand::Kind::Pseudo:
             return "invalid pseudo";
         case Operand::Kind::Imm: {
-            const auto immOperand = dynamic_cast<ImmOperand*>(operand.get());
+            const auto immOperand = dyn_cast<ImmOperand>(operand.get());
             return "$" + std::to_string(immOperand->value);
         }
         case Operand::Kind::Memory: {
-            const auto moveOperand = dynamic_cast<const MemoryOperand*>(operand.get());
+            const auto moveOperand = dyn_cast<const MemoryOperand>(operand.get());
             if (moveOperand->value != 0)
                 return std::to_string(moveOperand->value) + "(" +
                             asmRegister(moveOperand->type, moveOperand->regKind) + ")";
             return "(" + asmRegister(moveOperand->type, moveOperand->regKind) + ")";
         }
         case Operand::Kind::Data: {
-            const auto dataOperand = dynamic_cast<DataOperand*>(operand.get());
+            const auto dataOperand = dyn_cast<DataOperand>(operand.get());
             if (dataOperand->local && dataOperand->type == AsmType::Double)
                 return createLabel(dataOperand->identifier.value) + "(%rip)";
             return dataOperand->identifier.value + "(%rip)";

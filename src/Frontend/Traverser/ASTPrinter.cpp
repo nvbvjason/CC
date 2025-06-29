@@ -1,7 +1,7 @@
 #include "ASTPrinter.hpp"
-
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
+#include "DynCast.hpp"
 
 namespace Parsing {
 
@@ -107,7 +107,8 @@ void ASTPrinter::visit(const Program& program)
 void ASTPrinter::visit(const VarDecl& varDecl)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("VarDecl " + varDecl.name + ' ' + storageClass(varDecl.storage) + ' ' + varTypeToString(varDecl.type->kind));
+    addLine("VarDecl " + varDecl.name + ' ' + storageClass(varDecl.storage) + ' ' +
+            varTypeToString(varDecl.type->type));
     ConstASTTraverser::visit(varDecl);
 }
 
@@ -115,13 +116,13 @@ void ASTPrinter::visit(const FunDecl& funDecl)
 {
     IndentGuard guard(m_indentLevel);
     addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storage));
-    auto type = static_cast<const Parsing::FuncType*>(funDecl.type.get());
-    addLine("ReturnType " + varTypeToString(type->returnType->kind));
+    auto type = dyn_cast<const FuncType>(funDecl.type.get());
+    addLine("ReturnType " + varTypeToString(type->returnType->type));
     std::string args = "args: ";
     for (i64 i = 0; i < funDecl.params.size(); ++i) {
         if (i != 0)
             args += ", ";
-        args += varTypeToString(type->params[i]->kind) + " " + funDecl.params[i];
+        args += varTypeToString(type->params[i]->type) + " " + funDecl.params[i];
     }
     addLine(args);
     ConstASTTraverser::visit(funDecl);
@@ -136,7 +137,7 @@ void ASTPrinter::visit(const Block& block)
 
 void ASTPrinter::visit(const VarType& varType)
 {
-    addLine(varTypeToString(varType.kind));
+    addLine(varTypeToString(varType.type));
     ConstASTTraverser::visit(varType);
 }
 
@@ -277,7 +278,7 @@ void ASTPrinter::visit(const UnaryExpr& unaryExpr)
 {
     IndentGuard guard(m_indentLevel);
     if (unaryExpr.type)
-        addLine("Unary " + unaryOpToString(unaryExpr.op) + " " + varTypeToString(unaryExpr.type->kind));
+        addLine("Unary " + unaryOpToString(unaryExpr.op) + " " + varTypeToString(unaryExpr.type->type));
     else
         addLine("Unary " + unaryOpToString(unaryExpr.op));
     ConstASTTraverser::visit(unaryExpr);
@@ -286,7 +287,7 @@ void ASTPrinter::visit(const UnaryExpr& unaryExpr)
 void ASTPrinter::visit(const CastExpr& castExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("Cast (" + varTypeToString(castExpr.type->kind) + ')');
+    addLine("Cast (" + varTypeToString(castExpr.type->type) + ')');
     ConstASTTraverser::visit(castExpr);
 }
 
@@ -294,7 +295,7 @@ void ASTPrinter::visit(const BinaryExpr& binaryExpr)
 {
     IndentGuard guard(m_indentLevel);
     if (binaryExpr.type)
-        addLine("Binary " + binaryOpToString(binaryExpr.op) + " " + varTypeToString(binaryExpr.type->kind));
+        addLine("Binary " + binaryOpToString(binaryExpr.op) + " " + varTypeToString(binaryExpr.type->type));
     else
         addLine("Binary " + binaryOpToString(binaryExpr.op));
     ConstASTTraverser::visit(binaryExpr);
@@ -312,16 +313,25 @@ void ASTPrinter::visit(const AssignmentExpr& assignmentExpr)
 void ASTPrinter::visit(const ConstExpr& constExpr)
 {
     IndentGuard guard(m_indentLevel);
-    if (constExpr.type->kind == Type::I32)
-        addLine(std::to_string(std::get<i32>(constExpr.value)) + ' ' + varTypeToString(Type::I32));
-    else if (constExpr.type->kind == Type::I64)
-        addLine(std::to_string(std::get<i64>(constExpr.value)) + ' ' + varTypeToString(Type::I64));
-    else if (constExpr.type->kind == Type::U32)
-        addLine(std::to_string(std::get<u32>(constExpr.value)) + ' ' + varTypeToString(Type::U32));
-    else if (constExpr.type->kind == Type::U64)
-        addLine(std::to_string(std::get<u64>(constExpr.value)) + ' ' + varTypeToString(Type::U64));
-    else if (constExpr.type->kind == Type::Double)
-        addLine(std::to_string(std::get<double>(constExpr.value)) + ' ' + varTypeToString(Type::Double));
+    switch (constExpr.type->type) {
+        case Type::I32:
+            addLine(std::to_string(std::get<i32>(constExpr.value)) + ' ' + varTypeToString(Type::I32));
+            break;
+        case Type::I64:
+            addLine(std::to_string(std::get<i64>(constExpr.value)) + ' ' + varTypeToString(Type::I64));
+            break;
+        case Type::U32:
+            addLine(std::to_string(std::get<u32>(constExpr.value)) + ' ' + varTypeToString(Type::U32));
+            break;
+        case Type::U64:
+            addLine(std::to_string(std::get<u64>(constExpr.value)) + ' ' + varTypeToString(Type::U64));
+            break;
+        case Type::Double:
+            addLine(std::to_string(std::get<double>(constExpr.value)) + ' ' + varTypeToString(Type::Double));
+            break;
+        default:
+            std::abort();
+    }
     ConstASTTraverser::visit(constExpr);
 }
 
@@ -329,7 +339,7 @@ void ASTPrinter::visit(const VarExpr& varExpr)
 {
     IndentGuard guard(m_indentLevel);
     if (varExpr.type)
-        addLine(varExpr.name + " " + varTypeToString(varExpr.type->kind));
+        addLine(varExpr.name + " " + varTypeToString(varExpr.type->type));
     else
         addLine(varExpr.name);
     ConstASTTraverser::visit(varExpr);

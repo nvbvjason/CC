@@ -13,30 +13,34 @@ namespace Parsing {
 
 struct VarType : TypeBase {
     explicit VarType(const Type type)
-        : TypeBase(type) {}
+        : TypeBase(Kind::Var, type) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Var; }
 };
 
 struct FuncType : TypeBase {
     std::vector<std::unique_ptr<TypeBase>> params;
     std::unique_ptr<TypeBase> returnType;
     explicit FuncType(std::unique_ptr<TypeBase>&& rT, std::vector<std::unique_ptr<TypeBase>>&& params)
-        : TypeBase(Type::Function), params(std::move(params)), returnType(std::move(rT)) {}
+        : TypeBase(Kind::Func, Type::Function), params(std::move(params)), returnType(std::move(rT)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Func; }
+
 };
 
 struct PointerType : TypeBase {
     std::unique_ptr<TypeBase> referenced;
 
     explicit PointerType(std::unique_ptr<TypeBase>&& r)
-        : TypeBase(Type::Pointer), referenced(std::move(r)) {}
+        : TypeBase(Kind::Pointer, Type::Pointer), referenced(std::move(r)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Pointer; }
 };
 
 struct ArrayType : TypeBase {
@@ -44,10 +48,11 @@ struct ArrayType : TypeBase {
     u64 size;
 
     ArrayType(std::unique_ptr<TypeBase>&& t, u64 size)
-        : TypeBase(Type::Array), elementType(std::move(t)), size(size) {}
+        : TypeBase(Kind::Array, Type::Array), elementType(std::move(t)), size(size) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Array; }
 };
 
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase);

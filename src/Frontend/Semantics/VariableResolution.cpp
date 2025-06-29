@@ -1,4 +1,5 @@
 #include "VariableResolution.hpp"
+#include "DynCast.hpp"
 #include "ASTParser.hpp"
 
 #include <unordered_set>
@@ -51,14 +52,14 @@ bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
         return true;
     if (returnedEntry.isDefined() && funDecl.body != nullptr)
         return false;
-    if (returnedEntry.typeBase->kind != funDecl.type->kind && returnedEntry.isFromCurrentScope())
+    if (returnedEntry.typeBase->type != funDecl.type->type && returnedEntry.isFromCurrentScope())
         return false;
-    if (returnedEntry.typeBase->kind != funDecl.type->kind && returnedEntry.isGlobal())
+    if (returnedEntry.typeBase->type != funDecl.type->type && returnedEntry.isGlobal())
         return false;
     if (returnedEntry.hasExternalLinkage() && funDecl.storage == Storage::Static)
         return false;
-    if (returnedEntry.typeBase->kind == Type::Function) {
-        const auto funcType = static_cast<const Parsing::FuncType*>(returnedEntry.typeBase.get());
+    if (returnedEntry.typeBase->type == Type::Function) {
+        const auto funcType = dyn_cast<const Parsing::FuncType>(returnedEntry.typeBase.get());
         if (funcType->params.size() != funDecl.params.size())
             return false;
     }
@@ -112,9 +113,9 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
         return false;
     if (varDecl.storage == Storage::Extern
         && prevEntry.hasExternalLinkage()
-        && prevEntry.typeBase->kind != varDecl.type->kind)
+        && prevEntry.typeBase->type != varDecl.type->type)
         return false;
-    if (prevEntry.typeBase->kind != varDecl.type->kind &&
+    if (prevEntry.typeBase->type != varDecl.type->type &&
         prevEntry.isFromCurrentScope() &&
         varDecl.storage != Storage::Extern)
         return false;
@@ -123,7 +124,7 @@ bool isValidVarDecl(const Parsing::VarDecl& varDecl, const SymbolTable& symbolTa
 
 bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry)
 {
-    if (prevEntry.typeBase->kind != varDecl.type->kind)
+    if (prevEntry.typeBase->type != varDecl.type->type)
         return false;
     if (varDecl.init != nullptr && prevEntry.isDefined())
         return false;
@@ -159,7 +160,7 @@ bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::Returned
         return true;
     if (!returnedEntry.contains())
         return false;
-    if (returnedEntry.typeBase->kind == Type::Function)
+    if (returnedEntry.typeBase->type == Type::Function)
         return false;
     return true;
 }
@@ -171,7 +172,7 @@ void VariableResolution::visit(Parsing::FuncCallExpr& funcCallExpr)
         m_valid = false;
         return;
     }
-    const auto funcType = static_cast<const Parsing::FuncType*>(returnedEntry.typeBase.get());
+    const auto funcType = dyn_cast<const Parsing::FuncType>(returnedEntry.typeBase.get());
     funcCallExpr.type = Parsing::deepCopy(*funcType->returnType);
     ASTTraverser::visit(funcCallExpr);
 }
@@ -180,7 +181,7 @@ bool isValidFuncCall(const Parsing::FuncCallExpr& funCallExpr, const SymbolTable
 {
     if (!returnedEntry.contains())
         return false;
-    if (returnedEntry.typeBase->kind != Type::Function)
+    if (returnedEntry.typeBase->type != Type::Function)
         return false;
     return true;
 }

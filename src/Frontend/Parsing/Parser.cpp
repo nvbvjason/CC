@@ -6,6 +6,8 @@
 #include <cassert>
 #include <tuple>
 
+#include "DynCast.hpp"
+
 namespace Parsing {
 
 bool Parser::programParse(Program& program)
@@ -33,7 +35,7 @@ std::unique_ptr<Declaration> Parser::declarationParse()
             declaratorProcess(std::move(declarator), std::move(varType));
     if (iden.empty())
         return nullptr;
-    if (typeBase->kind == Type::Function)
+    if (typeBase->type == Type::Function)
         return funDeclParse(iden, std::move(typeBase), storage, std::move(params));
     return varDeclParse(iden, std::move(typeBase), storage);
 }
@@ -232,7 +234,7 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
             return {nullptr, true};
         if (decl->kind == Declaration::Kind::FuncDecl)
             return {nullptr, true};
-        const auto varDecl = static_cast<VarDecl*>(decl.release());
+        const auto varDecl = dyn_cast<VarDecl>(decl.release());
         return {std::make_unique<DeclForInit>(std::unique_ptr<VarDecl>(varDecl)), false};
     }
     std::unique_ptr<Expr> expr = exprParse(0);
@@ -843,7 +845,7 @@ Declaration::StorageClass getStorageClass(const Lexing::Token::Type tokenType)
 
 bool isAboveZero(const ConstExpr& constExpr)
 {
-    switch (constExpr.type->kind) {
+    switch (constExpr.type->type) {
         case Type::I32:
             return 0 < std::get<i32>(constExpr.value);
         case Type::I64:
@@ -859,7 +861,7 @@ bool isAboveZero(const ConstExpr& constExpr)
 
 u64 getArraySize(const ConstExpr& constExpr)
 {
-    switch (constExpr.type->kind) {
+    switch (constExpr.type->type) {
         case Type::I32:
             return std::get<i32>(constExpr.value);
         case Type::I64:

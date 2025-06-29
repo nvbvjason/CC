@@ -25,6 +25,8 @@ struct IdentifierDeclarator : Declarator {
     explicit IdentifierDeclarator(std::string&& identifier)
         : Declarator(Kind::Identifier), identifier(std::move(identifier)) {}
 
+    static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Identifier; }
+
     IdentifierDeclarator() = delete;
 };
 
@@ -33,6 +35,8 @@ struct PointerDeclarator : Declarator {
 
     explicit PointerDeclarator(std::unique_ptr<Declarator>&& declarator)
         : Declarator(Kind::Pointer), inner(std::move(declarator)) {}
+
+    static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Pointer; }
 
     PointerDeclarator() = delete;
 };
@@ -43,6 +47,8 @@ struct ArrayDeclarator : Declarator {
 
     explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, const u64 size)
         : Declarator(Kind::Array), declarator(std::move(declarator)), size(size) {}
+
+    static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Array; }
 
     ArrayDeclarator() = delete;
 };
@@ -64,6 +70,8 @@ struct FunctionDeclarator : Declarator {
     explicit FunctionDeclarator(std::unique_ptr<Declarator>&& declarator, std::vector<ParamInfo>&& params)
         : Declarator(Kind::Function), params(std::move(params)), declarator(std::move(declarator)) {}
 
+    static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Function; }
+
     FunctionDeclarator() = delete;
 };
 
@@ -82,6 +90,13 @@ struct AbstractPointer : AbstractDeclarator {
     std::unique_ptr<AbstractDeclarator> inner;
     explicit AbstractPointer(std::unique_ptr<AbstractDeclarator>&& i)
         : AbstractDeclarator(Kind::Pointer), inner(std::move(i)) {}
+
+    static bool classOf(const AbstractDeclarator* abstractDeclarator)
+    {
+        return abstractDeclarator->kind == Kind::Pointer;
+    }
+
+    AbstractPointer() = delete;
 };
 
 struct AbstractArray : AbstractDeclarator {
@@ -91,12 +106,22 @@ struct AbstractArray : AbstractDeclarator {
     explicit AbstractArray(std::unique_ptr<AbstractDeclarator>&& i, const size_t size)
         : AbstractDeclarator(Kind::Array), inner(std::move(i)), size(size) {}
 
+    static bool classOf(const AbstractDeclarator* abstractDeclarator)
+    {
+        return abstractDeclarator->kind == Kind::Array;
+    }
+
     AbstractArray() = delete;
 };
 
 struct AbstractBase : AbstractDeclarator {
     explicit AbstractBase()
         : AbstractDeclarator(Kind::Base) {}
+
+    static bool classOf(const AbstractDeclarator* abstractDeclarator)
+    {
+        return abstractDeclarator->kind == Kind::Base;
+    }
 };
 
 [[nodiscard]] std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>

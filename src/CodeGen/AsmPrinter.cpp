@@ -4,6 +4,8 @@
 
 #include <iomanip>
 
+#include "DynCast.hpp"
+
 namespace CodeGen {
 std::string AsmPrinter::printProgram(const Program &program)
 {
@@ -16,15 +18,15 @@ std::string AsmPrinter::printProgram(const Program &program)
 void AsmPrinter::add(const TopLevel& topLevel)
 {
     using Type = TopLevel::Kind;
-    switch (topLevel.type) {
+    switch (topLevel.kind) {
         case Type::Function:
-            add(static_cast<const Function&>(topLevel));
+            add(*dyn_cast<const Function>(&topLevel));
             break;
         case Type::StaticVariable:
-            add(static_cast<const StaticVariable&>(topLevel));
+            add(*dyn_cast<const StaticVariable>(&topLevel));
             break;
         case Type::StaticConstant:
-            add(static_cast<const ConstVariable&>(topLevel));
+            add(*dyn_cast<const ConstVariable>(&topLevel));
             break;
         default:
             addLine("Unknown Instruction");
@@ -66,43 +68,43 @@ void AsmPrinter::add(const Inst& inst)
     IndentGuard indent(m_indentLevel);
     switch (inst.kind) {
         case Kind::Move:
-            add(static_cast<const MoveInst&>(inst)); break;
+            add(*dyn_cast<const MoveInst>(&inst)); break;
         case Kind::MoveSX:
-            add(static_cast<const MoveSXInst&>(inst)); break;
+            add(*dyn_cast<const MoveSXInst>(&inst)); break;
         case Kind::MovZeroExtend:
-            add(static_cast<const MoveZeroExtendInst&>(inst)); break;
+            add(*dyn_cast<const MoveZeroExtendInst>(&inst)); break;
         case Kind::Lea:
-            add(static_cast<const LeaInst&>(inst)); break;
+            add(*dyn_cast<const LeaInst>(&inst)); break;
         case Kind::Cvtsi2sd:
-            add(static_cast<const Cvtsi2sdInst&>(inst)); break;
+            add(*dyn_cast<const Cvtsi2sdInst>(&inst)); break;
         case Kind::Cvttsd2si:
-            add(static_cast<const Cvttsd2siInst&>(inst)); break;
+            add(*dyn_cast<const Cvttsd2siInst>(&inst)); break;
         case Kind::Unary:
-            add(static_cast<const UnaryInst&>(inst)); break;
+            add(*dyn_cast<const UnaryInst>(&inst)); break;
         case Kind::Binary:
-            add(static_cast<const BinaryInst&>(inst)); break;
+            add(*dyn_cast<const BinaryInst>(&inst)); break;
         case Kind::Cmp:
-            add(static_cast<const CmpInst&>(inst)); break;
+            add(*dyn_cast<const CmpInst>(&inst)); break;
         case Kind::Idiv:
-            add(static_cast<const IdivInst&>(inst)); break;
+            add(*dyn_cast<const IdivInst>(&inst)); break;
         case Kind::Div:
-            add(static_cast<const DivInst&>(inst)); break;
+            add(*dyn_cast<const DivInst>(&inst)); break;
         case Kind::Cdq:
-            add(static_cast<const CdqInst&>(inst)); break;
+            add(*dyn_cast<const CdqInst>(&inst)); break;
         case Kind::Jmp:
-            add(static_cast<const JmpInst&>(inst)); break;
+            add(*dyn_cast<const JmpInst>(&inst)); break;
         case Kind::JmpCC:
-            add(static_cast<const JmpCCInst&>(inst)); break;
+            add(*dyn_cast<const JmpCCInst>(&inst)); break;
         case Kind::SetCC:
-            add(static_cast<const SetCCInst&>(inst)); break;
+            add(*dyn_cast<const SetCCInst>(&inst)); break;
         case Kind::Label:
-            add(static_cast<const LabelInst&>(inst)); break;
+            add(*dyn_cast<const LabelInst>(&inst)); break;
         case Kind::Push:
-            add(static_cast<const PushInst&>(inst)); break;
+            add(*dyn_cast<const PushInst>(&inst)); break;
         case Kind::Call:
-            add(static_cast<const CallInst&>(inst)); break;
+            add(*dyn_cast<const CallInst>(&inst)); break;
         case Kind::Ret:
-            add(static_cast<const ReturnInst&>(inst)); break;
+            add(*dyn_cast<const ReturnInst>(&inst)); break;
         default:
             addLine("Unknown Instruction");
     }
@@ -235,15 +237,15 @@ std::string to_string(const Operand& operand)
     using Kind = Operand::Kind;
     switch (operand.kind) {
         case Kind::Imm:
-            return to_string(static_cast<const ImmOperand&>(operand));
+            return to_string(*dyn_cast<const ImmOperand>(&operand));
         case Kind::Register:
-            return to_string(static_cast<const RegisterOperand&>(operand));
+            return to_string(*dyn_cast<const RegisterOperand>(&operand));
         case Kind::Pseudo:
-            return to_string(static_cast<const PseudoOperand&>(operand));
+            return to_string(*dyn_cast<const PseudoOperand>(&operand));
         case Kind::Memory:
-            return to_string(static_cast<const MemoryOperand&>(operand));
+            return to_string(*dyn_cast<const MemoryOperand>(&operand));
         case Kind::Data:
-            return to_string(static_cast<const DataOperand&>(operand));
+            return to_string(*dyn_cast<const DataOperand>(&operand));
         default:
             std::unreachable();
     }

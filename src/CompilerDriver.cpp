@@ -6,6 +6,7 @@
 #include "AsmAST.hpp"
 #include "GenerateAsmTree.hpp"
 #include "Assembly.hpp"
+#include "DynCast.hpp"
 #include "PseudoRegisterReplacer.hpp"
 
 #include <algorithm>
@@ -13,6 +14,7 @@
 #include <fstream>
 #include <filesystem>
 #include <format>
+
 
 static void printIr(const Ir::Program& irProgram);
 static CodeGen::Program codegen(const Ir::Program& irProgram);
@@ -120,9 +122,9 @@ void printIr(const Ir::Program& irProgram)
 void fixAsm(const CodeGen::Program& codegenProgram)
 {
     for (auto& topLevel : codegenProgram.topLevels) {
-        if (topLevel->type != CodeGen::TopLevel::Kind::Function)
+        if (topLevel->kind != CodeGen::TopLevel::Kind::Function)
             continue;
-        const auto function = dynamic_cast<CodeGen::Function*>(topLevel.get());
+        const auto function = dyn_cast<CodeGen::Function>(topLevel.get());
         const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function);
         CodeGen::fixUpInstructions(*function, stackAlloc);
     }

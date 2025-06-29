@@ -4,13 +4,14 @@
 #define CC_SEMANTICS_TUTILS_HPP
 
 #include "ASTExpr.hpp"
+#include "DynCast.hpp"
 #include "TypeConversion.hpp"
 
 namespace Semantics {
 
 inline bool canConvertToNullPtr(const Parsing::ConstExpr& constExpr)
 {
-    const Type type  = constExpr.type->kind;
+    const Type type  = constExpr.type->type;
     if (type == Type::I32)
         return 0 == std::get<i32>(constExpr.value);
     if (type == Type::U32)
@@ -26,13 +27,13 @@ inline bool canConvertToNullPtr(const Parsing::Expr& expr)
 {
     if (expr.kind != Parsing::Expr::Kind::Constant)
         return false;
-    const auto constExpr = static_cast<const Parsing::ConstExpr*>(&expr);
+    const auto constExpr = dyn_cast<const Parsing::ConstExpr>(&expr);
     return canConvertToNullPtr(*constExpr);
 }
 
 inline bool canConvertToPtr(const Parsing::ConstExpr& constExpr)
 {
-    if (!isInteger(constExpr.type->kind))
+    if (!isInteger(constExpr.type->type))
         return false;
     return canConvertToNullPtr(constExpr);
 }

@@ -3,12 +3,11 @@
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
 
-
 namespace Parsing {
 
 void ASTTraverser::visit(Program& program)
 {
-    for (auto& decl : program.declarations)
+    for (std::unique_ptr<Declaration>& decl : program.declarations)
         decl->accept(*this);
 }
 
@@ -27,7 +26,7 @@ void ASTTraverser::visit(FunDecl& funDecl)
 
 void ASTTraverser::visit(Block& block)
 {
-    for (auto& blockItem : block.body)
+    for (std::unique_ptr<BlockItem>& blockItem : block.body)
         blockItem->accept(*this);
 }
 
@@ -184,7 +183,7 @@ void ASTTraverser::visit(TernaryExpr& conditionalExpr)
 
 void ASTTraverser::visit(FuncCallExpr& functionCallExpr)
 {
-    for (auto& expr : functionCallExpr.args)
+    for (std::unique_ptr<Expr>& expr : functionCallExpr.args)
         expr->accept(*this);
 }
 

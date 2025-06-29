@@ -99,6 +99,6 @@ TEST(TokenTest, AllTypeNamesAreCorrect) {
 
     for (const auto& [type, expectedName] : testCases) {
         EXPECT_EQ(Token(1, 1, type, "").getTypeName(), expectedName)
-            << "Failed for TokenType: " << static_cast<int>(type);
+            << "Failed for TokenType: " << static_cast<i32>(type);
     }
 }

@@ -25,7 +25,7 @@ public:
     std::string print(const Program& program);
     void print(const StaticVariable& variable);
     void print(const Function& function);
-    void print(const Instruction& instruction);
+    void print(const Inst& inst);
     static std::string print(const Value& value);
     static std::string print(const Identifier& identifier);
     static std::string print(const ValueVar& val);

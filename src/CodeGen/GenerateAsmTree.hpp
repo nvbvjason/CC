@@ -35,7 +35,7 @@ public:
     void genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs);
     [[nodiscard]] std::unique_ptr<TopLevel> genFunction(const Ir::Function& function);
     [[nodiscard]] std::vector<bool> genFunctionPushIntoRegs(const Ir::Function& function);
-    void genInst(const std::unique_ptr<Ir::Instruction>& inst);
+    void genInst(const std::unique_ptr<Ir::Inst>& inst);
     void genUnary(const Ir::UnaryInst& irUnary);
     void genUnaryBasic(const Ir::UnaryInst& irUnary);
     void genNegateDouble(const Ir::UnaryInst& irUnary);

@@ -70,7 +70,7 @@ struct ValueVar final : Value {
     explicit ValueVar(Identifier v, const Type t)
         : Value(t, Kind::Variable), value(std::move(v)) {}
 
-    ~ValueVar() override;
+    static bool classOf(const Value* value) { return value->kind == Kind::Variable; }
 
     ValueVar() = delete;
 };
@@ -88,12 +88,12 @@ struct ValueConst final : Value {
     explicit ValueConst(const double v)
         : Value(Type::Double ,Kind::Constant), value(v) {}
 
-    ~ValueConst() override;
+    static bool classOf(const Value* value) { return value->kind == Kind::Constant; }
 
     ValueConst() = delete;
 };
 
-struct Instruction {
+struct Inst {
     enum class Kind {
         Return,
         SignExtend, Truncate, ZeroExtend,
@@ -105,84 +105,102 @@ struct Instruction {
     Kind kind;
     Type type;
 
-    Instruction() = delete;
+    Inst() = delete;
 
-    virtual ~Instruction() = default;
+    virtual ~Inst() = default;
 protected:
-    explicit Instruction(const Kind k, const Type t)
+    explicit Inst(const Kind k, const Type t)
         : kind(k), type(t) {}
 };
 
-struct ReturnInst final : Instruction {
+struct ReturnInst final : Inst {
     std::shared_ptr<Value> returnValue;
     explicit ReturnInst(std::shared_ptr<Value> v, const Type t)
-        : Instruction(Kind::Return, t), returnValue(std::move(v)) {}
+        : Inst(Kind::Return, t), returnValue(std::move(v)) {}
 
-    ~ReturnInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Return; }
+
+    ReturnInst() = delete;
 };
 
-struct SignExtendInst final : Instruction {
+struct SignExtendInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     SignExtendInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::SignExtend, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::SignExtend, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::SignExtend; }
+
+    SignExtendInst() = delete;
 };
 
-struct TruncateInst final : Instruction {
+struct TruncateInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     TruncateInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Truncate, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::Truncate, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Truncate; }
 
     TruncateInst() = delete;
 };
 
-struct ZeroExtendInst final : Instruction {
+struct ZeroExtendInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     ZeroExtendInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::ZeroExtend, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::ZeroExtend, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::ZeroExtend; }
 
     ZeroExtendInst() = delete;
 };
 
-struct DoubleToIntInst final : Instruction {
+struct DoubleToIntInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     DoubleToIntInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::DoubleToInt, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::DoubleToInt, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::DoubleToInt; }
 
     DoubleToIntInst() = delete;
 };
 
-struct DoubleToUIntInst final : Instruction {
+struct DoubleToUIntInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     DoubleToUIntInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::DoubleToUInt, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::DoubleToUInt, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::DoubleToUInt; }
 
     DoubleToUIntInst() = delete;
 };
 
-struct IntToDoubleInst final : Instruction {
+struct IntToDoubleInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     IntToDoubleInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::IntToDouble, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::IntToDouble, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::IntToDouble; }
 
     IntToDoubleInst() = delete;
 };
 
-struct UIntToDoubleInst final : Instruction {
+struct UIntToDoubleInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     UIntToDoubleInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::UIntToDouble, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::UIntToDouble, t), src(std::move(src)), dst(std::move(dst)) {}
+
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::UIntToDouble; }
 
     UIntToDoubleInst() = delete;
 };
 
-struct UnaryInst final : Instruction {
+struct UnaryInst final : Inst {
     enum class Operation {
         Complement, Negate, Not
     };
@@ -190,14 +208,14 @@ struct UnaryInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     UnaryInst(const Operation op, std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Unary, t), operation(op), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::Unary, t), operation(op), src(std::move(src)), dst(std::move(dst)) {}
 
-    ~UnaryInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Unary; }
 
     UnaryInst() = delete;
 };
 
-struct BinaryInst final : Instruction {
+struct BinaryInst final : Inst {
     enum class Operation {
         Add, Subtract, Multiply, Divide, Remainder,
         BitwiseAnd, BitwiseOr, BitwiseXor,
@@ -214,100 +232,100 @@ struct BinaryInst final : Instruction {
                const std::shared_ptr<Value>& src2,
                const std::shared_ptr<Value>& dst,
                const Type t)
-        : Instruction(Kind::Binary, t), operation(op), lhs(src1), rhs(src2), dst(dst) {}
+        : Inst(Kind::Binary, t), operation(op), lhs(src1), rhs(src2), dst(dst) {}
 
-    ~BinaryInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Binary; }
 
     BinaryInst() = delete;
 };
 
-struct CopyInst final : Instruction {
+struct CopyInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     CopyInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Copy, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::Copy, t), src(std::move(src)), dst(std::move(dst)) {}
 
-    ~CopyInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Copy; }
 
     CopyInst() = delete;
 };
 
-struct GetAddressInst final : Instruction {
+struct GetAddressInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
     GetAddressInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::GetAddress, t), src(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::GetAddress, t), src(std::move(src)), dst(std::move(dst)) {}
 
-    ~GetAddressInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::GetAddress; }
 
     GetAddressInst() = delete;
 };
 
-struct LoadInst final : Instruction {
+struct LoadInst final : Inst {
     std::shared_ptr<Value> ptr;
     std::shared_ptr<Value> dst;
     LoadInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Load, t), ptr(std::move(src)), dst(std::move(dst)) {}
+        : Inst(Kind::Load, t), ptr(std::move(src)), dst(std::move(dst)) {}
 
-    ~LoadInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Load; }
 
     LoadInst() = delete;
 };
 
-struct StoreInst final : Instruction {
+struct StoreInst final : Inst {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> ptr;
     StoreInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type t)
-        : Instruction(Kind::Store, t), src(std::move(src)), ptr(std::move(dst)) {}
+        : Inst(Kind::Store, t), src(std::move(src)), ptr(std::move(dst)) {}
 
-    ~StoreInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Store; }
 
     StoreInst() = delete;
 };
 
-struct JumpInst final : Instruction {
+struct JumpInst final : Inst {
     Identifier target;
     explicit JumpInst(Identifier target)
-        : Instruction(Kind::Jump, Type::I32), target(std::move(target)) {}
+        : Inst(Kind::Jump, Type::I32), target(std::move(target)) {}
 
-    ~JumpInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Jump; }
 
     JumpInst() = delete;
 };
 
-struct JumpIfZeroInst final : Instruction {
+struct JumpIfZeroInst final : Inst {
     std::shared_ptr<Value> condition;
     Identifier target;
     JumpIfZeroInst(std::shared_ptr<Value> condition, Identifier target)
-        : Instruction(Kind::JumpIfZero, condition->type), condition(std::move(condition)), target(std::move(target)) {}
+        : Inst(Kind::JumpIfZero, condition->type), condition(std::move(condition)), target(std::move(target)) {}
 
-    ~JumpIfZeroInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::JumpIfZero; }
 
     JumpIfZeroInst() = delete;
 };
 
-struct JumpIfNotZeroInst final : Instruction {
+struct JumpIfNotZeroInst final : Inst {
     std::shared_ptr<Value> condition;
     Identifier target;
     JumpIfNotZeroInst(std::shared_ptr<Value> condition, Identifier target)
-        : Instruction(Kind::JumpIfNotZero, condition->type), condition(std::move(condition)), target(std::move(target)) {}
+        : Inst(Kind::JumpIfNotZero, condition->type), condition(std::move(condition)), target(std::move(target)) {}
 
-    ~JumpIfNotZeroInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::JumpIfNotZero; }
 
     JumpIfNotZeroInst() = delete;
 };
 
-struct LabelInst final : Instruction {
+struct LabelInst final : Inst {
     Identifier target;
     explicit LabelInst(Identifier target)
-        : Instruction(Kind::Label, Type::I32), target(std::move(target)) {}
+        : Inst(Kind::Label, Type::I32), target(std::move(target)) {}
 
-    ~LabelInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Label; }
 
     LabelInst() = delete;
 };
 
-struct FunCallInst final : Instruction {
+struct FunCallInst final : Inst {
     Identifier funName;
     std::vector<std::shared_ptr<Value>> args;
     std::shared_ptr<Value> destination;
@@ -315,9 +333,9 @@ struct FunCallInst final : Instruction {
                 std::vector<std::shared_ptr<Value>> args,
                 std::shared_ptr<Value> dst,
                 const Type t)
-        : Instruction(Kind::FunCall, t), funName(std::move(funName)), args(std::move(args)), destination(std::move(dst)) {}
+        : Inst(Kind::FunCall, t), funName(std::move(funName)), args(std::move(args)), destination(std::move(dst)) {}
 
-    ~FunCallInst() override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::FunCall; }
 
     FunCallInst() = delete;
 };
@@ -326,26 +344,26 @@ struct TopLevel {
     enum class Kind {
         Function, StaticVariable
     };
-    Kind type;
+    Kind kind;
 
     TopLevel() = delete;
 
     virtual ~TopLevel() = default;
 protected:
     explicit TopLevel(const Kind t)
-        : type(t) {}
+        : kind(t) {}
 };
 
 struct Function : TopLevel {
     std::string name;
     std::vector<Identifier> args;
     std::vector<Type> argTypes;
-    std::vector<std::unique_ptr<Instruction>> insts;
+    std::vector<std::unique_ptr<Inst>> insts;
     const bool isGlobal;
     Function(std::string identifier, const bool isGlobal)
         : TopLevel(Kind::Function), name(std::move(identifier)), isGlobal(isGlobal) {}
 
-    ~Function() override;
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::Function; }
 
     Function() = delete;
 };
@@ -362,7 +380,7 @@ struct StaticVariable : TopLevel {
         : TopLevel(Kind::StaticVariable), name
                 (std::move(identifier)), value(value), type(ty), global(isGlobal) {}
 
-    ~StaticVariable() override;
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticVariable; }
 
     StaticVariable() = delete;
 };
@@ -373,7 +391,6 @@ struct Program {
 
     Program(Program&&) = default;
     Program& operator=(Program&&) = default;
-    ~Program();
 
     Program(const Program&) = delete;
     Program& operator=(const Program&) = delete;

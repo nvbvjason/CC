@@ -64,7 +64,6 @@ public:
     void visit(AddrOffExpr& addrOffExpr) override;
     void visit(SubscriptExpr& subscriptExpr) override;
 };
-
 } // Parsing
 
 #endif // CC_PARSING_AST_TRAVERSER_HPP

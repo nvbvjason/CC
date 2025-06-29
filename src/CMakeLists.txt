@@ -30,6 +30,7 @@ target_link_libraries(CompilerDriver PUBLIC
 add_executable(CC
         main.cpp
         StateCode.hpp
+        DynCast.hpp
 )
 
 # Specify include directories for the CC executable

@@ -12,7 +12,11 @@
 namespace Parsing {
 
 struct TypeBase {
-    Type kind;
+    enum class Kind {
+        Var, Func, Pointer, Array
+    };
+    Kind kind;
+    Type type;
 
     virtual ~TypeBase() = default;
     virtual void accept(ASTVisitor& visitor) = 0;
@@ -20,8 +24,8 @@ struct TypeBase {
 
     TypeBase() = delete;
 protected:
-    explicit TypeBase(const Type kind)
-        : kind(kind) {}
+    explicit TypeBase(const Kind k, const Type t)
+        : kind(k), type(t) {}
 };
 
 struct BlockItem {

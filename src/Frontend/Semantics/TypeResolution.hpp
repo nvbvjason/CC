@@ -15,27 +15,7 @@
 
 namespace Semantics {
 
-template<typename TargetType, Type TargetKind>
-void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
-{
-    TargetType value;
-    if (constExpr.type->kind == Type::I32)
-        value = std::get<i32>(constExpr.value);
-    else if (constExpr.type->kind == Type::I64)
-        value = std::get<i64>(constExpr.value);
-    else if (constExpr.type->kind == Type::U32)
-        value = std::get<u32>(constExpr.value);
-    else if (constExpr.type->kind == Type::U64)
-        value = std::get<u64>(constExpr.value);
-    else if (constExpr.type->kind == Type::Double)
-        value = std::get<double>(constExpr.value);
-    if (varDecl.init->kind != Parsing::Initializer::Kind::Single)
-        return;
-    varDecl.init = std::make_unique<Parsing::SingleInit>(std::make_unique<Parsing::ConstExpr>(
-        value, std::make_unique<Parsing::VarType>(TargetKind)));
-}
-
-class TypeResolution : public Parsing::ASTTraverser {
+class TypeResolution final : public Parsing::ASTTraverser {
     static constexpr auto s_boolType = Type::I32;
 
     struct FuncEntry {
@@ -69,16 +49,16 @@ public:
     void visit(Parsing::DeclForInit& declForInit) override;
 
     void visit(Parsing::FuncCallExpr& funCallExpr) override;
-    bool isIllegalVarDecl(const Parsing::VarDecl& varDecl) const;
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::UnaryExpr& unaryExpr) override;
     void visit(Parsing::BinaryExpr& binaryExpr) override;
     void visit(Parsing::AssignmentExpr& assignmentExpr) override;
-    bool isCastFromPointerToAndFromDouble(Type outerType, Type innerType);
     void visit(Parsing::CastExpr& castExpr) override;
     void visit(Parsing::TernaryExpr& ternaryExpr) override;
     void visit(Parsing::AddrOffExpr& addrOffExpr) override;
     void visit(Parsing::DereferenceExpr& dereferenceExpr) override;
+
+    bool isIllegalVarDecl(const Parsing::VarDecl& varDecl) const;
 
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
     static void assignTypeToArithmeticBinaryExpr(
@@ -127,5 +107,26 @@ inline bool isIllegalUnaryPointerOperator(const Parsing::UnaryExpr::Operator ope
 bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
+bool isCastFromPointerToAndFromDouble(Type outerType, Type innerType);
+
+template<typename TargetType, Type TargetKind>
+void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
+{
+    TargetType value;
+    if (constExpr.type->type == Type::I32)
+        value = std::get<i32>(constExpr.value);
+    else if (constExpr.type->type == Type::I64)
+        value = std::get<i64>(constExpr.value);
+    else if (constExpr.type->type == Type::U32)
+        value = std::get<u32>(constExpr.value);
+    else if (constExpr.type->type == Type::U64)
+        value = std::get<u64>(constExpr.value);
+    else if (constExpr.type->type == Type::Double)
+        value = std::get<double>(constExpr.value);
+    if (varDecl.init->kind != Parsing::Initializer::Kind::Single)
+        return;
+    varDecl.init = std::make_unique<Parsing::SingleInit>(std::make_unique<Parsing::ConstExpr>(
+        value, std::make_unique<Parsing::VarType>(TargetKind)));
+}
 } // Semantics
 #endif // CC_SEMANTICS_TYPE_RESOLUTION_HPP

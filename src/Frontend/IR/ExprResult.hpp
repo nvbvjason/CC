@@ -27,6 +27,8 @@ struct PlainOperand : ExprResult {
     explicit PlainOperand(std::shared_ptr<Value> value)
         : ExprResult(Kind::PlainOperand), value(std::move(value)) {}
 
+    static bool classOf(const ExprResult* exprResult) { return exprResult->kind == Kind::PlainOperand; }
+
     PlainOperand() = delete;
 };
 
@@ -35,6 +37,8 @@ struct DereferencedPointer : ExprResult {
     Type referredToType;
     DereferencedPointer(std::shared_ptr<Value> p, const Type rt)
         : ExprResult(Kind::DereferencedPointer), ptr(std::move(p)), referredToType(rt) {}
+
+    static bool classOf(const ExprResult* exprResult) { return exprResult->kind == Kind::DereferencedPointer; }
 
     DereferencedPointer() = delete;
 };
