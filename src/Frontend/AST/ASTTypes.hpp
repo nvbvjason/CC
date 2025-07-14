@@ -59,6 +59,7 @@ struct ArrayType : TypeBase {
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const VarType& typeBase);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const PointerType& pointerType);
+[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const ArrayType& arrayType);
 
 [[nodiscard]] bool areEquivalent(const TypeBase& left, const TypeBase& right);
 [[nodiscard]] bool areEquivalent(const VarType& left, const VarType& right);

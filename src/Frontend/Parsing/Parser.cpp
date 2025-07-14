@@ -837,10 +837,8 @@ Declaration::StorageClass getStorageClass(const Lexing::Token::Type tokenType)
         case TokenType::Extern:     return StorageClass::Extern;
         case TokenType::NotAToken:  return StorageClass::None;
         default:
-            assert("getVarStorageClass invalid TokenType");
             std::abort();
     }
-    assert("getVarStorageClass invalid TokenType");
 }
 
 bool isAboveZero(const ConstExpr& constExpr)

@@ -17,6 +17,10 @@ std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase)
             const auto typeFunction = dyn_cast<const FuncType>(&typeBase);
             return deepCopy(*typeFunction);
         }
+        case Type::Array: {
+            const auto typeArray = dyn_cast<const ArrayType>(&typeBase);
+            return deepCopy(*typeArray);
+        }
         default:
             const auto typeVar = dyn_cast<const VarType>(&typeBase);
             return deepCopy(*typeVar);
@@ -41,6 +45,11 @@ std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType)
 std::unique_ptr<TypeBase> deepCopy(const PointerType& pointerType)
 {
     return std::make_unique<PointerType>(deepCopy(*pointerType.referenced));
+}
+
+std::unique_ptr<TypeBase> deepCopy(const ArrayType& arrayType)
+{
+    return std::make_unique<ArrayType>(deepCopy(*arrayType.elementType), arrayType.size);
 }
 
 bool areEquivalent(const TypeBase& left, const TypeBase& right)

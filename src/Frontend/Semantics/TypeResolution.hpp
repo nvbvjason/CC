@@ -45,19 +45,60 @@ class TypeResolution final : public Parsing::ASTTraverser {
 public:
     bool validate(Parsing::Program& program);
 
-    void visit(Parsing::FunDecl& funDecl) override;
-    void visit(Parsing::VarDecl& varDecl) override;
-    void visit(Parsing::DeclForInit& declForInit) override;
+    // Declarations
+    void checkDecl(Parsing::Declaration& decl);
+    void checkVarDecl(Parsing::VarDecl& varDecl);
+    void checkFuncDecl(const Parsing::FunDecl& funDecl);
 
-    void visit(Parsing::FuncCallExpr& funCallExpr) override;
-    void visit(Parsing::VarExpr& varExpr) override;
-    void visit(Parsing::UnaryExpr& unaryExpr) override;
-    void visit(Parsing::BinaryExpr& binaryExpr) override;
-    void visit(Parsing::AssignmentExpr& assignmentExpr) override;
-    void visit(Parsing::CastExpr& castExpr) override;
-    void visit(Parsing::TernaryExpr& ternaryExpr) override;
-    void visit(Parsing::AddrOffExpr& addrOffExpr) override;
-    void visit(Parsing::DereferenceExpr& dereferenceExpr) override;
+    // Block
+    void checkBlock(const Parsing::Block& block);
+
+    // BlockItem
+    void checkBlockItem(Parsing::BlockItem& blockItem);
+    void checkStmtBlockItem(const Parsing::StmtBlockItem& stmtBlockItem);
+    void checkDeclBlockItem(const Parsing::DeclBlockItem& declBlockItem);
+
+    // Initializer
+    void checkInitializer(Parsing::Initializer& initializer);
+    void checkSingleInit(Parsing::SingleInit& singleInit);
+    void checkCompoundInit(const Parsing::CompoundInit& compoundInit);
+
+    // ForInit
+    void checkForInit(Parsing::ForInit& forInit);
+    void checkDeclForInit(const Parsing::DeclForInit& declForInit);
+    void checkExprForInit(const Parsing::ExprForInit& exprForInit);
+
+    // Statements
+    void checkStmt(Parsing::Stmt& stmt);
+    void checkReturnStmt(const Parsing::ReturnStmt& returnStmt);
+    void checkExprStmt(const Parsing::ExprStmt& exprStmt);
+    void checkIfStmt(const Parsing::IfStmt& ifStmt);
+    static void checkGotoStmt(Parsing::GotoStmt& gotoStmt) {}
+    void checkCompoundStmt(const Parsing::CompoundStmt& compoundStmt);
+    static void checkBreakStmt(Parsing::BreakStmt& breakStmt) {}
+    static void checkContinueStmt(Parsing::ContinueStmt& continueStmt) {}
+    void checkLabelStmt(const Parsing::LabelStmt& labelStmt);
+    void checkCaseStmt(const Parsing::CaseStmt& caseStmt);
+    void checkDefaultStmt(const Parsing::DefaultStmt& defaultStmt);
+    void checkWhileStmt(const Parsing::WhileStmt& whileStmt);
+    void checkDoWhileStmt(const Parsing::DoWhileStmt& doWhileStmt);
+    void checkForStmt(const Parsing::ForStmt& forStmt);
+    void checkSwitchStmt(const Parsing::SwitchStmt& switchStmt);
+    static void checkNullStmt(Parsing::NullStmt& nullStmt) {}
+
+    // Expressions
+    void checkExpr(Parsing::Expr& expr);
+    void checkConstExpr(Parsing::ConstExpr& expr);
+    void checkVarExpr(Parsing::VarExpr& expr);
+    void checkCastExpr(const Parsing::CastExpr& castExpr);
+    void checkUnaryExpr(Parsing::UnaryExpr& unaryExpr);
+    void checkBinaryExpr(Parsing::BinaryExpr& binaryExpr);
+    void checkAssignExpr(Parsing::AssignmentExpr& assignExpr);
+    void checkTernaryExpr(Parsing::TernaryExpr& ternaryExpr);
+    void checkFuncCallExpr(Parsing::FuncCallExpr& funcCallExpr);
+    void checkDereferenceExpr(Parsing::DereferenceExpr& dereferenceExpr);
+    void checkAddrOffExpr(Parsing::AddrOffExpr& addrOffExpr);
+    void checkSubscriptExpr(const Parsing::SubscriptExpr& subscriptExpr);
 
     bool isIllegalVarDecl(const Parsing::VarDecl& varDecl) const;
 

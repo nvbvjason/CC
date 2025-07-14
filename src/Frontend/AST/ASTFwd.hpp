@@ -13,7 +13,8 @@ namespace Parsing {
 
     variable_declaration = (identifier name, initializer? init, type var_type, storage_class?)
     function_definition = (identifier name, identifier* params, block? body, type var_type, storage_class?)
-    initializer = SingleInit(exp) | CompoundInit(initializer*)
+    initializer = SingleInit(exp)
+                | CompoundInit(initializer*)
 
     type = Int | Long | UInt | ULong | Double |
          | FunType(type* params, type ret)
