@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_CODEGEN_ASM_PRINTER_HPP
-#define CC_CODEGEN_ASM_PRINTER_HPP
-
 #include "AsmAST.hpp"
 
 #include <sstream>
@@ -67,5 +64,3 @@ std::string to_string(const BinaryInst::Operator& oper);
 std::string to_string(const Inst::CondCode& condCode);
 std::string to_string(AsmType type);
 } // CodeGen
-
-#endif // CC_CODEGEN_ASM_PRINTER_HPP

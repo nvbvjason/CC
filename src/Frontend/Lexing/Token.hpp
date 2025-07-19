@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_LEXING_TOKEN_H
-#define CC_LEXING_TOKEN_H
-
 #include "ShortTypes.hpp"
 
 #include <string>
@@ -125,5 +122,3 @@ std::ostream& operator<<(std::ostream& os, const Token& token);
 bool operator==(const Token& lhs, const Token& rhs);
 
 }
-
-#endif // CC_LEXING_TOKEN_H

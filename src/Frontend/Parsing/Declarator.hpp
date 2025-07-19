@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_DECLARATOR_HPP
-#define CC_PARSING_DECLARATOR_HPP
-
 #include "ASTBase.hpp"
 #include "CodeGen/AsmAST.hpp"
 
@@ -143,5 +140,3 @@ std::unique_ptr<AbstractDeclarator>& abstractDeclarator, std::unique_ptr<TypeBas
     std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<TypeBase>&& typeBase);
 
 } // Parsing
-
-#endif // CC_PARSING_DECLARATOR_HPP

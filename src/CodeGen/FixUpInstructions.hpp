@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_CODEGEN_FIX_UP_INSTRUCTIONS_HPP
-#define CC_CODEGEN_FIX_UP_INSTRUCTIONS_HPP
-
 #include "AsmAST.hpp"
 
 #include <vector>
@@ -89,5 +86,3 @@ constexpr bool FixUpInstructions::isOnTheStack(const Operand::Kind kind)
 }
 
 } // namespace CodeGen
-
-#endif // CC_CODEGEN_FIX_UP_INSTRUCTIONS_HPP

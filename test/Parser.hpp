@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef PARSER_HPP
-#define PARSER_HPP
-
 #include "Token.hpp"
 #include "Parsing/Parser.hpp"
 
@@ -46,4 +43,3 @@ void RunTestCases(const std::string& stmtName, ParseFunc parseFunc,
         RunTestCase(stmtName, parser, parseFunc, test);
     }
 }
-#endif //PARSER_HPP

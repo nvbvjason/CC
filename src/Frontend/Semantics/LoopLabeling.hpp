@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_SEMANTICS_SWITCH_HPP
-#define CC_SEMANTICS_SWITCH_HPP
-
 #include "ASTTraverser.hpp"
 #include "ASTParser.hpp"
 #include "ShortTypes.hpp"
@@ -80,7 +77,4 @@ inline std::string LoopLabeling::makeTemporary(const std::string& name)
     static i32 m_counter = 0;
     return name + '.' + std::to_string(m_counter++);
 }
-
 } // Semantics
-
-#endif // CC_SEMANTICS_SWITCH_HPP

@@ -88,6 +88,8 @@ public:
 
     // Expressions
     void checkExpr(Parsing::Expr& expr);
+    void checkExprAndConvert(Parsing::Expr& expr);
+
     void checkConstExpr(Parsing::ConstExpr& expr);
     void checkVarExpr(Parsing::VarExpr& expr);
     void checkCastExpr(const Parsing::CastExpr& castExpr);

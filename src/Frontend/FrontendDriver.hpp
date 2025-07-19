@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_FRONTEND_DRIVER_HPP
-#define CC_FRONTEND_DRIVER_HPP
-
 #include "ASTIr.hpp"
 #include "StateCode.hpp"
 #include "ASTParser.hpp"
@@ -24,5 +21,3 @@ public:
 };
 
 StateCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable);
-
-#endif // CC_FRONTEND_DRIVER_HPP

@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_SEMANTICS_VARIABLE_SOLUTION_HPP
-#define CC_SEMANTICS_VARIABLE_SOLUTION_HPP
-
 #include "ASTTraverser.hpp"
 #include "ShortTypes.hpp"
 #include "ASTParser.hpp"
@@ -77,4 +74,3 @@ inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl, bool global)
     return varDecl.storage == Storage::Extern;
 }
 } // Semantics
-#endif // CC_SEMANTICS_VARIABLE_SOLUTION_HPP

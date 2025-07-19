@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_CODEGEN_PSEUDO_REGISTER_REPLACER_HPP
-#define CC_CODEGEN_PSEUDO_REGISTER_REPLACER_HPP
-
 #include "AsmAST.hpp"
 
 #include <unordered_map>
@@ -40,4 +37,3 @@ private:
 };
 
 } // CodeGen
-#endif // CC_CODEGEN_PSEUDO_REGISTER_REPLACER_HPP

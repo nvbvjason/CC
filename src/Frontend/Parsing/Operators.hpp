@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_OPERATORS_HPP
-#define CC_PARSING_OPERATORS_HPP
-
 #include "Token.hpp"
 #include "ASTParser.hpp"
 
@@ -309,5 +306,3 @@ constexpr i32 getPrecedenceLevel(const AssignmentExpr::Operator oper)
     return 14;
 }
 } // namespace Parsing::Operators
-
-#endif // CC_PARSING_OPERATORS_HPP

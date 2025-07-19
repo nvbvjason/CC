@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_TYPES_TREE_HPP
-#define CC_PARSING_TYPES_TREE_HPP
-
 #include "ASTVisitor.hpp"
 #include "ASTBase.hpp"
 
@@ -67,4 +64,3 @@ struct ArrayType : TypeBase {
 [[nodiscard]] bool areEquivalent(const PointerType& left, const PointerType& right);
 
 } // Parsing
-#endif // CC_PARSING_TYPES_TREE_HPP

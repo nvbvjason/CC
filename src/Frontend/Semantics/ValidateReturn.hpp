@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_VALIDATE_RETURN_HPP
-#define CC_PARSING_VALIDATE_RETURN_HPP
-
 #include "ASTTraverser.hpp"
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
@@ -25,5 +22,3 @@ inline void ValidateReturn::addReturnZero(Parsing::FunDecl& funDecl)
     funDecl.body->body.push_back(std::move(returnBlockStmt));
 }
 } // Semantics
-
-#endif // CC_PARSING_VALIDATE_RETURN_HPP

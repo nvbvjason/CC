@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_CODEGEN_ABSTRACTTREE_HPP
-#define CC_CODEGEN_ABSTRACTTREE_HPP
-
 #include "ShortTypes.hpp"
 #include "Types/Type.hpp"
 
@@ -536,4 +533,3 @@ inline void CallInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void ReturnInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 
 }
-#endif // CC_CODEGEN_ABSTRACTTREE_HPP

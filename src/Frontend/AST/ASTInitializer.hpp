@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_INITIALIZER_HPP
-#define CC_PARSING_INITIALIZER_HPP
-
 #include <vector>
 
 #include "ASTBase.hpp"
@@ -35,4 +32,3 @@ struct CompoundInit : Initializer {
 };
 
 } // Parsing
-#endif // CC_PARSING_INITIALIZER_HPP

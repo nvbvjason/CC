@@ -1,10 +1,5 @@
 #pragma once
 
-#ifndef CC_LEXING_LEXER_HPP
-#define CC_LEXING_LEXER_HPP
-
-#include <regex>
-
 #include "Token.hpp"
 
 #include <string>
@@ -12,7 +7,6 @@
 #include <vector>
 
 namespace Lexing {
-
 
 class Lexer {
     using Type = Token::Type;
@@ -77,4 +71,3 @@ inline bool matchesUL(const std::string& text, const i32 endNumbers, const i32 c
 }
 
 }
-#endif // CC_LEXING_LEXER_HPP

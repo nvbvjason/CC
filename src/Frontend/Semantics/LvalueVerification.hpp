@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_SEMANTICS_LVALUE_VERIFICATION_HPP
-#define CC_SEMANTICS_LVALUE_VERIFICATION_HPP
-
 #include "ConstASTTraverser.hpp"
 #include "ASTParser.hpp"
 
@@ -29,6 +26,4 @@ inline bool isNotAnLvalue(const Parsing::Expr::Kind kind)
            kind == Kind::Constant ||
            kind == Kind::Ternary;
 }
-
 } // Semantics
-#endif // CC_SEMANTICS_LVALUE_VERIFICATION_HPP

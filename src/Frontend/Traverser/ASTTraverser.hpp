@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_AST_TRAVERSER_HPP
-#define CC_PARSING_AST_TRAVERSER_HPP
-
 #include "ASTVisitor.hpp"
 
 namespace Parsing {
@@ -65,5 +62,3 @@ public:
     void visit(SubscriptExpr& subscriptExpr) override;
 };
 } // Parsing
-
-#endif // CC_PARSING_AST_TRAVERSER_HPP

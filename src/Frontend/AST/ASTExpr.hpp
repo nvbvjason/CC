@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_EXPR_TREE_HPP
-#define CC_PARSING_EXPR_TREE_HPP
-
 #include "ASTVisitor.hpp"
 #include "ASTBase.hpp"
 #include "ShortTypes.hpp"
@@ -192,5 +189,3 @@ struct SubscriptExpr final : Expr {
     SubscriptExpr() = delete;
 };
 } // Parsing
-
-#endif // CC_PARSING_EXPR_TREE_HPP
