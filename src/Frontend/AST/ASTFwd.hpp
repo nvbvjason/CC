@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_AST_FWD_HPP
-#define CC_PARSING_AST_FWD_HPP
-
 namespace Parsing {
 
 // for Levelisation
@@ -121,5 +118,3 @@ struct FuncCallExpr;
 struct DereferenceExpr;
 struct AddrOffExpr;
 } // Parsing
-
-#endif // CC_PARSING_AST_FWD_HPP

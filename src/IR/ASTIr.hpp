@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_IR_ABSTRACT_TREE_HPP
-#define CC_IR_ABSTRACT_TREE_HPP
-
 #include "ShortTypes.hpp"
 #include "Types/Type.hpp"
 
@@ -380,5 +377,3 @@ struct Program {
 };
 
 } // IR
-
-#endif // CC_IR_ABSTRACT_TREE_HPP

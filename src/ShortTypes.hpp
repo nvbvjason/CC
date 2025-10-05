@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef SHORT_TYPES_HPP
-#define SHORT_TYPES_HPP
-
 #include <cstdint>
 
 using i8  = int8_t;
@@ -16,5 +13,3 @@ using u64 = uint64_t;
 
 static_assert(sizeof(i8) == 1,  "Non-8-bit char platform?");
 static_assert(sizeof(u8) == 1,  "Non-8-bit char platform?");
-
-#endif // SHORT_TYPES_HPP

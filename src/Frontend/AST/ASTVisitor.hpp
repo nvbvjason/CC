@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSER_AST_VISITOR_HPP
-#define CC_PARSER_AST_VISITOR_HPP
-
 #include "ASTFwd.hpp"
 
 namespace Parsing {
@@ -116,5 +113,3 @@ public:
 };
 
 } // Parsing
-
-#endif // CC_PARSER_AST_VISITOR_HPP

@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_CODEGEN_AST_TO_ASSEMBLY_HPP
-#define CC_CODEGEN_AST_TO_ASSEMBLY_HPP
-
 #include "AsmAST.hpp"
 
 namespace CodeGen {
@@ -28,4 +25,3 @@ std::string addType(const std::string& instruction, AsmType type);
 std::string condCode(BinaryInst::CondCode condCode);
 
 } // CodeGen
-#endif // CC_CODEGEN_AST_TO_ASSEMBLY_HPP

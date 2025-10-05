@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_SEMANTICS_DESUGAR_COMPOUND_ASSIGN_HPP
-#define CC_SEMANTICS_DESUGAR_COMPOUND_ASSIGN_HPP
-
 #include <memory>
 
 #include "ASTTraverser.hpp"
@@ -18,4 +15,3 @@ public:
 
 std::unique_ptr<Parsing::Expr> deepCopy(const Parsing::Expr& derefExpr);
 } // Semantics
-#endif // CC_SEMANTICS_DESUGAR_COMPOUND_ASSIGN_HPP

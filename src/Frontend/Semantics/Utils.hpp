@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_SEMANTICS_TUTILS_HPP
-#define CC_SEMANTICS_TUTILS_HPP
-
 #include "ASTExpr.hpp"
 #include "TypeConversion.hpp"
 
@@ -38,5 +35,3 @@ inline bool canConvertToPtr(const Parsing::ConstExpr& constExpr)
 }
 
 } // Parsing
-
-#endif // CC_SEMANTICS_TUTILS_HPP

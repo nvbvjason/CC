@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_SEMANTICS_GOTO_LABELS_UNIQUE_HPP
-#define CC_SEMANTICS_GOTO_LABELS_UNIQUE_HPP
-
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -26,5 +23,3 @@ public:
 };
 
 } // Semantics
-
-#endif // CC_SEMANTICS_GOTO_LABELS_UNIQUE_HPP

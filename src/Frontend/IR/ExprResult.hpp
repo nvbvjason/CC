@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_IR_EXPR_RESULT_HPP
-#define CC_IR_EXPR_RESULT_HPP
-
 #include <memory>
 
 #include "ASTIr.hpp"
@@ -40,5 +37,3 @@ struct DereferencedPointer : ExprResult {
 };
 
 } // Ir
-
-#endif // CC_IR_EXPR_RESULT_HPP

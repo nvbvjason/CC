@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_ABSTRACT_TREE_PRINTER_HPP
-#define CC_PARSING_ABSTRACT_TREE_PRINTER_HPP
-
 #include "ASTParser.hpp"
 #include "ConstASTTraverser.hpp"
 
@@ -81,5 +78,3 @@ private:
     std::string getIndent() const;
 };
 } // namespace Parsing
-
-#endif // CC_PARSING_ABSTRACT_TREE_PRINTER_HPP

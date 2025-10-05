@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_IR_GENERATE_IR_HPP
-#define CC_IR_GENERATE_IR_HPP
-
 #include "ASTIr.hpp"
 #include "ASTParser.hpp"
 #include "SymbolTable.hpp"
@@ -71,5 +68,3 @@ public:
 };
 
 } // IR
-
-#endif // CC_IR_GENERATE_IR_HPP

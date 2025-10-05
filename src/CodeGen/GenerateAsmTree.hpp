@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_CONCRETE_TREE_HPP
-#define CC_CONCRETE_TREE_HPP
-
 #include "AsmAST.hpp"
 #include "ASTIr.hpp"
 
@@ -124,5 +121,4 @@ inline AsmType getAsmType(Type type)
 
 std::string makeTemporaryPseudoName();
 
-}
-#endif // CC_CONCRETE_TREE_HPP
+} // CodeGen

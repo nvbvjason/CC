@@ -1,15 +1,12 @@
 #pragma once
 
-#ifndef CC_CompilerDriver_HPP
-#define CC_CompilerDriver_HPP
-
-#include "Frontend/Parsing/Parser.hpp"
+#include "Parser.hpp"
+#include "StateCode.hpp"
 
 #include <filesystem>
 #include <string>
 #include <vector>
 
-#include "StateCode.hpp"
 
 class CompilerDriver {
     std::vector<std::string> m_args;
@@ -29,5 +26,3 @@ private:
 
 std::string getSourceCode(const std::string& inputFile);
 std::string astPrinter(const Parsing::Program &program);
-
-#endif // CC_CompilerDriver_HPP

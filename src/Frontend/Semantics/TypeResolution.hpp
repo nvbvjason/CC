@@ -1,8 +1,5 @@
  #pragma once
 
-#ifndef CC_SEMANTICS_TYPE_RESOLUTION_HPP
-#define CC_SEMANTICS_TYPE_RESOLUTION_HPP
-
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
 #include "ASTTypes.hpp"
@@ -126,4 +123,3 @@ bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
 } // Semantics
-#endif // CC_SEMANTICS_TYPE_RESOLUTION_HPP

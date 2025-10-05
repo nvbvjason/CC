@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_ABSTRACT_TREE_HPP
-#define CC_PARSING_ABSTRACT_TREE_HPP
-
 #include "ASTVisitor.hpp"
 #include "ASTExpr.hpp"
 #include "ASTBase.hpp"
@@ -307,5 +304,3 @@ struct Program {
 };
 
 } // namespace Parsing
-
-#endif // CC_PARSING_ABSTRACT_TREE_HPP

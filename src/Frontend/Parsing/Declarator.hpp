@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_DECLARATOR_HPP
-#define CC_PARSING_DECLARATOR_HPP
-
 #include "ASTBase.hpp"
 #include "CodeGen/AsmAST.hpp"
 
@@ -80,5 +77,3 @@ struct AbstractBase : AbstractDeclarator {
 };
 
 } // Parsing
-
-#endif // CC_PARSING_DECLARATOR_HPP

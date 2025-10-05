@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_SEMANTICS_SWITCH_HPP
-#define CC_SEMANTICS_SWITCH_HPP
-
 #include "ASTTraverser.hpp"
 #include "ASTParser.hpp"
 #include "ShortTypes.hpp"
@@ -82,5 +79,3 @@ inline std::string LoopLabeling::makeTemporary(const std::string& name)
 }
 
 } // Semantics
-
-#endif // CC_SEMANTICS_SWITCH_HPP

@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_FRONTEND_SYMBOL_TABLE_HPP
-#define CC_FRONTEND_SYMBOL_TABLE_HPP
-
 #include "ShortTypes.hpp"
 #include "Types/Type.hpp"
 #include "ASTParser.hpp"
@@ -119,5 +116,3 @@ public:
     [[nodiscard]] bool inFunc() const { return 1 < m_entries.size(); }
     [[nodiscard]] bool isFunc(const std::string& name) const;
 };
-
-#endif // CC_FRONTEND_SYMBOL_TABLE_HPP

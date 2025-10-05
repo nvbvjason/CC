@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_CONCRETE_TREE_HPP
-#define CC_PARSING_CONCRETE_TREE_HPP
-
 /*
     <program>               ::= { <declaration> }
     <declaration>           ::= <function_declaration> | <variable_declaration>
@@ -161,5 +158,3 @@ inline bool Parser::continuePrecedenceClimbing(const i32 minPrecedence, const To
         && minPrecedence <= Operators::precedence(nextToken);
 }
 } // namespace Parsing
-
-#endif // CC_PARSING_CONCRETE_TREE_HPP

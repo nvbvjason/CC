@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_ERROR_CODES_HPP
-#define CC_ERROR_CODES_HPP
-
 enum class StateCode {
     Done = 0,
     Continue,
@@ -47,5 +44,3 @@ inline std::string to_string(StateCode code)
         default:                                    return "Error Unknown";
     }
 }
-
-#endif //CC_ERROR_CODES_HPP

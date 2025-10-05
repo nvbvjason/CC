@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef CC_PARSING_AST_BASE_HPP
-#define CC_PARSING_AST_BASE_HPP
-
 #include "ASTVisitor.hpp"
 #include "ShortTypes.hpp"
 #include "Types/Type.hpp"
@@ -120,5 +117,3 @@ protected:
 };
 
 } // Parsing
-
-#endif // CC_PARSING_AST_BASE_HPP
