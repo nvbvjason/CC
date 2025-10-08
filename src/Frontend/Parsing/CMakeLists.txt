@@ -1,7 +1,6 @@
 add_library(Parsing STATIC
         Parser.cpp
-        Operators.cpp
-        Declarator.cpp
+        Operators.hpp
         Declarator.hpp
 )
 

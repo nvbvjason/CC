@@ -17,7 +17,7 @@ public:
     FrontendDriver(std::string arg, std::filesystem::path inputFile)
         : m_arg(std::move(arg)), m_inputFile(std::move(inputFile)) {}
 
-    [[nodiscard]] std::tuple<Ir::Program, StateCode> run() const;
+    [[nodiscard]] std::tuple<std::optional<Ir::Program>, StateCode> run() const;
 };
 
 StateCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable);

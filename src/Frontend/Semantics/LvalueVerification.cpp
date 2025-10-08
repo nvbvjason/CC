@@ -1,5 +1,7 @@
 #include "LvalueVerification.hpp"
 
+#include "DynCast.hpp"
+
 namespace Semantics {
 
 bool LvalueVerification::resolve(Parsing::Program& program)
@@ -21,7 +23,7 @@ void LvalueVerification::visit(const Parsing::UnaryExpr& unaryExpr)
     }
     if (unaryExpr.operand->kind != Parsing::Expr::Kind::Unary)
         return;
-    const auto innerUnaryExpr = static_cast<Parsing::UnaryExpr*>(unaryExpr.operand.get());
+    const auto innerUnaryExpr = dynCast<Parsing::UnaryExpr>(unaryExpr.operand.get());
     if (innerUnaryExpr->op == Operator::PostFixDecrement
         || innerUnaryExpr->op == Operator::PostFixIncrement)
         m_valid = false;
@@ -43,7 +45,7 @@ void LvalueVerification::visit(const Parsing::AddrOffExpr& addrOffExpr)
         return;
     }
     if (addrOffExpr.reference->kind == Parsing::Expr::Kind::Unary) {
-        const auto unaryExpr = static_cast<Parsing::UnaryExpr*>(addrOffExpr.reference.get());
+        const auto unaryExpr = dynCast<Parsing::UnaryExpr>(addrOffExpr.reference.get());
         if (unaryExpr->op == Operator::PostFixDecrement || unaryExpr->op == Operator::PrefixDecrement
             || unaryExpr->op == Operator::PrefixIncrement || unaryExpr->op == Operator::PostFixDecrement) {
             m_valid = false;

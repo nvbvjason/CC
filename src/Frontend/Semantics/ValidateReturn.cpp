@@ -1,5 +1,6 @@
 #include "ValidateReturn.hpp"
 
+#include "DynCast.hpp"
 #include "Utils.hpp"
 
 namespace Semantics {
@@ -28,14 +29,14 @@ void ValidateReturn::visit(Parsing::FunDecl& funDecl)
         return;
     }
 
-    const auto stmtBlockItem = dynamic_cast<Parsing::StmtBlockItem*>(lastBlockItem.get());
+    const auto stmtBlockItem = dynCast<Parsing::StmtBlockItem>(lastBlockItem.get());
     if (stmtBlockItem->stmt->kind != Parsing::Stmt::Kind::Return) {
         addReturnZero(funDecl);
         return;
     }
-    const auto returnStmt = dynamic_cast<Parsing::ReturnStmt*>(stmtBlockItem->stmt.get());
-    const auto funcType = static_cast<const Parsing::FuncType*>(funDecl.type.get());
-    if (funcType->returnType->kind == Type::Pointer && returnStmt->expr->type->kind != Type::Pointer) {
+    const auto returnStmt = dynCast<Parsing::ReturnStmt>(stmtBlockItem->stmt.get());
+    const auto funcType = dynCast<const Parsing::FuncType>(funDecl.type.get());
+    if (funcType->returnType->type == Type::Pointer && returnStmt->expr->type->type != Type::Pointer) {
         if (!canConvertToNullPtr(*returnStmt->expr)) {
             m_hasValidReturns = false;
             return;
@@ -43,15 +44,15 @@ void ValidateReturn::visit(Parsing::FunDecl& funDecl)
         returnStmt->expr = std::make_unique<Parsing::CastExpr>(
             Parsing::deepCopy(*funcType->returnType), std::move(returnStmt->expr));
     }
-    if (funcType->returnType->kind == Type::Pointer || returnStmt->expr->type->kind == Type::Pointer) {
+    if (funcType->returnType->type == Type::Pointer || returnStmt->expr->type->type == Type::Pointer) {
         if (!Parsing::areEquivalent(*funcType->returnType, *returnStmt->expr->type)) {
             m_hasValidReturns = false;
             return;
         }
     }
-    if (funcType->returnType->kind != returnStmt->expr->type->kind) {
+    if (funcType->returnType->type != returnStmt->expr->type->type) {
         returnStmt->expr = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(funcType->returnType->kind),
+            std::make_unique<Parsing::VarType>(funcType->returnType->type),
             std::move(returnStmt->expr));
     }
 }

@@ -22,6 +22,8 @@ struct IdentifierDeclarator : Declarator {
     explicit IdentifierDeclarator(std::string&& identifier)
         : Declarator(Kind::Identifier), identifier(std::move(identifier)) {}
 
+    static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Identifier; }
+
     IdentifierDeclarator() = delete;
 };
 
@@ -30,6 +32,8 @@ struct PointerDeclarator : Declarator {
 
     explicit PointerDeclarator(std::unique_ptr<Declarator>&& declarator)
         : Declarator(Kind::Pointer), inner(std::move(declarator)) {}
+
+    static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Pointer; }
 
     PointerDeclarator() = delete;
 };
@@ -51,6 +55,8 @@ struct FunctionDeclarator : Declarator {
     explicit FunctionDeclarator(std::unique_ptr<Declarator>&& declarator, std::vector<ParamInfo>&& params)
         : Declarator(Kind::Function), params(std::move(params)), declarator(std::move(declarator)) {}
 
+    static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Function; }
+
     FunctionDeclarator() = delete;
 };
 
@@ -69,11 +75,15 @@ struct AbstractPointer : AbstractDeclarator {
     std::unique_ptr<AbstractDeclarator> inner;
     explicit AbstractPointer(std::unique_ptr<AbstractDeclarator>&& i)
         : AbstractDeclarator(Kind::Pointer), inner(std::move(i)) {}
+
+    static bool classOf(const AbstractDeclarator* abstractDeclarator) { return abstractDeclarator->kind == Kind::Pointer; }
 };
 
 struct AbstractBase : AbstractDeclarator {
     explicit AbstractBase()
         : AbstractDeclarator(Kind::Base) {}
+
+    static bool classOf(const AbstractDeclarator* declarator) { return declarator->kind == Kind::Base; }
 };
 
 } // Parsing

@@ -7,7 +7,6 @@ add_library(Semantics STATIC
         TypeResolution.cpp
         DeSugar.cpp
         DeSugar.hpp
-        Utils.cpp
         Utils.hpp
 )
 

@@ -40,7 +40,10 @@ StateCode CompilerDriver::wrappedRun()
     const std::string inputFile = m_args.back();
     std::vector<Lexing::Token> tokens;
     FrontendDriver frontend(argument, inputFile);
-    auto [irProgram, err] = frontend.run();
+    auto [irProgramOptional, err] = frontend.run();
+    if (!irProgramOptional.has_value())
+        return StateCode::ERROR_UNKNOWN;
+    Ir::Program irProgram = std::move(irProgramOptional.value());
     if (err != StateCode::Continue)
         return err;
     if (argument == "--tacky")
@@ -81,7 +84,9 @@ StateCode CompilerDriver::writeAssmFile(const std::string& inputFile, const std:
 {
     std::string stem = std::filesystem::path(inputFile).stem().string();
     const std::string inputFolder = std::filesystem::path(inputFile).parent_path().string();
-    m_outputFileName = std::format("{}/{}.s", inputFolder, stem);
+    std::filesystem::path inputPath(inputFile);
+    std::filesystem::path outputPath = inputPath.parent_path() / (inputPath.stem().string() + ".s");
+    m_outputFileName = outputPath.string();
     std::ofstream ofs(m_outputFileName);
     if (!ofs) {
         std::cerr << "Error: Could not open output file " << m_outputFileName << '\n';
@@ -120,7 +125,7 @@ void printIr(const Ir::Program& irProgram)
 void fixAsm(const CodeGen::Program& codegenProgram)
 {
     for (auto& topLevel : codegenProgram.topLevels) {
-        if (topLevel->type != CodeGen::TopLevel::Kind::Function)
+        if (topLevel->kind != CodeGen::TopLevel::Kind::Function)
             continue;
         const auto function = dynamic_cast<CodeGen::Function*>(topLevel.get());
         const i32 stackAlloc = CodeGen::replacingPseudoRegisters(*function);

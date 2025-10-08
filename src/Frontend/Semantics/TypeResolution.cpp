@@ -1,5 +1,6 @@
 #include "TypeResolution.hpp"
 #include "ASTIr.hpp"
+#include "DynCast.hpp"
 #include "TypeConversion.hpp"
 #include "Utils.hpp"
 
@@ -24,8 +25,8 @@ void TypeResolution::visit(Parsing::FunDecl& funDecl)
     if (funDecl.body != nullptr)
         m_definedFunctions.insert(funDecl.name);
     m_global = false;
-    const auto type = static_cast<Parsing::FuncType*>(funDecl.type.get());
-    FuncEntry funcEntry(type->params, type->returnType->kind, funDecl.storage,
+    const auto type = dynCast<Parsing::FuncType>(funDecl.type.get());
+    FuncEntry funcEntry(type->params, type->returnType->type, funDecl.storage,
         funDecl.body != nullptr);
     m_functions.emplace_hint(it, funDecl.name, std::move(funcEntry));
     ASTTraverser::visit(funDecl);
@@ -39,11 +40,11 @@ bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::Fu
         return false;
     if (funDecl.params.size() != funcEntry.paramTypes.size())
         return false;
-    const auto funcType = static_cast<Parsing::FuncType*>(funDecl.type.get());
+    const auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
     for (size_t i = 0; i < funDecl.params.size(); ++i)
-        if (funcEntry.paramTypes[i]->kind != funcType->params[i]->kind)
+        if (funcEntry.paramTypes[i]->type != funcType->params[i]->type)
             return false;
-    if (funcType->returnType->kind != funcEntry.returnType)
+    if (funcType->returnType->type != funcEntry.returnType)
         return false;
     return true;
 }
@@ -70,8 +71,8 @@ void TypeResolution::visit(Parsing::FuncCallExpr& funCallExpr)
     if (!m_valid)
         return;
     for (size_t i = 0; i < funCallExpr.args.size(); ++i) {
-        const Type typeInner = funCallExpr.args[i]->type->kind;
-        const Type castTo = it->second.paramTypes[i]->kind;
+        const Type typeInner = funCallExpr.args[i]->type->type;
+        const Type castTo = it->second.paramTypes[i]->type;
         if (typeInner == Type::Pointer && castTo == Type::Pointer) {
             if (!Parsing::areEquivalent(*funCallExpr.args[i]->type, *it->second.paramTypes[i])) {
                 m_valid = false;
@@ -109,7 +110,7 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     if (varDecl.init == nullptr)
         return;
     if (!Parsing::areEquivalent(*varDecl.type, *varDecl.init->type)) {
-        if (varDecl.type->kind == Type::Pointer) {
+        if (varDecl.type->type == Type::Pointer) {
             if (!canConvertToNullPtr(*varDecl.init)) {
                 m_valid = false;
                 return;
@@ -133,13 +134,13 @@ void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
     ASTTraverser::visit(unaryExpr);
     if (!m_valid)
         return;
-    if (unaryExpr.operand->type->kind == Type::Double) {
+    if (unaryExpr.operand->type->type == Type::Double) {
         if (unaryExpr.op == Operator::Complement) {
             m_valid = false;
             return;
         }
     }
-    if (unaryExpr.operand->type->kind == Type::Pointer) {
+    if (unaryExpr.operand->type->type == Type::Pointer) {
         if (isIllegalUnaryPointerOperator(unaryExpr.op)) {
             m_valid = false;
             return;
@@ -148,7 +149,7 @@ void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
     if (unaryExpr.op == Operator::Not)
         unaryExpr.type = std::make_unique<Parsing::VarType>(s_boolType);
     else
-        unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->kind);
+        unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->type);
 }
 
 void TypeResolution::assignTypeToArithmeticBinaryExpr(
@@ -179,23 +180,23 @@ void TypeResolution::assignTypeToArithmeticBinaryExpr(
 void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
 {
     if (varDecl.init->kind == Parsing::Expr::Kind::Constant &&
-        varDecl.type->kind != varDecl.init->type->kind) {
-        const auto constExpr = static_cast<const Parsing::ConstExpr*>(varDecl.init.get());
-        if (varDecl.type->kind == Type::U32)
+        varDecl.type->type != varDecl.init->type->type) {
+        const auto constExpr = dynCast<const Parsing::ConstExpr>(varDecl.init.get());
+        if (varDecl.type->type == Type::U32)
             convertConstantExpr<u32, Type::U32>(varDecl, *constExpr);
-        else if (varDecl.type->kind == Type::U64)
+        else if (varDecl.type->type == Type::U64)
             convertConstantExpr<u64, Type::U64>(varDecl, *constExpr);
-        else if (varDecl.type->kind == Type::I32)
+        else if (varDecl.type->type == Type::I32)
             convertConstantExpr<i32, Type::I32>(varDecl, *constExpr);
-        else if (varDecl.type->kind == Type::I64)
+        else if (varDecl.type->type == Type::I64)
             convertConstantExpr<i64, Type::I64>(varDecl, *constExpr);
-        else if (varDecl.type->kind == Type::Double)
+        else if (varDecl.type->type == Type::Double)
             convertConstantExpr<double, Type::Double>(varDecl, *constExpr);
         return;
-        }
-    if (varDecl.type->kind != varDecl.init->type->kind) {
+    }
+    if (varDecl.type->type != varDecl.init->type->type) {
         varDecl.init = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(varDecl.type->kind),
+            std::make_unique<Parsing::VarType>(varDecl.type->type),
             std::move(varDecl.init));
     }
 }
@@ -210,8 +211,8 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         return;
     }
-    const Type leftType = binaryExpr.lhs->type->kind;
-    const Type rightType = binaryExpr.rhs->type->kind;
+    const Type leftType = binaryExpr.lhs->type->type;
+    const Type rightType = binaryExpr.rhs->type->type;
     const Type commonType = getCommonType(leftType, rightType);
     if (commonType == Type::Double && (isBinaryBitwise(binaryExpr.op) || binaryExpr.op == Operator::Modulo)) {
         m_valid = false;
@@ -262,8 +263,8 @@ void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
     ASTTraverser::visit(assignmentExpr);
     if (!m_valid)
         return;
-    const Type leftType = assignmentExpr.lhs->type->kind;
-    const Type rightType = assignmentExpr.rhs->type->kind;
+    const Type leftType = assignmentExpr.lhs->type->type;
+    const Type rightType = assignmentExpr.rhs->type->type;
     if (!isLegalAssignExpr(assignmentExpr)) {
         m_valid = false;
         return;
@@ -279,8 +280,8 @@ void TypeResolution::visit(Parsing::CastExpr& castExpr)
     ASTTraverser::visit(castExpr);
     if (!m_valid)
         return;
-    const Type outerType = castExpr.type->kind;
-    const Type innerType = castExpr.expr->type->kind;
+    const Type outerType = castExpr.type->type;
+    const Type innerType = castExpr.expr->type->type;
     if ((outerType == Type::Double && innerType == Type::Pointer) ||
         (outerType == Type::Pointer && innerType == Type::Double)) {
         m_valid = false;
@@ -290,8 +291,8 @@ void TypeResolution::visit(Parsing::CastExpr& castExpr)
 
 bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
 {
-    const Type leftType = assignmentExpr.lhs->type->kind;
-    const Type rightType = assignmentExpr.rhs->type->kind;
+    const Type leftType = assignmentExpr.lhs->type->type;
+    const Type rightType = assignmentExpr.rhs->type->type;
     if (leftType == Type::Pointer && rightType == Type::Pointer)
         return Parsing::areEquivalent(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type);
     if (leftType == Type::Pointer) {
@@ -308,8 +309,8 @@ bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
 void TypeResolution::visit(Parsing::TernaryExpr& ternaryExpr)
 {
     ASTTraverser::visit(ternaryExpr);
-    const Type trueType = ternaryExpr.trueExpr->type->kind;
-    const Type falseType = ternaryExpr.falseExpr->type->kind;
+    const Type trueType = ternaryExpr.trueExpr->type->type;
+    const Type falseType = ternaryExpr.falseExpr->type->type;
     const Type commonType = getCommonType(trueType, falseType);
     if (trueType == Type::Pointer || falseType == Type::Pointer) {
         if (trueType == Type::Pointer && falseType == Type::Pointer) {
@@ -369,11 +370,11 @@ void TypeResolution::visit(Parsing::DereferenceExpr& dereferenceExpr)
     ASTTraverser::visit(dereferenceExpr);
     if (!m_valid)
         return;
-    if (dereferenceExpr.reference->type->kind != Type::Pointer) {
+    if (dereferenceExpr.reference->type->type != Type::Pointer) {
         m_valid = false;
         return;
     }
-    const auto referencedPtrType = static_cast<const Parsing::PointerType*>(dereferenceExpr.reference->type.get());
+    const auto referencedPtrType = dynCast<const Parsing::PointerType>(dereferenceExpr.reference->type.get());
     dereferenceExpr.type = Parsing::deepCopy(*referencedPtrType->referenced);
 }
 

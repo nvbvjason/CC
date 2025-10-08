@@ -19,13 +19,13 @@ void processSwitchCase(const Parsing::ConstExpr* constantExpr,
                        Parsing::CaseStmt& caseStmt, bool& valid)
 {
     TargetType value = 0;
-    if (constantExpr->type->kind == Type::I32)
+    if (constantExpr->type->type == Type::I32)
         value = std::get<i32>(constantExpr->value);
-    else if (constantExpr->type->kind == Type::I64)
+    else if (constantExpr->type->type == Type::I64)
         value = std::get<i64>(constantExpr->value);
-    else if (constantExpr->type->kind == Type::U32)
+    else if (constantExpr->type->type == Type::U32)
         value = std::get<u32>(constantExpr->value);
-    else if (constantExpr->type->kind == Type::U64)
+    else if (constantExpr->type->type == Type::U64)
         value = std::get<u64>(constantExpr->value);
     const auto it = switchCases.find(switchLabel);
     for (const std::variant<i32, i64, u32, u64>& v : it->second)

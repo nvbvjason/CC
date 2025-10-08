@@ -1,9 +1,8 @@
 add_library(AST STATIC
-        ASTFwd.cpp
-        ASTParser.cpp
-        ASTVisitor.cpp
-        ASTExpr.cpp
-        ASTBase.cpp
+        ASTFwd.hpp
+        ASTVisitor.hpp
+        ASTExpr.hpp
+        ASTBase.hpp
         ASTTypes.cpp
 )
 

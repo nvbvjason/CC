@@ -24,39 +24,39 @@ static Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbo
 static std::string preProcess(const std::filesystem::path& file);
 static std::string getSourceCode(const std::filesystem::path& inputFile);
 
-std::tuple<Ir::Program, StateCode> FrontendDriver::run() const
+std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run() const
 {
     std::vector<Lexing::Token> tokens;
     if (lex(tokens, m_inputFile) != 0) {
         if (m_arg == "--printTokens")
             for (const auto& token : tokens)
                 std::cout << token << '\n';
-        return {std::move(Ir::Program()), StateCode::Lexer};
+        return {std::nullopt, StateCode::Lexer};
     }
     if (m_arg == "--lex")
-        return {Ir::Program(), StateCode::Done};
+        return {std::nullopt, StateCode::Done};
     if (m_arg == "--printTokens") {
         for (const auto& token : tokens)
             std::cout << token << '\n';
-        return {Ir::Program(), StateCode::Done};
+        return {std::nullopt, StateCode::Done};
     }
     Parsing::Program program;
     if (!parse(tokens, program))
-        return {std::move(Ir::Program()), StateCode::Parser};
+        return {std::nullopt, StateCode::Parser};
     if (m_arg == "--parse")
-        return {std::move(Ir::Program()), StateCode::Done};
+        return {std::nullopt, StateCode::Done};
     if (m_arg == "--printAst") {
         printParsingAst(program);
-        return {std::move(Ir::Program()), StateCode::Done};
+        return {std::nullopt, StateCode::Done};
     }
     SymbolTable symbolTable;
     if (StateCode err = validateSemantics(program, symbolTable); err != StateCode::Done)
-        return {std::move(Ir::Program()), err};
+        return {std::nullopt, err};
     if (m_arg == "--validate")
-        return {std::move(Ir::Program()), StateCode::Done};
+        return {std::nullopt, StateCode::Done};
     if (m_arg == "--printAstAfter") {
         printParsingAst(program);
-        return {std::move(Ir::Program()), StateCode::Done};
+        return {std::nullopt, StateCode::Done};
     }
     Ir::Program irProgram = ir(program, symbolTable);
     return {std::move(irProgram), StateCode::Continue};

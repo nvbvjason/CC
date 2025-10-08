@@ -1,5 +1,5 @@
 add_library(CodeGen STATIC
-        AsmAST.cpp
+        AsmAST.hpp
         AsmPrinter.cpp
         Assembly.cpp
         FixUpInstructions.cpp

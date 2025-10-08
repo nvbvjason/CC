@@ -1,5 +1,6 @@
 #include "SymbolTable.hpp"
 #include "ASTTypes.hpp"
+#include "DynCast.hpp"
 
 #include <cassert>
 
@@ -53,7 +54,7 @@ void SymbolTable::setArgs(const Parsing::FunDecl& funDecl)
 {
     m_args = funDecl.params;
     m_argTypes.clear();
-    const auto funcType = static_cast<const Parsing::FuncType*>(funDecl.type.get());
+    const auto funcType = dynCast<const Parsing::FuncType>(funDecl.type.get());
     for (const std::unique_ptr<Parsing::TypeBase>& param : funcType->params)
         m_argTypes.emplace_back(Parsing::deepCopy(*param));
 }
@@ -93,5 +94,5 @@ bool SymbolTable::isFunc(const std::string& name) const
     const auto it = m_entries.front().find(name);
     if (it == m_entries.front().end())
         return false;
-    return it->second.varType->kind == Type::Function;
+    return it->second.varType->type == Type::Function;
 }

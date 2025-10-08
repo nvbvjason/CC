@@ -3,32 +3,39 @@
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
 #include "ASTTypes.hpp"
+#include "TypeConversion.hpp"
 
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "TypeConversion.hpp"
-
- namespace Semantics {
+namespace Semantics {
 
 template<typename TargetType, Type TargetKind>
 void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
 {
     TargetType value;
-    if (constExpr.type->kind == Type::I32)
-        value = std::get<i32>(constExpr.value);
-    else if (constExpr.type->kind == Type::I64)
-        value = std::get<i64>(constExpr.value);
-    else if (constExpr.type->kind == Type::U32)
-        value = std::get<u32>(constExpr.value);
-    else if (constExpr.type->kind == Type::U64)
-        value = std::get<u64>(constExpr.value);
-    else if (constExpr.type->kind == Type::Double)
-        value = std::get<double>(constExpr.value);
+    switch (constExpr.type->type) {
+        case Type::I32:
+            value = std::get<i32>(constExpr.value);
+            break;
+        case Type::I64:
+            value = std::get<i64>(constExpr.value);
+            break;
+        case Type::U32:
+            value = std::get<u32>(constExpr.value);
+            break;
+        case Type::U64:
+            value = std::get<u64>(constExpr.value);
+            break;
+        case Type::Double:
+            value = std::get<double>(constExpr.value);
+            break;
+        default:
+            std::abort();
+    }
     varDecl.init = std::make_unique<Parsing::ConstExpr>(
-        value, std::make_unique<Parsing::VarType>(TargetKind)
-    );
+        value, std::make_unique<Parsing::VarType>(TargetKind));
 }
 
 class TypeResolution : public Parsing::ASTTraverser {

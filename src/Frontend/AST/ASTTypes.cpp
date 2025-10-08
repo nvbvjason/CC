@@ -1,33 +1,31 @@
 #include "ASTTypes.hpp"
+#include "DynCast.hpp"
 
 #include <cassert>
 
 namespace Parsing {
 std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase)
 {
-    assert(typeBase.kind != Type::Invalid);
-    switch (typeBase.kind) {
+    assert(typeBase.type != Type::Invalid);
+    switch (typeBase.type) {
         case Type::Pointer: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto typePtr = static_cast<const PointerType*>(&typeBase);
+            const auto typePtr = dynCast<const PointerType>(&typeBase);
             auto referencedCopy = deepCopy(*typePtr->referenced);
             return std::make_unique<PointerType>(std::move(referencedCopy));
         }
         case Type::Function: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto typeFunction = static_cast<const FuncType*>(&typeBase);
+            const auto typeFunction = dynCast<const FuncType>(&typeBase);
             return deepCopy(*typeFunction);
         }
         default:
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto typeVar = static_cast<const VarType*>(&typeBase);
+            const auto typeVar = dynCast<const VarType>(&typeBase);
             return deepCopy(*typeVar);
     }
 }
 
 std::unique_ptr<TypeBase> deepCopy(const VarType& varType)
 {
-    return std::make_unique<VarType>(varType.kind);
+    return std::make_unique<VarType>(varType.type);
 }
 
 std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType)
@@ -47,37 +45,31 @@ std::unique_ptr<TypeBase> deepCopy(const PointerType& pointerType)
 
 bool areEquivalent(const TypeBase& left, const TypeBase& right)
 {
-    assert(left.kind != Type::Invalid);
-    assert(right.kind != Type::Invalid);
-    if (left.kind != right.kind)
+    assert(left.type != Type::Invalid);
+    assert(right.type != Type::Invalid);
+    if (left.type != right.type)
         return false;
-    switch (left.kind) {
+    switch (left.type) {
         case Type::Pointer: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto typePtrLeft = static_cast<const PointerType*>(&left);
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto typePtrRight = static_cast<const PointerType*>(&right);
+            const auto typePtrLeft = dynCast<const PointerType>(&left);
+            const auto typePtrRight = dynCast<const PointerType>(&right);
             return areEquivalent(*typePtrLeft->referenced, *typePtrRight->referenced);
         }
         case Type::Function: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto typeFunctionLeft = static_cast<const FuncType*>(&left);
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto typeFunctionRight = static_cast<const FuncType*>(&right);
+            const auto typeFunctionLeft = dynCast<const FuncType>(&left);
+            const auto typeFunctionRight = dynCast<const FuncType>(&right);
             return areEquivalent(*typeFunctionLeft, *typeFunctionRight);
         }
         default:
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto typeVarRight = static_cast<const VarType*>(&left);
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto typeVarLeft = static_cast<const VarType*>(&right);
+            const auto typeVarRight = dynCast<const VarType>(&left);
+            const auto typeVarLeft = dynCast<const VarType>(&right);
             return areEquivalent(*typeVarRight, *typeVarLeft);
     }
 }
 
 bool areEquivalent(const VarType& left, const VarType& right)
 {
-    return left.kind == right.kind;
+    return left.type == right.type;
 }
 
 bool areEquivalent(const FuncType& left, const FuncType& right)

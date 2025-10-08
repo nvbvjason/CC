@@ -1,3 +1,4 @@
+#include "DynCast.hpp"
 #include "FixUpInstructions.hpp"
 
 namespace CodeGen {
@@ -19,44 +20,34 @@ void FixUpInstructions::fixUp()
         m_insts.erase(m_insts.begin());
         switch (inst->kind) {
             case Inst::Move:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<MoveInst*>(inst.get()));
+                visit(*dynCast<MoveInst>(inst.get()));
                 break;
             case Inst::MoveSX:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<MoveSXInst*>(inst.get()));
+                visit(*dynCast<MoveSXInst>(inst.get()));
                 break;
-            case Inst::MovZeroExtend:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<MoveZeroExtendInst*>(inst.get()));
+            case Inst::MoveZeroExtend:
+                visit(*dynCast<MoveZeroExtendInst>(inst.get()));
                 break;
             case Inst::Lea:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<LeaInst*>(inst.get()));
+                visit(*dynCast<LeaInst>(inst.get()));
                 break;
             case Inst::Binary:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<BinaryInst*>(inst.get()));
+                visit(*dynCast<BinaryInst>(inst.get()));
                 break;
             case Inst::Cmp:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<CmpInst*>(inst.get()));
+                visit(*dynCast<CmpInst>(inst.get()));
                 break;
             case Inst::Idiv:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<IdivInst*>(inst.get()));
+                visit(*dynCast<IdivInst>(inst.get()));
                 break;
             case Inst::Div:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<DivInst*>(inst.get()));
+                visit(*dynCast<DivInst>(inst.get()));
                 break;
             case Inst::Cvttsd2si:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<Cvttsd2siInst*>(inst.get()));
+                visit(*dynCast<Cvttsd2siInst>(inst.get()));
                 break;
             case Inst::Cvtsi2sd:
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                visit(*static_cast<Cvtsi2sdInst*>(inst.get()));
+                visit(*dynCast<Cvtsi2sdInst>(inst.get()));
                 break;
             default:
                 m_copy.emplace_back(std::move(inst));

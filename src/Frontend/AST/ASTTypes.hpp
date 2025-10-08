@@ -10,30 +10,36 @@ namespace Parsing {
 
 struct VarType : TypeBase {
     explicit VarType(const Type type)
-        : TypeBase(type) {}
+        : TypeBase(type, Kind::Var) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Var; }
 };
 
 struct FuncType : TypeBase {
     std::vector<std::unique_ptr<TypeBase>> params;
     std::unique_ptr<TypeBase> returnType;
     explicit FuncType(std::unique_ptr<TypeBase>&& rT, std::vector<std::unique_ptr<TypeBase>>&& params)
-        : TypeBase(Type::Function), params(std::move(params)), returnType(std::move(rT)) {}
+        : TypeBase(Type::Function, Kind::Func), params(std::move(params)), returnType(std::move(rT)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Func; }
 };
 
 struct PointerType : TypeBase {
     std::unique_ptr<TypeBase> referenced;
 
     explicit PointerType(std::unique_ptr<TypeBase>&& r)
-        : TypeBase(Type::Pointer), referenced(std::move(r)) {}
+        : TypeBase(Type::Pointer, Kind::Pointer), referenced(std::move(r)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Pointer; }
 };
 
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase);

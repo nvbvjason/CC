@@ -22,6 +22,8 @@ struct VarDecl final : Declaration {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Declaration* decl) { return decl->kind == Kind::VarDecl; }
+
     VarDecl() = delete;
 };
 
@@ -33,6 +35,8 @@ struct DeclForInit final : ForInit {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const ForInit* forInit) { return forInit->kind == Kind::Declaration; }
 
     DeclForInit() = delete;
 };
@@ -48,6 +52,8 @@ struct ExprForInit final : ForInit {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const ForInit* forInit) { return forInit->kind == Kind::Expression; }
 };
 
 struct StmtBlockItem final : BlockItem {
@@ -58,6 +64,8 @@ struct StmtBlockItem final : BlockItem {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const BlockItem* blockItem) { return blockItem->kind == Kind::Statement; }
 
     StmtBlockItem() = delete;
 };
@@ -70,6 +78,8 @@ struct DeclBlockItem final : BlockItem {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const BlockItem* blockItem) { return blockItem->kind == Kind::Declaration; }
 
     DeclBlockItem() = delete;
 };
@@ -99,6 +109,8 @@ struct FunDecl final : Declaration {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::FuncDecl; }
+
     FunDecl() = delete;
 };
 
@@ -111,6 +123,8 @@ struct ReturnStmt final : Stmt {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Return; }
+
     ReturnStmt() = delete;
 };
 
@@ -122,6 +136,8 @@ struct ExprStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Expression; }
 
     ExprStmt() = delete;
 };
@@ -141,6 +157,8 @@ struct IfStmt final : Stmt {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::If; }
+
     IfStmt() = delete;
 };
 
@@ -152,6 +170,8 @@ struct GotoStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Goto; }
 
     GotoStmt() = delete;
 };
@@ -165,6 +185,8 @@ struct CompoundStmt final : Stmt {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Compound; }
+
     CompoundStmt() = delete;
 };
 
@@ -176,6 +198,8 @@ struct BreakStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Break; }
 };
 
 struct ContinueStmt final : Stmt {
@@ -186,6 +210,8 @@ struct ContinueStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Continue; }
 };
 
 struct LabelStmt final : Stmt {
@@ -197,6 +223,8 @@ struct LabelStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Label; }
 
     LabelStmt() = delete;
 };
@@ -212,6 +240,8 @@ struct CaseStmt final : Stmt {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Case; }
+
     CaseStmt() = delete;
 };
 
@@ -223,6 +253,8 @@ struct DefaultStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Default; }
 
     DefaultStmt() = delete;
 };
@@ -238,6 +270,8 @@ struct WhileStmt final : Stmt {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::While; }
+
     WhileStmt() = delete;
 };
 
@@ -251,6 +285,8 @@ struct DoWhileStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::DoWhile; }
 
     DoWhileStmt() = delete;
 };
@@ -267,6 +303,8 @@ struct ForStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::For; }
 
     ForStmt() = delete;
 };
@@ -285,6 +323,8 @@ struct SwitchStmt final : Stmt {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Switch; }
+
     SwitchStmt() = delete;
 };
 
@@ -294,6 +334,8 @@ struct NullStmt final : Stmt {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Stmt* stmt) { return stmt->kind == Kind::Null; }
 };
 
 struct Program {

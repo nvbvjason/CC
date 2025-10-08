@@ -1,4 +1,5 @@
 #include "IrPrinter.hpp"
+#include "DynCast.hpp"
 
 #include <sstream>
 
@@ -8,11 +9,11 @@ std::string IrPrinter::print(const Program& program)
 {
     addLine("Program:");
     for (const auto& topLevel : program.topLevels) {
-        if (topLevel->type == TopLevel::Kind::Function) {
+        if (topLevel->kind == TopLevel::Kind::Function) {
             const auto function = dynamic_cast<Function*>(topLevel.get());
             print(*function);
         }
-        if (topLevel->type == TopLevel::Kind::StaticVariable) {
+        if (topLevel->kind == TopLevel::Kind::StaticVariable) {
             const auto variable = dynamic_cast<StaticVariable*>(topLevel.get());
             print(*variable);
         }
@@ -53,9 +54,9 @@ std::string IrPrinter::print(const Value& value)
 {
     switch (value.kind) {
         case Value::Kind::Variable:
-            return print(static_cast<const ValueVar&>(value));
+            return print(*dynCast<const ValueVar>(&value));
         case Value::Kind::Constant:
-            return print(static_cast<const ValueConst&>(value));
+            return print(*dynCast<const ValueConst>(&value));
     }
     std::unreachable();
 }
@@ -250,43 +251,43 @@ void IrPrinter::print(const Instruction& instruction) {
     using Kind = Instruction::Kind;
     switch (instruction.kind) {
         case Kind::Return:
-            print(static_cast<const ReturnInst&>(instruction)); break;
+            print(*dynCast<const ReturnInst>(&instruction)); break;
         case Kind::SignExtend:
-            print(static_cast<const SignExtendInst&>(instruction)); break;
+            print(*dynCast<const SignExtendInst>(&instruction)); break;
         case Kind::ZeroExtend:
-            print(static_cast<const ZeroExtendInst&>(instruction)); break;
+            print(*dynCast<const ZeroExtendInst>(&instruction)); break;
         case Kind::Truncate:
-            print(static_cast<const TruncateInst&>(instruction)); break;
+            print(*dynCast<const TruncateInst>(&instruction)); break;
         case Kind::DoubleToInt:
-            print(static_cast<const DoubleToIntInst&>(instruction)); break;
+            print(*dynCast<const DoubleToIntInst>(&instruction)); break;
         case Kind::DoubleToUInt:
-            print(static_cast<const DoubleToUIntInst&>(instruction)); break;
+            print(*dynCast<const DoubleToUIntInst>(&instruction)); break;
         case Kind::IntToDouble:
-            print(static_cast<const IntToDoubleInst&>(instruction)); break;
+            print(*dynCast<const IntToDoubleInst>(&instruction)); break;
         case Kind::UIntToDouble:
-            print(static_cast<const UIntToDoubleInst&>(instruction)); break;
+            print(*dynCast<const UIntToDoubleInst>(&instruction)); break;
         case Kind::Unary:
-            print(static_cast<const UnaryInst&>(instruction)); break;
+            print(*dynCast<const UnaryInst>(&instruction)); break;
         case Kind::Binary:
-            print(static_cast<const BinaryInst&>(instruction)); break;
+            print(*dynCast<const BinaryInst>(&instruction)); break;
         case Kind::Copy:
-            print(static_cast<const CopyInst&>(instruction)); break;
+            print(*dynCast<const CopyInst>(&instruction)); break;
         case Kind::GetAddress:
-            print(static_cast<const GetAddressInst&>(instruction)); break;
+            print(*dynCast<const GetAddressInst>(&instruction)); break;
         case Kind::Load:
-            print(static_cast<const LoadInst&>(instruction)); break;
+            print(*dynCast<const LoadInst>(&instruction)); break;
         case Kind::Store:
-            print(static_cast<const StoreInst&>(instruction)); break;
+            print(*dynCast<const StoreInst>(&instruction)); break;
         case Kind::Jump:
-            print(static_cast<const JumpInst&>(instruction)); break;
+            print(*dynCast<const JumpInst>(&instruction)); break;
         case Kind::JumpIfZero:
-            print(static_cast<const JumpIfZeroInst&>(instruction)); break;
+            print(*dynCast<const JumpIfZeroInst>(&instruction)); break;
         case Kind::JumpIfNotZero:
-            print(static_cast<const JumpIfNotZeroInst&>(instruction)); break;
+            print(*dynCast<const JumpIfNotZeroInst>(&instruction)); break;
         case Kind::Label:
-            print(static_cast<const LabelInst&>(instruction)); break;
+            print(*dynCast<const LabelInst>(&instruction)); break;
         case Kind::FunCall:
-            print(static_cast<const FunCallInst&>(instruction)); break;
+            print(*dynCast<const FunCallInst>(&instruction)); break;
         default:
             m_oss << "Unknown Instruction\n";
             break;

@@ -22,6 +22,8 @@ struct ConstExpr final : Expr {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::Constant; }
+
     ConstExpr() = delete;
 };
 
@@ -33,6 +35,8 @@ struct VarExpr final : Expr {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::Var; }
 
     VarExpr() = delete;
 };
@@ -47,6 +51,8 @@ struct CastExpr final : Expr {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::Cast; }
 
     CastExpr() = delete;
 };
@@ -65,6 +71,8 @@ struct UnaryExpr final : Expr {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::Unary; }
 
     UnaryExpr() = delete;
 };
@@ -89,6 +97,8 @@ struct BinaryExpr final : Expr {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::Binary; }
+
     BinaryExpr() = delete;
 };
 
@@ -109,6 +119,8 @@ struct AssignmentExpr final : Expr {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::Assignment; }
+
     AssignmentExpr() = delete;
 };
 
@@ -125,6 +137,8 @@ struct TernaryExpr final : Expr {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::Ternary; }
+
     TernaryExpr() = delete;
 };
 
@@ -138,6 +152,8 @@ struct FuncCallExpr final : Expr {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::FunctionCall; }
+
     FuncCallExpr() = delete;
 };
 
@@ -150,6 +166,8 @@ struct DereferenceExpr final : Expr {
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::Dereference; }
+
     DereferenceExpr() = delete;
 };
 
@@ -161,6 +179,8 @@ struct AddrOffExpr final : Expr {
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::AddrOf; }
 
     AddrOffExpr() = delete;
 };

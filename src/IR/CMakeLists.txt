@@ -1,6 +1,6 @@
 add_library(IR STATIC
         IrPrinter.cpp
-        ASTIr.cpp
+        ASTIr.hpp
 )
 
 target_include_directories(IR PUBLIC

@@ -1,5 +1,6 @@
 #include "Parser.hpp"
 #include "ASTTypes.hpp"
+#include "DynCast.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -32,7 +33,7 @@ std::unique_ptr<Declaration> Parser::declarationParse()
             declaratorProcess(std::move(declarator), std::move(varType));
     if (iden.empty())
         return nullptr;
-    if (typeBase->kind == Type::Function)
+    if (typeBase->type == Type::Function)
         return funDeclParse(iden, std::move(typeBase), storage, std::move(params));
     return varDeclParse(iden, std::move(typeBase), storage);
 }
@@ -116,31 +117,31 @@ std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> Par
 {
     switch (declarator->kind) {
         case Declarator::Kind::Identifier: {
-            const auto iden = static_cast<IdentifierDeclarator*>(declarator.get());
-            return std::make_tuple(std::move(iden->identifier),
+            const auto identifierDeclarator = dynCast<IdentifierDeclarator>(declarator.get());
+            return std::make_tuple(std::move(identifierDeclarator->identifier),
                                    std::move(typeBase),
                                    std::move(std::vector<std::string>()));
         }
         case Declarator::Kind::Pointer: {
             auto derivedType = std::make_unique<PointerType>(std::move(typeBase));
-            const auto pointerDecl = static_cast<PointerDeclarator*>(declarator.get());
-            return declaratorProcess(std::move(pointerDecl->inner), std::move(derivedType));
+            const auto pointerDeclarator = dynCast<PointerDeclarator>(declarator.get());
+            return declaratorProcess(std::move(pointerDeclarator->inner), std::move(derivedType));
         }
         case Declarator::Kind::Function: {
-            const auto funcDecl = static_cast<FunctionDeclarator*>(declarator.get());
+            const auto funcDecl = dynCast<FunctionDeclarator>(declarator.get());
             if (funcDecl->declarator->kind != Declarator::Kind::Identifier)
                 return {};
             std::vector<std::unique_ptr<TypeBase>> paramTypes;
             std::vector<std::string> params;
             for (ParamInfo& param : funcDecl->params) {
-                auto [iden, typeBase, _] =
+                auto [iden, typeBaseParam, _] =
                     declaratorProcess(std::move(param.declarator), std::move(param.type));
-                if (typeBase->kind == Type::Function)
+                if (typeBaseParam->type == Type::Function)
                     return {};
                 params.emplace_back(std::move(iden));
-                paramTypes.emplace_back(std::move(typeBase));
+                paramTypes.emplace_back(std::move(typeBaseParam));
             }
-            const auto idenDecl = static_cast<IdentifierDeclarator*>(funcDecl->declarator.get());
+            const auto idenDecl = dynCast<IdentifierDeclarator>(funcDecl->declarator.get());
             auto funcType = std::make_unique<FuncType>(std::move(typeBase), std::move(paramTypes));
             return std::make_tuple(std::move(idenDecl->identifier), std::move(funcType), std::move(params));
         }
@@ -221,7 +222,7 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
             return {nullptr, true};
         if (decl->kind == Declaration::Kind::FuncDecl)
             return {nullptr, true};
-        const auto varDecl = static_cast<VarDecl*>(decl.release());
+        const auto varDecl = dynCast<VarDecl>(decl.release());
         return {std::make_unique<DeclForInit>(std::unique_ptr<VarDecl>(varDecl)), false};
     }
     std::unique_ptr<Expr> expr = exprParse(0);
@@ -660,7 +661,7 @@ std::unique_ptr<TypeBase> Parser::abstractDeclaratorProcess(std::unique_ptr<Abst
     std::unique_ptr<TypeBase> varType = std::make_unique<VarType>(type);
     while (abstractDeclarator->kind == AbstractDeclarator::Kind::Pointer) {
         varType = std::make_unique<PointerType>(std::move(varType));
-        const auto inner = static_cast<AbstractPointer*>(abstractDeclarator.get());
+        const auto inner = dynCast<AbstractPointer>(abstractDeclarator.get());
         abstractDeclarator = std::move(inner->inner);
     }
     return varType;

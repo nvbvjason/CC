@@ -92,6 +92,8 @@ struct ImmOperand final : Operand {
     explicit ImmOperand(const u64 value, const AsmType type)
         : Operand(Kind::Imm, type, false), value(value) {}
 
+    static bool classOf(const Operand* operand) { return operand->kind == Kind::Imm; }
+
     ImmOperand() = delete;
 };
 
@@ -100,6 +102,8 @@ struct RegisterOperand final : Operand {
 
     explicit RegisterOperand(const RegKind rK, const AsmType t)
         : Operand(Kind::Register, t), regKind(rK) {}
+
+    static bool classOf(const Operand* operand) { return operand->kind == Kind::Register; }
 
     RegisterOperand() = delete;
 };
@@ -113,6 +117,8 @@ struct PseudoOperand final : Operand {
         : Operand(Kind::Pseudo, t), identifier(std::move(identifier)),
                                       referingTo(referingTo), local(local) {}
 
+    static bool classOf(const Operand* operand) { return operand->kind == Kind::Pseudo; }
+
     PseudoOperand() = delete;
 };
 
@@ -121,6 +127,8 @@ struct MemoryOperand final : Operand {
     i32 value;
     MemoryOperand(const RegKind rK, const i32 value, const AsmType type)
         : Operand(Kind::Memory, type), regKind(rK), value(value) {}
+
+    static bool classOf(const Operand* operand) { return operand->kind == Kind::Memory; }
 
     MemoryOperand() = delete;
 };
@@ -131,12 +139,14 @@ struct DataOperand final : Operand {
     DataOperand(Identifier iden, const AsmType t, const bool local)
         : Operand(Kind::Data, t), identifier(std::move(iden)), local(local) {}
 
+    static bool classOf(const Operand* operand) { return operand->kind == Kind::Data; }
+
     DataOperand() = delete;
 };
 
 struct Inst {
     enum class Kind : u8 {
-        Move, MoveSX, MovZeroExtend, Lea,
+        Move, MoveSX, MoveZeroExtend, Lea,
         Cvttsd2si, Cvtsi2sd,
         Unary, Binary, Cmp, Idiv, Div, Cdq, Jmp, JmpCC, SetCC, Label,
         Push, Call, Ret
@@ -168,6 +178,7 @@ struct MoveInst final : Inst {
         : Inst(Kind::Move), src(std::move(src)), dst(std::move(dst)), type(t) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Move; }
 
     MoveInst() = delete;
 };
@@ -182,6 +193,7 @@ struct MoveSXInst final : Inst {
         : Inst(Kind::MoveSX), src(std::move(src)), dst(std::move(dst)) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::MoveSX; }
 
     MoveSXInst() = delete;
 };
@@ -195,9 +207,10 @@ struct MoveZeroExtendInst final : Inst {
         std::shared_ptr<Operand> src,
         std::shared_ptr<Operand> dst,
         const AsmType t)
-        : Inst(Kind::MovZeroExtend), src(std::move(src)), dst(std::move(dst)), type(t) {}
+        : Inst(Kind::MoveZeroExtend), src(std::move(src)), dst(std::move(dst)), type(t) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::MoveZeroExtend; }
 
     MoveZeroExtendInst() = delete;
 };
@@ -211,6 +224,7 @@ struct LeaInst final : Inst {
         : Inst(Kind::Lea), src(std::move(src)), dst(std::move(dst)), type(t) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Lea; }
 
     LeaInst() = delete;
 };
@@ -227,6 +241,7 @@ struct Cvttsd2siInst final : Inst {
         : Inst(Kind::Cvttsd2si), src(std::move(src)), dst(std::move(dst)), dstType(dstType) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Cvttsd2si; }
 
     Cvttsd2siInst() = delete;
 };
@@ -243,6 +258,7 @@ struct Cvtsi2sdInst final : Inst {
         : Inst(Kind::Cvtsi2sd), src(std::move(src)), dst(std::move(dst)), srcType(srcType) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Cvtsi2sd; }
 
     Cvtsi2sdInst() = delete;
 };
@@ -259,6 +275,7 @@ struct UnaryInst final : Inst {
         : Inst(Kind::Unary), destination(std::move(dst)), oper(op), type(type) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Unary; }
 
     UnaryInst() = delete;
 };
@@ -282,6 +299,7 @@ struct BinaryInst final : Inst {
         :Inst(Kind::Binary), lhs(std::move(lhs)), rhs(std::move(rhs)), oper(op), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Binary; }
 
     BinaryInst() = delete;
 };
@@ -294,6 +312,7 @@ struct CmpInst final : Inst {
         : Inst(Kind::Cmp), lhs(std::move(lhs)), rhs(std::move(rhs)), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Cmp; }
 
     CmpInst() = delete;
 };
@@ -306,6 +325,7 @@ struct IdivInst final : Inst {
         : Inst(Kind::Idiv), operand(std::move(operand)), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Idiv; }
 
     IdivInst() = delete;
 };
@@ -318,6 +338,7 @@ struct DivInst final : Inst {
         : Inst(Kind::Div), operand(std::move(operand)), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Div; }
 
     DivInst() = delete;
 };
@@ -329,6 +350,7 @@ struct CdqInst final : Inst {
         : Inst(Kind::Cdq), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Cdq; }
 };
 
 struct JmpInst final : Inst {
@@ -337,6 +359,7 @@ struct JmpInst final : Inst {
         : Inst(Kind::Jmp), target(std::move(target)) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Jmp; }
 
     JmpInst() = delete;
 };
@@ -348,6 +371,7 @@ struct JmpCCInst final : Inst {
         : Inst(Kind::JmpCC), condition(condition), target(std::move(target)) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::JmpCC; }
 
     JmpCCInst() = delete;
 };
@@ -359,6 +383,7 @@ struct SetCCInst final : Inst {
         : Inst(Kind::SetCC), condition(condition), operand(std::move(operand)) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::SetCC; }
 
     SetCCInst() = delete;
 };
@@ -369,6 +394,7 @@ struct LabelInst final : Inst {
         : Inst(Kind::Label), target(std::move(target)) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Label; }
 
     LabelInst() = delete;
 };
@@ -379,6 +405,7 @@ struct PushInst final : Inst {
         : Inst(Kind::Push), operand(std::move(operand)) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Push; }
 
     PushInst() = delete;
 };
@@ -389,6 +416,7 @@ struct CallInst final : Inst {
         : Inst(Kind::Call), funName(std::move(iden)) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Call; }
 
     CallInst() = delete;
 };
@@ -398,20 +426,21 @@ struct ReturnInst final : Inst {
         : Inst(Kind::Ret) {}
 
     void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::Ret; }
 };
 
 struct TopLevel {
     enum class Kind {
         Function, StaticVariable, StaticConstant,
     };
-    Kind type;
+    Kind kind;
 
     TopLevel() = delete;
 
     virtual ~TopLevel() = default;
 protected:
     explicit TopLevel(const Kind t)
-        : type(t) {}
+        : kind(t) {}
 };
 
 struct Function : TopLevel {
@@ -422,16 +451,20 @@ struct Function : TopLevel {
     Function(std::string name, const bool isGlobal)
         : TopLevel(Kind::Function), name(std::move(name)), isGlobal(isGlobal) {}
 
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::Function; }
+
     Function() = delete;
 };
 
 struct StaticVariable : TopLevel {
     std::string name;
-    u64 init;
+    u64 init = 0;
     AsmType type;
     const bool global;
     StaticVariable(std::string name, const AsmType type, const bool isGlobal)
         : TopLevel(Kind::StaticVariable), name(std::move(name)), type(type), global(isGlobal) {}
+
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticVariable; }
 
     StaticVariable() = delete;
 };
@@ -445,6 +478,8 @@ struct ConstVariable : TopLevel {
     ConstVariable(Identifier name, const i32 alignment, const double staticInit, const bool local)
         : TopLevel(Kind::StaticConstant), name(std::move(name)), alignment(alignment)
                                           , staticInit(staticInit), local(local) {}
+
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticConstant; }
 
     ConstVariable() = delete;
 };
