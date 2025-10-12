@@ -20,34 +20,34 @@ void FixUpInstructions::fixUp()
         m_insts.erase(m_insts.begin());
         switch (inst->kind) {
             case Inst::Move:
-                visit(*dynCast<MoveInst>(inst.get()));
+                fixMove(*dynCast<MoveInst>(inst.get()));
                 break;
             case Inst::MoveSX:
-                visit(*dynCast<MoveSXInst>(inst.get()));
+                fixMoveSX(*dynCast<MoveSXInst>(inst.get()));
                 break;
             case Inst::MoveZeroExtend:
-                visit(*dynCast<MoveZeroExtendInst>(inst.get()));
+                fixMoveZero(*dynCast<MoveZeroExtendInst>(inst.get()));
                 break;
             case Inst::Lea:
-                visit(*dynCast<LeaInst>(inst.get()));
+                fixLea(*dynCast<LeaInst>(inst.get()));
                 break;
             case Inst::Binary:
-                visit(*dynCast<BinaryInst>(inst.get()));
+                fixBinary(*dynCast<BinaryInst>(inst.get()));
                 break;
             case Inst::Cmp:
-                visit(*dynCast<CmpInst>(inst.get()));
+                fixCmp(*dynCast<CmpInst>(inst.get()));
                 break;
             case Inst::Idiv:
-                visit(*dynCast<IdivInst>(inst.get()));
+                fixIdiv(*dynCast<IdivInst>(inst.get()));
                 break;
             case Inst::Div:
-                visit(*dynCast<DivInst>(inst.get()));
+                fixDiv(*dynCast<DivInst>(inst.get()));
                 break;
             case Inst::Cvttsd2si:
-                visit(*dynCast<Cvttsd2siInst>(inst.get()));
+                fixCvttsd2si(*dynCast<Cvttsd2siInst>(inst.get()));
                 break;
             case Inst::Cvtsi2sd:
-                visit(*dynCast<Cvtsi2sdInst>(inst.get()));
+                fixCvtsi2sd(*dynCast<Cvtsi2sdInst>(inst.get()));
                 break;
             default:
                 m_copy.emplace_back(std::move(inst));
@@ -56,7 +56,7 @@ void FixUpInstructions::fixUp()
     m_insts.swap(m_copy);
 }
 
-void FixUpInstructions::visit(MoveInst& moveInst)
+void FixUpInstructions::fixMove(MoveInst& moveInst)
 {
     if (areBothOnTheStack(moveInst)) {
         std::shared_ptr<Operand> src = genSrcOperand(moveInst.type);
@@ -67,7 +67,7 @@ void FixUpInstructions::visit(MoveInst& moveInst)
     insert(std::make_unique<MoveInst>(moveInst));
 }
 
-void FixUpInstructions::visit(MoveSXInst& moveSX)
+void FixUpInstructions::fixMoveSX(MoveSXInst& moveSX)
 {
     std::shared_ptr<Operand> src = moveSX.src;
     if (src->kind == Operand::Kind::Imm) {
@@ -84,7 +84,7 @@ void FixUpInstructions::visit(MoveSXInst& moveSX)
     insert(std::make_unique<MoveSXInst>(src, moveSX.dst));
 }
 
-void FixUpInstructions::visit(MoveZeroExtendInst& moveZero)
+void FixUpInstructions::fixMoveZero(MoveZeroExtendInst& moveZero)
 {
     if (moveZero.dst->kind != Operand::Kind::Register) {
         insert(std::make_unique<MoveInst>(
@@ -96,7 +96,7 @@ void FixUpInstructions::visit(MoveZeroExtendInst& moveZero)
     insert(std::make_unique<MoveInst>(moveZero.src, moveZero.dst, AsmType::QuadWord));
 }
 
-void FixUpInstructions::visit(LeaInst& lea)
+void FixUpInstructions::fixLea(LeaInst& lea)
 {
     if (isOnTheStack(lea.dst->kind)) {
         std::shared_ptr<Operand> dst = genDstOperand(AsmType::QuadWord);
@@ -107,7 +107,7 @@ void FixUpInstructions::visit(LeaInst& lea)
     insert(std::make_unique<LeaInst>(lea));
 }
 
-void FixUpInstructions::visit(BinaryInst& binary)
+void FixUpInstructions::fixBinary(BinaryInst& binary)
 {
     if (isBinaryShift(binary))
         binaryShift(binary);
@@ -164,7 +164,7 @@ void FixUpInstructions::binaryOthers(BinaryInst& binaryInst)
     insert(std::make_unique<BinaryInst>(binaryInst));
 }
 
-void FixUpInstructions::visit(CmpInst& cmpInst)
+void FixUpInstructions::fixCmp(CmpInst& cmpInst)
 {
     if (cmpInst.rhs->kind != Operand::Kind::Register && cmpInst.type == AsmType::Double) {
         std::shared_ptr<Operand> dst = genDstOperand(cmpInst.type);
@@ -185,7 +185,7 @@ void FixUpInstructions::visit(CmpInst& cmpInst)
         insert(std::make_unique<CmpInst>(cmpInst));
 }
 
-void FixUpInstructions::visit(IdivInst& idiv)
+void FixUpInstructions::fixIdiv(IdivInst& idiv)
 {
     if (isOnTheStack(idiv.operand->kind) || idiv.operand->kind == Operand::Kind::Imm) {
         std::shared_ptr<Operand> src = genSrcOperand(idiv.type);
@@ -196,7 +196,7 @@ void FixUpInstructions::visit(IdivInst& idiv)
     insert(std::make_unique<IdivInst>(idiv));
 }
 
-void FixUpInstructions::visit(DivInst& div)
+void FixUpInstructions::fixDiv(DivInst& div)
 {
     if (isOnTheStack(div.operand->kind) || div.operand->kind == Operand::Kind::Imm) {
         std::shared_ptr<Operand> src = genSrcOperand(div.type);
@@ -207,7 +207,7 @@ void FixUpInstructions::visit(DivInst& div)
     insert(std::make_unique<DivInst>(div));
 }
 
-void FixUpInstructions::visit(Cvttsd2siInst& cvttsd2si)
+void FixUpInstructions::fixCvttsd2si(Cvttsd2siInst& cvttsd2si)
 {
     if (cvttsd2si.dst->kind != Operand::Kind::Register) {
         std::shared_ptr<Operand> dst = genDstOperand(cvttsd2si.dstType);
@@ -218,7 +218,7 @@ void FixUpInstructions::visit(Cvttsd2siInst& cvttsd2si)
     insert(std::make_unique<Cvttsd2siInst>(cvttsd2si));
 }
 
-void FixUpInstructions::visit(Cvtsi2sdInst& cvtsi2sd)
+void FixUpInstructions::fixCvtsi2sd(Cvtsi2sdInst& cvtsi2sd)
 {
     std::shared_ptr<Operand> src = cvtsi2sd.src;
     if (src->kind == Operand::Kind::Imm) {

@@ -6,40 +6,31 @@
 
 namespace CodeGen {
 
-class FixUpInstructions final : public InstVisitor {
+class FixUpInstructions final {
     using RegType = Operand::RegKind;
 
     std::vector<std::unique_ptr<Inst>>& m_insts;
     std::vector<std::unique_ptr<Inst>> m_copy;
     i32 stackAlloc;
-
 public:
     FixUpInstructions(std::vector<std::unique_ptr<Inst>>& insts, const i32 stackAlloc)
         : m_insts(insts), stackAlloc(stackAlloc) {}
 
-    void visit(MoveInst& moveInst) override;
-    void visit(MoveSXInst& moveSX) override;
-    void visit(MoveZeroExtendInst& moveZero) override;
-    void visit(LeaInst& lea) override;
-    void visit(BinaryInst& binary) override;
-    void visit(CmpInst& cmpInst) override;
-    void visit(IdivInst& idiv) override;
-    void visit(DivInst& div) override;
-    void visit(Cvttsd2siInst& cvttsd2si) override;
-    void visit(Cvtsi2sdInst& cvtsi2sd) override;
-
-    void visit(PushInst& push) override {}
-
-    void visit(CallInst&) override {}
-    void visit(UnaryInst&) override {}
-    void visit(SetCCInst&) override {}
-    void visit(CdqInst&) override {}
-    void visit(JmpInst&) override {}
-    void visit(JmpCCInst&) override {}
-    void visit(LabelInst&) override {}
-    void visit(ReturnInst&) override {}
+    void fixMove(MoveInst& moveInst);
+    void fixMoveSX(MoveSXInst& moveSX);
+    void fixMoveZero(MoveZeroExtendInst& moveZero);
+    void fixLea(LeaInst& lea);
+    void fixBinary(BinaryInst& binary);
+    void fixCmp(CmpInst& cmpInst);
+    void fixIdiv(IdivInst& idiv);
+    void fixDiv(DivInst& div);
+    void fixCvttsd2si(Cvttsd2siInst& cvttsd2si);
+    void fixCvtsi2sd(Cvtsi2sdInst& cvtsi2sd);
 
     void fixUp();
+
+    static std::shared_ptr<RegisterOperand> genSrcOperand(AsmType type);
+    static std::shared_ptr<RegisterOperand> genDstOperand(AsmType type);
 private:
     template<typename... InstPtrs>
     void insert(InstPtrs&&... others)
@@ -51,8 +42,6 @@ private:
     void binaryMul(BinaryInst& binaryInst);
     void binaryDoubleOthers(BinaryInst& binaryInst);
     void binaryOthers(BinaryInst& binaryInst);
-    static std::shared_ptr<RegisterOperand> genSrcOperand(AsmType type);
-    static std::shared_ptr<RegisterOperand> genDstOperand(AsmType type);
 
     static constexpr bool isBinaryShift(const BinaryInst& binaryInst);
     static constexpr bool areBothOnTheStack(const MoveInst& move);

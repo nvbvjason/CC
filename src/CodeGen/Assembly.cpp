@@ -416,7 +416,7 @@ std::string addType(const std::string& instruction, const AsmType type)
         case AsmType::Double:
             return instruction + "sd";
         default:
-            return instruction + "not set addType";
+            return instruction + " not set addType";
     }
 }
 

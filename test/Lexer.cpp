@@ -3,40 +3,45 @@
 #include <gtest/gtest.h>
 
 namespace {
-    using TokenType = Lexing::Token::Type;
 
-    const std::string BASIC_PROGRAM =
-        "int main(void) {\n"
-        "// int main return\n"
-        "    return 100;\n"
-        "}";
+using TokenType = Lexing::Token::Type;
 
-    const std::string MULTILINE_COMMENT_PROGRAM =
-        "/*int main(void) {\n"
-        "// int main return\n"
-        "    return 100;\n"
-        "}*/";
+const std::string BASIC_PROGRAM =
+    "int main(void) {\n"
+    "// int main return\n"
+    "    return 100;\n"
+    "}";
 
-    std::vector<Lexing::Token> runLexerTest(const std::string& input) {
-        Lexing::Lexer lexer(input);
-        std::vector<Lexing::Token> tokens;
-        lexer.getLexemes(tokens);
-        return tokens;
-    }
-    void TestSingleTokenLexing(const std::string& input, Lexing::Token::Type expectedType)
-    {
-        constexpr i32 endOfFile = 1;
-        const auto tokens = runLexerTest(input);
-        ASSERT_EQ(tokens.size(), 1 + endOfFile) << "Expected exactly one token for input: " << input;
-        const Lexing::Token expected{
-            1, 1, expectedType, input
-        };
-        EXPECT_EQ(tokens[0], expected) << "Token mismatch for input: " << input;
-    }
+const std::string MULTILINE_COMMENT_PROGRAM =
+    "/*int main(void) {\n"
+    "// int main return\n"
+    "    return 100;\n"
+    "}*/";
+
+std::vector<Lexing::Token> runLexerTest(const std::string& input)
+{
+    Lexing::Lexer lexer(input);
+    std::vector<Lexing::Token> tokens;
+    lexer.getLexemes(tokens);
+    return tokens;
 }
 
-TEST(LexerTests, GetTokens) {
-    auto tokens = runLexerTest(BASIC_PROGRAM);
+void TestSingleTokenLexing(const std::string& input, Lexing::Token::Type expectedType)
+{
+    constexpr i32 endOfFile = 1;
+    const auto tokens = runLexerTest(input);
+    ASSERT_EQ(tokens.size(), 1 + endOfFile) << "Expected exactly one token for input: " << input;
+    const Lexing::Token expected{
+        1, 1, expectedType, input
+    };
+    EXPECT_EQ(tokens[0], expected) << "Token mismatch for input: " << input;
+}
+
+}
+
+TEST(LexerTests, GetTokens)
+{
+    const auto tokens = runLexerTest(BASIC_PROGRAM);
 
     EXPECT_EQ(tokens.size(), 11);
 
@@ -54,9 +59,8 @@ TEST(LexerTests, GetTokens) {
         {4, 2, Lexing::Token::Type::EndOfFile, ""}
     };
 
-    for(size_t i = 0; i < tokens.size(); ++i) {
+    for(size_t i = 0; i < tokens.size(); ++i)
         EXPECT_EQ(tokens[i], expected[i]) << "Mismatch at token " << i;
-    }
 }
 
 TEST(LexerTests, Return)
@@ -380,7 +384,8 @@ TEST(LexerTests, UnsignedLongLiteralLowerCase)
     TestSingleTokenLexing("2147ul", TokenType::UnsignedLongLiteral);
 }
 
-TEST(LexerTests, InvalidInput) {
+TEST(LexerTests, InvalidInput)
+{
     Lexing::Lexer lexer("\\");
     std::vector<Lexing::Token> tokens;
     ASSERT_NE(lexer.getLexemes(tokens), 0);

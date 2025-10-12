@@ -10,6 +10,10 @@ add_executable(CC_test
         Token.cpp
         ParserExpr.cpp
         GenerateIr.cpp
+        Assembly.cpp
+        Assembly.hpp
+        FixUpInstructions.cpp
+        FixUpInstructions.hpp
 )
 
 target_include_directories(CC_test PRIVATE
