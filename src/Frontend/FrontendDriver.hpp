@@ -20,4 +20,4 @@ public:
     [[nodiscard]] std::tuple<std::optional<Ir::Program>, StateCode> run() const;
 };
 
-StateCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable);
+StateCode validateSemantics(Parsing::Program& program, SymbolTable& symbolTable);

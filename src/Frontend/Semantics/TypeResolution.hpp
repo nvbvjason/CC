@@ -83,9 +83,6 @@ public:
     void visit(Parsing::DereferenceExpr& dereferenceExpr) override;
 
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
-    static void assignTypeToArithmeticBinaryExpr(
-        Parsing::BinaryExpr& binaryExpr,
-        Type leftType, Type rightType, Type commonType);
     static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 };
@@ -108,14 +105,6 @@ inline bool isBinaryBitwise(const Parsing::BinaryExpr::Operator binOper)
     return binOper == Operator::BitwiseAnd || binOper == Operator::BitwiseOr ||
            binOper == Operator::BitwiseXor || binOper == Operator::LeftShift ||
            binOper == Operator::RightShift;
-}
-
-inline bool isBinaryComparison(const Parsing::BinaryExpr& binaryExpr)
-{
-    using Operator = Parsing::BinaryExpr::Operator;
-    return binaryExpr.op == Operator::Equal || binaryExpr.op == Operator::NotEqual ||
-           binaryExpr.op == Operator::LessThan || binaryExpr.op == Operator::LessOrEqual ||
-           binaryExpr.op == Operator::GreaterThan || binaryExpr.op == Operator::GreaterOrEqual;
 }
 
 inline bool isIllegalUnaryPointerOperator(const Parsing::UnaryExpr::Operator oper)

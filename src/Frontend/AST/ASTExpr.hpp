@@ -67,7 +67,6 @@ struct CastExpr final : Expr {
     explicit CastExpr(std::unique_ptr<Expr>&& expr) noexcept
         : Expr(Kind::Cast), expr(std::move(expr)) {}
 
-
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 

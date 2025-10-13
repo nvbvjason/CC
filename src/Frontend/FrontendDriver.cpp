@@ -12,10 +12,12 @@
 #include "LoopLabeling.hpp"
 #include "ValidateReturn.hpp"
 #include "TypeResolution.hpp"
-#include "DeSugar.hpp"
+#include "DeSugarSimple.hpp"
 
 #include <fstream>
 #include <iostream>
+
+#include "DeSugarDeref.hpp"
 
 static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
 static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
@@ -71,27 +73,29 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
     return source;
 }
 
-StateCode validateSemantics(Parsing::Program& programNode, SymbolTable& symbolTable)
+StateCode validateSemantics(Parsing::Program& program, SymbolTable& symbolTable)
 {
-    Semantics::DeSugar deSugarCompoundAssign;
-    deSugarCompoundAssign.deSugar(programNode);
+    Semantics::DeSugarSimple deSugarCompoundAssign;
+    deSugarCompoundAssign.deSugar(program);
     Semantics::VariableResolution variableResolution(symbolTable);
-    if (!variableResolution.resolve(programNode))
+    if (!variableResolution.resolve(program))
         return StateCode::VariableResolution;
     Semantics::TypeResolution typeResolution;
-    if (!typeResolution.validate(programNode))
+    if (!typeResolution.validate(program))
         return StateCode::TypeResolution;
     Semantics::LvalueVerification lvalueVerification;
-    if (!lvalueVerification.resolve(programNode))
+    if (!lvalueVerification.resolve(program))
         return StateCode::LValueVerification;
+    Semantics::DeSugarDeref deSugarDeref;
+    deSugarDeref.deSugar(program);
     Semantics::ValidateReturn validateReturn;
-    if (!validateReturn.programValidate(programNode))
+    if (!validateReturn.programValidate(program))
         return StateCode::ValidateReturn;
     Semantics::GotoLabelsUnique labelsUnique;
-    if (!labelsUnique.programValidate(programNode))
+    if (!labelsUnique.programValidate(program))
         return StateCode::LabelsUnique;
     Semantics::LoopLabeling loopLabeling;
-    if (!loopLabeling.programValidate(programNode))
+    if (!loopLabeling.programValidate(program))
         return StateCode::LoopLabeling;
     return StateCode::Done;
 }

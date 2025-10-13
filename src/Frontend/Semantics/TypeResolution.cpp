@@ -156,30 +156,6 @@ void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
         unaryExpr.type = std::make_unique<Parsing::VarType>(unaryExpr.operand->type->type);
 }
 
-void TypeResolution::assignTypeToArithmeticBinaryExpr(
-    Parsing::BinaryExpr& binaryExpr,
-    const Type leftType, const Type rightType, const Type commonType)
-{
-    if (commonType != leftType)
-        binaryExpr.lhs = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.lhs));
-    if (commonType != rightType)
-        binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.rhs));
-    if (binaryExpr.op == BinaryOp::LeftShift || binaryExpr.op == BinaryOp::RightShift) {
-        binaryExpr.type = std::make_unique<Parsing::VarType>(leftType);
-        return;
-    }
-    if (isBinaryComparison(binaryExpr)) {
-        if (commonType == Type::Double || isSigned(commonType))
-            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
-        else
-            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::U32);
-        return;
-    }
-    binaryExpr.type = std::make_unique<Parsing::VarType>(commonType);
-}
-
 void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
 {
     if (varDecl.init->kind == Parsing::Expr::Kind::Constant &&
@@ -248,7 +224,7 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
         m_valid = false;
         return;
     }
-    assignTypeToArithmeticBinaryExpr(binaryExpr, leftType, rightType, commonType);
+    assignTypeToArithmeticBinaryExpr(binaryExpr);
 }
 
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr)
@@ -271,9 +247,10 @@ void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
         m_valid = false;
         return;
     }
-    if (leftType != rightType)
+    if (leftType != rightType && assignmentExpr.op == Parsing::AssignmentExpr::Operator::Assign) {
         assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(leftType), std::move(assignmentExpr.rhs));
+    }
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
 }
 
