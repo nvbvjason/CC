@@ -778,7 +778,7 @@ std::vector<bool> GenerateAsmTree::genFuncCallPushArgsRegs(const Ir::FunCallInst
     i32 regIntIndex = 0;
     i32 regDoubleIndex = 0;
     std::vector pushedIntoRegs(funcCall.args.size(), false);
-    for (i32 i = 0; i < funcCall.args.size(); ++i) {
+    for (size_t i = 0; i < funcCall.args.size(); ++i) {
         std::shared_ptr<Operand> src = genOperand(funcCall.args[i]);
         const AsmType type = getAsmType(funcCall.args[i]->type);
         std::shared_ptr<RegisterOperand> reg;
@@ -910,12 +910,10 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
 {
     switch (value->kind) {
         case Ir::Value::Kind::Constant: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             return getOperandFromConstant(value);
         }
         case Ir::Value::Kind::Variable: {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-            const auto valueVar = static_cast<Ir::ValueVar*>(value.get());
+            const auto valueVar = dynCast<Ir::ValueVar>(value.get());
             const bool isConst = valueVar->type == Type::Double;
             return std::make_shared<PseudoOperand>(
                 Identifier(valueVar->value.value), valueVar->referingTo, getAsmType(valueVar->type), isConst);
@@ -927,8 +925,7 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
 
 std::shared_ptr<Operand> GenerateAsmTree::getOperandFromConstant(const std::shared_ptr<Ir::Value>& value)
 {
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    const auto valueConst = static_cast<Ir::ValueConst*>(value.get());
+    const auto valueConst = dynCast<Ir::ValueConst>(value.get());
     if (valueConst->type == Type::Double)
         return genDoubleLocalConst(std::get<double>(valueConst->value), 8);
     std::shared_ptr<ImmOperand> imm = getImmOperandFromValue(*valueConst);

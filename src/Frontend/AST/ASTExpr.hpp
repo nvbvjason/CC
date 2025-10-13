@@ -19,6 +19,25 @@ struct ConstExpr final : Expr {
     ConstExpr(T&& value, std::unique_ptr<TypeBase> varType) noexcept
         : Expr(Kind::Constant, std::move(varType)), value(std::forward<T>(value)) {}
 
+    template<typename TargetType>
+    TargetType getValue() const
+    {
+        switch (type->type) {
+            case Type::I32:
+                return std::get<i32>(value);
+            case Type::I64:
+                return std::get<i64>(value);
+            case Type::U32:
+                return std::get<u32>(value);
+            case Type::U64:
+                return std::get<u64>(value);
+            case Type::Double:
+                return std::get<double>(value);
+            default:
+                std::abort();
+        }
+    }
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 

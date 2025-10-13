@@ -4,6 +4,10 @@
 #include "TypeConversion.hpp"
 #include "Utils.hpp"
 
+namespace {
+    using BinaryOp = Parsing::BinaryExpr::Operator;
+}
+
 namespace Semantics {
 bool TypeResolution::validate(Parsing::Program& program)
 {
@@ -162,8 +166,7 @@ void TypeResolution::assignTypeToArithmeticBinaryExpr(
     if (commonType != rightType)
         binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.rhs));
-    if (binaryExpr.op == Parsing::BinaryExpr::Operator::LeftShift ||
-        binaryExpr.op == Parsing::BinaryExpr::Operator::RightShift) {
+    if (binaryExpr.op == BinaryOp::LeftShift || binaryExpr.op == BinaryOp::RightShift) {
         binaryExpr.type = std::make_unique<Parsing::VarType>(leftType);
         return;
     }
@@ -203,25 +206,24 @@ void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
 
 void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
 {
-    using Operator = Parsing::BinaryExpr::Operator;
     ASTTraverser::visit(binaryExpr);
     if (!m_valid)
         return;
-    if (binaryExpr.op == Operator::And || binaryExpr.op == Operator::Or) {
+    if (binaryExpr.op == BinaryOp::And || binaryExpr.op == BinaryOp::Or) {
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         return;
     }
     const Type leftType = binaryExpr.lhs->type->type;
     const Type rightType = binaryExpr.rhs->type->type;
     const Type commonType = getCommonType(leftType, rightType);
-    if (commonType == Type::Double && (isBinaryBitwise(binaryExpr.op) || binaryExpr.op == Operator::Modulo)) {
+    if (commonType == Type::Double && (isBinaryBitwise(binaryExpr.op) || binaryExpr.op == BinaryOp::Modulo)) {
         m_valid = false;
         return;
     }
     if (leftType == Type::Pointer || rightType == Type::Pointer) {
-        if (binaryExpr.op == Operator::Modulo || binaryExpr.op == Operator::Multiply ||
-            binaryExpr.op == Operator::Divide ||
-            binaryExpr.op == Operator::BitwiseOr || binaryExpr.op == Operator::BitwiseXor) {
+        if (binaryExpr.op == BinaryOp::Modulo || binaryExpr.op == BinaryOp::Multiply ||
+            binaryExpr.op == BinaryOp::Divide ||
+            binaryExpr.op == BinaryOp::BitwiseOr || binaryExpr.op == BinaryOp::BitwiseXor) {
             m_valid = false;
             return;
         }
@@ -239,7 +241,7 @@ void TypeResolution::visit(Parsing::BinaryExpr& binaryExpr)
                     std::move(Parsing::deepCopy(*binaryExpr.lhs->type)), std::move(binaryExpr.rhs));
             }
         }
-        if (binaryExpr.op == Operator::Equal || binaryExpr.op == Operator::NotEqual) {
+        if (binaryExpr.op == BinaryOp::Equal || binaryExpr.op == BinaryOp::NotEqual) {
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
             return;
         }

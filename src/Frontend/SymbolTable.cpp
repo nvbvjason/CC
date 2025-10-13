@@ -30,10 +30,10 @@ SymbolTable::ReturnedEntry SymbolTable::lookup(const std::string& uniqueName) co
         if (it == m_entries[i].end())
             continue;
         const bool fromCurrentScope = i == m_entries.size() - 1;
-        const bool internal = it->second.isSet(State::InternalLinkage);
-        const bool external = it->second.isSet(State::ExternalLinkage);
-        const bool global = it->second.isSet(State::Global);
-        const bool defined = it->second.isSet(State::Defined);
+        const bool internal = it->second.hasInternalLinkage();
+        const bool external = it->second.hasExternalLinkage();
+        const bool global = it->second.isGlobal();
+        const bool defined = it->second.isDefined();
         return {Parsing::deepCopy(*it->second.varType), true, inArgs, fromCurrentScope, internal, external, global, defined};
     }
     return {nullptr, false, inArgs, false, false, false, false, false};

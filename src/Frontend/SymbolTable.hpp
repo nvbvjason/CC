@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ShortTypes.hpp"
-#include "Types/Type.hpp"
 #include "ASTParser.hpp"
 
 #include <string>
@@ -28,10 +27,6 @@ public:
         {
             flags = static_cast<State>(static_cast<u32>(flags) | static_cast<u32>(flag));
         }
-        [[nodiscard]] bool isSet(State flag) const noexcept
-        {
-            return (static_cast<u32>(flags) & static_cast<u32>(flag)) != 0;
-        }
         void clear(State flag) noexcept
         {
             flags = static_cast<State>(static_cast<u32>(flags) & ~static_cast<u32>(flag));
@@ -39,6 +34,18 @@ public:
         void clearAll() noexcept
         {
             flags = State::None;
+        }
+        [[nodiscard]] bool contains() const noexcept { return isSet(State::Contains); }
+        [[nodiscard]] bool isFromCurrentScope() const noexcept { return isSet(State::FromCurrentScope); }
+        [[nodiscard]] bool hasInternalLinkage() const noexcept { return isSet(State::InternalLinkage); }
+        [[nodiscard]] bool hasExternalLinkage() const noexcept { return isSet(State::ExternalLinkage); }
+        [[nodiscard]] bool isGlobal() const noexcept { return isSet(State::Global); }
+        [[nodiscard]] bool isDefined() const noexcept { return isSet(State::Defined); }
+        [[nodiscard]] bool isInArgs() const noexcept { return isSet(State::InArgs); }
+    private:
+        [[nodiscard]] bool isSet(State flag) const noexcept
+        {
+            return (static_cast<u32>(flags) & static_cast<u32>(flag)) != 0;
         }
     };
     struct ReturnedEntry : FlagBase<ReturnedEntry>  {

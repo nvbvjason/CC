@@ -56,10 +56,9 @@ bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::Returned
 bool duplicatesInArgs(const std::vector<std::string>& args);
 inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry)
 {
-    using Flag = SymbolTable::State;
     using Storage = Parsing::Declaration::StorageClass;
-    return prevEntry.isSet(Flag::FromCurrentScope)
-        && (!prevEntry.isSet(Flag::ExternalLinkage) || varDecl.storage != Storage::Extern);
+    return prevEntry.isFromCurrentScope()
+        && (!prevEntry.hasExternalLinkage() || varDecl.storage != Storage::Extern);
 }
 inline bool hasInternalLinkageVar(const Parsing::VarDecl& varDecl)
 {

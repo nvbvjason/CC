@@ -6,7 +6,6 @@
 #include "AsmAST.hpp"
 #include "GenerateAsmTree.hpp"
 #include "Assembly.hpp"
-#include "PseudoRegisterReplacer.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -42,7 +41,7 @@ StateCode CompilerDriver::wrappedRun()
     FrontendDriver frontend(argument, inputFile);
     auto [irProgramOptional, err] = frontend.run();
     if (!irProgramOptional.has_value())
-        return StateCode::ERROR_UNKNOWN;
+        return err;
     Ir::Program irProgram = std::move(irProgramOptional.value());
     if (err != StateCode::Continue)
         return err;

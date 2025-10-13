@@ -47,7 +47,7 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
 std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& varDecl)
 {
     const auto entry = m_symbolTable.lookup(varDecl.name);
-    const bool defined = entry.isSet(SymbolTable::State::Defined);
+    const bool defined = entry.isDefined();
     if (defined && varDecl.init == nullptr)
         return nullptr;
     if (!defined && varDecl.storage == Storage::Extern)
@@ -84,10 +84,9 @@ std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl&
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDecl& parsingFunction)
 {
-    using State = SymbolTable::State;
-    bool global = !m_symbolTable.lookup(parsingFunction.name).isSet(State::InternalLinkage);
+    bool global = !m_symbolTable.lookup(parsingFunction.name).hasInternalLinkage();
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);
-    m_global = true;;
+    m_global = true;
     insts = std::move(functionTacky->insts);
     functionTacky->args.reserve(parsingFunction.params.size());
     functionTacky->argTypes.reserve(parsingFunction.params.size());
@@ -739,7 +738,7 @@ std::unique_ptr<ExprResult> GenerateIr::genFuncCallInst(const Parsing::FuncCallE
     arguments.reserve(funcCallExpr.args.size());
     for (const auto& expr : funcCallExpr.args)
         arguments.emplace_back(genInstAndConvert(*expr));
-    const auto returnType = static_cast<const Parsing::VarType*>(funcCallExpr.type.get());
+    const auto returnType = dynCast<const Parsing::VarType>(funcCallExpr.type.get());
     auto dst = std::make_shared<ValueVar>(makeTemporaryName(), funcCallExpr.type->type);
     insts.emplace_back(std::make_unique<FunCallInst>(
         Identifier(funcCallExpr.name), std::move(arguments), dst, returnType->type));

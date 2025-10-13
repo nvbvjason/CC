@@ -22,7 +22,7 @@ struct TypeBase {
     TypeBase() = delete;
 protected:
     explicit TypeBase(const Type type, const Kind kind)
-        : type(type), kind(kind) {}
+        : kind(kind), type(type) {}
 };
 
 struct BlockItem {

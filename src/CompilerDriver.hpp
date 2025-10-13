@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-
 class CompilerDriver {
     std::vector<std::string> m_args;
     std::string m_outputFileName;

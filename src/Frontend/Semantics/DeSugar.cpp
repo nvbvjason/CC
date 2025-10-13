@@ -31,8 +31,6 @@ void DeSugar::visit(Parsing::AssignmentExpr& assignmentExpr)
         assignmentExpr.rhs = std::make_unique<Parsing::BinaryExpr>(
             op, std::move(leftCopy), std::move(assignmentExpr.rhs));
     }
-    if (assignmentExpr.lhs->type != nullptr)
-        assignmentExpr.rhs->type = Parsing::deepCopy(*assignmentExpr.lhs->type);
     ASTTraverser::visit(assignmentExpr);
 }
 
