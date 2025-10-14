@@ -5,7 +5,7 @@
 #include "Utils.hpp"
 
 namespace {
-    using BinaryOp = Parsing::BinaryExpr::Operator;
+using BinaryOp = Parsing::BinaryExpr::Operator;
 }
 
 namespace Semantics {

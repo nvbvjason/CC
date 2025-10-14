@@ -99,7 +99,7 @@ StateCode CompilerDriver::writeAssmFile(const std::string& inputFile, const std:
 StateCode CompilerDriver::validateAndSetArg(std::string& argument) const
 {
     if (m_args.size() < 2 || 3 < m_args.size()) {
-        std::cerr << "Usage: <input_file> possible-argument" << '\n';
+        std::cerr << "Usage: possible-argument <input_file>" << '\n';
         return StateCode::NoInputFile;
     }
     if (const std::filesystem::path m_inputFile(m_args.back()); !fileExists(m_inputFile)) {
