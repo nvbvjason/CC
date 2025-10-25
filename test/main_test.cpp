@@ -48,7 +48,7 @@ bool ParseFileAndGiveResult(const std::filesystem::directory_entry& filePath)
     lexer.getLexemes();
     Parsing::Parser parser(tokenStore);
     Parsing::Program program;
-    return parser.programParse(program);
+    return parser.programParse(program).empty();
 }
 
 bool CheckSemantics(const std::filesystem::directory_entry& filePath)
@@ -59,7 +59,7 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     lexer.getLexemes();
     Parsing::Parser parser(tokenStore);
     Parsing::Program program;
-    if (!parser.programParse(program))
+    if (!parser.programParse(program).empty())
         return false;
     SymbolTable symbolTable;
     const StateCode err = validateSemantics(program, symbolTable);

@@ -63,10 +63,10 @@
 #include "ASTParser.hpp"
 #include "Operators.hpp"
 #include "Declarator.hpp"
+#include "TokenStore.hpp"
+#include "Error.hpp"
 
 #include <vector>
-
-#include "TokenStore.hpp"
 
 namespace Parsing {
 
@@ -77,11 +77,12 @@ class Parser {
     bool m_atFileScope = true;
     const TokenStore& c_tokenStore;
     size_t m_current = 0;
+    std::vector<Error> m_errors;
 public:
     Parser() = delete;
     explicit Parser(const TokenStore& tokenStore)
         : c_tokenStore(tokenStore) {}
-    bool programParse(Program& program);
+    std::vector<Error> programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
                                                         std::unique_ptr<TypeBase>&& type,
@@ -148,6 +149,8 @@ private:
     [[nodiscard]] TokenType peekNextTokenType() const;
     [[nodiscard]] TokenType peekNextNextTokenType() const;
     [[nodiscard]] bool expect(TokenType type);
+    void addError(std::string message);
+    void addError(std::string message, size_t index);
 };
 
 bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens);

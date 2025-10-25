@@ -19,7 +19,7 @@
 #include <iostream>
 
 static std::vector<Error> lex(TokenStore& tokenStore, const std::filesystem::path& inputFile);
-static bool parse(const TokenStore& tokenStore, Parsing::Program& programNode);
+static std::vector<Error> parse(const TokenStore& tokenStore, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
 static Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable);
 static std::string preProcess(const std::filesystem::path& file);
@@ -39,8 +39,10 @@ std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
         return {std::nullopt, StateCode::Done};
     }
     Parsing::Program program;
-    if (!parse(m_tokenStore, program))
+    if (const std::vector<Error> errors = parse(m_tokenStore, program); !errors.empty()) {
+        reportErrors(errors);
         return {std::nullopt, StateCode::Parser};
+    }
     if (m_arg == "--parse")
         return {std::nullopt, StateCode::Done};
     if (m_arg == "--printAst") {
@@ -110,12 +112,10 @@ std::vector<Error> lex(TokenStore& tokenStore, const std::filesystem::path& inpu
     return lexer.getLexemes();
 }
 
-bool parse(const TokenStore& tokenStore, Parsing::Program& programNode)
+std::vector<Error> parse(const TokenStore& tokenStore, Parsing::Program& programNode)
 {
     Parsing::Parser parser(tokenStore);
-    if (!parser.programParse(programNode))
-        return false;
-    return true;
+    return parser.programParse(programNode);
 }
 
 Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable)
@@ -149,6 +149,6 @@ void FrontendDriver::reportErrors(const std::vector<Error>& errors) const
 void FrontendDriver::reportError(const Error& error) const
 {
     std::cout << error.msg << ": " <<
-        m_tokenStore.getLineNumber(error.index) << ' ' <<
-        m_tokenStore.getColumnNumber(error.index) << '\n';
+        "line: " << m_tokenStore.getLineNumber(error.index) << ' ' <<
+        "column: " << m_tokenStore.getColumnNumber(error.index) << '\n';
 }
