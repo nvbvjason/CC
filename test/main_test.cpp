@@ -35,18 +35,18 @@ std::string removeLinesStartingWithHash(const std::string& input)
 i32 getLexerErrors(const std::filesystem::directory_entry& filePath)
 {
     const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
-    std::vector<Lexing::Token> lexemes;
-    Lexing::Lexer lexer(sourceCode);
-    return lexer.getLexemes(lexemes);
+    TokenStore tokenStore;
+    Lexing::Lexer lexer(sourceCode, tokenStore);
+    return lexer.getLexemes();
 }
 
 bool ParseFileAndGiveResult(const std::filesystem::directory_entry& filePath)
 {
     const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
-    std::vector<Lexing::Token> lexemes;
-    Lexing::Lexer lexer(sourceCode);
-    lexer.getLexemes(lexemes);
-    Parsing::Parser parser(lexemes);
+    TokenStore tokenStore;
+    Lexing::Lexer lexer(sourceCode, tokenStore);
+    lexer.getLexemes();
+    Parsing::Parser parser(tokenStore);
     Parsing::Program program;
     return parser.programParse(program);
 }
@@ -54,10 +54,10 @@ bool ParseFileAndGiveResult(const std::filesystem::directory_entry& filePath)
 bool CheckSemantics(const std::filesystem::directory_entry& filePath)
 {
     const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
-    std::vector<Lexing::Token> lexemes;
-    Lexing::Lexer lexer(sourceCode);
-    lexer.getLexemes(lexemes);
-    Parsing::Parser parser(lexemes);
+    TokenStore tokenStore;
+    Lexing::Lexer lexer(sourceCode, tokenStore);
+    lexer.getLexemes();
+    Parsing::Parser parser(tokenStore);
     Parsing::Program program;
     if (!parser.programParse(program))
         return false;

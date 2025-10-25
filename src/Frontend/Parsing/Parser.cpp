@@ -233,7 +233,7 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
 
 std::unique_ptr<Stmt> Parser::stmtParse()
 {
-    switch (peek().m_type) {
+    switch (peekTokenType()) {
         case TokenType::Return:         return returnStmtParse();
         case TokenType::Semicolon:      return nullStmtParse();
         case TokenType::If:             return ifStmtParse();
@@ -468,7 +468,7 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
     if (left == nullptr)
         return nullptr;
     Lexing::Token nextToken = peek();
-    while (continuePrecedenceClimbing(minPrecedence, nextToken.m_type)) {
+    while (continuePrecedenceClimbing(minPrecedence, peekTokenType())) {
         advance();
         if (nextToken.m_type == TokenType::QuestionMark) {
             auto first = exprParse(0);
@@ -523,13 +523,13 @@ std::unique_ptr<Expr> Parser::castExpr()
 
 std::unique_ptr<Expr> Parser::unaryExprParse()
 {
-    if (!Operators::isUnaryOperator(peek().m_type))
+    if (!Operators::isUnaryOperator(peekTokenType()))
         return exprPostfix();
-    if (peek().m_type == TokenType::Ampersand)
+    if (peekTokenType() == TokenType::Ampersand)
         return addrOFExprParse();
-    if (peek().m_type == TokenType::Asterisk)
+    if (peekTokenType() == TokenType::Asterisk)
         return dereferenceExprParse();
-    UnaryExpr::Operator oper = Operators::unaryOperator(peek().m_type);
+    UnaryExpr::Operator oper = Operators::unaryOperator(peekTokenType());
     advance();
     std::unique_ptr<Expr> expr = unaryExprParse();
     if (expr == nullptr)
@@ -670,7 +670,7 @@ std::unique_ptr<TypeBase> Parser::abstractDeclaratorProcess(std::unique_ptr<Abst
 std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()
 {
     std::vector<std::unique_ptr<Expr>> arguments;
-    if (peek().m_type == TokenType::CloseParen)
+    if (peekTokenType() == TokenType::CloseParen)
         return std::make_unique<std::vector<std::unique_ptr<Expr>>>(std::move(arguments));
     auto expr = exprParse(0);
     if (expr == nullptr)
@@ -772,7 +772,7 @@ Declaration::StorageClass getStorageClass(const Lexing::Token::Type tokenType)
 
 bool Parser::match(const TokenType &type)
 {
-    if (type == peek().m_type) {
+    if (type == peekTokenType()) {
         if (advance().m_type == TokenType::EndOfFile)
             return false;
         return true;
@@ -782,7 +782,7 @@ bool Parser::match(const TokenType &type)
 
 bool Parser::expect(const TokenType type)
 {
-    if (peek().m_type == type) {
+    if (peekTokenType() == type) {
         if (advance().m_type == TokenType::EndOfFile)
             return false;
         return true;
@@ -792,20 +792,20 @@ bool Parser::expect(const TokenType type)
 
 Lexing::Token::Type Parser::peekTokenType() const
 {
-    return c_tokens[m_current].m_type;
+    return c_tokenStore.getType(m_current);
 }
 
 Lexing::Token::Type Parser::peekNextTokenType() const
 {
-    if (c_tokens.size() <= m_current + 1)
+    if (c_tokenStore.size() <= m_current + 1)
         return TokenType::EndOfFile;
-    return c_tokens[m_current + 1].m_type;
+    return c_tokenStore.getType(m_current + 1);
 }
 
 Lexing::Token::Type Parser::peekNextNextTokenType() const
 {
-    if (c_tokens.size() <= m_current + 2)
+    if (c_tokenStore.size() <= m_current + 2)
         return TokenType::EndOfFile;
-    return c_tokens[m_current + 2].m_type;
+    return c_tokenStore.getType(m_current + 2);
 }
 } // Parsing

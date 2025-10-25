@@ -15,13 +15,14 @@ struct TestCase {
     std::vector<Lexing::Token::Type> tokens;
 };
 
-std::vector<Lexing::Token> generateTokens(const std::vector<Lexing::Token::Type>& tokenTypes);
+TokenStore generateTokens(const std::vector<Lexing::Token::Type>& tokenTypes);
 Parsing::Parser createParser(const std::vector<Lexing::Token::Type>& tokenTypes);
 
 class ParserStmtTest : public ::testing::Test {
 protected:
-    Parsing::Parser createParser(const std::vector<Lexing::Token::Type>& tokenTypes) {
-        return Parsing::Parser(generateTokens(tokenTypes));
+    static Parsing::Parser createParser(const std::vector<Lexing::Token::Type>& tokenTypes) {
+        const TokenStore tokenStore = generateTokens(tokenTypes);
+        return Parsing::Parser(tokenStore);
     }
 };
 

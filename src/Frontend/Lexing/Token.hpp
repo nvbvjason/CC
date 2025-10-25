@@ -108,6 +108,11 @@ struct Token {
     std::string m_lexeme;
     Token(const i32 line, const u16 column, const Type type, std::string lexeme)
         : m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
+    Token(
+        const std::variant<i32, i64, u32, u64, double> data,
+        const i32 line, const u16 column,
+        const Type type, std::string lexeme)
+        : m_data(data), m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
     [[nodiscard]] i32 line() const { return m_line; }
     [[nodiscard]] u16 column() const { return m_column; }
     [[nodiscard]] i32 getI32Value() const { return std::get<i32>(m_data); }

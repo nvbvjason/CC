@@ -19,8 +19,8 @@
 
 #include "DeSugarDeref.hpp"
 
-static i32 lex(std::vector<Lexing::Token>& lexemes, const std::filesystem::path& inputFile);
-static bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode);
+static i32 lex(TokenStore& tokenStore, const std::filesystem::path& inputFile);
+static bool parse(const TokenStore& tokenStore, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
 static Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable);
 static std::string preProcess(const std::filesystem::path& file);
@@ -28,22 +28,22 @@ static std::string getSourceCode(const std::filesystem::path& inputFile);
 
 std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run() const
 {
-    std::vector<Lexing::Token> tokens;
-    if (lex(tokens, m_inputFile) != 0) {
+    TokenStore tokenStore;
+    if (lex(tokenStore, m_inputFile) != 0) {
         if (m_arg == "--printTokens")
-            for (const auto& token : tokens)
-                std::cout << token << '\n';
+            for (size_t i = 0; i < tokenStore.size(); ++i)
+                std::cout << tokenStore.getToken(i) << '\n';
         return {std::nullopt, StateCode::Lexer};
     }
     if (m_arg == "--lex")
         return {std::nullopt, StateCode::Done};
     if (m_arg == "--printTokens") {
-        for (const auto& token : tokens)
-            std::cout << token << '\n';
+        for (size_t i = 0; i < tokenStore.size(); ++i)
+            std::cout << tokenStore.getToken(i) << '\n';
         return {std::nullopt, StateCode::Done};
     }
     Parsing::Program program;
-    if (!parse(tokens, program))
+    if (!parse(tokenStore, program))
         return {std::nullopt, StateCode::Parser};
     if (m_arg == "--parse")
         return {std::nullopt, StateCode::Done};
@@ -107,18 +107,18 @@ void printParsingAst(const Parsing::Program& program)
     std::cout << printer.getString();
 }
 
-i32 lex(std::vector<Lexing::Token> &lexemes, const std::filesystem::path& inputFile)
+i32 lex(TokenStore& tokenStore, const std::filesystem::path& inputFile)
 {
     const std::string source = preProcess(inputFile);
-    Lexing::Lexer lexer(source);
-    if (const i32 err = lexer.getLexemes(lexemes); err != 0)
+    Lexing::Lexer lexer(source, tokenStore);
+    if (const i32 err = lexer.getLexemes(); err != 0)
         return err;
     return 0;
 }
 
-bool parse(const std::vector<Lexing::Token>& tokens, Parsing::Program& programNode)
+bool parse(const TokenStore& tokenStore, Parsing::Program& programNode)
 {
-    Parsing::Parser parser(tokens);
+    Parsing::Parser parser(tokenStore);
     if (!parser.programParse(programNode))
         return false;
     return true;

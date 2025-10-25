@@ -1,6 +1,8 @@
 add_library(Lexing STATIC
         Lexer.cpp
         Token.cpp
+        TokenStore.cpp
+        TokenStore.hpp
 )
 
 target_include_directories(Lexing PUBLIC

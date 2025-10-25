@@ -18,32 +18,32 @@ const std::string MULTILINE_COMMENT_PROGRAM =
     "    return 100;\n"
     "}*/";
 
-std::vector<Lexing::Token> runLexerTest(const std::string& input)
+TokenStore runLexerTest(const std::string& input)
 {
-    Lexing::Lexer lexer(input);
-    std::vector<Lexing::Token> tokens;
-    lexer.getLexemes(tokens);
-    return tokens;
+    TokenStore tokenStore;
+    Lexing::Lexer lexer(input, tokenStore);
+    lexer.getLexemes();
+    return tokenStore;
 }
 
 void TestSingleTokenLexing(const std::string& input, Lexing::Token::Type expectedType)
 {
     constexpr i32 endOfFile = 1;
-    const auto tokens = runLexerTest(input);
-    ASSERT_EQ(tokens.size(), 1 + endOfFile) << "Expected exactly one token for input: " << input;
+    const TokenStore tokenStore = runLexerTest(input);
+    ASSERT_EQ(tokenStore.size(), 1 + endOfFile) << "Expected exactly one token for input: " << input;
     const Lexing::Token expected{
         1, 1, expectedType, input
     };
-    EXPECT_EQ(tokens[0], expected) << "Token mismatch for input: " << input;
+    EXPECT_EQ(tokenStore.getToken(0), expected) << "Token mismatch for input: " << input;
 }
 
 }
 
 TEST(LexerTests, GetTokens)
 {
-    const auto tokens = runLexerTest(BASIC_PROGRAM);
+    const TokenStore tokenStore = runLexerTest(BASIC_PROGRAM);
 
-    EXPECT_EQ(tokens.size(), 11);
+    EXPECT_EQ(tokenStore.size(), 11);
 
     const Lexing::Token expected[] = {
         {1, 1, Lexing::Token::Type::IntKeyword, "int"},
@@ -59,8 +59,8 @@ TEST(LexerTests, GetTokens)
         {4, 2, Lexing::Token::Type::EndOfFile, ""}
     };
 
-    for(size_t i = 0; i < tokens.size(); ++i)
-        EXPECT_EQ(tokens[i], expected[i]) << "Mismatch at token " << i;
+    for(size_t i = 0; i < tokenStore.size(); ++i)
+        EXPECT_EQ(tokenStore.getToken(i), expected[i]) << "Mismatch at token " << i;
 }
 
 TEST(LexerTests, Return)
@@ -386,9 +386,9 @@ TEST(LexerTests, UnsignedLongLiteralLowerCase)
 
 TEST(LexerTests, InvalidInput)
 {
-    Lexing::Lexer lexer("\\");
-    std::vector<Lexing::Token> tokens;
-    ASSERT_NE(lexer.getLexemes(tokens), 0);
-    ASSERT_EQ(tokens.size(), 1);
-    EXPECT_EQ(tokens[0].m_type, Lexing::Token::Type::Invalid);
+    TokenStore tokenStore;
+    Lexing::Lexer lexer("\\", tokenStore);
+    ASSERT_NE(lexer.getLexemes(), 0);
+    ASSERT_EQ(tokenStore.size(), 1);
+    EXPECT_EQ(tokenStore.getType(0), Lexing::Token::Type::Invalid);
 }

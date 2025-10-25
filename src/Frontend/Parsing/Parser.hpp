@@ -66,6 +66,8 @@
 
 #include <vector>
 
+#include "TokenStore.hpp"
+
 namespace Parsing {
 
 class Parser {
@@ -73,12 +75,12 @@ class Parser {
     using Storage = Declaration::StorageClass;
 
     bool m_atFileScope = true;
-    std::vector<Lexing::Token> c_tokens;
+    const TokenStore& c_tokenStore;
     size_t m_current = 0;
 public:
     Parser() = delete;
-    explicit Parser(const std::vector<Lexing::Token> &c_tokens)
-        : c_tokens(c_tokens) {}
+    explicit Parser(const TokenStore& tokenStore)
+        : c_tokenStore(tokenStore) {}
     bool programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
@@ -138,10 +140,10 @@ public:
     [[nodiscard]] static Type typeResolve(std::vector<TokenType>& tokens);
 private:
     bool match(const TokenType& type);
-    Lexing::Token advance() { return c_tokens[m_current++]; }
+    Lexing::Token advance() { return c_tokenStore.getToken(m_current++); }
     [[nodiscard]] bool isAtEnd() const { return peekTokenType() == TokenType::EndOfFile; }
     [[nodiscard]] static bool continuePrecedenceClimbing(i32 minPrecedence, TokenType nextToken);
-    [[nodiscard]] Lexing::Token peek() const { return c_tokens[m_current]; }
+    [[nodiscard]] Lexing::Token peek() const { return c_tokenStore.getToken(m_current); }
     [[nodiscard]] TokenType peekTokenType() const;
     [[nodiscard]] TokenType peekNextTokenType() const;
     [[nodiscard]] TokenType peekNextNextTokenType() const;

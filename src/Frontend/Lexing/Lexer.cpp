@@ -2,23 +2,20 @@
 
 #include <string>
 #include <cctype>
-#include <climits>
 #include <cmath>
-#include <cfloat>
 
 namespace Lexing {
 
-i32 Lexer::getLexemes(std::vector<Token>& lexemes)
+i32 Lexer::getLexemes()
 {
     while (!isAtEnd()) {
         m_start = m_current;
         scanToken();
     }
-    lexemes = m_tokens;
-    for (const Token& lexeme : lexemes)
-        if (lexeme.m_type == Token::Type::Invalid)
+    for (size_t i = 0; i < tokenStore.size(); ++i)
+        if (tokenStore.getType(i) == Type::Invalid)
             return 1;
-    lexemes.emplace_back(m_line, m_column, Token::Type::EndOfFile, "");
+    tokenStore.emplaceBack(0, m_line, m_column, Type::EndOfFile, "");
     return 0;
 }
 
@@ -275,40 +272,30 @@ void Lexer::number()
     if (endNumbers + 2 < m_current)
         addToken(Type::Invalid);
     const i32 ahead = m_current - m_start;
-    const std::string text = c_source.substr(m_start, ahead);
+    std::string text = c_source.substr(m_start, ahead);
     if (matchesUL(text, endNumbers, m_current)) {
-        m_tokens.emplace_back(m_line, m_column - ahead, Type::UnsignedLongLiteral, text);
-        m_tokens.back().m_data = num;
+        addToken(Type::UnsignedLongLiteral, num, ahead, text);
         return;
     }
     if (tolower(text.back()) == 'l' && endNumbers + 1 == m_current) {
-        m_tokens.emplace_back(m_line, m_column - ahead, Type::LongLiteral, text);
-        m_tokens.back().m_data = static_cast<i64>(num);
+        addToken(Type::LongLiteral, num, ahead, text);
         return;
     }
     if (tolower(text.back()) == 'u' && endNumbers + 1 == m_current) {
-        if (UINT_MAX < num) {
-            m_tokens.emplace_back(m_line, m_column - ahead, Type::UnsignedLongLiteral, text);
-            m_tokens.back().m_data = num;
-        }
-        else {
-            m_tokens.emplace_back(m_line, m_column - ahead, Type::UnsignedIntegerLiteral, text);
-            m_tokens.back().m_data = static_cast<u32>(num);
-        }
+        if (MAX_U32 < num)
+            addToken(Type::UnsignedLongLiteral, num, ahead, text);
+        else
+            addToken(Type::UnsignedIntegerLiteral, num, ahead, text);
         return;
     }
     if (endNumbers == m_current) {
-        if (INT_MAX < num) {
-            m_tokens.emplace_back(m_line, m_column - ahead, Type::LongLiteral, text);
-            m_tokens.back().m_data = static_cast<i64>(num);
-        }
-        else {
-            m_tokens.emplace_back(m_line, m_column - ahead, Type::IntegerLiteral, text);
-            m_tokens.back().m_data = static_cast<i32>(num);
-        }
+        if (MAX_I32 < num)
+            addToken(Type::LongLiteral, num, ahead, text);
+        else
+            addToken(Type::IntegerLiteral, num, ahead, text);
         return;
     }
-    addToken(Token::Type::Invalid);
+    addToken(Type::Invalid);
 }
 
 void Lexer::floating()
@@ -349,17 +336,42 @@ void Lexer::identifier()
     addToken(iden->second);
 }
 
+void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std::string& text)
+{
+    std::variant<i32, i64, u32, u64, double> value;
+    if (type == Type::IntegerLiteral)
+        value = static_cast<i32>(num);
+    else if (type == Type::LongLiteral)
+        value = static_cast<i64>(num);
+    else if (type == Type::UnsignedIntegerLiteral)
+        value = static_cast<u32>(num);
+    else if (type == Type::UnsignedLongLiteral)
+        value = num;
+    tokenStore.emplaceBack(
+        value,
+        m_line,
+        m_column - ahead,
+        type,
+        std::move(text));
+}
+
 void Lexer::addToken(const Token::Type type)
 {
     const i32 ahead = m_current - m_start;
     std::string text = c_source.substr(m_start, ahead);
-    m_tokens.emplace_back(m_line, m_column - ahead, type, text);
+    std::variant<i32, i64, u32, u64, double> valueToStore = 0;
     if (type == Type::DoubleLiteral) {
         const double value = std::strtod(text.c_str(), nullptr);
         if (errno == ERANGE && value == HUGE_VAL)
-            m_tokens.back().m_data = std::numeric_limits<double>::infinity();
+            valueToStore = std::numeric_limits<double>::infinity();
         else
-            m_tokens.back().m_data = value;
+            valueToStore = value;
     }
+    tokenStore.emplaceBack(
+        valueToStore,
+        m_line,
+        m_column - ahead,
+        type,
+        std::move(text));
 }
 }

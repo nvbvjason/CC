@@ -4,29 +4,32 @@
 #include "gtest/gtest.h"
 #include <vector>
 
+TokenStore g_tokenStore;
+
 namespace {
 using Token = Lexing::Token;
 using TokenType = Lexing::Token::Type;
 }
 
-std::vector<Token> generateTokens(const std::vector<TokenType>& tokenTypes)
+TokenStore generateTokens(const std::vector<Lexing::Token::Type>& tokenTypes)
 {
     std::vector<Token> tokens;
-    tokens.reserve(tokenTypes.size() + 1);
+    g_tokenStore.clear();
+    g_tokenStore.reserve(tokenTypes.size() + 1);
     for (const TokenType tokenType : tokenTypes) {
         if (tokenType == TokenType::Identifier)
-            tokens.emplace_back(1, 1, tokenType, "x");
+            g_tokenStore.emplaceBack(0, 1, 1, tokenType, "x");
         else
-            tokens.emplace_back(1, 1, tokenType, "");
+            g_tokenStore.emplaceBack(0, 1, 1, tokenType, "");
     }
-    tokens.emplace_back(1, 1, TokenType::EndOfFile, "");
-    return tokens;
+    g_tokenStore.emplaceBack(0, 1, 1, TokenType::EndOfFile, "");
+    return g_tokenStore;
 }
 
 Parsing::Parser createParser(const std::vector<TokenType>& tokenTypes)
 {
-    const std::vector<Token> tokens = generateTokens(tokenTypes);
-    return Parsing::Parser(tokens);
+    const TokenStore tokenStore = generateTokens(tokenTypes);
+    return Parsing::Parser(g_tokenStore);
 }
 
 TEST(ParserTests, BlockParseSuccesEmpty)
