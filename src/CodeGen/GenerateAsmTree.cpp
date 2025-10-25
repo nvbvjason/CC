@@ -4,10 +4,10 @@
 #include "FixUpInstructions.hpp"
 #include "PseudoRegisterReplacer.hpp"
 #include "Types/TypeConversion.hpp"
+#include "Operators.hpp"
 
 #include <array>
 #include <cassert>
-#include <random>
 
 namespace {
 using RegType = CodeGen::Operand::RegKind;
@@ -62,7 +62,7 @@ std::vector<bool> GenerateAsmTree::genFunctionPushIntoRegs(const Ir::Function& f
     i32 regIntIndex = 0;
     i32 regDoubleInex = 0;
     for (size_t i = 0; i < function.args.size(); ++i) {
-        const AsmType type = getAsmType(function.argTypes[i]);
+        const AsmType type = Operators::getAsmType(function.argTypes[i]);
         std::shared_ptr<RegisterOperand> src;
         if (type != AsmType::Double && regIntIndex < intRegs.size())
             src = std::make_shared<RegisterOperand>(intRegs[regIntIndex++], type);
@@ -86,10 +86,12 @@ void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std
             continue;
         constexpr i32 stackAlignment = 8;
         auto stack = std::make_shared<MemoryOperand>(
-            RegType::BP, stackAlignment * stackPtr++, getAsmType(function.argTypes[i]));
+            RegType::BP, stackAlignment * stackPtr++, Operators::getAsmType(function.argTypes[i]));
         auto arg = std::make_shared<Ir::ValueVar>(function.args[i], function.argTypes[i]);
         std::shared_ptr<Operand> dst = genOperand(arg);
-        insts.emplace_back(std::make_unique<MoveInst>(stack, dst, getAsmType(function.argTypes[i])));
+        insts.emplace_back(std::make_unique<MoveInst>(
+            stack, dst, Operators::getAsmType(function.argTypes[i]))
+            );
     }
 }
 
@@ -105,7 +107,7 @@ std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVari
         return staticVar;
     }
     auto result = std::make_unique<StaticVariable>(
-        staticVariable.name, getAsmType(staticVariable.type), staticVariable.global);
+        staticVariable.name, Operators::getAsmType(staticVariable.type), staticVariable.global);
     if (type == Type::I32)
         result->init = std::get<i32>(value->value);
     if (type == Type::I64)
@@ -351,7 +353,7 @@ void GenerateAsmTree::genUnary(const Ir::UnaryInst& irUnary)
 
 void GenerateAsmTree::genUnaryBasic(const Ir::UnaryInst& irUnary)
 {
-    UnaryInst::Operator oper = unaryOperator(irUnary.operation);
+    UnaryInst::Operator oper = Operators::unaryOperator(irUnary.operation);
     std::shared_ptr<Operand> src = genOperand(irUnary.src);
     std::shared_ptr<Operand> dst = genOperand(irUnary.dst);
 
@@ -526,7 +528,9 @@ void GenerateAsmTree::genUIntToDoubleLong(const Ir::UIntToDoubleInst& uintToDoub
     std::shared_ptr<Operand> rax = std::make_unique<RegisterOperand>(RegType::AX, AsmType::QuadWord);
     std::shared_ptr<Operand> dst = genOperand(uintToDouble.dst);
 
-    insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, rax, getAsmType(uintToDouble.type)));
+    insts.emplace_back(std::make_unique<MoveZeroExtendInst>(
+        src, rax, Operators::getAsmType(uintToDouble.type))
+        );
     insts.emplace_back(std::make_unique<Cvtsi2sdInst>(rax, dst, AsmType::QuadWord));
 }
 
@@ -591,7 +595,7 @@ void GenerateAsmTree::genBinaryCondInteger(const Ir::BinaryInst& irBinary)
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
     std::shared_ptr<Operand> zero = getZeroOperand(AsmType::LongWord);
     const bool isSigned = irBinary.lhs->type == Type::I32 || irBinary.lhs->type == Type::I64;
-    BinaryInst::CondCode cc = condCode(irBinary.operation, isSigned);
+    BinaryInst::CondCode cc = Operators::condCode(irBinary.operation, isSigned);
 
     insts.emplace_back(std::make_unique<CmpInst>(rhs, lhs, lhs->type));
     insts.emplace_back(std::make_unique<MoveInst>(zero, dst, dst->type));
@@ -604,7 +608,7 @@ void GenerateAsmTree::genBinaryCondDouble(const Ir::BinaryInst& irBinary)
     std::shared_ptr<Operand> rhs = genOperand(irBinary.rhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
     std::shared_ptr<Operand> zero = getZeroOperand(AsmType::LongWord);
-    BinaryInst::CondCode cc = condCode(irBinary.operation, false);
+    BinaryInst::CondCode cc = Operators::condCode(irBinary.operation, false);
     Identifier nanLabel(makeTemporaryPseudoName());
     Identifier endLabel(makeTemporaryPseudoName());
 
@@ -648,7 +652,7 @@ void GenerateAsmTree::genBinaryDivideDouble(const Ir::BinaryInst& irBinary)
 void GenerateAsmTree::genBinaryDivideSigned(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> src1 = genOperand(irBinary.lhs);
-    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, getAsmType(irBinary.type));
+    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(irBinary.type));
     std::shared_ptr<Operand> src2 = genOperand(irBinary.rhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
 
@@ -662,8 +666,10 @@ void GenerateAsmTree::genUnsignedBinaryDivide(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> src1 = genOperand(irBinary.lhs);
     const auto zero = getZeroOperand(src1->type);
-    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, getAsmType(irBinary.type));
-    const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, getAsmType(irBinary.type));
+    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(irBinary.type));
+    const auto regDX = std::make_shared<RegisterOperand>(
+        RegType::DX, Operators::getAsmType(irBinary.type)
+        );
     std::shared_ptr<Operand> src2 = genOperand(irBinary.rhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
 
@@ -685,10 +691,12 @@ void GenerateAsmTree::genBinaryRemainder(const Ir::BinaryInst& irBinary)
 void GenerateAsmTree::genSignedBinaryRemainder(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> src1 = genOperand(irBinary.lhs);
-    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, getAsmType(irBinary.type));
+    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(irBinary.type));
     std::shared_ptr<Operand> src2 = genOperand(irBinary.rhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
-    const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, getAsmType(irBinary.type));
+    const auto regDX = std::make_shared<RegisterOperand>(
+        RegType::DX, Operators::getAsmType(irBinary.type)
+        );
 
     insts.emplace_back(std::make_unique<MoveInst>(src1, regAX, src1->type));
     insts.emplace_back(std::make_unique<CdqInst>(src1->type));
@@ -700,8 +708,10 @@ void GenerateAsmTree::genUnsignedBinaryRemainder(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> lhs = genOperand(irBinary.lhs);
     const auto zero = getZeroOperand(lhs->type);
-    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, getAsmType(irBinary.type));
-    const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, getAsmType(irBinary.type));
+    auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(irBinary.type));
+    const auto regDX = std::make_shared<RegisterOperand>(
+        RegType::DX, Operators::getAsmType(irBinary.type)
+        );
     std::shared_ptr<Operand> rhs = genOperand(irBinary.rhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
 
@@ -715,7 +725,7 @@ void GenerateAsmTree::genBinaryBasic(const Ir::BinaryInst& irBinary)
 {
     std::shared_ptr<Operand> lhs = genOperand(irBinary.lhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
-    BinaryInst::Operator oper = binaryOperator(irBinary.operation);
+    BinaryInst::Operator oper = Operators::binaryOperator(irBinary.operation);
     std::shared_ptr<Operand> rhs = genOperand(irBinary.rhs);
 
     insts.emplace_back(std::make_unique<MoveInst>(lhs, dst, lhs->type));
@@ -727,7 +737,7 @@ void GenerateAsmTree::genBinaryShift(const Ir::BinaryInst& irBinary)
     std::shared_ptr<Operand> lhs = genOperand(irBinary.lhs);
     std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
     const bool isSigned = irBinary.type == Type::I32 || irBinary.type == Type::I64;
-    BinaryInst::Operator oper = getShiftOperator(irBinary.operation, isSigned);
+    BinaryInst::Operator oper = Operators::getShiftOperator(irBinary.operation, isSigned);
     std::shared_ptr<Operand> rhs = genOperand(irBinary.rhs);
 
     insts.emplace_back(std::make_unique<MoveInst>(lhs, dst, lhs->type));
@@ -738,12 +748,18 @@ void GenerateAsmTree::genReturn(const Ir::ReturnInst& returnInst)
 {
     std::shared_ptr<Operand> val = genOperand(returnInst.returnValue);
     std::shared_ptr<Operand> regReturn;
-    if (getAsmType(returnInst.type) == AsmType::Double)
-        regReturn = std::make_shared<RegisterOperand>(RegType::XMM0, getAsmType(returnInst.type));
+    if (Operators::getAsmType(returnInst.type) == AsmType::Double)
+        regReturn = std::make_shared<RegisterOperand>(
+            RegType::XMM0, Operators::getAsmType(returnInst.type)
+            );
     else
-        regReturn = std::make_shared<RegisterOperand>(RegType::AX, getAsmType(returnInst.type));
+        regReturn = std::make_shared<RegisterOperand>(
+            RegType::AX, Operators::getAsmType(returnInst.type)
+            );
 
-    insts.emplace_back(std::make_unique<MoveInst>(val, regReturn, getAsmType(returnInst.type)));
+    insts.emplace_back(std::make_unique<MoveInst>(
+        val, regReturn, Operators::getAsmType(returnInst.type))
+        );
     insts.emplace_back(std::make_unique<ReturnInst>());
 }
 
@@ -766,11 +782,11 @@ void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
     }
     std::shared_ptr<Operand> dst = genOperand(funcCall.destination);
     std::shared_ptr<Operand> src;
-    if (getAsmType(funcCall.type) != AsmType::Double)
-        src = std::make_shared<RegisterOperand>(RegType::AX, getAsmType(funcCall.type));
+    if (Operators::getAsmType(funcCall.type) != AsmType::Double)
+        src = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(funcCall.type));
     else
-        src = std::make_shared<RegisterOperand>(RegType::XMM0, getAsmType(funcCall.type));
-    insts.emplace_back(std::make_unique<MoveInst>(src, dst, getAsmType(funcCall.type)));
+        src = std::make_shared<RegisterOperand>(RegType::XMM0, Operators::getAsmType(funcCall.type));
+    insts.emplace_back(std::make_unique<MoveInst>(src, dst, Operators::getAsmType(funcCall.type)));
 }
 
 std::vector<bool> GenerateAsmTree::genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall)
@@ -780,7 +796,7 @@ std::vector<bool> GenerateAsmTree::genFuncCallPushArgsRegs(const Ir::FunCallInst
     std::vector pushedIntoRegs(funcCall.args.size(), false);
     for (size_t i = 0; i < funcCall.args.size(); ++i) {
         std::shared_ptr<Operand> src = genOperand(funcCall.args[i]);
-        const AsmType type = getAsmType(funcCall.args[i]->type);
+        const AsmType type = Operators::getAsmType(funcCall.args[i]->type);
         std::shared_ptr<RegisterOperand> reg;
         if (type != AsmType::Double && regIntIndex < intRegs.size())
             reg = std::make_shared<RegisterOperand>(intRegs[regIntIndex++], type);
@@ -807,7 +823,7 @@ void GenerateAsmTree::genFunCallPushArgs(const Ir::FunCallInst& funcCall)
             insts.emplace_back(std::make_unique<PushInst>(src));
         }
         else {
-            const AsmType type = getAsmType(funcCall.args[i]->type);
+            const AsmType type = Operators::getAsmType(funcCall.args[i]->type);
             insts.emplace_back(std::make_unique<MoveInst>(
                 src, std::make_shared<RegisterOperand>(RegType::AX, type), type));
             insts.emplace_back(std::make_unique<PushInst>(
@@ -826,86 +842,6 @@ i32 getStackPadding(const size_t numArgs)
     return stackPadding;
 }
 
-UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
-{
-    using IrOper = Ir::UnaryInst::Operation;
-    using AsmOper = UnaryInst::Operator;
-    switch (type)
-    {
-        case IrOper::Complement:        return AsmOper::Not;
-        case IrOper::Negate:            return AsmOper::Neg;
-        default:
-            throw std::invalid_argument("Invalid UnaryOperator type");
-    }
-}
-
-BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
-{
-    using IrOper = Ir::BinaryInst::Operation;
-    using AsmOper = BinaryInst::Operator;
-    switch (type) {
-        case IrOper::Add:          return AsmOper::Add;
-        case IrOper::Subtract:     return AsmOper::Sub;
-        case IrOper::Multiply:     return AsmOper::Mul;
-
-        case IrOper::BitwiseAnd:   return AsmOper::AndBitwise;
-        case IrOper::BitwiseOr:    return AsmOper::OrBitwise;
-        case IrOper::BitwiseXor:   return AsmOper::BitwiseXor;
-        default:
-            throw std::invalid_argument("Invalid BinaryOperation type: " +
-                std::to_string(static_cast<int>(type)));
-    }
-}
-
-BinaryInst::Operator getShiftOperator(const Ir::BinaryInst::Operation type, const bool isSigned)
-{
-    using IrOper = Ir::BinaryInst::Operation;
-    using AsmOper = BinaryInst::Operator;
-    if (isSigned) {
-        switch (type) {
-            case IrOper::LeftShift:    return AsmOper::LeftShiftSigned;
-            case IrOper::RightShift:   return AsmOper::RightShiftSigned;
-            default:
-                throw std::invalid_argument("Invalid BinaryOperation type: " +
-                    std::to_string(static_cast<int>(type)));
-        }
-    }
-    switch (type) {
-        case IrOper::LeftShift:    return AsmOper::LeftShiftUnsigned;
-        case IrOper::RightShift:   return AsmOper::RightShiftUnsigned;
-        default:
-            throw std::invalid_argument("Invalid BinaryOperation type: " +
-                std::to_string(static_cast<int>(type)));
-    }
-}
-
-BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const bool isSigned)
-{
-    using IrOper = Ir::BinaryInst::Operation;
-    using BinCond = BinaryInst::CondCode;
-    if (isSigned)
-        switch (oper) {
-            case IrOper::Equal:             return BinCond::E;
-            case IrOper::NotEqual:          return BinCond::NE;
-            case IrOper::LessThan:          return BinCond::L;
-            case IrOper::LessOrEqual:       return BinCond::LE;
-            case IrOper::GreaterThan:       return BinCond::G;
-            case IrOper::GreaterOrEqual:    return BinCond::GE;
-            default:
-                throw std::invalid_argument("Invalid BinaryOperation type");
-        }
-    switch (oper) {
-        case IrOper::Equal:             return BinCond::E;
-        case IrOper::NotEqual:          return BinCond::NE;
-        case IrOper::LessThan:          return BinCond::B;
-        case IrOper::LessOrEqual:       return BinCond::BE;
-        case IrOper::GreaterThan:       return BinCond::A;
-        case IrOper::GreaterOrEqual:    return BinCond::AE;
-        default:
-                throw std::invalid_argument("Invalid BinaryOperation type");
-    }
-}
-
 std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::Value>& value)
 {
     switch (value->kind) {
@@ -916,7 +852,11 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
             const auto valueVar = dynCast<Ir::ValueVar>(value.get());
             const bool isConst = valueVar->type == Type::Double;
             return std::make_shared<PseudoOperand>(
-                Identifier(valueVar->value.value), valueVar->referingTo, getAsmType(valueVar->type), isConst);
+                Identifier(
+                    valueVar->value.value),
+                    valueVar->referingTo,
+                    Operators::getAsmType(valueVar->type), isConst
+                );
         }
         default:
             throw std::invalid_argument("Invalid UnaryOperator type");

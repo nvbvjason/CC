@@ -4,7 +4,6 @@
 #include "ShortTypes.hpp"
 #include "ASTParser.hpp"
 #include "Frontend/SymbolTable.hpp"
-#include "ASTTypes.hpp"
 
 #include <string>
 
@@ -38,20 +37,22 @@ public:
 private:
     void reset();
     std::string makeTemporaryName(const std::string &name);
+    [[nodiscard]] bool isValid() const { return m_valid; }
 };
 
 bool isValidVarDecl(
     const Parsing::VarDecl& varDecl,
     const SymbolTable& symbolTable,
-    const SymbolTable::ReturnedEntry& prevEntry);
+    const SymbolTable::ReturnedEntry& prevEntry
+);
 bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry);
 
 bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
                      const SymbolTable& symbolTable,
                      const SymbolTable::ReturnedEntry& returnedEntry);
 
-bool isValidFuncCall(const Parsing::FuncCallExpr& funCallExpr, const SymbolTable::ReturnedEntry& returnedEntry);
-bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::ReturnedEntry& returnedEntry);
+bool isValidFuncCall(const SymbolTable::ReturnedEntry& returnedEntry);
+bool isValidVarExpr(const SymbolTable::ReturnedEntry& returnedEntry);
 
 bool duplicatesInArgs(const std::vector<std::string>& args);
 inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry)

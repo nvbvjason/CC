@@ -5,6 +5,7 @@ add_library(CodeGen STATIC
         FixUpInstructions.cpp
         GenerateAsmTree.cpp
         PseudoRegisterReplacer.cpp
+        Operators.hpp
 )
 
 target_include_directories(CodeGen PUBLIC

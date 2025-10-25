@@ -26,7 +26,7 @@ std::unique_ptr<Declaration> Parser::declarationParse()
     auto [type, storageClass] = specifierParse();
     if (type == Type::Invalid)
         return nullptr;
-    const Declaration::StorageClass storage = getStorageClass(storageClass);
+    const Declaration::StorageClass storage = Operators::getStorageClass(storageClass);
     std::unique_ptr<Declarator> declarator = declaratorParse();
     if (declarator == nullptr)
         return nullptr;
@@ -63,10 +63,12 @@ std::unique_ptr<VarDecl> Parser::varDeclParse(const std::string& iden,
     return varDecl;
 }
 
-std::unique_ptr<FunDecl> Parser::funDeclParse(const std::string& iden,
-                                              std::unique_ptr<TypeBase>&& type,
-                                              const Storage storage,
-                                              std::vector<std::string>&& params)
+std::unique_ptr<FunDecl> Parser::funDeclParse(
+        const std::string& iden,
+        std::unique_ptr<TypeBase>&& type,
+        const Storage storage,
+        std::vector<std::string>&& params
+    )
 {
     auto result = std::make_unique<FunDecl>(storage, iden, std::move(params), std::move(type));
     if (expect(TokenType::Semicolon))
@@ -74,7 +76,7 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(const std::string& iden,
     const size_t before = m_current;
     auto block = blockParse();
     if (block == nullptr) {
-        addError("Expected block after function declaration", m_current);
+        addError("Expected block after function declaration", before);
         return nullptr;
     }
     result->body = std::move(block);
@@ -854,21 +856,6 @@ bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens)
         if (tokens[i] == tokens[i - 1])
             return true;
     return false;
-}
-
-Declaration::StorageClass getStorageClass(const Lexing::Token::Type tokenType)
-{
-    using TokenType = Lexing::Token::Type;
-    using StorageClass = Declaration::StorageClass;
-    switch (tokenType) {
-        case TokenType::Static:     return StorageClass::Static;
-        case TokenType::Extern:     return StorageClass::Extern;
-        case TokenType::NotAToken:  return StorageClass::None;
-        default:
-            assert("getVarStorageClass invalid TokenType");
-            std::abort();
-    }
-    assert("getVarStorageClass invalid TokenType");
 }
 
 bool Parser::match(const TokenType &type)

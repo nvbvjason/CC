@@ -97,28 +97,10 @@ private:
 };
 
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
-
 i32 getStackPadding(size_t numArgs);
-UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
-BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
-BinaryInst::Operator getShiftOperator(Ir::BinaryInst::Operation type, bool isSigned);
-BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
-AsmType getAsmType(Type type);
 
 [[nodiscard]] i32 replacingPseudoRegisters(const Function& function);
 void fixUpInstructions(Function& function, i32 stackAlloc);
-
-inline AsmType getAsmType(Type type)
-{
-    if (type == Type::I32 || type == Type::U32)
-        return AsmType::LongWord;
-    if (type == Type::I64 || type == Type::U64 || type == Type::Pointer)
-        return AsmType::QuadWord;
-    if (type == Type::Double)
-        return AsmType::Double;
-    std::abort();
-}
-
 std::string makeTemporaryPseudoName();
 
 } // CodeGen

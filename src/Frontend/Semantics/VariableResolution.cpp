@@ -1,6 +1,7 @@
 #include "VariableResolution.hpp"
 #include "ASTParser.hpp"
 #include "DynCast.hpp"
+#include "ASTTypes.hpp"
 
 #include <unordered_set>
 
@@ -20,7 +21,7 @@ bool VariableResolution::resolve(Parsing::Program& program)
 {
     reset();
     ASTTraverser::visit(program);
-    return m_valid;
+    return isValid();
 }
 
 void VariableResolution::visit(Parsing::FunDecl& funDecl)
@@ -137,7 +138,7 @@ bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::Re
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
     const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookup(varExpr.name);
-    if (!isValidVarExpr(varExpr, returnedEntry)) {
+    if (!isValidVarExpr(returnedEntry)) {
         m_valid = false;
         return;
     }
@@ -153,7 +154,7 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
     ASTTraverser::visit(varExpr);
 }
 
-bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::ReturnedEntry& returnedEntry)
+bool isValidVarExpr(const SymbolTable::ReturnedEntry& returnedEntry)
 {
     if (returnedEntry.isInArgs())
         return true;
@@ -167,7 +168,7 @@ bool isValidVarExpr(const Parsing::VarExpr& varExpr, const SymbolTable::Returned
 void VariableResolution::visit(Parsing::FuncCallExpr& funcCallExpr)
 {
     const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookup(funcCallExpr.name);
-    if (!isValidFuncCall(funcCallExpr, returnedEntry)) {
+    if (!isValidFuncCall(returnedEntry)) {
         m_valid = false;
         return;
     }
@@ -176,7 +177,7 @@ void VariableResolution::visit(Parsing::FuncCallExpr& funcCallExpr)
     ASTTraverser::visit(funcCallExpr);
 }
 
-bool isValidFuncCall(const Parsing::FuncCallExpr& funCallExpr, const SymbolTable::ReturnedEntry& returnedEntry)
+bool isValidFuncCall(const SymbolTable::ReturnedEntry& returnedEntry)
 {
     if (!returnedEntry.contains())
         return false;

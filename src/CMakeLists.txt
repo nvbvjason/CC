@@ -3,6 +3,14 @@ add_subdirectory(IR)
 add_subdirectory(CodeGen)
 add_subdirectory(Types)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /Zi /DDEBUG")
+endif()
+
 # Add CompilerDriver library
 add_library(CompilerDriver
         CompilerDriver.cpp

@@ -87,10 +87,12 @@ public:
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
                                                         std::unique_ptr<TypeBase>&& type,
                                                         Storage storage);
-    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(const std::string& iden,
-                                                        std::unique_ptr<TypeBase>&& type,
-                                                        Storage storage,
-                                                        std::vector<std::string>&& params);
+    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(
+            const std::string& iden,
+            std::unique_ptr<TypeBase>&& type,
+            Storage storage,
+            std::vector<std::string>&& params
+        );
 
     [[nodiscard]] std::unique_ptr<Declarator> declaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> directDeclaratorParse();
@@ -154,7 +156,6 @@ private:
 };
 
 bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens);
-Declaration::StorageClass getStorageClass(Lexing::Token::Type tokenType);
 inline bool Parser::continuePrecedenceClimbing(const i32 minPrecedence, const TokenType nextToken)
 {
     return (Operators::isBinaryOperator(nextToken) ||

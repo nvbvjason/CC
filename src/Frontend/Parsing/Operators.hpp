@@ -18,6 +18,8 @@ using TokenType = Lexing::Token::Type;
 [[nodiscard]] constexpr bool isSpecifier(TokenType type);
 [[nodiscard]] constexpr bool isType(TokenType type);
 [[nodiscard]] constexpr BinaryExpr::Operator getBinaryOperator(AssignmentExpr::Operator oper);
+[[nodiscard]] Declaration::StorageClass getStorageClass(Lexing::Token::Type tokenType);
+
 
 // https://en.cppreference.com/w/c/language/operator_precedence
 [[nodiscard]] constexpr i32 precedence(TokenType type);
@@ -304,5 +306,19 @@ constexpr BinaryExpr::Operator getBinaryOperator(const AssignmentExpr::Operator 
 constexpr i32 getPrecedenceLevel(const AssignmentExpr::Operator oper)
 {
     return 14;
+}
+
+inline Declaration::StorageClass getStorageClass(const Lexing::Token::Type tokenType)
+{
+    using StorageClass = Declaration::StorageClass;
+    switch (tokenType) {
+        case TokenType::Static:     return StorageClass::Static;
+        case TokenType::Extern:     return StorageClass::Extern;
+        case TokenType::NotAToken:  return StorageClass::None;
+        default:
+            assert("getVarStorageClass invalid TokenType");
+            std::abort();
+    }
+    assert("getVarStorageClass invalid TokenType");
 }
 } // namespace Parsing::Operators
