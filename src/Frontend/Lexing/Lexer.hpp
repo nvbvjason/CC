@@ -2,11 +2,11 @@
 
 #include "Token.hpp"
 #include "TokenStore.hpp"
+#include "Error.hpp"
 
 #include <climits>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace Lexing {
 
@@ -21,6 +21,7 @@ class Lexer {
     u16 m_column = 1;
     u16 m_ahead = 0;
     TokenStore& tokenStore;
+    std::vector<Error> errors;
     static inline std::unordered_map<std::string, Token::Type> keywords = {
         { "return", Type::Return },
         { "int", Type::IntKeyword },
@@ -50,7 +51,7 @@ public:
         const size_t estimatedTokens = c_source.length() / 4;
         tokenStore.reserve(estimatedTokens);
     }
-    i32 getLexemes();
+    std::vector<Error> getLexemes();
 private:
     [[nodiscard]] bool isAtEnd() const { return c_source.size() <= m_current; }
     [[nodiscard]] char peek() const;
@@ -60,7 +61,7 @@ private:
     bool match(const std::string& expected);
     void scanToken();
     char advance();
-    void addToken(Token::Type type, u64 num, i32 ahead, std::string& text);
+    void addToken(Token::Type type, u64 num, i32 ahead, std::string& text) const;
     void addToken(Token::Type type);
 
     void forwardSlash();

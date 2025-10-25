@@ -4,7 +4,6 @@ add_library(Parsing STATIC
         Declarator.hpp
 )
 
-# Specify include directories for the Parsing library
 target_include_directories(Parsing PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/src
@@ -12,7 +11,6 @@ target_include_directories(Parsing PUBLIC
         ${CMAKE_SOURCE_DIR}/src/Frontend/Lexing
 )
 
-# Link against dependent libraries
 target_link_libraries(Parsing PUBLIC
         AST
         Lexing

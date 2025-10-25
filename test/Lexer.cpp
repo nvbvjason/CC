@@ -388,7 +388,7 @@ TEST(LexerTests, InvalidInput)
 {
     TokenStore tokenStore;
     Lexing::Lexer lexer("\\", tokenStore);
-    ASSERT_NE(lexer.getLexemes(), 0);
-    ASSERT_EQ(tokenStore.size(), 1);
+    EXPECT_FALSE(lexer.getLexemes().empty());
+    ASSERT_EQ(tokenStore.size(), 2);
     EXPECT_EQ(tokenStore.getType(0), Lexing::Token::Type::Invalid);
 }

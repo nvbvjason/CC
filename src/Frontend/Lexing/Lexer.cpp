@@ -6,17 +6,14 @@
 
 namespace Lexing {
 
-i32 Lexer::getLexemes()
+std::vector<Error> Lexer::getLexemes()
 {
     while (!isAtEnd()) {
         m_start = m_current;
         scanToken();
     }
-    for (size_t i = 0; i < tokenStore.size(); ++i)
-        if (tokenStore.getType(i) == Type::Invalid)
-            return 1;
     tokenStore.emplaceBack(0, m_line, m_column, Type::EndOfFile, "");
-    return 0;
+    return errors;
 }
 
 void Lexer::scanToken()
@@ -336,7 +333,7 @@ void Lexer::identifier()
     addToken(iden->second);
 }
 
-void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std::string& text)
+void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std::string& text) const
 {
     std::variant<i32, i64, u32, u64, double> value;
     if (type == Type::IntegerLiteral)
@@ -373,5 +370,7 @@ void Lexer::addToken(const Token::Type type)
         m_column - ahead,
         type,
         std::move(text));
+    if (type == Type::Invalid)
+        errors.emplace_back("Unknown token type", tokenStore.size() - 1);
 }
 }

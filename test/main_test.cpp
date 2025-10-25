@@ -32,12 +32,12 @@ std::string removeLinesStartingWithHash(const std::string& input)
     return result;
 }
 
-i32 getLexerErrors(const std::filesystem::directory_entry& filePath)
+bool lexerValid(const std::filesystem::directory_entry& filePath)
 {
     const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
     TokenStore tokenStore;
     Lexing::Lexer lexer(sourceCode, tokenStore);
-    return lexer.getLexemes();
+    return lexer.getLexemes().empty();
 }
 
 bool ParseFileAndGiveResult(const std::filesystem::directory_entry& filePath)
@@ -72,7 +72,7 @@ TEST(Chapter1, lexingValid)
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -82,7 +82,7 @@ TEST(Chapter1, lexingInvalid)
     for (const auto& path : std::filesystem::directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_NE(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_FALSE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -112,7 +112,7 @@ TEST(Chapter2_Unary_Operators, lexingValid)
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -142,7 +142,7 @@ TEST(Chapter3_Binary_Operators, lexingValid)
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -172,7 +172,7 @@ TEST(Chapter4_Logical_and_Relatinal_Operators, lexingValid)
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -202,7 +202,7 @@ TEST(Chapter5_Local_Variables, lexingValid)
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -262,7 +262,7 @@ TEST(Chapter6_If_and_Conditional_Statements, lexingValid)
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -322,7 +322,7 @@ TEST(Chapter6_If_and_Conditional_Statements, lexingValidExtraCredit)
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -352,7 +352,7 @@ TEST(Chapter7_Compound_Statements, lexingValid)
     for (const auto& path : std::filesystem::directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -402,7 +402,7 @@ TEST(Chapter8_Loops, lexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -452,7 +452,7 @@ TEST(Chapter9_Functions, lexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -522,7 +522,7 @@ TEST(Chapter10_File_Scope_Decls_and_Storageclass, lexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -592,7 +592,7 @@ TEST(Chapter11_Long_Integers, validLexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -602,7 +602,7 @@ TEST(Chapter11_Long_Integers, inValidLexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_NE(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_FALSE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -662,7 +662,7 @@ TEST(Chapter12_Unsigned, validLexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -672,7 +672,7 @@ TEST(Chapter12_Unsigned, inValidLexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_NE(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_FALSE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -732,7 +732,7 @@ TEST(Chapter13_Doubles, validLexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -742,7 +742,7 @@ TEST(Chapter13_Doubles, inValidLexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_NE(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_FALSE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -792,7 +792,7 @@ TEST(Chapter14_Pointers, validLexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 
@@ -854,7 +854,7 @@ TEST(Chapter15_Arrays_Pointer_Arithmetic, validLexingValid)
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
-        EXPECT_EQ(0, getLexerErrors(path)) << path.path().string();
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
     }
 }
 

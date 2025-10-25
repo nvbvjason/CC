@@ -13,37 +13,33 @@
 #include "ValidateReturn.hpp"
 #include "TypeResolution.hpp"
 #include "DeSugarSimple.hpp"
+#include "DeSugarDeref.hpp"
 
 #include <fstream>
 #include <iostream>
 
-#include "DeSugarDeref.hpp"
-
-static i32 lex(TokenStore& tokenStore, const std::filesystem::path& inputFile);
+static std::vector<Error> lex(TokenStore& tokenStore, const std::filesystem::path& inputFile);
 static bool parse(const TokenStore& tokenStore, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
 static Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable);
 static std::string preProcess(const std::filesystem::path& file);
 static std::string getSourceCode(const std::filesystem::path& inputFile);
 
-std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run() const
+std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
 {
-    TokenStore tokenStore;
-    if (lex(tokenStore, m_inputFile) != 0) {
-        if (m_arg == "--printTokens")
-            for (size_t i = 0; i < tokenStore.size(); ++i)
-                std::cout << tokenStore.getToken(i) << '\n';
+    if (const std::vector<Error> errors = lex(m_tokenStore, m_inputFile); !errors.empty()) {
+        reportErrors(errors);
         return {std::nullopt, StateCode::Lexer};
     }
     if (m_arg == "--lex")
         return {std::nullopt, StateCode::Done};
     if (m_arg == "--printTokens") {
-        for (size_t i = 0; i < tokenStore.size(); ++i)
-            std::cout << tokenStore.getToken(i) << '\n';
+        for (size_t i = 0; i < m_tokenStore.size(); ++i)
+            std::cout << m_tokenStore.getToken(i) << '\n';
         return {std::nullopt, StateCode::Done};
     }
     Parsing::Program program;
-    if (!parse(tokenStore, program))
+    if (!parse(m_tokenStore, program))
         return {std::nullopt, StateCode::Parser};
     if (m_arg == "--parse")
         return {std::nullopt, StateCode::Done};
@@ -107,13 +103,11 @@ void printParsingAst(const Parsing::Program& program)
     std::cout << printer.getString();
 }
 
-i32 lex(TokenStore& tokenStore, const std::filesystem::path& inputFile)
+std::vector<Error> lex(TokenStore& tokenStore, const std::filesystem::path& inputFile)
 {
     const std::string source = preProcess(inputFile);
     Lexing::Lexer lexer(source, tokenStore);
-    if (const i32 err = lexer.getLexemes(); err != 0)
-        return err;
-    return 0;
+    return lexer.getLexemes();
 }
 
 bool parse(const TokenStore& tokenStore, Parsing::Program& programNode)
@@ -144,4 +138,17 @@ static std::string preProcess(const std::filesystem::path& file)
     if (std::system(command.c_str()) != 0)
         return {};
     return getSourceCode(generatedFile.string());
+}
+
+void FrontendDriver::reportErrors(const std::vector<Error>& errors) const
+{
+    for (const Error& error : errors)
+        reportError(error);
+}
+
+void FrontendDriver::reportError(const Error& error) const
+{
+    std::cout << error.msg << ": " <<
+        m_tokenStore.getLineNumber(error.index) << ' ' <<
+        m_tokenStore.getColumnNumber(error.index) << '\n';
 }
