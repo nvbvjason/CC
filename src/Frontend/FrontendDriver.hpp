@@ -10,7 +10,6 @@
 #include <filesystem>
 #include <string>
 
-
 class FrontendDriver {
     std::string m_arg;
     std::filesystem::path m_inputFile;
@@ -22,8 +21,8 @@ public:
         : m_arg(std::move(arg)), m_inputFile(std::move(inputFile)) {}
 
     [[nodiscard]] std::tuple<std::optional<Ir::Program>, StateCode> run();
-    void reportErrors(const std::vector<Error>& errors) const;
-    void reportError(const Error& error) const;
 };
 
-StateCode validateSemantics(Parsing::Program& program, SymbolTable& symbolTable);
+std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& program, SymbolTable& symbolTable);
+void reportErrors(const std::vector<Error>& errors, const TokenStore& tokenStore);
+void reportError(const Error& error, const TokenStore& tokenStore);

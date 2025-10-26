@@ -1,58 +1,57 @@
 #include "LoopLabeling.hpp"
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
+#include "DynCast.hpp"
 
 #include <cassert>
 
-#include "DynCast.hpp"
-
 namespace Semantics {
-bool LoopLabeling::programValidate(Parsing::Program& program)
+std::vector<Error> LoopLabeling::programValidate(Parsing::Program& program)
 {
-    valid = true;
     ASTTraverser::visit(program);
-    return valid;
+    return std::move(errors);
 }
 
 void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
 {
     caseStmt.identifier = switchLabel;
     if (isOutsideSwitchStmt(caseStmt)) {
-        valid = false;
+        errors.emplace_back("Case outside of switch ", caseStmt.location);
         return;
     }
     if (isNonConstantInSwitchCase(caseStmt)) {
-        valid = false;
+        errors.emplace_back("Non constant in in switch ", caseStmt.location);
         return;
     }
     const auto constantExpr = dynCast<const Parsing::ConstExpr>(caseStmt.condition.get());
     if (constantExpr->type->type == Type::Double || constantExpr->type->type == Type::Pointer) {
-        valid = false;
+        if (constantExpr->type->type == Type::Double)
+            errors.emplace_back("Double in switch case ", caseStmt.location);
+        if (constantExpr->type->type == Type::Pointer)
+            errors.emplace_back("Pointer in switch case ", caseStmt.location);
         return;
     }
     switch (conditionType) {
         case Type::I32: {
-            processSwitchCase<i32>(constantExpr, switchCases, switchLabel, caseStmt, valid);
+            processSwitchCase<i32>(constantExpr, switchCases, switchLabel, caseStmt, errors);
             break;
         }
         case Type::I64: {
-            processSwitchCase<i64>(constantExpr, switchCases, switchLabel, caseStmt, valid);
+            processSwitchCase<i64>(constantExpr, switchCases, switchLabel, caseStmt, errors);
             break;
         }
         case Type::U32: {
-            processSwitchCase<u32>(constantExpr, switchCases, switchLabel, caseStmt, valid);
+            processSwitchCase<u32>(constantExpr, switchCases, switchLabel, caseStmt, errors);
             break;
         }
         case Type::U64: {
-            processSwitchCase<u64>(constantExpr, switchCases, switchLabel, caseStmt, valid);
+            processSwitchCase<u64>(constantExpr, switchCases, switchLabel, caseStmt, errors);
             break;
         }
         default:
             assert("Should never be reached");
             std::unreachable();
     }
-    if (!valid)
-        return;
     ASTTraverser::visit(caseStmt);
 }
 
@@ -60,29 +59,25 @@ void LoopLabeling::visit(Parsing::DefaultStmt& defaultStmt)
 {
     defaultStmt.identifier = switchLabel;
     if (m_default.contains(defaultStmt.identifier))
-        valid = false;
+        errors.emplace_back("Duplicate default statement ", defaultStmt.location);
     m_default.insert(defaultStmt.identifier);
     if (defaultStmt.identifier.empty())
-        valid = false;
+        errors.emplace_back("Default must be in switch statement ", defaultStmt.location);
     ASTTraverser::visit(defaultStmt);
 }
 
 void LoopLabeling::visit(Parsing::ContinueStmt& continueStmt)
 {
     continueStmt.identifier = continueLabel;
-    if (!valid)
-        return;
     if (continueStmt.identifier.empty())
-        valid = false;
+        errors.emplace_back("Continue statement has nothing to refer to ", continueStmt.location);
 }
 
 void LoopLabeling::visit(Parsing::BreakStmt& breakStmt)
 {
     breakStmt.identifier = breakLabel;
-    if (!valid)
-        return;
     if (breakStmt.identifier.empty())
-        valid = false;
+        errors.emplace_back("Break statement has nothing to refer to ", breakStmt.location);
 }
 
 void LoopLabeling::visit(Parsing::WhileStmt& whileStmt)
@@ -131,7 +126,10 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     switchLabel = switchStmt.identifier;
     conditionType = switchStmt.condition->type->type;
     if (conditionType == Type::Double || conditionType == Type::Pointer) {
-        valid = false;
+        if (conditionType == Type::Double)
+            errors.emplace_back("Double as switch condition ", switchStmt.location);
+        if (conditionType == Type::Pointer)
+            errors.emplace_back("Pointer as switch condition ", switchStmt.location);
         return;
     }
     switchCases[switchStmt.identifier] = std::vector<std::variant<i32, i64, u32, u64>>();

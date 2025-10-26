@@ -2,17 +2,17 @@
 #include "AsmAST.hpp"
 #include "AsmPrinter.hpp"
 #include "CodeGen/Assembly.hpp"
+#include "ASTIr.hpp"
 
 #include <gtest/gtest.h>
 #include <utility>
-
-#include "ASTIr.hpp"
 
 namespace {
 using AsmType = CodeGen::AsmType;
 using CondCode = CodeGen::BinaryInst::CondCode;
 using RegKind = CodeGen::Operand::RegKind;
 using BinaryOper = CodeGen::BinaryInst::Operator;
+using UnaryOper = CodeGen::UnaryInst::Operator;
 using PseudoOperand = CodeGen::PseudoOperand;
 using Iden = CodeGen::Identifier;
 using DataOperand = CodeGen::DataOperand;
@@ -150,6 +150,26 @@ TEST(AssemblyTests, asmRegister)
         EXPECT_EQ(withType, test.expected) << "Instruction mismatch for input: "
                                            << CodeGen::to_string(test.type) << ' '
                                            << CodeGen::to_string(test.reg) << '\n';
+    }
+}
+
+TEST(AssemblyTests, asmUnaryOperator)
+{
+    struct TestDataUnaryOperator {
+        const std::string expected;
+        const UnaryOper oper;
+        TestDataUnaryOperator(std::string expected, const UnaryOper oper)
+            : expected(std::move(expected)), oper(oper) {}
+    };
+    const std::vector<TestDataUnaryOperator> tests = {
+        {"negl", UnaryOper::Neg},
+        {"notl", UnaryOper::Not},
+        {"shrl", UnaryOper::Shr},
+    };
+    for (const TestDataUnaryOperator& test : tests) {
+        const std::string operString = CodeGen::asmUnaryOperator(test.oper, AsmType::LongWord);
+        EXPECT_EQ(operString, test.expected) << "Instruction mismatch for input: "
+                                   << CodeGen::to_string(test.oper)<< '\n';
     }
 }
 

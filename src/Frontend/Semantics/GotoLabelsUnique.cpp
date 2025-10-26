@@ -4,10 +4,10 @@
 #include <ranges>
 
 namespace Semantics {
-bool GotoLabelsUnique::programValidate(Parsing::Program& program)
+std::vector<Error> GotoLabelsUnique::programValidate(Parsing::Program& program)
 {
     program.accept(*this);
-    return m_valid;
+    return std::move(m_errors);
 }
 
 void GotoLabelsUnique::visit(Parsing::FunDecl& funDecl)
@@ -18,25 +18,26 @@ void GotoLabelsUnique::visit(Parsing::FunDecl& funDecl)
     m_goto.clear();
     m_funName = funDecl.name;
     ASTTraverser::visit(funDecl);
-    for (const i32 count: m_labels | std::views::values)
-        if (1 < count)
-            m_valid = false;
+    for (const std::vector<i64>& locations: m_labels | std::views::values)
+        if (1 < locations.size())
+            for (const auto& location: locations)
+                m_errors.emplace_back("Duplicate labels at ", location);
     for (auto& gotoStmt : m_goto)
-        if (!m_labels.contains(gotoStmt))
-            m_valid = false;
+        if (!m_labels.contains(gotoStmt->identifier))
+            m_errors.emplace_back("Did not find goto label ", gotoStmt->location);
 }
 
 void GotoLabelsUnique::visit(Parsing::GotoStmt& gotoStmt)
 {
     gotoStmt.identifier += '.' + m_funName;
-    m_goto.insert(gotoStmt.identifier);
+    m_goto.insert(&gotoStmt);
     ASTTraverser::visit(gotoStmt);
 }
 
 void GotoLabelsUnique::visit(Parsing::LabelStmt& labelStmt)
 {
     labelStmt.identifier += '.' + m_funName;
-    ++m_labels[labelStmt.identifier];
+    m_labels[labelStmt.identifier].emplace_back(labelStmt.location);
     ASTTraverser::visit(labelStmt);
 }
 } // Semantics

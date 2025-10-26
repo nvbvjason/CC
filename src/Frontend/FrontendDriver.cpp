@@ -28,7 +28,7 @@ static std::string getSourceCode(const std::filesystem::path& inputFile);
 std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
 {
     if (const std::vector<Error> errors = lex(m_tokenStore, m_inputFile); !errors.empty()) {
-        reportErrors(errors);
+        reportErrors(errors, m_tokenStore);
         return {std::nullopt, StateCode::Lexer};
     }
     if (m_arg == "--lex")
@@ -40,7 +40,7 @@ std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
     }
     Parsing::Program program;
     if (const std::vector<Error> errors = parse(m_tokenStore, program); !errors.empty()) {
-        reportErrors(errors);
+        reportErrors(errors, m_tokenStore);
         return {std::nullopt, StateCode::Parser};
     }
     if (m_arg == "--parse")
@@ -50,8 +50,10 @@ std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
         return {std::nullopt, StateCode::Done};
     }
     SymbolTable symbolTable;
-    if (StateCode err = validateSemantics(program, symbolTable); err != StateCode::Done)
+    if (const auto [err, errors] = validateSemantics(program, symbolTable); err != StateCode::Done) {
+        reportErrors(errors, m_tokenStore);
         return {std::nullopt, err};
+    }
     if (m_arg == "--validate")
         return {std::nullopt, StateCode::Done};
     if (m_arg == "--printAstAfter") {
@@ -71,31 +73,31 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
     return source;
 }
 
-StateCode validateSemantics(Parsing::Program& program, SymbolTable& symbolTable)
+std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& program, SymbolTable& symbolTable)
 {
     Semantics::DeSugarSimple deSugarCompoundAssign;
     deSugarCompoundAssign.deSugar(program);
     Semantics::VariableResolution variableResolution(symbolTable);
     if (!variableResolution.resolve(program))
-        return StateCode::VariableResolution;
+        return {StateCode::VariableResolution, {}};
     Semantics::TypeResolution typeResolution;
     if (!typeResolution.validate(program))
-        return StateCode::TypeResolution;
+        return {StateCode::TypeResolution, {}};
     Semantics::LvalueVerification lvalueVerification;
     if (!lvalueVerification.resolve(program))
-        return StateCode::LValueVerification;
+        return {StateCode::LValueVerification, {}};
     Semantics::DeSugarDeref deSugarDeref;
     deSugarDeref.deSugar(program);
     Semantics::ValidateReturn validateReturn;
     if (!validateReturn.programValidate(program))
-        return StateCode::ValidateReturn;
+        return {StateCode::ValidateReturn, {}};
     Semantics::GotoLabelsUnique labelsUnique;
-    if (!labelsUnique.programValidate(program))
-        return StateCode::LabelsUnique;
+    if (const std::vector<Error> errors = labelsUnique.programValidate(program); !errors.empty())
+        return {StateCode::LabelsUnique, errors};
     Semantics::LoopLabeling loopLabeling;
-    if (!loopLabeling.programValidate(program))
-        return StateCode::LoopLabeling;
-    return StateCode::Done;
+    if (const std::vector<Error> errors = loopLabeling.programValidate(program); !errors.empty())
+        return {StateCode::LoopLabeling, errors};
+    return {StateCode::Done, {}};
 }
 
 void printParsingAst(const Parsing::Program& program)
@@ -140,15 +142,15 @@ static std::string preProcess(const std::filesystem::path& file)
     return getSourceCode(generatedFile.string());
 }
 
-void FrontendDriver::reportErrors(const std::vector<Error>& errors) const
+void reportErrors(const std::vector<Error>& errors, const TokenStore& tokenStore)
 {
     for (const Error& error : errors)
-        reportError(error);
+        reportError(error, tokenStore);
 }
 
-void FrontendDriver::reportError(const Error& error) const
+void reportError(const Error& error, const TokenStore& tokenStore)
 {
     std::cout << error.msg << ": " <<
-        "line: " << m_tokenStore.getLineNumber(error.index) << ' ' <<
-        "column: " << m_tokenStore.getColumnNumber(error.index) << '\n';
+        "line: " << tokenStore.getLineNumber(error.index) << ' ' <<
+        "column: " << tokenStore.getColumnNumber(error.index) << '\n';
 }

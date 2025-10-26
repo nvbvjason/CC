@@ -56,8 +56,7 @@ std::unique_ptr<VarDecl> Parser::varDeclParse(const std::string& iden,
         addError("Expected semicolon after variable declaration");
         return nullptr;
     }
-    auto varDecl = std::make_unique<VarDecl>(
-        storage, iden, std::move(type));
+    auto varDecl = std::make_unique<VarDecl>(m_current, storage, iden, std::move(type));
     if (init)
         varDecl->init = std::move(init);
     return varDecl;
@@ -70,7 +69,7 @@ std::unique_ptr<FunDecl> Parser::funDeclParse(
         std::vector<std::string>&& params
     )
 {
-    auto result = std::make_unique<FunDecl>(storage, iden, std::move(params), std::move(type));
+    auto result = std::make_unique<FunDecl>(m_current, storage, iden, std::move(params), std::move(type));
     if (expect(TokenType::Semicolon))
         return result;
     const size_t before = m_current;
@@ -223,12 +222,12 @@ std::unique_ptr<BlockItem> Parser::blockItemParse()
         std::unique_ptr<Declaration> declaration = declarationParse();
         if (declaration == nullptr)
             return nullptr;
-        return std::make_unique<DeclBlockItem>(std::move(declaration));
+        return std::make_unique<DeclBlockItem>(m_current, std::move(declaration));
     }
     std::unique_ptr<Stmt> statement = stmtParse();
     if (statement == nullptr)
         return nullptr;
-    return std::make_unique<StmtBlockItem>(std::move(statement));
+    return std::make_unique<StmtBlockItem>(m_current, std::move(statement));
 }
 
 std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
@@ -244,14 +243,14 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
             return {nullptr, true};
         }
         const auto varDecl = dynCast<VarDecl>(decl.release());
-        return {std::make_unique<DeclForInit>(std::unique_ptr<VarDecl>(varDecl)), false};
+        return {std::make_unique<DeclForInit>(m_current, std::unique_ptr<VarDecl>(varDecl)), false};
     }
     std::unique_ptr<Expr> expr = exprParse(0);
     if (!expect(TokenType::Semicolon)) {
         addError("Expected semicolon after for loop condition");
         return {nullptr, true};
     }
-    return {std::make_unique<ExprForInit>(std::move(expr)), false};
+    return {std::make_unique<ExprForInit>(m_current, std::move(expr)), false};
 }
 
 std::unique_ptr<Stmt> Parser::stmtParse()
@@ -261,7 +260,7 @@ std::unique_ptr<Stmt> Parser::stmtParse()
         case TokenType::Semicolon:      return nullStmtParse();
         case TokenType::If:             return ifStmtParse();
         case TokenType::Goto:           return gotoStmtParse();
-        case TokenType::OpenBrace:      return std::make_unique<CompoundStmt>(blockParse());
+        case TokenType::OpenBrace:      return std::make_unique<CompoundStmt>(m_current, blockParse());
         case TokenType::Break:          return breakStmtParse();
         case TokenType::Continue:       return continueStmtParse();
         case TokenType::While:          return whileStmtParse();
@@ -287,7 +286,7 @@ std::unique_ptr<Stmt> Parser::returnStmtParse()
         addError("Return without Expression", m_current - 1);
         return nullptr;
     }
-    auto statement = std::make_unique<ReturnStmt>(std::move(expr));
+    auto statement = std::make_unique<ReturnStmt>(m_current, std::move(expr));
     if (!expect(TokenType::Semicolon)) {
         addError("Return without semicolon", m_current - 1);
         return nullptr;
@@ -303,7 +302,7 @@ std::unique_ptr<Stmt> Parser::exprStmtParse()
         addError("Invalid expression in expression statement", before);
         return nullptr;
     }
-    auto statement = std::make_unique<ExprStmt>(std::move(expr));
+    auto statement = std::make_unique<ExprStmt>(m_current, std::move(expr));
     if (!expect(TokenType::Semicolon)) {
         addError("Expression statement without semicolon");
         return nullptr;
@@ -333,9 +332,10 @@ std::unique_ptr<Stmt> Parser::ifStmtParse()
         std::unique_ptr<Stmt> elseStmt = stmtParse();
         if (elseStmt == nullptr)
             return nullptr;
-        return std::make_unique<IfStmt>(std::move(condition), std::move(thenStmt), std::move(elseStmt));
+        return std::make_unique<IfStmt>(
+            m_current, std::move(condition), std::move(thenStmt), std::move(elseStmt));
     }
-    return std::make_unique<IfStmt>(std::move(condition), std::move(thenStmt));
+    return std::make_unique<IfStmt>(m_current, std::move(condition), std::move(thenStmt));
 }
 
 std::unique_ptr<Stmt> Parser::gotoStmtParse()
@@ -351,7 +351,7 @@ std::unique_ptr<Stmt> Parser::gotoStmtParse()
         addError("Expected semicolon after goto statement");
         return nullptr;
     }
-    return std::make_unique<GotoStmt>(lexeme.m_lexeme);
+    return std::make_unique<GotoStmt>(m_current, lexeme.m_lexeme);
 }
 
 std::unique_ptr<Stmt> Parser::breakStmtParse()
@@ -362,7 +362,7 @@ std::unique_ptr<Stmt> Parser::breakStmtParse()
         addError("Expected semicolon after break statement");
         return nullptr;
     }
-    return std::make_unique<BreakStmt>();
+    return std::make_unique<BreakStmt>(m_current);
 }
 
 std::unique_ptr<Stmt> Parser::continueStmtParse()
@@ -373,7 +373,7 @@ std::unique_ptr<Stmt> Parser::continueStmtParse()
         addError("Expected semicolon after continue statement");
         return nullptr;
     }
-    return std::make_unique<ContinueStmt>();
+    return std::make_unique<ContinueStmt>(m_current);
 }
 
 std::unique_ptr<Stmt> Parser::labelStmtParse()
@@ -388,7 +388,7 @@ std::unique_ptr<Stmt> Parser::labelStmtParse()
     auto stmt = stmtParse();
     if (stmt == nullptr)
         return nullptr;
-    return std::make_unique<LabelStmt>(lexeme.m_lexeme, std::move(stmt));
+    return std::make_unique<LabelStmt>(m_current, lexeme.m_lexeme, std::move(stmt));
 }
 
 std::unique_ptr<Stmt> Parser::caseStmtParse()
@@ -408,7 +408,7 @@ std::unique_ptr<Stmt> Parser::caseStmtParse()
         addError("Expected body in case statement");
         return nullptr;
     }
-    return std::make_unique<CaseStmt>(std::move(expr), std::move(stmt));
+    return std::make_unique<CaseStmt>(m_current, std::move(expr), std::move(stmt));
 }
 
 std::unique_ptr<Stmt> Parser::defaultStmtParse()
@@ -424,7 +424,7 @@ std::unique_ptr<Stmt> Parser::defaultStmtParse()
         addError("Expected body in default statement");
         return nullptr;
     }
-    return std::make_unique<DefaultStmt>(std::move(stmt));
+    return std::make_unique<DefaultStmt>(m_current, std::move(stmt));
 }
 
 std::unique_ptr<Stmt> Parser::whileStmtParse()
@@ -449,7 +449,7 @@ std::unique_ptr<Stmt> Parser::whileStmtParse()
         addError("Expected body in while loop");
         return nullptr;
     }
-    return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
+    return std::make_unique<WhileStmt>(m_current, std::move(condition), std::move(body));
 }
 
 std::unique_ptr<Stmt> Parser::doWhileStmtParse()
@@ -478,7 +478,7 @@ std::unique_ptr<Stmt> Parser::doWhileStmtParse()
         addError("Expected semicolon after do while");
         return nullptr;
     }
-    return std::make_unique<DoWhileStmt>(std::move(body), std::move(condition));
+    return std::make_unique<DoWhileStmt>(m_current, std::move(body), std::move(condition));
 }
 
 std::unique_ptr<Stmt> Parser::forStmtParse()
@@ -507,7 +507,7 @@ std::unique_ptr<Stmt> Parser::forStmtParse()
         addError("Expected body in for loop");
         return nullptr;
     }
-    auto result = std::make_unique<ForStmt>(std::move(body));
+    auto result = std::make_unique<ForStmt>(m_current, std::move(body));
     if (init != nullptr)
         result->init = std::move(init);
     if (condition != nullptr)
@@ -537,7 +537,7 @@ std::unique_ptr<Stmt> Parser::switchStmtParse()
         addError("Expected body in switch condition");
         return nullptr;
     }
-    return std::make_unique<SwitchStmt>(std::move(expr), std::move(body));
+    return std::make_unique<SwitchStmt>(m_current, std::move(expr), std::move(body));
 }
 
 std::unique_ptr<Stmt> Parser::nullStmtParse()
@@ -546,7 +546,7 @@ std::unique_ptr<Stmt> Parser::nullStmtParse()
         addError("Expected semicolon in null statement");
         return nullptr;
     }
-    return std::make_unique<NullStmt>();
+    return std::make_unique<NullStmt>(m_current);
 }
 
 std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
@@ -573,7 +573,7 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
                 return nullptr;
             }
             left = std::make_unique<TernaryExpr>(
-                std::move(left), std::move(trueExpr), std::move(falseExpr));
+                m_current, std::move(left), std::move(trueExpr), std::move(falseExpr));
         }
         if (Operators::isAssignmentOperator(nextToken.m_type)) {
             AssignmentExpr::Operator op = Operators::assignOperator(nextToken.m_type);
@@ -582,7 +582,8 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
                 addError("Expected right hand side after assignment operator");
                 return nullptr;
             }
-            left = std::make_unique<AssignmentExpr>(op, std::move(left), std::move(right));
+            left = std::make_unique<AssignmentExpr>(
+                m_current, op, std::move(left), std::move(right));
         }
         if (Operators::isBinaryOperator(nextToken.m_type)) {
             BinaryExpr::Operator op = Operators::binaryOperator(nextToken.m_type);
@@ -591,7 +592,8 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
                 addError("Expected right hand side after binary operator");
                 return nullptr;
             }
-            left = std::make_unique<BinaryExpr>(op, std::move(left), std::move(right));
+            left = std::make_unique<BinaryExpr>(
+                m_current, op, std::move(left), std::move(right));
         }
         nextToken = peek();
     }
@@ -613,7 +615,7 @@ std::unique_ptr<Expr> Parser::castExpr()
         auto innerExpr = castExpr();
         if (innerExpr == nullptr)
             return nullptr;
-        return std::make_unique<CastExpr>(std::move(typeBase), std::move(innerExpr));
+        return std::make_unique<CastExpr>(m_current, std::move(typeBase), std::move(innerExpr));
     }
     return unaryExprParse();
 }
@@ -631,7 +633,7 @@ std::unique_ptr<Expr> Parser::unaryExprParse()
     std::unique_ptr<Expr> expr = unaryExprParse();
     if (expr == nullptr)
         return nullptr;
-    return std::make_unique<UnaryExpr>(oper, std::move(expr));
+    return std::make_unique<UnaryExpr>(m_current, oper, std::move(expr));
 }
 
 std::unique_ptr<Expr> Parser::addrOFExprParse()
@@ -640,7 +642,7 @@ std::unique_ptr<Expr> Parser::addrOFExprParse()
     std::unique_ptr<Expr> expr = unaryExprParse();
     if (expr == nullptr)
         return nullptr;
-    return std::make_unique<AddrOffExpr>(std::move(expr));
+    return std::make_unique<AddrOffExpr>(m_current, std::move(expr));
 }
 
 std::unique_ptr<Expr> Parser::dereferenceExprParse()
@@ -649,7 +651,7 @@ std::unique_ptr<Expr> Parser::dereferenceExprParse()
     std::unique_ptr<Expr> expr = unaryExprParse();
     if (expr == nullptr)
         return nullptr;
-    return std::make_unique<DereferenceExpr>(std::move(expr));
+    return std::make_unique<DereferenceExpr>(m_current, std::move(expr));
 }
 
 std::unique_ptr<Expr> Parser::exprPostfix()
@@ -657,9 +659,11 @@ std::unique_ptr<Expr> Parser::exprPostfix()
     auto expr = factorParse();
     while (true) {
         if (expect(TokenType::Increment))
-            expr = std::make_unique<UnaryExpr>(UnaryExpr::Operator::PostFixIncrement, std::move(expr));
+            expr = std::make_unique<UnaryExpr>(
+                m_current, UnaryExpr::Operator::PostFixIncrement, std::move(expr));
         else if (expect(TokenType::Decrement))
-            expr = std::make_unique<UnaryExpr>(UnaryExpr::Operator::PostFixDecrement, std::move(expr));
+            expr = std::make_unique<UnaryExpr>(
+                m_current, UnaryExpr::Operator::PostFixDecrement, std::move(expr));
         else
             break;
     }
@@ -671,35 +675,35 @@ std::unique_ptr<Expr> Parser::factorParse()
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case TokenType::IntegerLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.getI32Value(), std::make_unique<VarType>(Type::I32));
+                m_current, lexeme.getI32Value(), std::make_unique<VarType>(Type::I32));
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;
         }
         case TokenType::LongLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.getI64Value(), std::make_unique<VarType>(Type::I64));
+                m_current, lexeme.getI64Value(), std::make_unique<VarType>(Type::I64));
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;
         }
         case TokenType::UnsignedLongLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.getU64Value(), std::make_unique<VarType>(Type::U64));
+                m_current, lexeme.getU64Value(), std::make_unique<VarType>(Type::U64));
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;
         }
         case TokenType::UnsignedIntegerLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.getU32Value(), std::make_unique<VarType>(Type::U32));
+                m_current, lexeme.getU32Value(), std::make_unique<VarType>(Type::U32));
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;
         }
         case TokenType::DoubleLiteral: {
             auto constantExpr = std::make_unique<ConstExpr>(
-                lexeme.getDoubleValue(), std::make_unique<VarType>(Type::Double));
+                m_current, lexeme.getDoubleValue(), std::make_unique<VarType>(Type::Double));
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             return constantExpr;
@@ -707,13 +711,13 @@ std::unique_ptr<Expr> Parser::factorParse()
         case TokenType::Identifier: {
             advance();
             if (!expect(TokenType::OpenParen))
-                return std::make_unique<VarExpr>(lexeme.m_lexeme);
+                return std::make_unique<VarExpr>(m_current, lexeme.m_lexeme);
             const std::unique_ptr<std::vector<std::unique_ptr<Expr>>> arguments = argumentListParse();
             if (arguments == nullptr)
                 return nullptr;
             if (!expect(TokenType::CloseParen))
                 return nullptr;
-            return std::make_unique<FuncCallExpr>(lexeme.m_lexeme, std::move(*arguments));
+            return std::make_unique<FuncCallExpr>(m_current, lexeme.m_lexeme, std::move(*arguments));
         }
         case TokenType::OpenParen: {
             if (advance().m_type == TokenType::EndOfFile)

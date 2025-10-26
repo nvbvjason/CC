@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "Error.hpp"
+
 namespace Semantics {
 
 template<typename TargetType>
@@ -16,13 +18,14 @@ void processSwitchCase(const Parsing::ConstExpr* constantExpr,
                        std::unordered_map<std::string,
                        std::vector<std::variant<i32, i64, u32, u64>>>& switchCases,
                        const std::string& switchLabel,
-                       Parsing::CaseStmt& caseStmt, bool& valid)
+                       Parsing::CaseStmt& caseStmt,
+                       std::vector<Error>& errors)
 {
     TargetType value = constantExpr->getValue<TargetType>();
     const auto it = switchCases.find(switchLabel);
     for (const std::variant<i32, i64, u32, u64>& v : it->second) {
         if (value == std::get<TargetType>(v)) {
-            valid = false;
+            errors.emplace_back("Duplicate case value in switch statement ", constantExpr->location);
             return;
         }
     }
@@ -31,7 +34,7 @@ void processSwitchCase(const Parsing::ConstExpr* constantExpr,
 }
 
 class LoopLabeling : public Parsing::ASTTraverser {
-    bool valid = true;
+    std::vector<Error> errors;
     std::unordered_set<std::string> m_default;
     std::unordered_map<std::string, std::vector<std::variant<i32, i64, u32, u64>>> switchCases;
     Type conditionType = Type::I32;
@@ -39,7 +42,7 @@ class LoopLabeling : public Parsing::ASTTraverser {
     std::string continueLabel;
     std::string switchLabel;
 public:
-    bool programValidate(Parsing::Program& program);
+    std::vector<Error> programValidate(Parsing::Program& program);
 
     void visit(Parsing::BreakStmt&) override;
     void visit(Parsing::ContinueStmt&) override;

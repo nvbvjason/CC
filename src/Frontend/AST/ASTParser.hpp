@@ -16,8 +16,11 @@ struct VarDecl final : Declaration {
     std::unique_ptr<Expr> init = nullptr;
     std::unique_ptr<TypeBase> type;
 
-    explicit VarDecl(const StorageClass storageClass, std::string name, std::unique_ptr<TypeBase>&& type)
+    VarDecl(const StorageClass storageClass, std::string name, std::unique_ptr<TypeBase> type)
         : Declaration(Kind::VarDecl, storageClass), name(std::move(name)), type(std::move(type)) {}
+
+    VarDecl(const i64 loc, const StorageClass storageClass, std::string name, std::unique_ptr<TypeBase> type)
+        : Declaration(loc, Kind::VarDecl, storageClass), name(std::move(name)), type(std::move(type)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -33,6 +36,9 @@ struct DeclForInit final : ForInit {
     explicit DeclForInit(std::unique_ptr<VarDecl> decl)
         : ForInit(Kind::Declaration), decl(std::move(decl)) {}
 
+    DeclForInit(const i64 loc, std::unique_ptr<VarDecl> decl)
+        : ForInit(loc, Kind::Declaration), decl(std::move(decl)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -46,6 +52,9 @@ struct ExprForInit final : ForInit {
 
     explicit ExprForInit(std::unique_ptr<Expr> expr)
         : ForInit(Kind::Expression), expression(std::move(expr)) {}
+
+    ExprForInit(const i64 loc, std::unique_ptr<Expr> expr)
+        : ForInit(loc, Kind::Expression), expression(std::move(expr)) {}
 
     ExprForInit()
         : ForInit(Kind::Expression) {}
@@ -62,6 +71,9 @@ struct StmtBlockItem final : BlockItem {
     explicit StmtBlockItem(std::unique_ptr<Stmt> stmt)
         : BlockItem(Kind::Statement), stmt(std::move(stmt)) {}
 
+    StmtBlockItem(const i64 loc, std::unique_ptr<Stmt> stmt)
+        : BlockItem(loc, Kind::Statement), stmt(std::move(stmt)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -75,6 +87,9 @@ struct DeclBlockItem final : BlockItem {
 
     explicit DeclBlockItem(std::unique_ptr<Declaration> decl)
         : BlockItem(Kind::Declaration), decl(std::move(decl)) {}
+
+    DeclBlockItem(const i64 loc, std::unique_ptr<Declaration> decl)
+        : BlockItem(loc, Kind::Declaration), decl(std::move(decl)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -97,11 +112,21 @@ struct FunDecl final : Declaration {
     std::unique_ptr<Block> body = nullptr;
     std::unique_ptr<TypeBase> type = nullptr;
 
-    explicit FunDecl(const StorageClass storageClass,
-                     std::string name,
-                     std::vector<std::string>&& ps,
-                     std::unique_ptr<TypeBase>&& t)
+    FunDecl(const StorageClass storageClass,
+            std::string name,
+            std::vector<std::string>&& ps,
+            std::unique_ptr<TypeBase>&& t)
         : Declaration(Kind::FuncDecl, storageClass),
+            name(std::move(name)),
+            params(std::move(ps)),
+            type(std::move(t)){}
+
+    FunDecl(const i64 loc,
+            const StorageClass storageClass,
+            std::string name,
+            std::vector<std::string>&& ps,
+            std::unique_ptr<TypeBase>&& t)
+    : Declaration(loc, Kind::FuncDecl, storageClass),
             name(std::move(name)),
             params(std::move(ps)),
             type(std::move(t)){}
@@ -120,6 +145,9 @@ struct ReturnStmt final : Stmt {
     explicit ReturnStmt(std::unique_ptr<Expr> expr)
         : Stmt(Kind::Return), expr(std::move(expr)) {}
 
+    ReturnStmt(const i64 loc, std::unique_ptr<Expr> expr)
+        : Stmt(loc, Kind::Return), expr(std::move(expr)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -133,6 +161,9 @@ struct ExprStmt final : Stmt {
 
     explicit ExprStmt(std::unique_ptr<Expr> expr)
         : Stmt(Kind::Expression), expr(std::move(expr)) {}
+
+    ExprStmt(const i64 loc, std::unique_ptr<Expr> expr)
+        : Stmt(loc, Kind::Expression), expr(std::move(expr)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -154,6 +185,16 @@ struct IfStmt final : Stmt {
         : Stmt(Kind::If), condition(std::move(condition)), thenStmt(std::move(thenStmt)),
           elseStmt(std::move(elseStmt)) {}
 
+    IfStmt(const i64 loc, std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenStmt)
+        : Stmt(loc, Kind::If), condition(std::move(condition)), thenStmt(std::move(thenStmt)) {}
+
+    IfStmt(const i64 loc,
+           std::unique_ptr<Expr> condition,
+           std::unique_ptr<Stmt> thenStmt,
+           std::unique_ptr<Stmt> elseStmt)
+        : Stmt(loc, Kind::If), condition(std::move(condition)),
+          thenStmt(std::move(thenStmt)), elseStmt(std::move(elseStmt)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -167,6 +208,9 @@ struct GotoStmt final : Stmt {
 
     explicit GotoStmt(std::string iden)
         : Stmt(Kind::Goto), identifier(std::move(iden)) {}
+
+    GotoStmt(const i64 loc, std::string iden)
+       : Stmt(loc, Kind::Goto), identifier(std::move(iden)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -182,6 +226,9 @@ struct CompoundStmt final : Stmt {
     explicit CompoundStmt(std::unique_ptr<Block> block)
         : Stmt(Kind::Compound), block(std::move(block)) {}
 
+    CompoundStmt(const i64 loc, std::unique_ptr<Block> block)
+        : Stmt(loc, Kind::Compound), block(std::move(block)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -196,6 +243,9 @@ struct BreakStmt final : Stmt {
     explicit BreakStmt()
         : Stmt(Kind::Break) {}
 
+    explicit BreakStmt(const i64 loc)
+        : Stmt(loc, Kind::Break) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -207,6 +257,9 @@ struct ContinueStmt final : Stmt {
 
     explicit ContinueStmt()
         : Stmt(Kind::Continue) {}
+
+    explicit ContinueStmt(const i64 loc)
+        : Stmt(loc, Kind::Continue) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -220,6 +273,9 @@ struct LabelStmt final : Stmt {
 
     explicit LabelStmt(std::string name, std::unique_ptr<Stmt> stmt)
         : Stmt(Kind::Label), identifier(std::move(name)), stmt(std::move(stmt)) {}
+
+    LabelStmt(const i64 loc, std::string name, std::unique_ptr<Stmt> stmt)
+        : Stmt(loc, Kind::Label), identifier(std::move(name)), stmt(std::move(stmt)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -237,6 +293,9 @@ struct CaseStmt final : Stmt {
     CaseStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
         : Stmt(Kind::Case), condition(std::move(condition)), body(std::move(body)) {}
 
+    CaseStmt(const i64 loc, std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
+        : Stmt(loc, Kind::Case), condition(std::move(condition)), body(std::move(body)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -248,8 +307,12 @@ struct CaseStmt final : Stmt {
 struct DefaultStmt final : Stmt {
     std::string identifier;
     std::unique_ptr<Stmt> body;
+
     explicit DefaultStmt(std::unique_ptr<Stmt> body)
         : Stmt(Kind::Default), body(std::move(body)) {}
+
+    DefaultStmt(const i64 loc, std::unique_ptr<Stmt> body)
+        : Stmt(loc, Kind::Default), body(std::move(body)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -267,6 +330,9 @@ struct WhileStmt final : Stmt {
     WhileStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
         : Stmt(Kind::While), condition(std::move(condition)), body(std::move(body)) {}
 
+    WhileStmt(const i64 loc, std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
+        : Stmt(loc, Kind::While), condition(std::move(condition)), body(std::move(body)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -282,6 +348,9 @@ struct DoWhileStmt final : Stmt {
 
     DoWhileStmt(std::unique_ptr<Stmt> body, std::unique_ptr<Expr> condition)
         : Stmt(Kind::DoWhile), body(std::move(body)), condition(std::move(condition)) {}
+
+    DoWhileStmt(const i64 loc, std::unique_ptr<Stmt> body, std::unique_ptr<Expr> condition)
+        : Stmt(loc, Kind::DoWhile), body(std::move(body)), condition(std::move(condition)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -300,6 +369,9 @@ struct ForStmt final : Stmt {
 
     explicit ForStmt(std::unique_ptr<Stmt> body)
         : Stmt(Kind::For), body(std::move(body)) {}
+
+    ForStmt(const i64 loc, std::unique_ptr<Stmt> body)
+        : Stmt(loc, Kind::For), body(std::move(body)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -320,6 +392,9 @@ struct SwitchStmt final : Stmt {
     SwitchStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
         : Stmt(Kind::Switch), condition(std::move(condition)), body(std::move(body)) {}
 
+    SwitchStmt(const i64 loc, std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
+        : Stmt(loc, Kind::Switch), condition(std::move(condition)), body(std::move(body)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -331,6 +406,9 @@ struct SwitchStmt final : Stmt {
 struct NullStmt final : Stmt {
     NullStmt()
         : Stmt(Kind::Null) {}
+
+    explicit NullStmt(const i64 loc)
+        : Stmt(loc, Kind::Null) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

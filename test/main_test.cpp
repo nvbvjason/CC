@@ -62,7 +62,7 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     if (!parser.programParse(program).empty())
         return false;
     SymbolTable symbolTable;
-    const StateCode err = validateSemantics(program, symbolTable);
+    const auto [err, errors] = validateSemantics(program, symbolTable);
     return err == StateCode::Done;
 }
 
