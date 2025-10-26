@@ -26,9 +26,9 @@ public:
         : m_symbolTable(symbolTable) {}
     std::vector<Error> resolve(Parsing::Program& program);
     void visit(Parsing::FunDecl& funDecl) override;
+    void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
-    void visit(Parsing::VarDecl& varDecl) override;
 
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::FuncCallExpr& funcCallExpr) override;
@@ -42,19 +42,19 @@ private:
     std::string makeTemporaryName(const std::string &name);
 };
 
-bool isValidVarDecl(
+void validateVarDecl(
     const Parsing::VarDecl& varDecl,
     const SymbolTable& symbolTable,
     const SymbolTable::ReturnedEntry& prevEntry,
     std::vector<Error>& errors
 );
-bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl,
-                          const SymbolTable::ReturnedEntry& prevEntry,
-                          std::vector<Error>& errors);
-bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
+void validateFuncDecl(const Parsing::FunDecl& funDecl,
                      const SymbolTable& symbolTable,
                      const SymbolTable::ReturnedEntry& returnedEntry,
                      std::vector<Error>& errors);
+void validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
+                           const SymbolTable::ReturnedEntry& prevEntry,
+                           std::vector<Error>& errors);
 bool isValidFuncCall(i64 location,
                      const SymbolTable::ReturnedEntry& returnedEntry,
                      std::vector<Error>& errors);
