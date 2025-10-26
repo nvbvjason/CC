@@ -84,13 +84,13 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& pro
     if (!typeResolution.validate(program))
         return {StateCode::TypeResolution, {}};
     Semantics::LvalueVerification lvalueVerification;
-    if (!lvalueVerification.resolve(program))
-        return {StateCode::LValueVerification, {}};
+    if (const std::vector<Error> errors = lvalueVerification.resolve(program); !errors.empty())
+        return {StateCode::LValueVerification, errors};
     Semantics::DeSugarDeref deSugarDeref;
     deSugarDeref.deSugar(program);
     Semantics::ValidateReturn validateReturn;
-    if (!validateReturn.programValidate(program))
-        return {StateCode::ValidateReturn, {}};
+    if (std::vector<Error> errors = validateReturn.programValidate(program); !errors.empty())
+        return {StateCode::ValidateReturn, errors};
     Semantics::GotoLabelsUnique labelsUnique;
     if (const std::vector<Error> errors = labelsUnique.programValidate(program); !errors.empty())
         return {StateCode::LabelsUnique, errors};

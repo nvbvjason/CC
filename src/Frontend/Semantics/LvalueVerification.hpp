@@ -2,15 +2,16 @@
 
 #include "ConstASTTraverser.hpp"
 #include "ASTParser.hpp"
+#include "Error.hpp"
 
 namespace Semantics {
 
 class LvalueVerification : public Parsing::ConstASTTraverser {
-    bool m_valid = true;
+    std::vector<Error> m_errors;
 public:
     LvalueVerification() = default;
 
-    bool resolve(Parsing::Program& program);
+    std::vector<Error> resolve(Parsing::Program& program);
 
     void visit(const Parsing::UnaryExpr& unaryExpr) override;
     void visit(const Parsing::AssignmentExpr& assignmentExpr) override;

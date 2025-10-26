@@ -22,10 +22,6 @@ void TypeResolution::visit(Parsing::FunDecl& funDecl)
         m_valid = false;
         return;
     }
-    if (!m_global && funDecl.body != nullptr) {
-        m_valid = false;
-        return;
-    }
     if (funDecl.body != nullptr)
         m_definedFunctions.insert(funDecl.name);
     m_global = false;
@@ -39,8 +35,8 @@ void TypeResolution::visit(Parsing::FunDecl& funDecl)
 
 bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl)
 {
-    if ((funcEntry.storage == Storage::Extern || funcEntry.storage == Storage::None)
-        && funDecl.storage == Storage::Static)
+    if ((funcEntry.storage == Storage::Extern || funcEntry.storage == Storage::None) &&
+        funDecl.storage == Storage::Static)
         return false;
     if (funDecl.params.size() != funcEntry.paramTypes.size())
         return false;

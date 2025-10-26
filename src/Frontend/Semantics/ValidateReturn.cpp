@@ -1,14 +1,12 @@
 #include "ValidateReturn.hpp"
-
 #include "DynCast.hpp"
 #include "Utils.hpp"
 
 namespace Semantics {
-bool ValidateReturn::programValidate(Parsing::Program& program)
+std::vector<Error> ValidateReturn::programValidate(Parsing::Program& program)
 {
-    m_hasValidReturns = true;
     program.accept(*this);
-    return m_hasValidReturns;
+    return std::move(m_errors);
 }
 
 void ValidateReturn::visit(Parsing::FunDecl& funDecl)
@@ -38,7 +36,7 @@ void ValidateReturn::visit(Parsing::FunDecl& funDecl)
     const auto funcType = dynCast<const Parsing::FuncType>(funDecl.type.get());
     if (funcType->returnType->type == Type::Pointer && returnStmt->expr->type->type != Type::Pointer) {
         if (!canConvertToNullPtr(*returnStmt->expr)) {
-            m_hasValidReturns = false;
+            m_errors.emplace_back("Cannot convert return type to pointer ", returnStmt->expr->location);
             return;
         }
         returnStmt->expr = std::make_unique<Parsing::CastExpr>(
@@ -46,7 +44,8 @@ void ValidateReturn::visit(Parsing::FunDecl& funDecl)
     }
     if (funcType->returnType->type == Type::Pointer || returnStmt->expr->type->type == Type::Pointer) {
         if (!Parsing::areEquivalent(*funcType->returnType, *returnStmt->expr->type)) {
-            m_hasValidReturns = false;
+            m_errors.emplace_back("Return type does not conform to function return type ",
+                                returnStmt->expr->location);
             return;
         }
     }

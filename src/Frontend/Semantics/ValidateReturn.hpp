@@ -3,12 +3,13 @@
 #include "ASTTraverser.hpp"
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
+#include "Error.hpp"
 
 namespace Semantics {
 class ValidateReturn : public Parsing::ASTTraverser {
-    bool m_hasValidReturns = true;
+    std::vector<Error> m_errors;
 public:
-    bool programValidate(Parsing::Program& program);
+    std::vector<Error> programValidate(Parsing::Program& program);
 private:
     static void addReturnZero(Parsing::FunDecl& funDecl);
     void visit(Parsing::FunDecl& funDecl) override;
