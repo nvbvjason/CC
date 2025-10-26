@@ -4,6 +4,7 @@
 #include "ShortTypes.hpp"
 #include "ASTParser.hpp"
 #include "Frontend/SymbolTable.hpp"
+#include "Error.hpp"
 
 #include <string>
 
@@ -19,11 +20,11 @@ class VariableResolution : public Parsing::ASTTraverser {
     };
     SymbolTable& m_symbolTable;
     i32 m_nameCounter = 0;
-    bool m_valid = true;
+    std::vector<Error> m_errors;
 public:
     explicit VariableResolution(SymbolTable& symbolTable)
         : m_symbolTable(symbolTable) {}
-    bool resolve(Parsing::Program& program);
+    std::vector<Error> resolve(Parsing::Program& program);
     void visit(Parsing::FunDecl& funDecl) override;
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
@@ -38,25 +39,26 @@ public:
         const SymbolTable::ReturnedEntry& prevEntry
     ) const;
 private:
-    void reset();
     std::string makeTemporaryName(const std::string &name);
-    [[nodiscard]] bool isValid() const { return m_valid; }
 };
 
 bool isValidVarDecl(
     const Parsing::VarDecl& varDecl,
     const SymbolTable& symbolTable,
-    const SymbolTable::ReturnedEntry& prevEntry
+    const SymbolTable::ReturnedEntry& prevEntry,
+    std::vector<Error>& errors
 );
-bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry);
-
+bool isValidVarDeclGlobal(const Parsing::VarDecl& varDecl,
+                          const SymbolTable::ReturnedEntry& prevEntry,
+                          std::vector<Error>& errors);
 bool isValidFuncDecl(const Parsing::FunDecl& funDecl,
                      const SymbolTable& symbolTable,
-                     const SymbolTable::ReturnedEntry& returnedEntry);
-
-bool isValidFuncCall(const SymbolTable::ReturnedEntry& returnedEntry);
-bool isValidVarExpr(const SymbolTable::ReturnedEntry& returnedEntry);
-
+                     const SymbolTable::ReturnedEntry& returnedEntry,
+                     std::vector<Error>& errors);
+bool isValidFuncCall(i64 location,
+                     const SymbolTable::ReturnedEntry& returnedEntry,
+                     std::vector<Error>& errors);
+bool isValidVarExpr(i64 location, const SymbolTable::ReturnedEntry& returnedEntry, std::vector<Error>& errors);
 bool duplicatesInArgs(const std::vector<std::string>& args);
 inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry)
 {

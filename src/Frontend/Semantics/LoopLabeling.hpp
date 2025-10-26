@@ -3,13 +3,12 @@
 #include "ASTTraverser.hpp"
 #include "ASTParser.hpp"
 #include "ShortTypes.hpp"
+#include "Error.hpp"
 
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-
-#include "Error.hpp"
 
 namespace Semantics {
 

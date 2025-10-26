@@ -78,8 +78,8 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& pro
     Semantics::DeSugarSimple deSugarCompoundAssign;
     deSugarCompoundAssign.deSugar(program);
     Semantics::VariableResolution variableResolution(symbolTable);
-    if (!variableResolution.resolve(program))
-        return {StateCode::VariableResolution, {}};
+    if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
+        return {StateCode::VariableResolution, errors};
     Semantics::TypeResolution typeResolution;
     if (!typeResolution.validate(program))
         return {StateCode::TypeResolution, {}};
