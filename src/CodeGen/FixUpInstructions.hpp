@@ -16,6 +16,9 @@ public:
     FixUpInstructions(std::vector<std::unique_ptr<Inst>>& insts, const i32 stackAlloc)
         : m_insts(insts), stackAlloc(stackAlloc) {}
 
+    void fixStackAlignment();
+    void fixUp();
+
     void fixMove(MoveInst& moveInst);
     void fixMoveSX(MoveSXInst& moveSX);
     void fixMoveZero(MoveZeroExtendInst& moveZero);
@@ -26,8 +29,6 @@ public:
     void fixDiv(DivInst& div);
     void fixCvttsd2si(Cvttsd2siInst& cvttsd2si);
     void fixCvtsi2sd(Cvtsi2sdInst& cvtsi2sd);
-
-    void fixUp();
 
     static std::shared_ptr<RegisterOperand> genSrcOperand(AsmType type);
     static std::shared_ptr<RegisterOperand> genDstOperand(AsmType type);
@@ -46,6 +47,7 @@ private:
     static constexpr bool isBinaryShift(const BinaryInst& binaryInst);
     static constexpr bool areBothOnTheStack(const MoveInst& move);
     static constexpr bool areBothOnTheStack(const CmpInst& cmp);
+    static constexpr bool areBothOnTheStack(const BinaryInst& binary);
     static constexpr bool isOnTheStack(Operand::Kind kind);
 };
 
@@ -66,6 +68,11 @@ constexpr bool FixUpInstructions::areBothOnTheStack(const MoveInst& move)
 constexpr bool FixUpInstructions::areBothOnTheStack(const CmpInst& cmp)
 {
     return isOnTheStack(cmp.lhs->kind) && isOnTheStack(cmp.rhs->kind);
+}
+
+constexpr bool FixUpInstructions::areBothOnTheStack(const BinaryInst& binary)
+{
+    return isOnTheStack(binary.lhs->kind) && isOnTheStack(binary.rhs->kind);
 }
 
 constexpr bool FixUpInstructions::isOnTheStack(const Operand::Kind kind)

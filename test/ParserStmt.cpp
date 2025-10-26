@@ -8,7 +8,7 @@ using enum Lexing::Token::Type;
 
 TEST_F(ParserStmtTest, ReturnStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"ValidReturn", true,
             {Return, IntegerLiteral, Semicolon}},
         {"MissingReturn", false,
@@ -23,7 +23,7 @@ TEST_F(ParserStmtTest, ReturnStmtVariations)
 
 TEST_F(ParserStmtTest, ExprStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"ValidExpr", true,
             {IntegerLiteral, Semicolon}},
         {"MissingExpr", false,
@@ -36,7 +36,7 @@ TEST_F(ParserStmtTest, ExprStmtVariations)
 
 TEST_F(ParserStmtTest, IfStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid If", true,
             {If, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Wrong Bracketing Symbols", false,
@@ -61,7 +61,7 @@ TEST_F(ParserStmtTest, IfStmtVariations)
 
 TEST_F(ParserStmtTest, GotoStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid Goto", true,
             {Goto, Identifier, Semicolon}},
         {"Missing Goto", false,
@@ -76,7 +76,7 @@ TEST_F(ParserStmtTest, GotoStmtVariations)
 
 TEST_F(ParserStmtTest, BreakStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid Break", true,
             {Break, Semicolon}},
         {"Missing Break", false,
@@ -89,7 +89,7 @@ TEST_F(ParserStmtTest, BreakStmtVariations)
 
 TEST_F(ParserStmtTest, ContinueStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid Continue", true,
             {Continue, Semicolon}},
         {"Missing Continue", false,
@@ -102,7 +102,7 @@ TEST_F(ParserStmtTest, ContinueStmtVariations)
 
 TEST_F(ParserStmtTest, LabelStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid Label", true,
             {Identifier, Colon, Semicolon}},
         {"Missing Identifier", false,
@@ -117,7 +117,7 @@ TEST_F(ParserStmtTest, LabelStmtVariations)
 
 TEST_F(ParserStmtTest, CaseStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid Case", true,
             {Case, IntegerLiteral, Colon, Semicolon}},
         {"Missing Case", false,
@@ -134,7 +134,7 @@ TEST_F(ParserStmtTest, CaseStmtVariations)
 
 TEST_F(ParserStmtTest, DefaultStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid Default", true,
             {Default, Colon, Semicolon}},
         {"Missing Default", false,
@@ -149,7 +149,7 @@ TEST_F(ParserStmtTest, DefaultStmtVariations)
 
 TEST_F(ParserStmtTest, WhileStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid While", true,
         {While, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing While", false,
@@ -168,7 +168,7 @@ TEST_F(ParserStmtTest, WhileStmtVariations)
 
 TEST_F(ParserStmtTest, DoWhileStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid Do While", true,
 {Do, Semicolon, While, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Missing Do While", false,
@@ -189,7 +189,7 @@ TEST_F(ParserStmtTest, DoWhileStmtVariations)
 
 TEST_F(ParserStmtTest, ForStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid For", true,
 {For, OpenParen, Semicolon, Semicolon, CloseParen, Semicolon}},
         {"Wrong Bracketing Symbols", false,
@@ -210,7 +210,7 @@ TEST_F(ParserStmtTest, ForStmtVariations)
 
 TEST_F(ParserStmtTest, SwitchStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid Switch", true,
 {Switch, OpenParen, IntegerLiteral, CloseParen, Semicolon}},
         {"Wrong Bracketing Symbols", false,
@@ -231,7 +231,7 @@ TEST_F(ParserStmtTest, SwitchStmtVariations)
 
 TEST_F(ParserStmtTest, NullStmtVariations)
 {
-    const std::vector<TestCase> cases = {
+    const std::vector<TestCaseParser> cases = {
         {"Valid Null", true,
 {Semicolon}},
         {"Missing Semicolon", false,

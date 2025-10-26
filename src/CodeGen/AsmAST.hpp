@@ -115,7 +115,7 @@ struct PseudoOperand final : Operand {
     PseudoOperand(Identifier identifier, const ReferingTo referingTo,
                   const AsmType t, const bool local)
         : Operand(Kind::Pseudo, t), identifier(std::move(identifier)),
-                                      referingTo(referingTo), local(local) {}
+          referingTo(referingTo), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Pseudo; }
 

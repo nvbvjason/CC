@@ -12,8 +12,13 @@ add_executable(CC_test
         GenerateIr.cpp
         Assembly.cpp
         Assembly.hpp
-        FixUpInstructions.cpp
-        FixUpInstructions.hpp
+        FixUpInstructionsTest.cpp
+        FixUpInstructionsTest.hpp
+        TypeConversion.hpp
+        TypeConversion.cpp
+        CodeGenInstructionFactory.cpp
+        CodeGenInstructionFactory.hpp
+        FixUpInstructionsTest.cpp
 )
 
 target_include_directories(CC_test PRIVATE
@@ -27,6 +32,7 @@ target_include_directories(CC_test PRIVATE
         ${CMAKE_SOURCE_DIR}/src/Frontend/IR
         ${CMAKE_SOURCE_DIR}/src/IR
         ${CMAKE_SOURCE_DIR}/src/CodeGen
+        ${CMAKE_SOURCE_DIR}/src/Types
 )
 
 target_link_libraries(CC_test PRIVATE
@@ -39,6 +45,7 @@ target_link_libraries(CC_test PRIVATE
         AST
         IR
         CodeGen
+        TYPES
         GTest::gtest
         GTest::gtest_main
 )

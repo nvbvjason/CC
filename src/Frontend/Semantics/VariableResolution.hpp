@@ -33,7 +33,10 @@ public:
     void visit(Parsing::FuncCallExpr& funcCallExpr) override;
 
     void addVarToSymbolTable(Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry);
-    void addFuncToSymbolTable(const Parsing::FunDecl& funDecl, const SymbolTable::ReturnedEntry& prevEntry) const;
+    void addFuncToSymbolTable(
+        const Parsing::FunDecl& funDecl,
+        const SymbolTable::ReturnedEntry& prevEntry
+    ) const;
 private:
     void reset();
     std::string makeTemporaryName(const std::string &name);

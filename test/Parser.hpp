@@ -9,7 +9,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-struct TestCase {
+struct TestCaseParser {
     std::string name;
     bool shouldSucceed;
     std::vector<Lexing::Token::Type> tokens;
@@ -29,7 +29,7 @@ protected:
 
 template <typename ParseFunc>
 void RunTestCase(const std::string& stmtName, Parsing::Parser& parser, ParseFunc parseFunc,
-                 const TestCase& testCase)
+                 const TestCaseParser& testCase)
 {
     auto result = (parser.*parseFunc)();
     if (testCase.shouldSucceed)
@@ -40,7 +40,7 @@ void RunTestCase(const std::string& stmtName, Parsing::Parser& parser, ParseFunc
 
 template <typename ParseFunc>
 void RunTestCases(const std::string& stmtName, ParseFunc parseFunc,
-                  const std::vector<TestCase>& testCases)
+                  const std::vector<TestCaseParser>& testCases)
 {
     for (const auto& test : testCases) {
         Parsing::Parser parser = createParser(test.tokens);

@@ -1,3 +1,4 @@
+#include <Lexer.hpp>
 #include "Frontend/Lexing/Lexer.hpp"
 #include "Frontend/Lexing/Token.hpp"
 #include <gtest/gtest.h>
@@ -26,7 +27,7 @@ TokenStore runLexerTest(const std::string& input)
     return tokenStore;
 }
 
-void TestSingleTokenLexing(const std::string& input, Lexing::Token::Type expectedType)
+void TestSingleTokenLexing(const std::string& input, const TokenType expectedType)
 {
     constexpr i32 endOfFile = 1;
     const TokenStore tokenStore = runLexerTest(input);
@@ -35,6 +36,17 @@ void TestSingleTokenLexing(const std::string& input, Lexing::Token::Type expecte
         1, 1, expectedType, input
     };
     EXPECT_EQ(tokenStore.getToken(0), expected) << "Token mismatch for input: " << input;
+}
+
+void TestSingleTokenLexing(const TestCaseLexer& testCase)
+{
+    constexpr i32 endOfFile = 1;
+    const TokenStore tokenStore = runLexerTest(testCase.input);
+    ASSERT_EQ(tokenStore.size(), 1 + endOfFile) << "Expected exactly one token for input: " << testCase.input;
+    const Lexing::Token expected{
+        1, 1, testCase.expectedType, testCase.input
+    };
+    EXPECT_EQ(tokenStore.getToken(0), expected) << "Token mismatch for input: " << testCase.input;
 }
 
 }
@@ -46,292 +58,82 @@ TEST(LexerTests, GetTokens)
     EXPECT_EQ(tokenStore.size(), 11);
 
     const Lexing::Token expected[] = {
-        {1, 1, Lexing::Token::Type::IntKeyword, "int"},
-        {1, 5, Lexing::Token::Type::Identifier, "main"},
-        {1, 9, Lexing::Token::Type::OpenParen, "("},
-        {1, 10, Lexing::Token::Type::Void, "void"},
-        {1, 14, Lexing::Token::Type::CloseParen, ")"},
-        {1, 16, Lexing::Token::Type::OpenBrace, "{"},
-        {3, 5, Lexing::Token::Type::Return, "return"},
-        {3, 12, Lexing::Token::Type::IntegerLiteral, "100"},
-        {3, 15, Lexing::Token::Type::Semicolon, ";"},
-        {4, 1, Lexing::Token::Type::CloseBrace, "}"},
-        {4, 2, Lexing::Token::Type::EndOfFile, ""}
+        {1, 1, TokenType::IntKeyword, "int"},
+        {1, 5, TokenType::Identifier, "main"},
+        {1, 9, TokenType::OpenParen, "("},
+        {1, 10, TokenType::Void, "void"},
+        {1, 14, TokenType::CloseParen, ")"},
+        {1, 16, TokenType::OpenBrace, "{"},
+        {3, 5, TokenType::Return, "return"},
+        {3, 12, TokenType::IntegerLiteral, "100"},
+        {3, 15, TokenType::Semicolon, ";"},
+        {4, 1, TokenType::CloseBrace, "}"},
+        {4, 2, TokenType::EndOfFile, ""}
     };
 
     for(size_t i = 0; i < tokenStore.size(); ++i)
         EXPECT_EQ(tokenStore.getToken(i), expected[i]) << "Mismatch at token " << i;
 }
 
-TEST(LexerTests, Return)
+TEST(LexerTests, Tokens)
 {
-    TestSingleTokenLexing("return", TokenType::Return);
-}
-
-TEST(LexerTests, IntKeyword)
-{
-    TestSingleTokenLexing("int", TokenType::IntKeyword);
-}
-
-TEST(LexerTests, Void)
-{
-    TestSingleTokenLexing("void", TokenType::Void);
-}
-
-TEST(LexerTests, If)
-{
-    TestSingleTokenLexing("if", TokenType::If);
-}
-
-TEST(LexerTests, Else)
-{
-    TestSingleTokenLexing("else", TokenType::Else);
-}
-
-TEST(LexerTests, Do)
-{
-    TestSingleTokenLexing("do", TokenType::Do);
-}
-
-TEST(LexerTests, While)
-{
-    TestSingleTokenLexing("while", TokenType::While);
-}
-
-TEST(LexerTests, For)
-{
-    TestSingleTokenLexing("for", TokenType::For);
-}
-
-TEST(LexerTests, Break)
-{
-    TestSingleTokenLexing("break", TokenType::Break);
-}
-
-TEST(LexerTests, Continue)
-{
-    TestSingleTokenLexing("continue", TokenType::Continue);
-}
-
-TEST(LexerTests, Goto)
-{
-    TestSingleTokenLexing("goto", TokenType::Goto);
-}
-
-TEST(LexerTests, Switch)
-{
-    TestSingleTokenLexing("switch", TokenType::Switch);
-}
-
-TEST(LexerTests, Case)
-{
-    TestSingleTokenLexing("case", TokenType::Case);
-}
-
-TEST(LexerTests, Default)
-{
-    TestSingleTokenLexing("default", TokenType::Default);
-}
-
-TEST(LexerTests, Static)
-{
-    TestSingleTokenLexing("static", TokenType::Static);
-}
-
-TEST(LexerTests, Extern)
-{
-    TestSingleTokenLexing("extern", TokenType::Extern);
-}
-
-TEST(LexerTests, Signed)
-{
-    TestSingleTokenLexing("signed", TokenType::Signed);
-}
-
-TEST(LexerTests, Unsigned)
-{
-    TestSingleTokenLexing("unsigned", TokenType::Unsigned);
-}
-
-TEST(LexerTests, Double)
-{
-    TestSingleTokenLexing("double", TokenType::DoubleKeyword);
-}
-
-TEST(LexerTests, Percent)
-{
-    TestSingleTokenLexing("%", TokenType::Percent);
-}
-
-TEST(LexerTests, Plus)
-{
-    TestSingleTokenLexing("+", TokenType::Plus);
-}
-
-TEST(LexerTests, Asterisk)
-{
-    TestSingleTokenLexing("*", TokenType::Asterisk);
-}
-
-TEST(LexerTests, ForwardSlash)
-{
-    TestSingleTokenLexing("/", TokenType::ForwardSlash);
-}
-
-TEST(LexerTests, Pipe)
-{
-    TestSingleTokenLexing("|", TokenType::Pipe);
-}
-
-TEST(LexerTests, Ampersand)
-{
-    TestSingleTokenLexing("&", TokenType::Ampersand);
-}
-
-TEST(LexerTests, LeftShift)
-{
-    TestSingleTokenLexing("<<", TokenType::LeftShift);
-}
-
-TEST(LexerTests, RightShift)
-{
-    TestSingleTokenLexing(">>", TokenType::RightShift);
-}
-
-TEST(LexerTests, Circumflex)
-{
-    TestSingleTokenLexing("^", TokenType::Circumflex);
-}
-
-TEST(LexerTests, Decrement)
-{
-    TestSingleTokenLexing("--", TokenType::Decrement);
-}
-
-TEST(LexerTests, Increment)
-{
-    TestSingleTokenLexing("++", TokenType::Increment);
-}
-
-TEST(LexerTests, LogicalAnd)
-{
-    TestSingleTokenLexing("&&", TokenType::LogicalAnd);
-}
-
-TEST(LexerTests, LogicalOr)
-{
-    TestSingleTokenLexing("||", TokenType::LogicalOr);
-}
-
-TEST(LexerTests, LogicalNotEqual)
-{
-    TestSingleTokenLexing("!=", TokenType::LogicalNotEqual);
-}
-
-TEST(LexerTests, LogicalEqual)
-{
-    TestSingleTokenLexing("==", TokenType::LogicalEqual);
-}
-
-TEST(LexerTests, Less)
-{
-    TestSingleTokenLexing("<", TokenType::Less);
-}
-
-TEST(LexerTests, LessEqual)
-{
-    TestSingleTokenLexing("<=", TokenType::LessOrEqual);
-}
-
-TEST(LexerTests, Greater)
-{
-    TestSingleTokenLexing(">", TokenType::Greater);
-}
-
-TEST(LexerTests, GreaterEqual)
-{
-    TestSingleTokenLexing(">=", TokenType::GreaterOrEqual);
-}
-
-TEST(LexerTests, ExclamationMark)
-{
-    TestSingleTokenLexing("!", TokenType::ExclamationMark);
-}
-
-TEST(LexerTests, Equal)
-{
-    TestSingleTokenLexing("=", TokenType::Equal);
-}
-
-TEST(LexerTests, MultiLineComment)
-{
-    const auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);
-    EXPECT_TRUE(tokens.size() == 1) << " " << tokens.size();
-}
-
-TEST(LexerTests, PlusAssign)
-{
-    TestSingleTokenLexing("+=", TokenType::PlusAssign);
-}
-
-TEST(LexerTests, MinusAssign)
-{
-    TestSingleTokenLexing("-=", TokenType::MinusAssign);
-}
-
-TEST(LexerTests, MultiplyAssign)
-{
-    TestSingleTokenLexing("*=", TokenType::MultiplyAssign);
-}
-
-TEST(LexerTests, DivideAssign)
-{
-    TestSingleTokenLexing("/=", TokenType::DivideAssign);
-}
-
-TEST(LexerTests, ModuloAssign)
-{
-    TestSingleTokenLexing("%=", TokenType::ModuloAssign);
-}
-
-TEST(LexerTests, BitwiseAndAssign)
-{
-    TestSingleTokenLexing("&=", TokenType::BitwiseAndAssign);
-}
-
-TEST(LexerTests, BitwiseOrAssign)
-{
-    TestSingleTokenLexing("|=", TokenType::BitwiseOrAssign);
-}
-
-TEST(LexerTests, BitwiseXorAssign)
-{
-    TestSingleTokenLexing("^=", TokenType::BitwiseXorAssign);
-}
-
-TEST(LexerTests, LeftShiftAssign)
-{
-    TestSingleTokenLexing("<<=", TokenType::LeftShiftAssign);
-}
-
-TEST(LexerTests, RightShiftAssign)
-{
-    TestSingleTokenLexing(">>=", TokenType::RightShiftAssign);
-}
-
-TEST(LexerTests, QuestionMark)
-{
-    TestSingleTokenLexing("?", TokenType::QuestionMark);
-}
-
-TEST(LexerTests, Comma)
-{
-    TestSingleTokenLexing(",", TokenType::Comma);
-}
-
-TEST(LexerTests, Colon)
-{
-    TestSingleTokenLexing(":", TokenType::Colon);
+    const std::vector<TestCaseLexer> testCases = {
+        {"return", TokenType::Return},
+        {"int", TokenType::IntKeyword},
+        {"void", TokenType::Void},
+        {"if", TokenType::If},
+        {"else", TokenType::Else},
+        {"do", TokenType::Do},
+        {"while", TokenType::While},
+        {"for", TokenType::For},
+        {"break", TokenType::Break},
+        {"continue", TokenType::Continue},
+        {"goto", TokenType::Goto},
+        {"switch", TokenType::Switch},
+        {"case", TokenType::Case},
+        {"default", TokenType::Default},
+        {"static", TokenType::Static},
+        {"extern", TokenType::Extern},
+        {"signed", TokenType::Signed},
+        {"unsigned", TokenType::Unsigned},
+        {"double", TokenType::DoubleKeyword},
+        {"%", TokenType::Percent},
+        {"+", TokenType::Plus},
+        {"*", TokenType::Asterisk},
+        {"/", TokenType::ForwardSlash},
+        {"|", TokenType::Pipe},
+        {"&", TokenType::Ampersand},
+        {"<<", TokenType::LeftShift},
+        {">>", TokenType::RightShift},
+        {"^", TokenType::Circumflex},
+        {"--", TokenType::Decrement},
+        {"++", TokenType::Increment},
+        {"&&", TokenType::LogicalAnd},
+        {"||", TokenType::LogicalOr},
+        {"!=", TokenType::LogicalNotEqual},
+        {"==", TokenType::LogicalEqual},
+        {"<", TokenType::Less},
+        {"<=", TokenType::LessOrEqual},
+        {">", TokenType::Greater},
+        {">=", TokenType::GreaterOrEqual},
+        {"!", TokenType::ExclamationMark},
+        {"=", TokenType::Equal},
+        {"+=", TokenType::PlusAssign},
+        {"-=", TokenType::MinusAssign},
+        {"*=", TokenType::MultiplyAssign},
+        {"/=", TokenType::DivideAssign},
+        {"%=", TokenType::ModuloAssign},
+        {"&=", TokenType::BitwiseAndAssign},
+        {"|=", TokenType::BitwiseOrAssign},
+        {"^=", TokenType::BitwiseXorAssign},
+        {"<<=", TokenType::LeftShiftAssign},
+        {">>=", TokenType::RightShiftAssign},
+        {"?", TokenType::QuestionMark},
+        {",", TokenType::Comma},
+        {":", TokenType::Colon},
+    };
+    for (const TestCaseLexer& testCase : testCases)
+        TestSingleTokenLexing(testCase);
 }
 
 TEST(LexerTests, IntegerLiteral)
@@ -382,6 +184,12 @@ TEST(LexerTests, UnsignedLongLiteralUpperCase)
 TEST(LexerTests, UnsignedLongLiteralLowerCase)
 {
     TestSingleTokenLexing("2147ul", TokenType::UnsignedLongLiteral);
+}
+
+TEST(LexerTests, MultiLineComment)
+{
+    const auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);
+    EXPECT_TRUE(tokens.size() == 1) << " " << tokens.size();
 }
 
 TEST(LexerTests, InvalidInput)

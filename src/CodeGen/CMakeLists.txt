@@ -2,10 +2,10 @@ add_library(CodeGen STATIC
         AsmAST.hpp
         AsmPrinter.cpp
         Assembly.cpp
-        FixUpInstructions.cpp
         GenerateAsmTree.cpp
         PseudoRegisterReplacer.cpp
         Operators.hpp
+        FixUpInstructions.cpp
 )
 
 target_include_directories(CodeGen PUBLIC

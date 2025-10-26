@@ -9,18 +9,17 @@
 #include "ASTIr.hpp"
 
 namespace {
-    using AsmType = CodeGen::AsmType;
-    using CondCode = CodeGen::BinaryInst::CondCode;
-    using RegKind = CodeGen::Operand::RegKind;
-    using BinaryOper = CodeGen::BinaryInst::Operator;
-    using std::make_shared;
-    using PseudoOperand = CodeGen::PseudoOperand;
-    using Iden = CodeGen::Identifier;
-    using DataOperand = CodeGen::DataOperand;
-    using ImmOperand = CodeGen::ImmOperand;
-    using RegisterOperand = CodeGen::RegisterOperand;
-    using MemoryOperand = CodeGen::MemoryOperand;
-    using StaticVariable = CodeGen::StaticVariable;
+using AsmType = CodeGen::AsmType;
+using CondCode = CodeGen::BinaryInst::CondCode;
+using RegKind = CodeGen::Operand::RegKind;
+using BinaryOper = CodeGen::BinaryInst::Operator;
+using PseudoOperand = CodeGen::PseudoOperand;
+using Iden = CodeGen::Identifier;
+using DataOperand = CodeGen::DataOperand;
+using ImmOperand = CodeGen::ImmOperand;
+using RegisterOperand = CodeGen::RegisterOperand;
+using MemoryOperand = CodeGen::MemoryOperand;
+using std::make_shared;
 }
 
 TEST(AssemblyTests, addType)
