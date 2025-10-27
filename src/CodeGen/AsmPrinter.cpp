@@ -324,8 +324,8 @@ std::string to_string(const BinaryInst::Operator& oper)
         case Oper::Sub:              return "-";
         case Oper::Mul:              return "*";
         case Oper::DivDouble:        return "/";
-        case Oper::AndBitwise:       return "&";
-        case Oper::OrBitwise:        return "|";
+        case Oper::BitwiseAnd:       return "&";
+        case Oper::BitwiseOr:        return "|";
         case Oper::BitwiseXor:       return "^";
         case Oper::LeftShiftSigned:  return "<<";
         case Oper::RightShiftSigned: return ">>";

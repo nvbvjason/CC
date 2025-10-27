@@ -67,9 +67,9 @@ constexpr BinaryExpr::Operator binaryOperator(const TokenType type)
         case TokenType::LogicalEqual:       return Operator::Equal;
         case TokenType::LogicalNotEqual:    return Operator::NotEqual;
         case TokenType::Greater:            return Operator::GreaterThan;
+        case TokenType::GreaterOrEqual:     return Operator::GreaterOrEqual;
         case TokenType::Less:               return Operator::LessThan;
         case TokenType::LessOrEqual:        return Operator::LessOrEqual;
-        case TokenType::GreaterOrEqual:     return Operator::GreaterOrEqual;
 
         default:
             assert(false && "Invalid binary operator: binaryOperator(Token::Type)");

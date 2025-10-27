@@ -556,9 +556,9 @@ void GenerateAsmTree::genUIntToDoubleQuad(const Ir::UIntToDoubleInst& uintToDoub
     insts.emplace_back(std::make_unique<MoveInst>(rdx, rax, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<UnaryInst>(rdx, UnaryOper::Shr, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<BinaryInst>(
-        one, rax, BinaryOper::AndBitwise, AsmType::QuadWord));
+        one, rax, BinaryOper::BitwiseAnd, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<BinaryInst>(
-        rax, rdx, BinaryOper::OrBitwise, AsmType::QuadWord));
+        rax, rdx, BinaryOper::BitwiseOr, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<Cvtsi2sdInst>(rdx, dst, AsmType::QuadWord));
     insts.emplace_back(std::make_unique<BinaryInst>(
         dst, dst, BinaryOper::Add, AsmType::Double));

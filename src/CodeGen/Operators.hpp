@@ -33,8 +33,8 @@ inline BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
         case IrOper::Subtract:     return AsmOper::Sub;
         case IrOper::Multiply:     return AsmOper::Mul;
 
-        case IrOper::BitwiseAnd:   return AsmOper::AndBitwise;
-        case IrOper::BitwiseOr:    return AsmOper::OrBitwise;
+        case IrOper::BitwiseAnd:   return AsmOper::BitwiseAnd;
+        case IrOper::BitwiseOr:    return AsmOper::BitwiseOr;
         case IrOper::BitwiseXor:   return AsmOper::BitwiseXor;
         default:
             throw std::invalid_argument("Invalid BinaryOperation type: " +

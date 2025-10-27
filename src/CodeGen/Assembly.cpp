@@ -347,8 +347,8 @@ std::string asmBinaryOperator(const BinaryInst::Operator oper, const AsmType typ
         case Operator::Add:                 return addType("add", type);
         case Operator::Sub:                 return addType("sub", type);
 
-        case Operator::AndBitwise:          return addType("and", type);
-        case Operator::OrBitwise:           return addType("or", type);
+        case Operator::BitwiseAnd:          return addType("and", type);
+        case Operator::BitwiseOr:           return addType("or", type);
         case Operator::BitwiseXor:          return addType("xor" ,type);
 
         case Operator::LeftShiftSigned:     return addType("shl", type);

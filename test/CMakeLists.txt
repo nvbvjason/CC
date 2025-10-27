@@ -3,7 +3,6 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 add_executable(CC_test
         main_test.cpp
-        Codegen.cpp
         Lexer.cpp
         Parser.cpp
         ParserStmt.cpp
@@ -19,6 +18,8 @@ add_executable(CC_test
         CodeGenInstructionFactory.cpp
         CodeGenInstructionFactory.hpp
         FixUpInstructionsTest.cpp
+        CodeGenOperatorsTest.cpp
+        ParserOperators.cpp
 )
 
 target_include_directories(CC_test PRIVATE

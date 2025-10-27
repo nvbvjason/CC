@@ -9,7 +9,7 @@ std::array stackOperandsAndImm{OperKind::Data, OperKind::Memory, OperKind::Imm};
 std::array binaryShiftOpers{BinaryOper::LeftShiftSigned, BinaryOper::RightShiftSigned,
                             BinaryOper::RightShiftUnsigned, BinaryOper::LeftShiftUnsigned};
 std::array binaryOtherOpers{BinaryOper::Add, BinaryOper::Sub,
-                            BinaryOper::AndBitwise, BinaryOper::OrBitwise, BinaryOper::BitwiseXor};
+                            BinaryOper::BitwiseAnd, BinaryOper::BitwiseOr, BinaryOper::BitwiseXor};
 
 void FixUpInstructionsTest::addMove(const OperKind srcKind, const OperKind dstKind, const AsmType asmType)
 {

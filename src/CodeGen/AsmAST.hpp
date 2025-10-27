@@ -283,7 +283,7 @@ struct UnaryInst final : Inst {
 struct BinaryInst final : Inst {
     enum class Operator : u8 {
         Add, Sub, Mul,
-        AndBitwise, OrBitwise, BitwiseXor,
+        BitwiseAnd, BitwiseOr, BitwiseXor,
         LeftShiftSigned, RightShiftSigned,
         LeftShiftUnsigned, RightShiftUnsigned,
         DivDouble,

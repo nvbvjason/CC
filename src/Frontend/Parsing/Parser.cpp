@@ -124,6 +124,27 @@ std::unique_ptr<Declarator> Parser::simpleDeclaratorParse()
     return std::make_unique<IdentifierDeclarator>(std::move(iden));
 }
 
+std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> Parser::processFunctionDeclarator(
+    std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase)
+{
+    const auto funcDecl = dynCast<FunctionDeclarator>(declarator.get());
+    if (funcDecl->declarator->kind != Declarator::Kind::Identifier)
+        return {};
+    std::vector<std::unique_ptr<TypeBase>> paramTypes;
+    std::vector<std::string> params;
+    for (ParamInfo& param : funcDecl->params) {
+        auto [iden, typeBaseParam, _] =
+                declaratorProcess(std::move(param.declarator), std::move(param.type));
+        if (typeBaseParam->type == Type::Function)
+            return {};
+        params.emplace_back(std::move(iden));
+        paramTypes.emplace_back(std::move(typeBaseParam));
+    }
+    const auto idenDecl = dynCast<IdentifierDeclarator>(funcDecl->declarator.get());
+    auto funcType = std::make_unique<FuncType>(std::move(typeBase), std::move(paramTypes));
+    return std::make_tuple(std::move(idenDecl->identifier), std::move(funcType), std::move(params));
+}
+
 std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> Parser::declaratorProcess(
     std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase)
 {
@@ -140,22 +161,7 @@ std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> Par
             return declaratorProcess(std::move(pointerDeclarator->inner), std::move(derivedType));
         }
         case Declarator::Kind::Function: {
-            const auto funcDecl = dynCast<FunctionDeclarator>(declarator.get());
-            if (funcDecl->declarator->kind != Declarator::Kind::Identifier)
-                return {};
-            std::vector<std::unique_ptr<TypeBase>> paramTypes;
-            std::vector<std::string> params;
-            for (ParamInfo& param : funcDecl->params) {
-                auto [iden, typeBaseParam, _] =
-                    declaratorProcess(std::move(param.declarator), std::move(param.type));
-                if (typeBaseParam->type == Type::Function)
-                    return {};
-                params.emplace_back(std::move(iden));
-                paramTypes.emplace_back(std::move(typeBaseParam));
-            }
-            const auto idenDecl = dynCast<IdentifierDeclarator>(funcDecl->declarator.get());
-            auto funcType = std::make_unique<FuncType>(std::move(typeBase), std::move(paramTypes));
-            return std::make_tuple(std::move(idenDecl->identifier), std::move(funcType), std::move(params));
+            return processFunctionDeclarator(std::move(declarator), std::move(typeBase));
         }
     }
     return std::make_tuple(std::string(), std::move(typeBase), std::vector<std::string>());
@@ -549,6 +555,49 @@ std::unique_ptr<Stmt> Parser::nullStmtParse()
     return std::make_unique<NullStmt>(m_current);
 }
 
+std::unique_ptr<Expr> Parser::ternaryExprParse(std::unique_ptr<Expr>& condition)
+{
+    auto trueExpr = exprParse(0);
+    if (trueExpr == nullptr) {
+        addError("Expected true expression in ternary");
+        return nullptr;
+    }
+    if (!expect(TokenType::Colon)) {
+        addError("Expected colon in ternary");
+        return nullptr;
+    }
+    auto falseExpr = exprParse(Operators::precedence(TokenType::Colon));
+    if (falseExpr == nullptr) {
+        addError("Expected false expression in ternary");
+        return nullptr;
+    }
+    return std::make_unique<TernaryExpr>(
+        m_current, std::move(condition), std::move(trueExpr), std::move(falseExpr));
+}
+
+std::unique_ptr<Expr> Parser::assignmentExprParse(std::unique_ptr<Expr>& left, const Lexing::Token& nextToken)
+{
+    AssignmentExpr::Operator op = Operators::assignOperator(nextToken.m_type);
+    auto right = exprParse(Operators::precedence(nextToken.m_type));
+    if (right == nullptr) {
+        addError("Expected right hand side after assignment operator");
+        return nullptr;
+    }
+    return std::make_unique<AssignmentExpr>(
+        m_current, op, std::move(left), std::move(right));
+}
+
+std::unique_ptr<Expr> Parser::binaryExprParse(std::unique_ptr<Expr>& left, const Lexing::Token& nextToken)
+{
+    BinaryExpr::Operator op = Operators::binaryOperator(nextToken.m_type);
+    auto right = exprParse(Operators::precedence(nextToken.m_type) + 1);
+    if (right == nullptr) {
+        addError("Expected right hand side after binary operator");
+        return nullptr;
+    }
+    return std::make_unique<BinaryExpr>(m_current, op, std::move(left), std::move(right));
+}
+
 std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
 {
     auto left = castExpr();
@@ -557,44 +606,14 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
     Lexing::Token nextToken = peek();
     while (continuePrecedenceClimbing(minPrecedence, peekTokenType())) {
         advance();
-        if (nextToken.m_type == TokenType::QuestionMark) {
-            auto trueExpr = exprParse(0);
-            if (trueExpr == nullptr) {
-                addError("Expected true expression in ternary");
-                return nullptr;
-            }
-            if (!expect(TokenType::Colon)) {
-                addError("Expected colon in ternary");
-                return nullptr;
-            }
-            auto falseExpr = exprParse(Operators::precedence(TokenType::Colon));
-            if (falseExpr == nullptr) {
-                addError("Expected false expression in ternary");
-                return nullptr;
-            }
-            left = std::make_unique<TernaryExpr>(
-                m_current, std::move(left), std::move(trueExpr), std::move(falseExpr));
-        }
-        if (Operators::isAssignmentOperator(nextToken.m_type)) {
-            AssignmentExpr::Operator op = Operators::assignOperator(nextToken.m_type);
-            auto right = exprParse(Operators::precedence(nextToken.m_type));
-            if (right == nullptr) {
-                addError("Expected right hand side after assignment operator");
-                return nullptr;
-            }
-            left = std::make_unique<AssignmentExpr>(
-                m_current, op, std::move(left), std::move(right));
-        }
-        if (Operators::isBinaryOperator(nextToken.m_type)) {
-            BinaryExpr::Operator op = Operators::binaryOperator(nextToken.m_type);
-            auto right = exprParse(Operators::precedence(nextToken.m_type) + 1);
-            if (right == nullptr) {
-                addError("Expected right hand side after binary operator");
-                return nullptr;
-            }
-            left = std::make_unique<BinaryExpr>(
-                m_current, op, std::move(left), std::move(right));
-        }
+        if (nextToken.m_type == TokenType::QuestionMark)
+            left = ternaryExprParse(left);
+        if (Operators::isAssignmentOperator(nextToken.m_type))
+            left = assignmentExprParse(left, nextToken);
+        if (Operators::isBinaryOperator(nextToken.m_type))
+            left = binaryExprParse(left, nextToken);
+        if (left == nullptr)
+            return nullptr;
         nextToken = peek();
     }
     return left;

@@ -102,6 +102,8 @@ public:
 
     [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
         declaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+    static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> processFunctionDeclarator(
+        std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
@@ -124,6 +126,9 @@ public:
     [[nodiscard]] std::unique_ptr<Stmt> nullStmtParse();
 
     [[nodiscard]] std::unique_ptr<Expr> exprParse(i32 minPrecedence);
+    [[nodiscard]] std::unique_ptr<Expr> ternaryExprParse(std::unique_ptr<Expr>& condition);
+    [[nodiscard]] std::unique_ptr<Expr> assignmentExprParse(std::unique_ptr<Expr>& left, const Lexing::Token& nextToken);
+    [[nodiscard]] std::unique_ptr<Expr> binaryExprParse(std::unique_ptr<Expr>& left, const Lexing::Token& nextToken);
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
     [[nodiscard]] std::unique_ptr<Expr> addrOFExprParse();
     [[nodiscard]] std::unique_ptr<Expr> dereferenceExprParse();
