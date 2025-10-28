@@ -12,7 +12,6 @@
 #include "LoopLabeling.hpp"
 #include "ValidateReturn.hpp"
 #include "TypeResolution.hpp"
-#include "DeSugarDeref.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -83,8 +82,6 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& pro
     Semantics::LvalueVerification lvalueVerification;
     if (const std::vector<Error> errors = lvalueVerification.resolve(program); !errors.empty())
         return {StateCode::LValueVerification, errors};
-    Semantics::DeSugarDeref deSugarDeref;
-    deSugarDeref.deSugar(program);
     Semantics::ValidateReturn validateReturn;
     if (std::vector<Error> errors = validateReturn.programValidate(program); !errors.empty())
         return {StateCode::ValidateReturn, errors};
