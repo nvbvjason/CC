@@ -248,6 +248,10 @@ void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
             std::make_unique<Parsing::VarType>(leftType), std::move(assignmentExpr.rhs));
     }
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
+    if (assignmentExpr.lhs->type->type != assignmentExpr.rhs->type->type) {
+        assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
+            Parsing::deepCopy(*assignmentExpr.lhs->type), std::move(assignmentExpr.rhs));
+    }
 }
 
 void TypeResolution::visit(Parsing::CastExpr& castExpr)
@@ -268,6 +272,13 @@ bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
 {
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
+    const Type commonType = getCommonType(leftType, rightType);
+    if ((leftType == Type::Pointer || rightType == Type::Pointer) &&
+        isIllegalPointerCompoundAssignOperation(assignmentExpr.op)) {
+        return false;
+    }
+    if (commonType == Type::Double && isIllegalDoubleCompoundAssignOperation(assignmentExpr.op))
+        return false;
     if (leftType == Type::Pointer && rightType == Type::Pointer)
         return Parsing::areEquivalent(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type);
     if (leftType == Type::Pointer) {

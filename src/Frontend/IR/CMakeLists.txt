@@ -1,6 +1,5 @@
 add_library(FrontendIR STATIC
         GenerateIr.cpp
-        AstToIrOperators.cpp
         ExprResult.hpp
 )
 

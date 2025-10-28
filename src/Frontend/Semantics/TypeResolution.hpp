@@ -115,6 +115,21 @@ inline bool isIllegalUnaryPointerOperator(const Parsing::UnaryExpr::Operator ope
            oper == Operator::PostFixDecrement || oper == Operator::PostFixIncrement;
 }
 
+inline bool isIllegalDoubleCompoundAssignOperation(const Parsing::AssignmentExpr::Operator oper)
+{
+    using Oper = Parsing::AssignmentExpr::Operator;
+    return oper == Oper::ModuloAssign || oper == Oper::BitwiseAndAssign ||
+           oper == Oper::BitwiseOrAssign || oper == Oper::BitwiseXorAssign ||
+           oper == Oper::LeftShiftAssign || oper == Oper::RightShiftAssign;;
+}
+
+inline bool isIllegalPointerCompoundAssignOperation(const Parsing::AssignmentExpr::Operator oper)
+{
+    using Oper = Parsing::AssignmentExpr::Operator;
+    return oper == Oper::BitwiseAndAssign || oper == Oper::BitwiseOrAssign ||
+           oper == Oper::DivideAssign || oper == Oper::ModuloAssign;
+}
+
 bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);

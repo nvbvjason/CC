@@ -13,6 +13,7 @@
 
 namespace Ir {
 static Identifier makeTemporaryName();
+static Identifier makeTemporaryName(Value& value);
 static std::string generateCaseLabelName(std::string before);
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
@@ -550,7 +551,7 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPostfixInst(const Parsing::Unary
         one = std::make_shared<ValueConst>(1.0);
     else
         one = std::make_shared<ValueConst>(1);
-    const std::shared_ptr<ExprResult> original = genInst(*unaryExpr.operand);
+    const std::shared_ptr original = genInst(*unaryExpr.operand);
     switch (original->kind) {
         case ExprResult::Kind::PlainOperand: {
             const auto plainOriginal = dynCast<const PlainOperand>(original.get());
@@ -618,7 +619,7 @@ std::unique_ptr<ExprResult> GenerateIr::genVarInst(const Parsing::VarExpr& varEx
 
 std::unique_ptr<ExprResult> GenerateIr::genBinaryInst(const Parsing::BinaryExpr& binaryExpr)
 {
-    BinaryInst::Operation operation = convertBinaryOperation(binaryExpr.op);
+    const BinaryInst::Operation operation = convertBinaryOperation(binaryExpr.op);
     if (operation == BinaryInst::Operation::And)
         return genBinaryAndInst(binaryExpr);
     if (operation == BinaryInst::Operation::Or)
@@ -640,8 +641,17 @@ std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentE
     switch (lhs->kind) {
         case ExprResult::Kind::PlainOperand: {
             const auto plainLhs = dynCast<const PlainOperand>(lhs.get());
+            if (assignmentExpr.op == Parsing::AssignmentExpr::Operator::Assign) {
+                insts.emplace_back(std::make_unique<CopyInst>(
+                    rhs, plainLhs->value, assignmentExpr.type->type));
+                return std::make_unique<PlainOperand>(plainLhs->value);
+            }
+            auto temp = std::make_shared<ValueVar>(makeTemporaryName(*plainLhs->value), plainLhs->value->type);
             insts.emplace_back(std::make_unique<CopyInst>(
-                rhs, plainLhs->value, assignmentExpr.type->type));
+                plainLhs->value, temp, plainLhs->value->type));
+            const BinaryInst::Operation operation = convertBinaryOperation(assignmentExpr.op);
+            insts.emplace_back(std::make_unique<BinaryInst>(
+                operation, temp, rhs, plainLhs->value, plainLhs->value->type));
             return std::make_unique<PlainOperand>(plainLhs->value);
         }
         case ExprResult::Kind::DereferencedPointer: {
@@ -777,7 +787,20 @@ std::unique_ptr<ExprResult> GenerateIr::genDereferenceInst(const Parsing::Derefe
 Identifier makeTemporaryName()
 {
     static i32 id = 0;
-    std::string prefix = "tmp.";
+    std::string prefix = ".";
+    prefix += std::to_string(id++);
+    return {prefix};
+}
+
+Identifier makeTemporaryName(Value& value)
+{
+    static i32 id = 0;
+    std::string prefix = "";
+    if (value.kind == Value::Kind::Variable) {
+        auto val = dynCast<ValueVar>(&value);
+        prefix += val->value.value;
+    }
+    prefix += '.';
     prefix += std::to_string(id++);
     return {prefix};
 }
