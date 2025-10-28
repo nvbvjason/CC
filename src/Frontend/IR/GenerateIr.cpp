@@ -639,32 +639,32 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryInst(const Parsing::BinaryExpr&
     return std::make_unique<PlainOperand>(destination);
 }
 
-std::unique_ptr<ExprResult> GenerateIr::genCompoundAssignWithoutDeref(const Parsing::AssignmentExpr& assignmentExpr, std::shared_ptr<Value>& rhs, const PlainOperand* plainLhs)
+void GenerateIr::genCompoundAssignWithoutDeref(
+    const Parsing::AssignmentExpr& assignmentExpr, std::shared_ptr<Value>& rhs, std::shared_ptr<Value> lhs)
 {
     auto temp = std::make_shared<ValueVar>(
-        makeTemporaryName(*plainLhs->value), plainLhs->value->type);
+        makeTemporaryName(*lhs), lhs->type);
     insts.emplace_back(std::make_unique<CopyInst>(
-        plainLhs->value, temp, plainLhs->value->type));
+        lhs, temp, lhs->type));
     const BinaryInst::Operation operation = convertBinaryOperation(assignmentExpr.op);
-    const Type leftType = plainLhs->value->type;
+    const Type leftType = lhs->type;
     const Type rightType = rhs->type;
     const Type commonType = getCommonType(leftType, rightType);
     if (commonType != leftType && !isBitShift(assignmentExpr.op))
         temp = castValue(temp, commonType, leftType);
     if (commonType != rightType && !isBitShift(assignmentExpr.op))
         rhs = castValue(rhs, commonType, rightType);
-    if (commonType != plainLhs->value->type && !isBitShift(assignmentExpr.op)) {
+    if (commonType != lhs->type && !isBitShift(assignmentExpr.op)) {
         insts.emplace_back(std::make_unique<BinaryInst>(
             operation, temp, rhs, temp, commonType));
-        temp = castValue(temp, plainLhs->value->type, commonType);
+        temp = castValue(temp, lhs->type, commonType);
         insts.emplace_back(std::make_unique<CopyInst>(
-            temp, plainLhs->value, plainLhs->value->type));
+            temp, lhs, lhs->type));
     }
     else {
         insts.emplace_back(std::make_unique<BinaryInst>(
-            operation, temp, rhs, plainLhs->value, plainLhs->value->type));
+            operation, temp, rhs, lhs, lhs->type));
     }
-    return std::make_unique<PlainOperand>(plainLhs->value);
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentExpr& assignmentExpr)
@@ -674,14 +674,26 @@ std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentE
     switch (lhs->kind) {
         case ExprResult::Kind::PlainOperand: {
             auto plainLhs = dynCast<const PlainOperand>(lhs.get());
-            if (assignmentExpr.op != Parsing::AssignmentExpr::Operator::Assign)
-                return genCompoundAssignWithoutDeref(assignmentExpr, rhs, plainLhs);
+            if (assignmentExpr.op != Parsing::AssignmentExpr::Operator::Assign) {
+                genCompoundAssignWithoutDeref(assignmentExpr, rhs, plainLhs->value);
+                return std::make_unique<PlainOperand>(plainLhs->value);
+            }
             insts.emplace_back(std::make_unique<CopyInst>(
                 rhs, plainLhs->value, assignmentExpr.type->type));
             return std::make_unique<PlainOperand>(plainLhs->value);
         }
         case ExprResult::Kind::DereferencedPointer: {
             const auto derefLhs = dynCast<const DereferencedPointer>(lhs.get());
+            if (assignmentExpr.op != Parsing::AssignmentExpr::Operator::Assign) {
+                auto tempLhs = std::make_shared<ValueVar>(
+                    makeTemporaryName(*derefLhs->ptr), assignmentExpr.type->type);
+                insts.emplace_back(std::make_unique<LoadInst>(
+                    derefLhs->ptr, tempLhs, assignmentExpr.type->type));
+                genCompoundAssignWithoutDeref(assignmentExpr, rhs, tempLhs);
+                insts.emplace_back(std::make_unique<StoreInst>(
+                    tempLhs, derefLhs->ptr, assignmentExpr.type->type));
+                return std::make_unique<PlainOperand>(tempLhs);
+            }
             insts.emplace_back(std::make_unique<StoreInst>(
                 rhs, derefLhs->ptr, assignmentExpr.type->type));
             return std::make_unique<PlainOperand>(rhs);

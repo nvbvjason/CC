@@ -6,8 +6,6 @@ add_library(Semantics STATIC
         LoopLabeling.cpp
         TypeResolution.cpp
         Utils.hpp
-        DeSugarDeref.cpp
-        DeSugarDeref.hpp
         Utils.cpp
 )
 
