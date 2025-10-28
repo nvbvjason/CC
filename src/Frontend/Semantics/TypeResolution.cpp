@@ -248,10 +248,6 @@ void TypeResolution::visit(Parsing::AssignmentExpr& assignmentExpr)
             std::make_unique<Parsing::VarType>(leftType), std::move(assignmentExpr.rhs));
     }
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
-    if (assignmentExpr.lhs->type->type != assignmentExpr.rhs->type->type) {
-        assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
-            Parsing::deepCopy(*assignmentExpr.lhs->type), std::move(assignmentExpr.rhs));
-    }
 }
 
 void TypeResolution::visit(Parsing::CastExpr& castExpr)

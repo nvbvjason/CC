@@ -12,7 +12,6 @@
 #include "LoopLabeling.hpp"
 #include "ValidateReturn.hpp"
 #include "TypeResolution.hpp"
-#include "DeSugarSimple.hpp"
 #include "DeSugarDeref.hpp"
 
 #include <fstream>
@@ -75,8 +74,6 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
 
 std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& program, SymbolTable& symbolTable)
 {
-    Semantics::DeSugarSimple deSugarCompoundAssign;
-    // deSugarCompoundAssign.deSugar(program);
     Semantics::VariableResolution variableResolution(symbolTable);
     if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
         return {StateCode::VariableResolution, errors};

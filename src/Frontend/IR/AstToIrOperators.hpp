@@ -96,4 +96,10 @@ inline BinaryInst::Operation convertBinaryOperation(const Parsing::AssignmentExp
     }
 }
 
+inline bool isBitShift(const Parsing::AssignmentExpr::Operator oper)
+{
+    using Oper = Parsing::AssignmentExpr::Operator;
+    return oper == Oper::LeftShiftAssign || oper == Oper::RightShiftAssign;
+}
+
 } // Ir

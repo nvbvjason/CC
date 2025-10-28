@@ -49,6 +49,7 @@ public:
 
     std::unique_ptr<ExprResult> genInst(const Parsing::Expr& parsingExpr);
     std::shared_ptr<Value> genInstAndConvert(const Parsing::Expr& parsingExpr);
+    std::shared_ptr<ValueVar> castValue(std::shared_ptr<Value> result, Type towards, Type from);
 
     std::unique_ptr<ExprResult> genCastInst(const Parsing::CastExpr& castExpr);
     std::unique_ptr<ExprResult> genUnaryInst(const Parsing::UnaryExpr& unaryExpr);
@@ -56,6 +57,9 @@ public:
     std::unique_ptr<ExprResult> genUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr);
     std::unique_ptr<ExprResult> genUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr);
     std::unique_ptr<ExprResult> genBinaryInst(const Parsing::BinaryExpr& binaryExpr);
+    std::unique_ptr<ExprResult> genCompoundAssignWithoutDeref(const Parsing::AssignmentExpr& assignmentExpr,
+                                                              std::shared_ptr<Value>& rhs,
+                                                              const PlainOperand* plainLhs);
     std::unique_ptr<ExprResult> genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genAssignInst(const Parsing::AssignmentExpr& assignmentExpr);

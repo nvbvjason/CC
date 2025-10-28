@@ -499,25 +499,30 @@ std::unique_ptr<ExprResult> GenerateIr::genCastInst(const Parsing::CastExpr& cas
     std::shared_ptr<Value> result = genInstAndConvert(*castExpr.expr);
     const Type type = castExpr.type->type;
     const Type innerType = castExpr.expr->type->type;
-    const Identifier iden(makeTemporaryName());
-    auto dst = std::make_shared<ValueVar>(iden, type);
-    if (type == Type::Double && !isSigned(innerType))
-        insts.emplace_back(std::make_unique<UIntToDoubleInst>(result, dst, type));
-    else if (type == Type::Double && isSigned(innerType))
-        insts.emplace_back(std::make_unique<IntToDoubleInst>(result, dst, type));
-    else if (!isSigned(type) && innerType == Type::Double)
-        insts.emplace_back(std::make_unique<DoubleToUIntInst>(result, dst, type));
-    else if (isSigned(type) && innerType == Type::Double)
-        insts.emplace_back(std::make_unique<DoubleToIntInst>(result, dst, type));
-    else if (getSize(type) == getSize(innerType))
-        insts.emplace_back(std::make_unique<CopyInst>(result, dst, type));
-    else if (getSize(type) < getSize(innerType))
-        insts.emplace_back(std::make_unique<TruncateInst>(result, dst, innerType));
-    else if (isSigned(innerType))
-        insts.emplace_back(std::make_unique<SignExtendInst>(result, dst, type));
-    else
-        insts.emplace_back(std::make_unique<ZeroExtendInst>(result, dst, type));
+    auto dst = castValue(result, type, innerType);
     return std::make_unique<PlainOperand>(dst);
+}
+
+std::shared_ptr<ValueVar> GenerateIr::castValue(std::shared_ptr<Value> result, const Type towards, const Type from)
+{
+    auto dst = std::make_shared<ValueVar>(makeTemporaryName(), towards);
+    if (towards == Type::Double && !isSigned(from))
+        insts.emplace_back(std::make_unique<UIntToDoubleInst>(result, dst, towards));
+    else if (towards == Type::Double && isSigned(from))
+        insts.emplace_back(std::make_unique<IntToDoubleInst>(result, dst, towards));
+    else if (!isSigned(towards) && from == Type::Double)
+        insts.emplace_back(std::make_unique<DoubleToUIntInst>(result, dst, towards));
+    else if (isSigned(towards) && from == Type::Double)
+        insts.emplace_back(std::make_unique<DoubleToIntInst>(result, dst, towards));
+    else if (getSize(towards) == getSize(from))
+        insts.emplace_back(std::make_unique<CopyInst>(result, dst, towards));
+    else if (getSize(towards) < getSize(from))
+        insts.emplace_back(std::make_unique<TruncateInst>(result, dst, from));
+    else if (isSigned(from))
+        insts.emplace_back(std::make_unique<SignExtendInst>(result, dst, towards));
+    else
+        insts.emplace_back(std::make_unique<ZeroExtendInst>(result, dst, towards));
+    return dst;
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genUnaryInst(const Parsing::UnaryExpr& unaryExpr)
@@ -634,24 +639,45 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryInst(const Parsing::BinaryExpr&
     return std::make_unique<PlainOperand>(destination);
 }
 
+std::unique_ptr<ExprResult> GenerateIr::genCompoundAssignWithoutDeref(const Parsing::AssignmentExpr& assignmentExpr, std::shared_ptr<Value>& rhs, const PlainOperand* plainLhs)
+{
+    auto temp = std::make_shared<ValueVar>(
+        makeTemporaryName(*plainLhs->value), plainLhs->value->type);
+    insts.emplace_back(std::make_unique<CopyInst>(
+        plainLhs->value, temp, plainLhs->value->type));
+    const BinaryInst::Operation operation = convertBinaryOperation(assignmentExpr.op);
+    const Type leftType = plainLhs->value->type;
+    const Type rightType = rhs->type;
+    const Type commonType = getCommonType(leftType, rightType);
+    if (commonType != leftType && !isBitShift(assignmentExpr.op))
+        temp = castValue(temp, commonType, leftType);
+    if (commonType != rightType && !isBitShift(assignmentExpr.op))
+        rhs = castValue(rhs, commonType, rightType);
+    if (commonType != plainLhs->value->type && !isBitShift(assignmentExpr.op)) {
+        insts.emplace_back(std::make_unique<BinaryInst>(
+            operation, temp, rhs, temp, commonType));
+        temp = castValue(temp, plainLhs->value->type, commonType);
+        insts.emplace_back(std::make_unique<CopyInst>(
+            temp, plainLhs->value, plainLhs->value->type));
+    }
+    else {
+        insts.emplace_back(std::make_unique<BinaryInst>(
+            operation, temp, rhs, plainLhs->value, plainLhs->value->type));
+    }
+    return std::make_unique<PlainOperand>(plainLhs->value);
+}
+
 std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentExpr& assignmentExpr)
 {
     const std::unique_ptr<ExprResult> lhs = genInst(*assignmentExpr.lhs);
-    const std::shared_ptr<Value> rhs = genInstAndConvert(*assignmentExpr.rhs);
+    std::shared_ptr<Value> rhs = genInstAndConvert(*assignmentExpr.rhs);
     switch (lhs->kind) {
         case ExprResult::Kind::PlainOperand: {
-            const auto plainLhs = dynCast<const PlainOperand>(lhs.get());
-            if (assignmentExpr.op == Parsing::AssignmentExpr::Operator::Assign) {
-                insts.emplace_back(std::make_unique<CopyInst>(
-                    rhs, plainLhs->value, assignmentExpr.type->type));
-                return std::make_unique<PlainOperand>(plainLhs->value);
-            }
-            auto temp = std::make_shared<ValueVar>(makeTemporaryName(*plainLhs->value), plainLhs->value->type);
+            auto plainLhs = dynCast<const PlainOperand>(lhs.get());
+            if (assignmentExpr.op != Parsing::AssignmentExpr::Operator::Assign)
+                return genCompoundAssignWithoutDeref(assignmentExpr, rhs, plainLhs);
             insts.emplace_back(std::make_unique<CopyInst>(
-                plainLhs->value, temp, plainLhs->value->type));
-            const BinaryInst::Operation operation = convertBinaryOperation(assignmentExpr.op);
-            insts.emplace_back(std::make_unique<BinaryInst>(
-                operation, temp, rhs, plainLhs->value, plainLhs->value->type));
+                rhs, plainLhs->value, assignmentExpr.type->type));
             return std::make_unique<PlainOperand>(plainLhs->value);
         }
         case ExprResult::Kind::DereferencedPointer: {
