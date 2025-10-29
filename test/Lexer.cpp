@@ -131,6 +131,12 @@ TEST(LexerTests, Tokens)
         {"?", TokenType::QuestionMark},
         {",", TokenType::Comma},
         {":", TokenType::Colon},
+        {"[", TokenType::OpenSqBracket},
+        {"]", TokenType::CloseSqBracket},
+        {"{", TokenType::OpenBrace},
+        {"}", TokenType::CloseBrace},
+        {"(", TokenType::OpenParen},
+        {")", TokenType::CloseParen},
     };
     for (const TestCaseLexer& testCase : testCases)
         TestSingleTokenLexing(testCase);

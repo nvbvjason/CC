@@ -1,4 +1,4 @@
-#include "Lexer.hpp"
+    #include "Lexer.hpp"
 
 #include <string>
 #include <cctype>
@@ -344,6 +344,8 @@ void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std
         value = static_cast<u32>(num);
     else if (type == Type::UnsignedLongLiteral)
         value = num;
+    else
+        std::abort();
     tokenStore.emplaceBack(
         value,
         m_line,

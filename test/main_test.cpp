@@ -848,13 +848,33 @@ TEST(Chapter14_Pointers, validSemantics)
     }
 }
 
-TEST(Chapter15_Arrays_Pointer_Arithmetic, validLexingValid)
+TEST(Chapter15_Arrays_Pointer_Arithmetic, validLexing)
 {
     const fs::path validPath = testsFolderPath / "chapter_15/valid";
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
         if (!path.is_regular_file() || path.path().extension() != ".c")
             continue;
         EXPECT_TRUE(lexerValid(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter15_Arrays_Pointer_Arithmetic, validParsing)
+{
+    const fs::path validPath = testsFolderPath / "chapter_15/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter15_Arrays_Pointer_Arithmetic, invalidParsing)
+{
+    const fs::path validPath = testsFolderPath / "chapter_15/invalid_parse";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!path.is_regular_file() || path.path().extension() != ".c")
+            continue;
+        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
     }
 }
 

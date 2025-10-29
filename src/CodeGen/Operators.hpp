@@ -20,7 +20,7 @@ inline UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
         case IrOper::Complement:        return AsmOper::Not;
         case IrOper::Negate:            return AsmOper::Neg;
         default:
-            throw std::invalid_argument("Invalid UnaryOperator type");
+            std::abort();
     }
 }
 
@@ -37,8 +37,7 @@ inline BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
         case IrOper::BitwiseOr:    return AsmOper::BitwiseOr;
         case IrOper::BitwiseXor:   return AsmOper::BitwiseXor;
         default:
-            throw std::invalid_argument("Invalid BinaryOperation type: " +
-                std::to_string(static_cast<int>(type)));
+            std::abort();
     }
 }
 
@@ -51,16 +50,14 @@ inline BinaryInst::Operator getShiftOperator(const Ir::BinaryInst::Operation typ
             case IrOper::LeftShift:    return AsmOper::LeftShiftSigned;
             case IrOper::RightShift:   return AsmOper::RightShiftSigned;
             default:
-                throw std::invalid_argument("Invalid BinaryOperation type: " +
-                    std::to_string(static_cast<int>(type)));
+                std::abort();
         }
     }
     switch (type) {
         case IrOper::LeftShift:    return AsmOper::LeftShiftUnsigned;
         case IrOper::RightShift:   return AsmOper::RightShiftUnsigned;
         default:
-            throw std::invalid_argument("Invalid BinaryOperation type: " +
-                std::to_string(static_cast<int>(type)));
+            std::abort();
     }
 }
 
@@ -76,8 +73,8 @@ inline BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const
             case IrOper::LessOrEqual:       return BinCond::LE;
             case IrOper::GreaterThan:       return BinCond::G;
             case IrOper::GreaterOrEqual:    return BinCond::GE;
-            default:
-                throw std::invalid_argument("Invalid BinaryOperation type");
+        default:
+                std::abort();
         }
     switch (oper) {
         case IrOper::Equal:             return BinCond::E;
@@ -87,7 +84,7 @@ inline BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const
         case IrOper::GreaterThan:       return BinCond::A;
         case IrOper::GreaterOrEqual:    return BinCond::AE;
         default:
-                throw std::invalid_argument("Invalid BinaryOperation type");
+            std::abort();
     }
 }
 
