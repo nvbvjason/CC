@@ -3,10 +3,11 @@
 /*
     <program>               ::= { <declaration> }
     <declaration>           ::= <function_declaration> | <variable_declaration>
-    <variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
+    <variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
     <function_declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
     <declarator>            ::= "*" <declarator> | <direct-declarator>
-    <direct-declarator>     ::= <simple-declarator> [ <param-list> ]
+    <direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
+    <declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
     <param-list>            ::= "(" "void ")" | "(" <param> [ "," <param> ] ")"
     <param>                 ::= { <type-specifier> }+ <declarator>
     <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
@@ -14,6 +15,7 @@
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
     <block_item>            ::= <statement> | <declaration>
+    <initializer>           ::= <exp> | "{" <initializer> { "," <initializer> } [ "," ] ")"
     <for-init>              ::= <variable-declaration> | <exp> ";"
     <statement>             ::= "return" <exp> ";"
                               | <exp> ";"
@@ -44,7 +46,7 @@
     <argument-list>         ::= <exp> { "," <exp> }
     <abstract-declarator>   ::= "*" [ <abstract-declarator> ]
                               | <direct-abstract-declarator>
-    <direct-abstarct-declarator> ::= "(" <abstract-declarator> ")"
+    <direct-abstract-declarator> ::= "(" <abstract-declarator> ")"
     <unop>                  ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
     <postfixop>             ::= "--" | "++"
     <binop>                 ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"

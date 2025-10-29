@@ -150,6 +150,11 @@ void ASTPrinter::visit(const PointerType& pointerType)
     ConstASTTraverser::visit(pointerType);
 }
 
+void ASTPrinter::visit(const ArrayType& arrayType)
+{
+    ConstASTTraverser::visit(arrayType);
+}
+
 void ASTPrinter::visit(const StmtBlockItem& stmtBlockItem)
 {
     IndentGuard guard(m_indentLevel);
@@ -371,6 +376,13 @@ void ASTPrinter::visit(const DereferenceExpr& dereferenceExpr)
     IndentGuard guard(m_indentLevel);
     addLine("Dereference");
     ConstASTTraverser::visit(dereferenceExpr);
+}
+
+void ASTPrinter::visit(const SubscriptExpr& subscriptExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("Subscript");
+    ConstASTTraverser::visit(subscriptExpr);
 }
 
 void ASTPrinter::addLine(const std::string& line)

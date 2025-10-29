@@ -16,7 +16,8 @@ class GenerateAsmTree {
 
     struct DoubleEqual {
         bool operator()(const double a, const double b) const noexcept {
-            if (std::isnan(a)) return std::isnan(b);
+            if (std::isnan(a))
+                return std::isnan(b);
             return std::bit_cast<u64>(a) == std::bit_cast<u64>(b);
         }
     };
