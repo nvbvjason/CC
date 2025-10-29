@@ -42,6 +42,19 @@ struct PointerType : TypeBase {
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Pointer; }
 };
 
+struct ArrayType : TypeBase {
+    std::unique_ptr<TypeBase> elementType;
+    u64 size;
+
+    explicit ArrayType(std::unique_ptr<TypeBase>&& rT, u64 size)
+        : TypeBase(Type::Array, Kind::Array), elementType(std::move(rT)), size(size) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Array; }
+};
+
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const VarType& typeBase);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType);

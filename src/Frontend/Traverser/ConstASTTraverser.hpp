@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ASTTypes.hpp"
 #include "ASTVisitor.hpp"
 
 namespace Parsing {
@@ -21,6 +22,7 @@ public:
     void visit(const VarType& varType) override {}
     void visit(const FuncType& functionType) override;
     void visit(const PointerType& pointerType) override;
+    void visit(const ArrayType& arrayType) override;
 
     // ForInit
     void visit(const DeclForInit& declForInit) override;
@@ -54,6 +56,7 @@ public:
     void visit(const FuncCallExpr& functionCallExpr) override;
     void visit(const DereferenceExpr& dereferenceExpr) override;
     void visit(const AddrOffExpr& addrOffExpr) override;
+    void visit(const SubscriptExpr& subscriptExpr) override;
 };
 
 } // Parsing

@@ -52,6 +52,11 @@ void ASTTraverser::visit(PointerType& pointerType)
     pointerType.referenced->accept(*this);
 }
 
+void ASTTraverser::visit(ArrayType& arrayType)
+{
+    arrayType.elementType->accept(*this);
+}
+
 // ForInit
 void ASTTraverser::visit(DeclForInit& declForInit)
 {
@@ -179,4 +184,9 @@ void ASTTraverser::visit(AddrOffExpr& addrOffExpr)
     addrOffExpr.reference->accept(*this);
 }
 
+void ASTTraverser::visit(SubscriptExpr& subscriptExpr)
+{
+    subscriptExpr.re->accept(*this);
+    subscriptExpr.index->accept(*this);
+}
 } // Parsing

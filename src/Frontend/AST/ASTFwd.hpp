@@ -14,6 +14,7 @@ namespace Parsing {
     type = Int | Long | UInt | ULong | Double |
          | FunType(type* params, type ret)
          | Pointer(type referenced)
+         | Array(type element, int size)
     storage_class = Static | Extern
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
@@ -44,6 +45,7 @@ namespace Parsing {
         | FunctionCall(identifier, exp* args)
         | Dereference(exp)
         | AddrOf(exp)
+        | Subscript(exp, exp)
     unary_operator = Complement | Negate | Not | Plus
                    | PrefixIncrement | PostFixIncrement
                    | PrefixDecrement | PostFixDecrement
@@ -81,6 +83,7 @@ struct TypeBase;
 struct VarType;
 struct FuncType;
 struct PointerType;
+struct ArrayType;
 
 // For loop initialization
 struct ForInit;
@@ -117,4 +120,5 @@ struct TernaryExpr;
 struct FuncCallExpr;
 struct DereferenceExpr;
 struct AddrOffExpr;
+struct SubscriptExpr;
 } // Parsing

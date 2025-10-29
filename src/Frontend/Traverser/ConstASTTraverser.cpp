@@ -53,6 +53,11 @@ void ConstASTTraverser::visit(const PointerType& pointerType)
     pointerType.referenced->accept(*this);
 }
 
+void ConstASTTraverser::visit(const ArrayType& arrayType)
+{
+    arrayType.elementType->accept(*this);
+}
+
 // ForInit
 void ConstASTTraverser::visit(const DeclForInit& declForInit)
 {
@@ -178,5 +183,11 @@ void ConstASTTraverser::visit(const DereferenceExpr& dereferenceExpr)
 void ConstASTTraverser::visit(const AddrOffExpr& addrOffExpr)
 {
     addrOffExpr.reference->accept(*this);
+}
+
+void ConstASTTraverser::visit(const SubscriptExpr& subscriptExpr)
+{
+    subscriptExpr.re->accept(*this);
+    subscriptExpr.index->accept(*this);
 }
 } // Parsing

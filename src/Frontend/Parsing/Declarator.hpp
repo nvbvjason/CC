@@ -7,7 +7,7 @@ namespace Parsing {
 
 struct Declarator {
     enum class Kind {
-        Identifier, Pointer, Function
+        Identifier, Pointer, Function, Array
     };
     Kind kind;
 
@@ -36,6 +36,17 @@ struct PointerDeclarator : Declarator {
     static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Pointer; }
 
     PointerDeclarator() = delete;
+};
+
+struct ArrayDeclarator : Declarator {
+    std::unique_ptr<Declarator> declarator;
+    u64 size;
+    explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, u64 size)
+        : Declarator(Kind::Array), declarator(std::move(declarator)), size(size) {}
+
+    static bool classof(const Declarator* declarator) { return declarator->kind == Kind::Array; }
+
+    ArrayDeclarator() = delete;
 };
 
 struct ParamInfo {

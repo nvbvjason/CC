@@ -16,7 +16,7 @@ struct ASTNode {
 
 struct TypeBase {
     enum class Kind {
-        Var, Func, Pointer
+        Var, Func, Pointer, Array
     };
     Kind kind;
     Type type;
@@ -70,7 +70,7 @@ protected:
 struct Expr : ASTNode {
     enum class Kind {
         Constant, Var, Cast, Unary, Binary, Assignment, Ternary, FunctionCall,
-        Dereference, AddrOf
+        Dereference, AddrOf, Subscript
     };
     Kind kind;
     std::unique_ptr<TypeBase> type = nullptr;
