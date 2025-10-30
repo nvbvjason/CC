@@ -85,6 +85,11 @@ struct FuncType;
 struct PointerType;
 struct ArrayType;
 
+// Initializer
+struct Initializer;
+struct SingleInitializer;
+struct CompoundInitializer;
+
 // For loop initialization
 struct ForInit;
 struct DeclForInit;

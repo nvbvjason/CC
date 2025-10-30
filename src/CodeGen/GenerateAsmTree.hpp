@@ -95,6 +95,83 @@ public:
 
 private:
     void zeroOutReg(const std::shared_ptr<RegisterOperand>& reg);
+    void emplaceUnary(std::shared_ptr<Operand> target, UnaryInst::Operator oper, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<UnaryInst>(target, oper, type));
+    }
+    void emplaceBinary(std::shared_ptr<Operand> left, std::shared_ptr<Operand> right, const BinaryInst::Operator oper,
+                       const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<BinaryInst>(left, right, oper, type));
+    }
+    void emplaceCvtsi2sd(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<Cvtsi2sdInst>(src, dst, type));
+    }
+    void emplaceCvttsd2si(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<Cvttsd2siInst>(src, dst, type));
+    }
+    void emplaceDiv(std::shared_ptr<Operand> src, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<DivInst>(src, type));
+    }
+    void emplaceCdq(const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<CdqInst>(type));
+    }
+    void emplaceIdiv(std::shared_ptr<Operand> src, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<IdivInst>(src, type));
+    }
+    void emplaceMove(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<MoveInst>(src, dst, type));
+    }
+    void emplaceMoveZeroExtend(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, dst, type));
+    }
+    void emplaceMoveSX(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst)
+    {
+        insts.emplace_back(std::make_unique<MoveSXInst>(src, dst));
+    }
+    void emplacePush(std::shared_ptr<Operand> src)
+    {
+        insts.emplace_back(std::make_unique<PushInst>(src));
+    }
+    void emplaceLea(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<LeaInst>(src, dst, type));
+    }
+    void emplaceCmp(std::shared_ptr<Operand> lhs, std::shared_ptr<Operand> rhs, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<CmpInst>(lhs, rhs, type));
+    }
+    void emplaceSetCC(BinaryInst::CondCode cond, std::shared_ptr<Operand> src)
+    {
+        insts.emplace_back(std::make_unique<SetCCInst>(cond, src));
+    }
+    void emplaceJmp(const Identifier& iden)
+    {
+        insts.emplace_back(std::make_unique<JmpInst>(iden));
+    }
+    void emplaceJmpCC(const Inst::CondCode cond, const Identifier& iden)
+    {
+        insts.emplace_back(std::make_unique<JmpCCInst>(cond, iden));
+    }
+    void emplaceLabel(const Identifier& iden)
+    {
+        insts.emplace_back(std::make_unique<LabelInst>(iden));
+    }
+    void emplaceCall(const Identifier& iden)
+    {
+        insts.emplace_back(std::make_unique<CallInst>(iden));
+    }
+    void emplaceReturn()
+    {
+        insts.emplace_back(std::make_unique<ReturnInst>());
+    }
 };
 
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);

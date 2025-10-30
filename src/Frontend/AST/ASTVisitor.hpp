@@ -22,6 +22,10 @@ public:
     virtual void visit(PointerType&) = 0;
     virtual void visit(ArrayType&) = 0;
 
+    // Initializer
+    virtual void visit(SingleInitializer&) = 0;
+    virtual void visit(CompoundInitializer&) = 0;
+
     virtual void visit(StmtBlockItem&) = 0;
     virtual void visit(DeclBlockItem&) = 0;
 
@@ -77,6 +81,10 @@ public:
     virtual void visit(const FuncType&) = 0;
     virtual void visit(const PointerType&) = 0;
     virtual void visit(const ArrayType&) = 0;
+
+    // Initializer
+    virtual void visit(const SingleInitializer&) = 0;
+    virtual void visit(const CompoundInitializer&) = 0;
 
     virtual void visit(const StmtBlockItem&) = 0;
     virtual void visit(const DeclBlockItem&) = 0;

@@ -44,10 +44,10 @@ struct PointerType : TypeBase {
 
 struct ArrayType : TypeBase {
     std::unique_ptr<TypeBase> elementType;
-    u64 size;
+    std::unique_ptr<Expr> size;
 
-    explicit ArrayType(std::unique_ptr<TypeBase>&& rT, u64 size)
-        : TypeBase(Type::Array, Kind::Array), elementType(std::move(rT)), size(size) {}
+    explicit ArrayType(std::unique_ptr<TypeBase>&& rT, std::unique_ptr<Expr>&& size)
+        : TypeBase(Type::Array, Kind::Array), elementType(std::move(rT)), size(std::move(size)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

@@ -99,8 +99,9 @@ public:
     [[nodiscard]] std::unique_ptr<Declarator> declaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> directDeclaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> simpleDeclaratorParse();
-    [[nodiscard]] std::unique_ptr<ParamInfo> paramParse();
+    [[nodiscard]] std::unique_ptr<Declarator> arrayDeclaratorParse(std::unique_ptr<Declarator>&& declarator);
     [[nodiscard]] std::unique_ptr<std::vector<ParamInfo>> paramsListParse();
+    [[nodiscard]] std::unique_ptr<ParamInfo> paramParse();
 
     [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
         declaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
@@ -109,6 +110,7 @@ public:
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
+    [[nodiscard]] std::unique_ptr<Initializer> initializerParse();
     [[nodiscard]] std::tuple<std::unique_ptr<ForInit>, bool> forInitParse();
 
     [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
@@ -137,6 +139,7 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> castExpr();
     [[nodiscard]] std::unique_ptr<Expr> exprPostfix();
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
+    [[nodiscard]] std::unique_ptr<Expr> constExprParse();
 
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> abstractDeclaratorParse();
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> directAbstractDeclaratorParse();

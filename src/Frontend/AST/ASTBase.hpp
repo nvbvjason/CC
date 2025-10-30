@@ -138,4 +138,21 @@ protected:
         : ASTNode(loc), kind(kind), storage(storageClass) {}
 };
 
+struct Initializer {
+    enum class Kind {
+        Single, Compound
+    };
+    Kind kind;
+
+    virtual ~Initializer() = default;
+
+    virtual void accept(ASTVisitor& visitor) = 0;
+    virtual void accept(ConstASTVisitor& visitor) const = 0;
+
+    Initializer() = delete;
+protected:
+    explicit Initializer(const Kind kind)
+        : kind(kind) {}
+};
+
 } // Parsing

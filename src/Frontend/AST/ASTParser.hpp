@@ -13,7 +13,7 @@ namespace Parsing {
 
 struct VarDecl final : Declaration {
     std::string name;
-    std::unique_ptr<Expr> init = nullptr;
+    std::unique_ptr<Initializer> init = nullptr;
     std::unique_ptr<TypeBase> type;
 
     VarDecl(const StorageClass storageClass, std::string name, std::unique_ptr<TypeBase> type)
@@ -421,6 +421,29 @@ struct Program {
     ~Program() = default;
     void accept(ASTVisitor& visitor) { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
+};
+
+struct SingleInitializer final : Initializer {
+    std::unique_ptr<Expr> exp;
+    explicit SingleInitializer(std::unique_ptr<Expr>&& exp)
+        : Initializer(Kind::Single), exp(std::move(exp)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Single; }
+};
+
+struct CompoundInitializer final : Initializer {
+    std::vector<std::unique_ptr<Initializer>> initializers;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    explicit CompoundInitializer(std::vector<std::unique_ptr<Initializer>>&& initializers)
+        : Initializer(Kind::Compound), initializers(std::move(initializers)) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Compound; }
 };
 
 } // namespace Parsing

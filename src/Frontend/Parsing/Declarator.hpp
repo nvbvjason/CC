@@ -5,6 +5,34 @@
 
 namespace Parsing {
 
+struct AbstractDeclarator {
+    enum class Kind {
+        Pointer, Base
+    };
+    Kind kind;
+
+    AbstractDeclarator() = delete;
+
+protected:
+    explicit AbstractDeclarator(const Kind kind)
+        : kind(kind) {}
+};
+
+struct AbstractPointer : AbstractDeclarator {
+    std::unique_ptr<AbstractDeclarator> inner;
+    explicit AbstractPointer(std::unique_ptr<AbstractDeclarator>&& i)
+        : AbstractDeclarator(Kind::Pointer), inner(std::move(i)) {}
+
+    static bool classOf(const AbstractDeclarator* abstractDeclarator) { return abstractDeclarator->kind == Kind::Pointer; }
+};
+
+struct AbstractBase : AbstractDeclarator {
+    explicit AbstractBase()
+        : AbstractDeclarator(Kind::Base) {}
+
+    static bool classOf(const AbstractDeclarator* declarator) { return declarator->kind == Kind::Base; }
+};
+
 struct Declarator {
     enum class Kind {
         Identifier, Pointer, Function, Array
@@ -40,11 +68,11 @@ struct PointerDeclarator : Declarator {
 
 struct ArrayDeclarator : Declarator {
     std::unique_ptr<Declarator> declarator;
-    u64 size;
-    explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, u64 size)
-        : Declarator(Kind::Array), declarator(std::move(declarator)), size(size) {}
+    std::unique_ptr<Expr> size;
+    explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<Expr>&& size)
+        : Declarator(Kind::Array), declarator(std::move(declarator)), size(std::move(size)) {}
 
-    static bool classof(const Declarator* declarator) { return declarator->kind == Kind::Array; }
+    static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Array; }
 
     ArrayDeclarator() = delete;
 };
@@ -69,32 +97,6 @@ struct FunctionDeclarator : Declarator {
     static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Function; }
 
     FunctionDeclarator() = delete;
-};
-
-struct AbstractDeclarator {
-    enum class Kind {
-        Pointer, Base
-    };
-    Kind kind;
-
-protected:
-    explicit AbstractDeclarator(const Kind kind)
-        : kind(kind) {}
-};
-
-struct AbstractPointer : AbstractDeclarator {
-    std::unique_ptr<AbstractDeclarator> inner;
-    explicit AbstractPointer(std::unique_ptr<AbstractDeclarator>&& i)
-        : AbstractDeclarator(Kind::Pointer), inner(std::move(i)) {}
-
-    static bool classOf(const AbstractDeclarator* abstractDeclarator) { return abstractDeclarator->kind == Kind::Pointer; }
-};
-
-struct AbstractBase : AbstractDeclarator {
-    explicit AbstractBase()
-        : AbstractDeclarator(Kind::Base) {}
-
-    static bool classOf(const AbstractDeclarator* declarator) { return declarator->kind == Kind::Base; }
 };
 
 } // Parsing
