@@ -2,6 +2,7 @@
 #include "ASTParser.hpp"
 #include "DynCast.hpp"
 #include "ASTTypes.hpp"
+#include "ASTDeepCopy.hpp"
 
 #include <unordered_set>
 
@@ -17,7 +18,7 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
     return std::move(m_errors);
 }
 
-void VariableResolution::visit(Parsing::FunDecl& funDecl)
+void VariableResolution::visit(Parsing::FunDeclaration& funDecl)
 {
     const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookup(funDecl.name);
     validateFuncDecl(funDecl, m_symbolTable, prevEntry, m_errors);
@@ -28,7 +29,7 @@ void VariableResolution::visit(Parsing::FunDecl& funDecl)
     m_symbolTable.clearArgs();
 }
 
-void validateFuncDecl(const Parsing::FunDecl& funDecl,
+void validateFuncDecl(const Parsing::FunDeclaration& funDecl,
                      const SymbolTable& symbolTable,
                      const SymbolTable::ReturnedEntry& returnedEntry,
                      std::vector<Error>& errors)
@@ -187,7 +188,7 @@ bool isValidFuncCall(const i64 location,
 }
 
 void VariableResolution::addFuncToSymbolTable(
-    const Parsing::FunDecl& funDecl,
+    const Parsing::FunDeclaration& funDecl,
     const SymbolTable::ReturnedEntry& prevEntry) const
 {
     const bool defined = funDecl.body != nullptr;

@@ -16,7 +16,8 @@ std::string varTypeToString(const Type kind)
         case Type::U64:     return "u long";
         case Type::Double:  return "double";
         case Type::Pointer: return "pointer";
-        default:           return "unknown";
+        case Type::Array:   return "array";
+        default:            return "unknown";
     }
 }
 
@@ -111,7 +112,7 @@ void ASTPrinter::visit(const VarDecl& varDecl)
     ConstASTTraverser::visit(varDecl);
 }
 
-void ASTPrinter::visit(const FunDecl& funDecl)
+void ASTPrinter::visit(const FunDeclaration& funDecl)
 {
     IndentGuard guard(m_indentLevel);
     addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storage));

@@ -17,7 +17,7 @@ void ASTTraverser::visit(VarDecl& varDecl)
 }
 
 // Declaration
-void ASTTraverser::visit(FunDecl& funDecl)
+void ASTTraverser::visit(FunDeclaration& funDecl)
 {
     if (funDecl.body)
         funDecl.body->accept(*this);

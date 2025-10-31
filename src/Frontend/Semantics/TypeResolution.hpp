@@ -4,6 +4,7 @@
 #include "ASTTraverser.hpp"
 #include "ASTTypes.hpp"
 #include "TypeConversion.hpp"
+#include "ASTDeepCopy.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -68,7 +69,7 @@ class TypeResolution : public Parsing::ASTTraverser {
 public:
     bool validate(Parsing::Program& program);
 
-    void visit(Parsing::FunDecl& funDecl) override;
+    void visit(Parsing::FunDeclaration& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::DeclForInit& declForInit) override;
 
@@ -85,7 +86,7 @@ public:
     void visit(Parsing::SubscriptExpr& subscriptExpr) override;
 
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
-    static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl);
+    static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDeclaration& funDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 };
 
@@ -112,9 +113,7 @@ inline bool isBinaryBitwise(const Parsing::BinaryExpr::Operator binOper)
 inline bool isIllegalUnaryPointerOperator(const Parsing::UnaryExpr::Operator oper)
 {
     using Operator = Parsing::UnaryExpr::Operator;
-    return oper == Operator::Complement || oper == Operator::Negate ||
-           oper == Operator::PrefixDecrement || oper == Operator::PrefixIncrement ||
-           oper == Operator::PostFixDecrement || oper == Operator::PostFixIncrement;
+    return oper == Operator::Complement || oper == Operator::Negate;
 }
 
 inline bool isIllegalDoubleCompoundAssignOperation(const Parsing::AssignmentExpr::Operator oper)

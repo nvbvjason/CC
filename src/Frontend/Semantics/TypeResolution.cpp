@@ -3,6 +3,7 @@
 #include "DynCast.hpp"
 #include "TypeConversion.hpp"
 #include "Utils.hpp"
+#include "ASTDeepCopy.hpp"
 
 namespace {
 using BinaryOp = Parsing::BinaryExpr::Operator;
@@ -15,7 +16,7 @@ bool TypeResolution::validate(Parsing::Program& program)
     return m_valid;
 }
 
-void TypeResolution::visit(Parsing::FunDecl& funDecl)
+void TypeResolution::visit(Parsing::FunDeclaration& funDecl)
 {
     const auto it = m_functions.find(funDecl.name);
     if (it != m_functions.end() && !validFuncDecl(it->second, funDecl)) {
@@ -24,16 +25,16 @@ void TypeResolution::visit(Parsing::FunDecl& funDecl)
     }
     if (funDecl.body != nullptr)
         m_definedFunctions.insert(funDecl.name);
-    m_global = false;
     const auto type = dynCast<Parsing::FuncType>(funDecl.type.get());
     FuncEntry funcEntry(type->params, type->returnType->type, funDecl.storage,
         funDecl.body != nullptr);
     m_functions.emplace_hint(it, funDecl.name, std::move(funcEntry));
+    m_global = false;
     ASTTraverser::visit(funDecl);
     m_global = true;
 }
 
-bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl)
+bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDeclaration& funDecl)
 {
     if ((funcEntry.storage == Storage::Extern || funcEntry.storage == Storage::None) &&
         funDecl.storage == Storage::Static)
@@ -141,8 +142,8 @@ void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
 {
     using Operator = Parsing::UnaryExpr::Operator;
     ASTTraverser::visit(unaryExpr);
-    if (!m_valid)
-        return;
+    // if (!m_valid)
+    //     return;
     if (unaryExpr.operand->type->type == Type::Double) {
         if (unaryExpr.op == Operator::Complement) {
             m_valid = false;

@@ -106,13 +106,13 @@ struct Block {
     void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
-struct FunDecl final : Declaration {
+struct FunDeclaration final : Declaration {
     std::string name;
     std::vector<std::string> params;
     std::unique_ptr<Block> body = nullptr;
     std::unique_ptr<TypeBase> type = nullptr;
 
-    FunDecl(const StorageClass storageClass,
+    FunDeclaration(const StorageClass storageClass,
             std::string name,
             std::vector<std::string>&& ps,
             std::unique_ptr<TypeBase>&& t)
@@ -121,7 +121,7 @@ struct FunDecl final : Declaration {
             params(std::move(ps)),
             type(std::move(t)){}
 
-    FunDecl(const i64 loc,
+    FunDeclaration(const i64 loc,
             const StorageClass storageClass,
             std::string name,
             std::vector<std::string>&& ps,
@@ -136,7 +136,7 @@ struct FunDecl final : Declaration {
 
     static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::FuncDecl; }
 
-    FunDecl() = delete;
+    FunDeclaration() = delete;
 };
 
 struct ReturnStmt final : Stmt {

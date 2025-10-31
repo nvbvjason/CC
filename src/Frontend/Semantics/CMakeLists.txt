@@ -7,6 +7,8 @@ add_library(Semantics STATIC
         TypeResolution.cpp
         Utils.hpp
         Utils.cpp
+        TypeCheckAndConvert.cpp
+        TypeCheckAndConvert.hpp
 )
 
 target_include_directories(Semantics PUBLIC

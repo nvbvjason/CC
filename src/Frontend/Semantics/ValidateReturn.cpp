@@ -1,4 +1,5 @@
 #include "ValidateReturn.hpp"
+#include "ASTDeepCopy.hpp"
 #include "DynCast.hpp"
 #include "Utils.hpp"
 
@@ -9,7 +10,7 @@ std::vector<Error> ValidateReturn::programValidate(Parsing::Program& program)
     return std::move(m_errors);
 }
 
-void ValidateReturn::visit(Parsing::FunDecl& funDecl)
+void ValidateReturn::visit(Parsing::FunDeclaration& funDecl)
 {
     if (funDecl.body == nullptr)
         return;

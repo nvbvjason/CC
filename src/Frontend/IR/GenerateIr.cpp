@@ -31,7 +31,7 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
     using Kind = Parsing::Declaration::Kind;
     switch (decl.kind) {
         case Kind::FuncDecl: {
-            const auto funcDecl = dynCast<const Parsing::FunDecl>(&decl);
+            const auto funcDecl = dynCast<const Parsing::FunDeclaration>(&decl);
             if (funcDecl->body == nullptr)
                 return nullptr;
             return functionIr(*funcDecl);
@@ -84,7 +84,7 @@ std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl&
     }
 }
 
-std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDecl& parsingFunction)
+std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDeclaration& parsingFunction)
 {
     bool global = !m_symbolTable.lookup(parsingFunction.name).hasInternalLinkage();
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);

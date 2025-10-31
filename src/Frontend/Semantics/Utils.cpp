@@ -1,5 +1,6 @@
-#include "Utils.hpp"
+#include "ASTDeepCopy.hpp"
 #include "ASTTypes.hpp"
+#include "Utils.hpp"
 #include "DynCast.hpp"
 #include "TypeConversion.hpp"
 
@@ -29,27 +30,6 @@ void assignTypeToArithmeticBinaryExpr(Parsing::BinaryExpr& binaryExpr)
         return;
     }
     binaryExpr.type = std::make_unique<Parsing::VarType>(commonType);
-}
-
-std::unique_ptr<Parsing::Expr> deepCopy(const Parsing::Expr& expr)
-{
-    using Kind = Parsing::Expr::Kind;
-    if (expr.kind == Kind::Var) {
-        const auto varExpr = dynCast<const Parsing::VarExpr>(&expr);
-        auto copy = std::make_unique<Parsing::VarExpr>(varExpr->name);
-        if (expr.type != nullptr)
-            copy->type = Parsing::deepCopy(*expr.type);
-        copy->referingTo = varExpr->referingTo;
-        return copy;
-    }
-    if (expr.kind == Kind::Dereference) {
-        const auto dereferenceExpr = dynCast<const Parsing::DereferenceExpr>(&expr);
-        std::unique_ptr<Parsing::Expr> inner = deepCopy(*dereferenceExpr->reference);
-        if (expr.type != nullptr)
-            inner->type = Parsing::deepCopy(*expr.type);
-        return std::make_unique<Parsing::DereferenceExpr>(std::move(inner));
-    }
-    std::abort();
 }
 
 bool canConvertToNullPtr(const Parsing::ConstExpr& constExpr)

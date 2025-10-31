@@ -63,14 +63,14 @@ std::unique_ptr<VarDecl> Parser::varDeclParse(const std::string& iden,
     return varDecl;
 }
 
-std::unique_ptr<FunDecl> Parser::funDeclParse(
+std::unique_ptr<FunDeclaration> Parser::funDeclParse(
         const std::string& iden,
         std::unique_ptr<TypeBase>&& type,
         const Storage storage,
         std::vector<std::string>&& params
     )
 {
-    auto result = std::make_unique<FunDecl>(m_current, storage, iden, std::move(params), std::move(type));
+    auto result = std::make_unique<FunDeclaration>(m_current, storage, iden, std::move(params), std::move(type));
     if (expect(TokenType::Semicolon))
         return result;
     const size_t before = m_current;

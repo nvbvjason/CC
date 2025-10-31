@@ -1,6 +1,7 @@
 #include "SymbolTable.hpp"
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
+#include "ASTDeepCopy.hpp"
 
 #include <cassert>
 
@@ -50,7 +51,7 @@ std::string SymbolTable::getUniqueName(const std::string& unique) const
     assert(false && "Should always get called after contains never happen in SymbolTable::getUniqueName");
 }
 
-void SymbolTable::setArgs(const Parsing::FunDecl& funDecl)
+void SymbolTable::setArgs(const Parsing::FunDeclaration& funDecl)
 {
     m_args = funDecl.params;
     m_argTypes.clear();

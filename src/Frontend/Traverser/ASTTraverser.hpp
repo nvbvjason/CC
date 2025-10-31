@@ -10,7 +10,7 @@ public:
 
     // Declaration
     void visit(VarDecl& varDecl) override;
-    void visit(FunDecl& funDecl) override;
+    void visit(FunDeclaration& funDecl) override;
 
     void visit(Block& block) override;
 

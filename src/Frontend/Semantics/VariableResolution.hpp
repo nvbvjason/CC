@@ -25,7 +25,7 @@ public:
     explicit VariableResolution(SymbolTable& symbolTable)
         : m_symbolTable(symbolTable) {}
     std::vector<Error> resolve(Parsing::Program& program);
-    void visit(Parsing::FunDecl& funDecl) override;
+    void visit(Parsing::FunDeclaration& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
@@ -35,7 +35,7 @@ public:
 
     void addVarToSymbolTable(Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry);
     void addFuncToSymbolTable(
-        const Parsing::FunDecl& funDecl,
+        const Parsing::FunDeclaration& funDecl,
         const SymbolTable::ReturnedEntry& prevEntry
     ) const;
 private:
@@ -48,7 +48,7 @@ void validateVarDecl(
     const SymbolTable::ReturnedEntry& prevEntry,
     std::vector<Error>& errors
 );
-void validateFuncDecl(const Parsing::FunDecl& funDecl,
+void validateFuncDecl(const Parsing::FunDeclaration& funDecl,
                      const SymbolTable& symbolTable,
                      const SymbolTable::ReturnedEntry& returnedEntry,
                      std::vector<Error>& errors);

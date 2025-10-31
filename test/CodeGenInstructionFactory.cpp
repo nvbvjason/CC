@@ -26,6 +26,8 @@ std::unique_ptr<Inst> CodeGenInstructionFactory::create(
             return std::make_unique<Cvtsi2sdInst>(std::move(src), std::move(dst), asmType);
         case Kind::Cmp:
             return std::make_unique<CmpInst>(std::move(src), std::move(dst), asmType);
+        default:
+            std::abort();
     }
 }
 

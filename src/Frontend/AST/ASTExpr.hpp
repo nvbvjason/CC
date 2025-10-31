@@ -77,9 +77,6 @@ struct CastExpr final : Expr {
     CastExpr(const i64 loc, std::unique_ptr<TypeBase>&& type, std::unique_ptr<Expr>&& expr) noexcept
         : Expr(loc, Kind::Cast, std::move(type)), expr(std::move(expr)) {}
 
-    explicit CastExpr(std::unique_ptr<Expr>&& expr) noexcept
-        : Expr(Kind::Cast), expr(std::move(expr)) {}
-
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -248,6 +245,9 @@ struct SubscriptExpr final : Expr {
 
     SubscriptExpr(std::unique_ptr<Expr> re, std::unique_ptr<Expr> index)
         : Expr(Kind::Subscript), referencing(std::move(re)), index(std::move(index)) {}
+
+    SubscriptExpr(const i64 loc, std::unique_ptr<Expr> re, std::unique_ptr<Expr> index)
+        : Expr(loc, Kind::Subscript), referencing(std::move(re)), index(std::move(index)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
