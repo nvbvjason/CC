@@ -197,7 +197,7 @@ void ASTTraverser::visit(AddrOffExpr& addrOffExpr)
 
 void ASTTraverser::visit(SubscriptExpr& subscriptExpr)
 {
-    subscriptExpr.re->accept(*this);
+    subscriptExpr.referencing->accept(*this);
     subscriptExpr.index->accept(*this);
 }
 } // Parsing

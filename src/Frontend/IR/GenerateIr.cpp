@@ -348,13 +348,15 @@ void GenerateIr::genDoWhileStmt(const Parsing::DoWhileStmt& doWhileStmt)
 
 void GenerateIr::genWhileStmt(const Parsing::WhileStmt& whileStmt)
 {
-    auto condition = genInstAndConvert(*whileStmt.condition);
+    const Identifier continueIden = Identifier(whileStmt.identifier + "continue");
+    const Identifier breakIden = Identifier(whileStmt.identifier + "break");
 
-    emplaceLabel(Identifier(whileStmt.identifier + "continue"));
-    emplaceJumpIfZero(condition, Identifier(whileStmt.identifier + "break"));
+    emplaceLabel(continueIden);
+    auto condition = genInstAndConvert(*whileStmt.condition);
+    emplaceJumpIfZero(condition, breakIden);
     genStmt(*whileStmt.body);
-    emplaceJump(Identifier(whileStmt.identifier + "continue"));
-    emplaceLabel(Identifier(whileStmt.identifier + "break"));
+    emplaceJump(continueIden);
+    emplaceLabel(breakIden);
 }
 
 void GenerateIr::genForStmt(const Parsing::ForStmt& forStmt)
@@ -807,7 +809,7 @@ Identifier makeTemporaryName()
 Identifier makeTemporaryName(Value& value)
 {
     static i32 id = 0;
-    std::string prefix = "";
+    std::string prefix;
     if (value.kind == Value::Kind::Variable) {
         auto val = dynCast<ValueVar>(&value);
         prefix += val->value.value;

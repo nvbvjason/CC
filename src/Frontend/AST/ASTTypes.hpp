@@ -47,8 +47,8 @@ struct ArrayType : TypeBase {
     std::unique_ptr<TypeBase> elementType;
     std::unique_ptr<Expr> size;
 
-    explicit ArrayType(std::unique_ptr<TypeBase>&& rT, std::unique_ptr<Expr>&& size)
-        : TypeBase(Type::Array, Kind::Array), elementType(std::move(rT)), size(std::move(size)) {}
+    explicit ArrayType(std::unique_ptr<TypeBase>&& elementType, std::unique_ptr<Expr>&& size)
+        : TypeBase(Type::Array, Kind::Array), elementType(std::move(elementType)), size(std::move(size)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -60,6 +60,7 @@ struct ArrayType : TypeBase {
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const VarType& typeBase);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const PointerType& pointerType);
+[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const ArrayType& arrayType);
 
 [[nodiscard]] bool areEquivalent(const TypeBase& left, const TypeBase& right);
 [[nodiscard]] bool areEquivalent(const VarType& left, const VarType& right);

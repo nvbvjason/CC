@@ -1,5 +1,6 @@
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
+#include "ASTExpr.hpp"
 
 #include <cassert>
 
@@ -17,10 +18,44 @@ std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase)
             const auto typeFunction = dynCast<const FuncType>(&typeBase);
             return deepCopy(*typeFunction);
         }
+        case Type::Array: {
+            const auto typeArray = dynCast<const ArrayType>(&typeBase);
+            return deepCopy(*typeArray);
+        }
         default:
             const auto typeVar = dynCast<const VarType>(&typeBase);
-            return deepCopy(*typeVar);
+        return deepCopy(*typeVar);
     }
+}
+
+std::unique_ptr<TypeBase> deepCopy(const ArrayType& arrayType)
+{
+    auto typeBase = deepCopy(*arrayType.elementType);
+    if (arrayType.size->kind != Expr::Kind::Constant)
+        std::abort();
+    auto constExpr = dynCast<const ConstExpr>(arrayType.size.get());
+    std::unique_ptr<Expr> expr = nullptr;
+    switch (constExpr->type->type) {
+        case Type::I32: {
+            expr = std::make_unique<ConstExpr>(constExpr->getValue<i32>(), deepCopy(*constExpr->type));
+            break;
+        }
+        case Type::I64: {
+            expr = std::make_unique<ConstExpr>(constExpr->getValue<i64>(), deepCopy(*constExpr->type));
+            break;
+        }
+        case Type::U32: {
+            expr = std::make_unique<ConstExpr>(constExpr->getValue<u32>(), deepCopy(*constExpr->type));
+            break;
+        }
+        case Type::U64: {
+            expr = std::make_unique<ConstExpr>(constExpr->getValue<u64>(), deepCopy(*constExpr->type));
+            break;
+        }
+        default:
+            std::abort();
+    }
+    return std::make_unique<ArrayType>(std::move(typeBase), std::move(expr));
 }
 
 std::unique_ptr<TypeBase> deepCopy(const VarType& varType)

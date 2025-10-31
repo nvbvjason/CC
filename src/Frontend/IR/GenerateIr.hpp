@@ -117,7 +117,7 @@ private:
     }
     void emplaceDoubleToUInt(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type type)
     {
-        insts.emplace_back(std::make_unique<DoubleToIntInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<DoubleToUIntInst>(src, dst, type));
     }
     void emplaceIntToDouble(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const Type type)
     {

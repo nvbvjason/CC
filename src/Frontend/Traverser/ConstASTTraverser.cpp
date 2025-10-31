@@ -198,7 +198,7 @@ void ConstASTTraverser::visit(const AddrOffExpr& addrOffExpr)
 
 void ConstASTTraverser::visit(const SubscriptExpr& subscriptExpr)
 {
-    subscriptExpr.re->accept(*this);
+    subscriptExpr.referencing->accept(*this);
     subscriptExpr.index->accept(*this);
 }
 } // Parsing

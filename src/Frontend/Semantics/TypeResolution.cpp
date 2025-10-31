@@ -373,6 +373,12 @@ void TypeResolution::visit(Parsing::DereferenceExpr& dereferenceExpr)
     dereferenceExpr.type = Parsing::deepCopy(*referencedPtrType->referenced);
 }
 
+void TypeResolution::visit(Parsing::SubscriptExpr& subscriptExpr)
+{
+    ASTTraverser::visit(subscriptExpr);
+    subscriptExpr.type = deepCopy(*subscriptExpr.referencing->type);
+}
+
 bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl) const
 {
     if (varDecl.storage == Storage::Extern && varDecl.init != nullptr)

@@ -243,11 +243,11 @@ struct AddrOffExpr final : Expr {
 };
 
 struct SubscriptExpr final : Expr {
-    std::unique_ptr<Expr> re;
+    std::unique_ptr<Expr> referencing;
     std::unique_ptr<Expr> index;
 
     SubscriptExpr(std::unique_ptr<Expr> re, std::unique_ptr<Expr> index)
-        : Expr(Kind::Subscript), re(std::move(re)), index(std::move(index)) {}
+        : Expr(Kind::Subscript), referencing(std::move(re)), index(std::move(index)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

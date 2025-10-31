@@ -82,6 +82,7 @@ public:
     void visit(Parsing::TernaryExpr& ternaryExpr) override;
     void visit(Parsing::AddrOffExpr& addrOffExpr) override;
     void visit(Parsing::DereferenceExpr& dereferenceExpr) override;
+    void visit(Parsing::SubscriptExpr& subscriptExpr) override;
 
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
     static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl);
