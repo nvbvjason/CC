@@ -34,8 +34,9 @@ void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& co
         default:
             std::abort();
     }
-    varDecl.init = std::make_unique<Parsing::ConstExpr>(
-        value, std::make_unique<Parsing::VarType>(TargetKind));
+    varDecl.init = std::make_unique<Parsing::SingleInitializer>(
+            std::make_unique<Parsing::ConstExpr>(
+        value, std::make_unique<Parsing::VarType>(TargetKind)));
 }
 
 class TypeResolution : public Parsing::ASTTraverser {

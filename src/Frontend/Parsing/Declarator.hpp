@@ -7,7 +7,7 @@ namespace Parsing {
 
 struct AbstractDeclarator {
     enum class Kind {
-        Pointer, Base
+        Pointer, Base, Array
     };
     Kind kind;
 
@@ -20,10 +20,25 @@ protected:
 
 struct AbstractPointer : AbstractDeclarator {
     std::unique_ptr<AbstractDeclarator> inner;
+
     explicit AbstractPointer(std::unique_ptr<AbstractDeclarator>&& i)
         : AbstractDeclarator(Kind::Pointer), inner(std::move(i)) {}
 
     static bool classOf(const AbstractDeclarator* abstractDeclarator) { return abstractDeclarator->kind == Kind::Pointer; }
+
+    AbstractPointer() = delete;
+};
+
+struct AbstractArrayDeclarator : AbstractDeclarator {
+    std::unique_ptr<AbstractDeclarator> abstractDeclarator;
+    std::unique_ptr<Expr> size;
+
+    explicit AbstractArrayDeclarator(std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<Expr>&& size)
+        : AbstractDeclarator(Kind::Array), abstractDeclarator(std::move(abstractDeclarator)), size(std::move(size)) {}
+
+    static bool classOf(const AbstractDeclarator* declarator) { return declarator->kind == Kind::Array; }
+
+    AbstractArrayDeclarator() = delete;
 };
 
 struct AbstractBase : AbstractDeclarator {
@@ -69,6 +84,7 @@ struct PointerDeclarator : Declarator {
 struct ArrayDeclarator : Declarator {
     std::unique_ptr<Declarator> declarator;
     std::unique_ptr<Expr> size;
+
     explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<Expr>&& size)
         : Declarator(Kind::Array), declarator(std::move(declarator)), size(std::move(size)) {}
 

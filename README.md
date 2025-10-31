@@ -1,8 +1,8 @@
-Generates x86_64 for Linux
-needs gcc for preprocessing and assembling
+## Language Specification
 
-The grammar
+###### The compiler supports a substantial subset of C with the following grammar:
 
+```ebnf
 <program>               ::= { <declaration> }
 <declaration>           ::= <function_declaration> | <variable_declaration>
 <variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
@@ -60,3 +60,6 @@ The grammar
 <uint>                  ::= ? An unsigned int token ?
 <ulong>                 ::= ? An unsigned int or unsigned long token ?
 <double>                ::= ? A floating-point constant token ?
+```
+
+Needs GCC for preprocessing and linking.

@@ -109,15 +109,24 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     }
     if (varDecl.init == nullptr)
         return;
-    if (!Parsing::areEquivalent(*varDecl.type, *varDecl.init->type)) {
-        if (varDecl.type->type == Type::Pointer) {
-            if (!canConvertToNullPtr(*varDecl.init)) {
-                m_valid = false;
-                return;
+    if (varDecl.init->kind == Parsing::Initializer::Kind::Single) {
+        auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+        if (!Parsing::areEquivalent(*varDecl.type, *singleInit->exp->type)) {
+            if (varDecl.type->type == Type::Pointer) {
+                if (!canConvertToNullPtr(*singleInit->exp)) {
+                    m_valid = false;
+                    return;
+                }
+                auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
+                varDecl.init = std::make_unique<Parsing::SingleInitializer>(
+                    std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr))
+                );
             }
-            auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
-            varDecl.init = std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr));
         }
+    }
+    else {
+        m_valid = false;
+        return;
     }
     assignTypeToArithmeticUnaryExpr(varDecl);
 }
@@ -154,25 +163,29 @@ void TypeResolution::visit(Parsing::UnaryExpr& unaryExpr)
 
 void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
 {
-    if (varDecl.init->kind == Parsing::Expr::Kind::Constant &&
-        varDecl.type->type != varDecl.init->type->type) {
-        const auto constExpr = dynCast<const Parsing::ConstExpr>(varDecl.init.get());
-        if (varDecl.type->type == Type::U32)
-            convertConstantExpr<u32, Type::U32>(varDecl, *constExpr);
-        else if (varDecl.type->type == Type::U64)
-            convertConstantExpr<u64, Type::U64>(varDecl, *constExpr);
-        else if (varDecl.type->type == Type::I32)
-            convertConstantExpr<i32, Type::I32>(varDecl, *constExpr);
-        else if (varDecl.type->type == Type::I64)
-            convertConstantExpr<i64, Type::I64>(varDecl, *constExpr);
-        else if (varDecl.type->type == Type::Double)
-            convertConstantExpr<double, Type::Double>(varDecl, *constExpr);
-        return;
-    }
-    if (varDecl.type->type != varDecl.init->type->type) {
-        varDecl.init = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(varDecl.type->type),
-            std::move(varDecl.init));
+    if (varDecl.init->kind == Parsing::Initializer::Kind::Single) {
+        auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+        if (singleInit->exp->kind == Parsing::Expr::Kind::Constant &&
+            varDecl.type->type != singleInit->exp->type->type) {
+            const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->exp.get());
+            if (varDecl.type->type == Type::U32)
+                convertConstantExpr<u32, Type::U32>(varDecl, *constExpr);
+            else if (varDecl.type->type == Type::U64)
+                convertConstantExpr<u64, Type::U64>(varDecl, *constExpr);
+            else if (varDecl.type->type == Type::I32)
+                convertConstantExpr<i32, Type::I32>(varDecl, *constExpr);
+            else if (varDecl.type->type == Type::I64)
+                convertConstantExpr<i64, Type::I64>(varDecl, *constExpr);
+            else if (varDecl.type->type == Type::Double)
+                convertConstantExpr<double, Type::Double>(varDecl, *constExpr);
+            return;
+        }
+        if (varDecl.type->type != singleInit->exp->type->type) {
+            varDecl.init = std::make_unique<Parsing::SingleInitializer>(
+                std::make_unique<Parsing::CastExpr>(
+                std::make_unique<Parsing::VarType>(varDecl.type->type),
+                std::move(singleInit->exp)));
+        }
     }
 }
 

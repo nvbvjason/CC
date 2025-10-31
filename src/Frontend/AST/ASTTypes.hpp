@@ -21,6 +21,7 @@ struct VarType : TypeBase {
 struct FuncType : TypeBase {
     std::vector<std::unique_ptr<TypeBase>> params;
     std::unique_ptr<TypeBase> returnType;
+
     explicit FuncType(std::unique_ptr<TypeBase>&& rT, std::vector<std::unique_ptr<TypeBase>>&& params)
         : TypeBase(Type::Function, Kind::Func), params(std::move(params)), returnType(std::move(rT)) {}
 

@@ -144,7 +144,7 @@ void reportErrors(const std::vector<Error>& errors, const TokenStore& tokenStore
 
 void reportError(const Error& error, const TokenStore& tokenStore)
 {
-    std::cout << error.msg << ": " <<
+    std::cout << error.msg << ' ' <<
         "line: " << tokenStore.getLineNumber(error.index) << ' ' <<
         "column: " << tokenStore.getColumnNumber(error.index) << '\n';
 }

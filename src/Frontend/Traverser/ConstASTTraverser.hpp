@@ -24,6 +24,10 @@ public:
     void visit(const PointerType& pointerType) override;
     void visit(const ArrayType& arrayType) override;
 
+    // Initializers
+    void visit(const SingleInitializer& singleInitializer) override;
+    void visit(const CompoundInitializer& compoundInitializer) override;
+
     // ForInit
     void visit(const DeclForInit& declForInit) override;
     void visit(const ExprForInit& exprForInit) override;

@@ -23,6 +23,10 @@ public:
     void visit(PointerType& pointerType) override;
     void visit(ArrayType& arrayType) override;
 
+    // Initializers
+    void visit(SingleInitializer& singleInitializer) override;
+    void visit(CompoundInitializer& compoundInitializer) override;
+
     // ForInit
     void visit(DeclForInit& declForInit) override;
     void visit(ExprForInit& exprForInit) override;

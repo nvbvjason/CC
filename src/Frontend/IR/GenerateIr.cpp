@@ -63,8 +63,10 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
 
 std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl& varDecl, const bool defined)
 {
-    if (defined)
-        return genInstAndConvert(*varDecl.init);
+    if (defined && varDecl.init->kind == Parsing::Initializer::Kind::Single) {
+        auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+        return genInstAndConvert(*singleInit->exp);
+    }
     switch (varDecl.type->type) {
         case Type::I32:
             return std::make_shared<ValueConst>(0);
@@ -151,12 +153,15 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
         return genStaticLocal(*varDecl);
     if (varDecl->init == nullptr)
         return;
-    std::shared_ptr<Value> value = genInstAndConvert(*varDecl->init);
-    auto temporary = std::make_shared<ValueVar>(makeTemporaryName(), varDecl->type->type);
-    emplaceCopy(value, temporary, varDecl->type->type);
-    const Identifier iden(varDecl->name);
-    auto var = std::make_shared<ValueVar>(iden, varDecl->type->type);
-    emplaceCopy(temporary, var, varDecl->type->type);
+    if (varDecl->init->kind == Parsing::Initializer::Kind::Single) {
+        auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl->init.get());
+        std::shared_ptr<Value> value = genInstAndConvert(*singleInit->exp);
+        auto temporary = std::make_shared<ValueVar>(makeTemporaryName(), varDecl->type->type);
+        emplaceCopy(value, temporary, varDecl->type->type);
+        const Identifier iden(varDecl->name);
+        auto var = std::make_shared<ValueVar>(iden, varDecl->type->type);
+        emplaceCopy(temporary, var, varDecl->type->type);
+    }
 }
 
 void GenerateIr::genStaticLocal(const Parsing::VarDecl& varDecl)

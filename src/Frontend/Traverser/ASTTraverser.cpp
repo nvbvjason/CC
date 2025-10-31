@@ -57,6 +57,17 @@ void ASTTraverser::visit(ArrayType& arrayType)
     arrayType.elementType->accept(*this);
 }
 
+void ASTTraverser::visit(SingleInitializer& singleInitializer)
+{
+    singleInitializer.exp->accept(*this);
+}
+
+void ASTTraverser::visit(CompoundInitializer& compoundInitializer)
+{
+    for (const auto& initializer : compoundInitializer.initializers)
+        initializer->accept(*this);
+}
+
 // ForInit
 void ASTTraverser::visit(DeclForInit& declForInit)
 {

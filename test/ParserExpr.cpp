@@ -32,21 +32,21 @@ TEST(ParserExprTests, PostfixIncrementSuccess)
 {
     const std::vector tokenTypes{TokenType::IntegerLiteral, TokenType::Increment};
     Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(Kind::Unary, parser.exprPostfix()->kind);
+    EXPECT_EQ(Kind::Unary, parser.exprPostfixParse()->kind);
 }
 
 TEST(ParserExprTests, PostfixDecrementSuccess)
 {
     const std::vector tokenTypes{TokenType::IntegerLiteral, TokenType::Decrement};
     Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(Kind::Unary, parser.exprPostfix()->kind);
+    EXPECT_EQ(Kind::Unary, parser.exprPostfixParse()->kind);
 }
 
 TEST(ParserExprTests, PostfixIntegerLiteranl)
 {
     const std::vector tokenTypes{TokenType::IntegerLiteral};
     Parsing::Parser parser = createParser(tokenTypes);
-    EXPECT_EQ(Kind::Constant, parser.exprPostfix()->kind);
+    EXPECT_EQ(Kind::Constant, parser.exprPostfixParse()->kind);
 }
 
 TEST(ParserExprTests, FactorIntgerLiteralSuccess)

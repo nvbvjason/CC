@@ -33,12 +33,12 @@
                               | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>
                               | ";"
     <exp>                   ::= <unary_exp>
-                              | <exp> <binop> <exp>
+                              | <exp> <binary-op> <exp>
                               | <exp> "?" <exp> ":" <exp>
     <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                               | <unary-exp>
-    <unary-exp>             ::= <postfix-exp> | <unop> <unary-exp>
-    <postfix-exp>           ::= <factor> | <postfix_exp> <postfixop>
+    <unary-exp>             ::= <postfix-exp> | <unary-op> <cast-exp>
+    <postfix-exp>           ::= <factor> | <postfix_exp> <postfix-op>
     <factor>                ::= <const>
                               | <identifier>
                               | <identifier> "(" [ <argument-list> ] ")"
@@ -47,9 +47,9 @@
     <abstract-declarator>   ::= "*" [ <abstract-declarator> ]
                               | <direct-abstract-declarator>
     <direct-abstract-declarator> ::= "(" <abstract-declarator> ")"
-    <unop>                  ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
-    <postfixop>             ::= "--" | "++"
-    <binop>                 ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
+    <unary-op>               ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
+    <postfix-op>             ::= "--" | "++"
+    <binary-op>              ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
                               | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
                               | "+=" | "-=" | "*=" | "/=" | "%="
                               | "&=" | "|=" | "^=" | "<<=" | ">>="
@@ -105,8 +105,8 @@ public:
 
     [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
         declaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
-    static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> processFunctionDeclarator(
-        std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+        processFunctionDeclarator(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
@@ -136,8 +136,9 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
     [[nodiscard]] std::unique_ptr<Expr> addrOFExprParse();
     [[nodiscard]] std::unique_ptr<Expr> dereferenceExprParse();
-    [[nodiscard]] std::unique_ptr<Expr> castExpr();
-    [[nodiscard]] std::unique_ptr<Expr> exprPostfix();
+    [[nodiscard]] std::unique_ptr<Expr> subscriptExprParse(std::unique_ptr<Expr>&& expr);
+    [[nodiscard]] std::unique_ptr<Expr> castExprParse();
+    [[nodiscard]] std::unique_ptr<Expr> exprPostfixParse();
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
     [[nodiscard]] std::unique_ptr<Expr> constExprParse();
 
@@ -145,7 +146,7 @@ public:
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> directAbstractDeclaratorParse();
 
     [[nodiscard]] static std::unique_ptr<TypeBase> abstractDeclaratorProcess(
-        std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, Type type);
+        std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<TypeBase>&& type);
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
     [[nodiscard]] Type typeParse();
