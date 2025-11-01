@@ -28,9 +28,8 @@ void LvalueVerification::visit(const Parsing::UnaryExpr& unaryExpr)
 
 void LvalueVerification::visit(const Parsing::AssignmentExpr& assignmentExpr)
 {
-    if (assignmentExpr.lhs->kind != Parsing::Expr::Kind::Var &&
-        assignmentExpr.lhs->kind != Parsing::Expr::Kind::Dereference)
-        m_errors.emplace_back("Assignment on non allowed expression type ", assignmentExpr.lhs->location);
+    if (!isAllowedLValueExprKind(assignmentExpr.lhs->kind))
+        m_errors.emplace_back("Assignment onto non LValue type ", assignmentExpr.lhs->location);
     ConstASTTraverser::visit(assignmentExpr);
 }
 

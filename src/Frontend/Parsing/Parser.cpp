@@ -115,16 +115,18 @@ std::unique_ptr<Declarator> Parser::arrayDeclaratorParse(std::unique_ptr<Declara
     if (peekTokenType() != TokenType::OpenSqBracket)
         return nullptr;
     while (expect(TokenType::OpenSqBracket)) {
-        auto constExpr = constExprParse();
-        if (constExpr == nullptr) {
+        auto expr = constExprParse();
+        if (expr == nullptr) {
             addError("Unexpected token in array declaration", m_current - 1);
             return nullptr;
         }
-        if (constExpr->type->type == Type::Double) {
+        if (expr->type->type == Type::Double) {
             addError("Double cannot be an array size", m_current - 1);
             return nullptr;
         }
-        declarator = std::make_unique<ArrayDeclarator>(std::move(declarator), std::move(constExpr));
+        const auto constExpr = dynCast<ConstExpr>(expr.get());
+        const i64 size = constExpr->getValue<i64>();
+        declarator = std::make_unique<ArrayDeclarator>(std::move(declarator), size);
         if (!expect(TokenType::CloseSqBracket)) {
             addError("Expected closing bracket", m_current);
             return nullptr;
@@ -757,7 +759,7 @@ std::unique_ptr<Expr> Parser::subscriptExprParse(std::unique_ptr<Expr>&& expr)
         auto index = exprParse(0);
         if (!expect(TokenType::CloseSqBracket))
             return nullptr;
-        expr = std::make_unique<SubscriptExpr>(std::move(expr), std::move(index));
+        expr = std::make_unique<SubscriptExpr>(m_current, std::move(expr), std::move(index));
     }
     return expr;
 }
@@ -858,11 +860,12 @@ std::unique_ptr<AbstractDeclarator> Parser::directAbstractDeclaratorParse()
     if (!expect(TokenType::CloseParen))
         return nullptr;
     while (expect(TokenType::OpenSqBracket)) {
-        auto constExpr = constExprParse();
+        auto expr = constExprParse();
         if (!expect(TokenType::CloseSqBracket))
             return nullptr;
-        abstractDeclarator = std::make_unique<AbstractArrayDeclarator>(
-            std::move(abstractDeclarator), std::move(constExpr));
+        const auto constExpr = dynCast<ConstExpr>(expr.get());
+        const i64 size = constExpr->getValue<i64>();
+        abstractDeclarator = std::make_unique<AbstractArrayDeclarator>(std::move(abstractDeclarator), size);
     }
     return abstractDeclarator;
 }
@@ -878,7 +881,7 @@ std::unique_ptr<TypeBase> Parser::abstractDeclaratorProcess(
         }
         case AbstractArrayDeclarator::Kind::Array: {
             const auto arrayDeclarator = dynCast<AbstractArrayDeclarator>(abstractDeclarator.get());
-            type = std::make_unique<ArrayType>(std::move(type), std::move(arrayDeclarator->size));
+            type = std::make_unique<ArrayType>(std::move(type), arrayDeclarator->size);
             return abstractDeclaratorProcess(std::move(arrayDeclarator->abstractDeclarator), std::move(type));
         }
         case AbstractArrayDeclarator::Kind::Base:

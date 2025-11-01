@@ -31,10 +31,10 @@ struct AbstractPointer : AbstractDeclarator {
 
 struct AbstractArrayDeclarator : AbstractDeclarator {
     std::unique_ptr<AbstractDeclarator> abstractDeclarator;
-    std::unique_ptr<Expr> size;
+    i64 size;
 
-    explicit AbstractArrayDeclarator(std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<Expr>&& size)
-        : AbstractDeclarator(Kind::Array), abstractDeclarator(std::move(abstractDeclarator)), size(std::move(size)) {}
+    explicit AbstractArrayDeclarator(std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, const i64 size)
+        : AbstractDeclarator(Kind::Array), abstractDeclarator(std::move(abstractDeclarator)), size(size) {}
 
     static bool classOf(const AbstractDeclarator* declarator) { return declarator->kind == Kind::Array; }
 
@@ -83,10 +83,10 @@ struct PointerDeclarator : Declarator {
 
 struct ArrayDeclarator : Declarator {
     std::unique_ptr<Declarator> declarator;
-    std::unique_ptr<Expr> size;
+    i64 size;
 
-    explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<Expr>&& size)
-        : Declarator(Kind::Array), declarator(std::move(declarator)), size(std::move(size)) {}
+    explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, const i64 size)
+        : Declarator(Kind::Array), declarator(std::move(declarator)), size(size) {}
 
     static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Array; }
 

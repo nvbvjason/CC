@@ -37,7 +37,6 @@ StateCode CompilerDriver::wrappedRun()
     if (StateCode errorCode = validateAndSetArg(argument); errorCode != StateCode::Continue)
         return errorCode;
     const std::string inputFile = m_args.back();
-    std::vector<Lexing::Token> tokens;
     FrontendDriver frontend(argument, inputFile);
     auto [irProgramOptional, err] = frontend.run();
     if (!irProgramOptional.has_value())

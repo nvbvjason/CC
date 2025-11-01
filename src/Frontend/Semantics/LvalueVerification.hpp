@@ -28,4 +28,10 @@ inline bool isNotAnLvalue(const Parsing::Expr::Kind kind)
            kind == Kind::Ternary;
 }
 
+inline bool isAllowedLValueExprKind(const Parsing::Expr::Kind kind)
+{
+    using Kind = Parsing::Expr::Kind;
+    return kind == Kind::Var || kind == Kind::Dereference || kind == Kind::Subscript;
+}
+
 } // Semantics

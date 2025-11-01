@@ -33,31 +33,7 @@ std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase)
 std::unique_ptr<TypeBase> deepCopy(const ArrayType& arrayType)
 {
     auto typeBase = deepCopy(*arrayType.elementType);
-    if (arrayType.size->kind != Expr::Kind::Constant)
-        std::abort();
-    const auto constExpr = dynCast<const ConstExpr>(arrayType.size.get());
-    std::unique_ptr<Expr> expr = nullptr;
-    switch (constExpr->type->type) {
-        case Type::I32: {
-            expr = std::make_unique<ConstExpr>(constExpr->getValue<i32>(), deepCopy(*constExpr->type));
-            break;
-        }
-        case Type::I64: {
-            expr = std::make_unique<ConstExpr>(constExpr->getValue<i64>(), deepCopy(*constExpr->type));
-            break;
-        }
-        case Type::U32: {
-            expr = std::make_unique<ConstExpr>(constExpr->getValue<u32>(), deepCopy(*constExpr->type));
-            break;
-        }
-        case Type::U64: {
-            expr = std::make_unique<ConstExpr>(constExpr->getValue<u64>(), deepCopy(*constExpr->type));
-            break;
-        }
-        default:
-            std::abort();
-    }
-    return std::make_unique<ArrayType>(std::move(typeBase), std::move(expr));
+    return std::make_unique<ArrayType>(std::move(typeBase), arrayType.size);
 }
 
 std::unique_ptr<TypeBase> deepCopy(const VarType& varType)
@@ -100,7 +76,7 @@ bool areEquivalent(const TypeBase& left, const TypeBase& right)
         case Type::Array: {
             const auto typeFunctionLeft = dynCast<const ArrayType>(&left);
             const auto typeFunctionRight = dynCast<const ArrayType>(&right);
-            return areEquivalent(*typeFunctionLeft->elementType, *typeFunctionRight->elementType);
+            return areEquivalent(*typeFunctionLeft, *typeFunctionRight);
         }
         default: {
             const auto typeVarRight = dynCast<const VarType>(&left);
@@ -130,6 +106,13 @@ bool areEquivalent(const FuncType& left, const FuncType& right)
 bool areEquivalent(const PointerType& left, const PointerType& right)
 {
     return areEquivalent(*left.referenced, *right.referenced);
+}
+
+bool areEquivalent(const ArrayType& left, const ArrayType& right)
+{
+    if (left.size != right.size)
+        return false;
+    return areEquivalent(*left.elementType, *right.elementType);
 }
 
 std::unique_ptr<Expr> deepCopy(const Expr& expr)

@@ -102,7 +102,7 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::FuncCallExpr& funCallExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::DereferenceExpr& dereferenceExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::AddrOffExpr& addrOffExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::SubscriptExpr& expr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::SubscriptExpr& subscriptExpr);
 
     bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
