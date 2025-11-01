@@ -66,10 +66,11 @@ class TypeResolution final : public Parsing::ASTTraverser {
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
     std::vector<Error> m_errors;
+    std::vector<Parsing::VarDecl*> m_arrayDecls;
     bool m_isConst = true;
     bool m_global = true;
 public:
-    std::vector<Error> validate(Parsing::Program& program);
+    std::tuple<std::vector<Error>, std::vector<Parsing::VarDecl*>> validate(Parsing::Program& program);
 
     void visit(Parsing::FunDeclaration& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;

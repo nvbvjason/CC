@@ -89,6 +89,7 @@ struct ArrayType;
 struct Initializer;
 struct SingleInitializer;
 struct CompoundInitializer;
+struct ZeroInitializer;
 
 // For loop initialization
 struct ForInit;

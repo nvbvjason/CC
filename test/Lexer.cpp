@@ -44,7 +44,7 @@ void TestSingleTokenLexing(const TestCaseLexer& testCase)
     const TokenStore tokenStore = runLexerTest(testCase.input);
     ASSERT_EQ(tokenStore.size(), 1 + endOfFile) << "Expected exactly one token for input: " << testCase.input;
     const Lexing::Token expected{
-        1, 1, testCase.expectedType, testCase.input
+        1, 1, testCase.expectedType, ""
     };
     EXPECT_EQ(tokenStore.getToken(0), expected) << "Token mismatch for input: " << testCase.input;
 }
@@ -58,16 +58,16 @@ TEST(LexerTests, GetTokens)
     EXPECT_EQ(tokenStore.size(), 11);
 
     const Lexing::Token expected[] = {
-        {1, 1, TokenType::IntKeyword, "int"},
+        {1, 1, TokenType::IntKeyword, ""},
         {1, 5, TokenType::Identifier, "main"},
-        {1, 9, TokenType::OpenParen, "("},
-        {1, 10, TokenType::Void, "void"},
-        {1, 14, TokenType::CloseParen, ")"},
-        {1, 16, TokenType::OpenBrace, "{"},
-        {3, 5, TokenType::Return, "return"},
+        {1, 9, TokenType::OpenParen, ""},
+        {1, 10, TokenType::Void, ""},
+        {1, 14, TokenType::CloseParen, ""},
+        {1, 16, TokenType::OpenBrace, ""},
+        {3, 5, TokenType::Return, ""},
         {3, 12, TokenType::IntegerLiteral, "100"},
-        {3, 15, TokenType::Semicolon, ";"},
-        {4, 1, TokenType::CloseBrace, "}"},
+        {3, 15, TokenType::Semicolon, ""},
+        {4, 1, TokenType::CloseBrace, ""},
         {4, 2, TokenType::EndOfFile, ""}
     };
 

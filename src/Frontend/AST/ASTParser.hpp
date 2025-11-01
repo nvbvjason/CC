@@ -446,4 +446,16 @@ struct CompoundInitializer final : Initializer {
     static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Compound; }
 };
 
+struct ZeroInitializer final : Initializer {
+    const i64 size;
+
+    explicit ZeroInitializer(const i64 size)
+        : Initializer(Kind::Zero), size(size) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Zero; }
+};
+
 } // namespace Parsing

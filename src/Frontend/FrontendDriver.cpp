@@ -16,6 +16,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "InitArrays.hpp"
+
 static std::vector<Error> lex(TokenStore& tokenStore, const std::filesystem::path& inputFile);
 static std::vector<Error> parse(const TokenStore& tokenStore, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
@@ -77,8 +79,10 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& pro
     if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
         return {StateCode::VariableResolution, errors};
     Semantics::TypeResolution typeResolution;
-    if (const std::vector<Error> errors = typeResolution.validate(program); !errors.empty())
+    if (auto [errors, varDecls] = typeResolution.validate(program); !errors.empty()) {
+        Semantics::initArrays(varDecls);
         return {StateCode::TypeResolution, errors};
+    }
     Semantics::LvalueVerification lvalueVerification;
     if (const std::vector<Error> errors = lvalueVerification.resolve(program); !errors.empty())
         return {StateCode::LValueVerification, errors};

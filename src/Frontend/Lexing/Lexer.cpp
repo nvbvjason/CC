@@ -316,7 +316,7 @@ void Lexer::floating()
         addToken(Type::Invalid);
         return;
     }
-    addToken(Type::DoubleLiteral);
+    addTokenStoreString(Type::DoubleLiteral);
 }
 
 void Lexer::identifier()
@@ -327,7 +327,7 @@ void Lexer::identifier()
     const std::string text = c_source.substr(m_start, ahead);
     const auto iden = keywords.find(text);
     if (iden == keywords.end()) {
-        addToken(Type::Identifier);
+        addTokenStoreString(Type::Identifier);
         return;
     }
     addToken(iden->second);
@@ -357,6 +357,20 @@ void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std
 void Lexer::addToken(const Token::Type type)
 {
     const i32 ahead = m_current - m_start;
+    std::variant<i32, i64, u32, u64, double> valueToStore;
+    tokenStore.emplaceBack(
+        valueToStore,
+        m_line,
+        m_column - ahead,
+        type,
+        "");
+    if (type == Type::Invalid)
+        errors.emplace_back("Unknown token type", tokenStore.size() - 1);
+}
+
+void Lexer::addTokenStoreString(const Token::Type type)
+{
+    const i32 ahead = m_current - m_start;
     std::string text = c_source.substr(m_start, ahead);
     std::variant<i32, i64, u32, u64, double> valueToStore = 0;
     if (type == Type::DoubleLiteral) {
@@ -372,7 +386,5 @@ void Lexer::addToken(const Token::Type type)
         m_column - ahead,
         type,
         std::move(text));
-    if (type == Type::Invalid)
-        errors.emplace_back("Unknown token type", tokenStore.size() - 1);
 }
 }
