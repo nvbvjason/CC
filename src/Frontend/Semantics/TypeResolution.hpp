@@ -10,7 +10,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace Semantics {
+#include "Error.hpp"
+
+ namespace Semantics {
 
 template<typename TargetType, Type TargetKind>
 void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
@@ -40,7 +42,7 @@ void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& co
         value, std::make_unique<Parsing::VarType>(TargetKind)));
 }
 
-class TypeResolution : public Parsing::ASTTraverser {
+class TypeResolution final : public Parsing::ASTTraverser {
     static constexpr auto s_boolType = Type::I32;
 
     struct FuncEntry {
@@ -63,15 +65,15 @@ class TypeResolution : public Parsing::ASTTraverser {
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
-    bool m_valid = true;
+    std::vector<Error> m_errors;
     bool m_isConst = true;
     bool m_global = true;
 public:
-    bool validate(Parsing::Program& program);
+    std::vector<Error> validate(Parsing::Program& program);
 
     void visit(Parsing::FunDeclaration& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
-    bool isIllegalVarDecl(const Parsing::VarDecl& varDecl) const;
+    bool isIllegalVarDecl(const Parsing::VarDecl& varDecl);
     void visit(Parsing::DeclForInit& declForInit) override;
     void visit(Parsing::ExprForInit& exprForInit) override;
 
@@ -102,9 +104,13 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::AddrOffExpr& addrOffExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::SubscriptExpr& expr);
 
+    bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
-    static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDeclaration& funDecl);
+    [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDeclaration& funDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
+private:
+    void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }
+    [[nodiscard]] bool hasError() const { return !m_errors.empty(); }
 };
 
 inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
@@ -148,7 +154,6 @@ inline bool isIllegalPointerCompoundAssignOperation(const Parsing::AssignmentExp
            oper == Oper::DivideAssign || oper == Oper::ModuloAssign;
 }
 
-bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
 } // Semantics

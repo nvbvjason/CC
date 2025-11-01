@@ -10,17 +10,17 @@ using BinaryOp = Parsing::BinaryExpr::Operator;
 }
 
 namespace Semantics {
-bool TypeResolution::validate(Parsing::Program& program)
+std::vector<Error> TypeResolution::validate(Parsing::Program& program)
 {
     ASTTraverser::visit(program);
-    return m_valid;
+    return std::move(m_errors);
 }
 
 void TypeResolution::visit(Parsing::FunDeclaration& funDecl)
 {
     const auto it = m_functions.find(funDecl.name);
     if (it != m_functions.end() && !validFuncDecl(it->second, funDecl)) {
-        m_valid = false;
+        addError("Function declaration does not exist", funDecl.location);
         return;
     }
     auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
@@ -33,7 +33,7 @@ void TypeResolution::visit(Parsing::FunDeclaration& funDecl)
         }
     }
     if (funcType->returnType->type == Type::Array) {
-        m_valid = false;
+        addError("Function cannot return array", funDecl.location);
         return;
     }
 
@@ -55,25 +55,32 @@ void TypeResolution::visit(Parsing::FunDeclaration& funDecl)
 bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDeclaration& funDecl)
 {
     if ((funcEntry.storage == Storage::Extern || funcEntry.storage == Storage::None) &&
-        funDecl.storage == Storage::Static)
+        funDecl.storage == Storage::Static) {
+        addError("Incompatible storage types", funDecl.location);
         return false;
-    if (funDecl.params.size() != funcEntry.paramTypes.size())
+    }
+    if (funDecl.params.size() != funcEntry.paramTypes.size()) {
+        addError("Unequal parameter numbers in function declarations", funDecl.location);
         return false;
+    }
     const auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
-    for (size_t i = 0; i < funDecl.params.size(); ++i)
-        if (funcEntry.paramTypes[i]->type != funcType->params[i]->type)
+    for (size_t i = 0; i < funDecl.params.size(); ++i) {
+        if (funcEntry.paramTypes[i]->type != funcType->params[i]->type) {
+            addError("Incompatible parameter types in function declarations", funDecl.location);
             return false;
-    if (funcType->returnType->type != funcEntry.returnType)
+        }
+    }
+    if (funcType->returnType->type != funcEntry.returnType) {
+        addError("Incompatible return types in function declarations", funDecl.location);
         return false;
+    }
     return true;
 }
 
 void TypeResolution::visit(Parsing::VarDecl& varDecl)
 {
-    if (isIllegalVarDecl(varDecl)) {
-        m_valid = false;
+    if (isIllegalVarDecl(varDecl))
         return;
-    }
     if (m_global && varDecl.storage == Storage::Static)
         m_globalStaticVars.insert(varDecl.name);
     if (!m_global && !m_globalStaticVars.contains(varDecl.name))
@@ -83,10 +90,10 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     if (varDecl.init)
         varDecl.init->accept(*this);
 
-    if (!m_valid)
+    if (hasError())
         return;
     if (illegalNonConstInitialization(varDecl, m_isConst, m_global)) {
-        m_valid = false;
+        addError("Is illegal non const variable initilization", varDecl.location);
         return;
     }
     if (varDecl.init == nullptr)
@@ -96,13 +103,13 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
 
         singleInit->exp = convertArrayType(*singleInit->exp);
 
-        if (!m_valid)
+        if (hasError())
             return;
 
         if (!Parsing::areEquivalent(*varDecl.type, *singleInit->exp->type)) {
             if (varDecl.type->type == Type::Pointer) {
                 if (!canConvertToNullPtr(*singleInit->exp)) {
-                    m_valid = false;
+                    addError("Cannot convert pointer init to pointer", varDecl.location);
                     return;
                 }
                 auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
@@ -113,7 +120,7 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         }
     }
     else {
-        m_valid = false;
+        addError("Cannot declare compound init", varDecl.location);
         return;
     }
     assignTypeToArithmeticUnaryExpr(varDecl);
@@ -161,7 +168,7 @@ void TypeResolution::visit(Parsing::CompoundInitializer& compoundInitializer)
 void TypeResolution::visit(Parsing::DeclForInit& declForInit)
 {
     if (hasStorageClassSpecifier(declForInit))
-        m_valid = false;
+        addError("Declaration in for cannot have storage specifier", declForInit.location);
     ASTTraverser::visit(declForInit);
 }
 
@@ -298,11 +305,11 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::FuncCallExpr& fu
 {
     const auto it = m_functions.find(funCallExpr.name);
     if (it == m_functions.end()) {
-        m_valid = false;
+        addError("Called function is not declared", funCallExpr.location);
         return Parsing::deepCopy(funCallExpr);
     }
     if (it->second.paramTypes.size() != funCallExpr.args.size()) {
-        m_valid = false;
+        addError("Called function is not declared", funCallExpr.location);
         return Parsing::deepCopy(funCallExpr);
     }
 
@@ -311,19 +318,19 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::FuncCallExpr& fu
         args.push_back(convertArrayType(*arg));
     funCallExpr.args = std::move(args);
 
-    if (!m_valid)
+    if (hasError())
         return Parsing::deepCopy(funCallExpr);
     for (size_t i = 0; i < funCallExpr.args.size(); ++i) {
         const Type typeInner = funCallExpr.args[i]->type->type;
         const Type castTo = it->second.paramTypes[i]->type;
         if (typeInner == Type::Pointer && castTo == Type::Pointer) {
             if (!Parsing::areEquivalent(*funCallExpr.args[i]->type, *it->second.paramTypes[i])) {
-                m_valid = false;
+                addError("Function arg of of different type with param", funCallExpr.args[i]->location);
                 return Parsing::deepCopy(funCallExpr);
             }
         }
         if (castTo != Type::Pointer && typeInner == Type::Pointer) {
-            m_valid = false;
+            addError("Cannot cast pointer arg to non pointer", funCallExpr.args[i]->location);
             return Parsing::deepCopy(funCallExpr);
         }
         if (typeInner != castTo)
@@ -346,18 +353,18 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::UnaryExpr& unary
 
     unaryExpr.operand = convertArrayType(*unaryExpr.operand);
 
-    if (!m_valid)
+    if (hasError())
         return Parsing::deepCopy(unaryExpr);
 
     if (unaryExpr.operand->type->type == Type::Double) {
         if (unaryExpr.op == Operator::Complement) {
-            m_valid = false;
+            addError("Cannot complement double", unaryExpr.location);
             return Parsing::deepCopy(unaryExpr);
         }
     }
     if (unaryExpr.operand->type->type == Type::Pointer) {
         if (isIllegalUnaryPointerOperator(unaryExpr.op)) {
-            m_valid = false;
+            addError("Cannot apply operator to pointer", unaryExpr.location);
             return Parsing::deepCopy(unaryExpr);
         }
     }
@@ -373,7 +380,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::BinaryExpr& bina
     binaryExpr.lhs = convertArrayType(*binaryExpr.lhs);
     binaryExpr.rhs = convertArrayType(*binaryExpr.rhs);
 
-    if (!m_valid)
+    if (hasError())
         return Parsing::deepCopy(binaryExpr);
     if (binaryExpr.op == BinaryOp::And || binaryExpr.op == BinaryOp::Or) {
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
@@ -383,18 +390,18 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::BinaryExpr& bina
     const Type rightType = binaryExpr.rhs->type->type;
     const Type commonType = getCommonType(leftType, rightType);
     if (commonType == Type::Double && (isBinaryBitwise(binaryExpr.op) || binaryExpr.op == BinaryOp::Modulo)) {
-        m_valid = false;
+        addError("Cannot apply operator to double", binaryExpr.location);
         return Parsing::deepCopy(binaryExpr);
     }
     if (leftType == Type::Pointer || rightType == Type::Pointer) {
         if (binaryExpr.op == BinaryOp::Modulo || binaryExpr.op == BinaryOp::Multiply ||
             binaryExpr.op == BinaryOp::Divide ||
             binaryExpr.op == BinaryOp::BitwiseOr || binaryExpr.op == BinaryOp::BitwiseXor) {
-            m_valid = false;
+            addError("Cannot apply operator to pointer", binaryExpr.location);
             return Parsing::deepCopy(binaryExpr);
         }
         if (!areValidNonArithmeticTypesInBinaryExpr(binaryExpr)) {
-            m_valid = false;
+            addError("Cannot apply operator to non-arithmetic types", binaryExpr.location);
             return Parsing::deepCopy(binaryExpr);
         }
         if (leftType != Type::Pointer || rightType != Type::Pointer) {
@@ -411,7 +418,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::BinaryExpr& bina
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
             return Parsing::deepCopy(binaryExpr);
         }
-        m_valid = false;
+        addError("Cannot apply operator to types", binaryExpr.location);
         return Parsing::deepCopy(binaryExpr);
     }
     assignTypeToArithmeticBinaryExpr(binaryExpr);
@@ -432,14 +439,12 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::AssignmentExpr& 
     assignmentExpr.lhs = convertArrayType(*assignmentExpr.lhs);
     assignmentExpr.rhs = convertArrayType(*assignmentExpr.rhs);
 
-    if (!m_valid)
+    if (hasError())
         return Parsing::deepCopy(assignmentExpr);
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
-    if (!isLegalAssignExpr(assignmentExpr)) {
-        m_valid = false;
+    if (!isLegalAssignExpr(assignmentExpr))
         return Parsing::deepCopy(assignmentExpr);
-    }
     if (leftType != rightType && assignmentExpr.op == Parsing::AssignmentExpr::Operator::Assign &&
         leftType != Type::Pointer) {
         assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
@@ -453,29 +458,31 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::CastExpr& castEx
 {
     castExpr.expr = convertArrayType(*castExpr.expr);
 
-    if (!m_valid)
+    if (hasError())
         return Parsing::deepCopy(castExpr);
     const Type outerType = castExpr.type->type;
     const Type innerType = castExpr.expr->type->type;
-    if ((outerType == Type::Double && innerType == Type::Pointer) ||
-        (outerType == Type::Pointer && innerType == Type::Double)) {
-        m_valid = false;
-        return Parsing::deepCopy(castExpr);
-    }
+    if (outerType == Type::Double && innerType == Type::Pointer)
+        addError("Cannot convert pointer to double", castExpr.location);
+    if (outerType == Type::Pointer && innerType == Type::Double)
+        addError("Cannot convert double to pointer", castExpr.location);
     return Parsing::deepCopy(castExpr);
 }
 
-bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
+bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
 {
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
     const Type commonType = getCommonType(leftType, rightType);
     if ((leftType == Type::Pointer || rightType == Type::Pointer) &&
         isIllegalPointerCompoundAssignOperation(assignmentExpr.op)) {
+        addError("Is illegal pointer assign operator", assignmentExpr.location);
         return false;
     }
-    if (commonType == Type::Double && isIllegalDoubleCompoundAssignOperation(assignmentExpr.op))
+    if (commonType == Type::Double && isIllegalDoubleCompoundAssignOperation(assignmentExpr.op)) {
+        addError("Is double compound assign operator", assignmentExpr.location);
         return false;
+    }
     if (leftType == Type::Pointer && rightType == Type::Pointer)
         return Parsing::areEquivalent(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type);
     if (leftType == Type::Pointer) {
@@ -483,8 +490,10 @@ bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
             assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
                 Parsing::deepCopy(*assignmentExpr.lhs->type), std::move(assignmentExpr.rhs));
         }
-        else
+        else {
+            addError("Cannot convert one type to pointer", assignmentExpr.location);
             return false;
+        }
     }
     return true;
 }
@@ -501,12 +510,12 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::TernaryExpr& ter
     if (trueType == Type::Pointer || falseType == Type::Pointer) {
         if (trueType == Type::Pointer && falseType == Type::Pointer) {
             if (!Parsing::areEquivalent(*ternaryExpr.trueExpr->type, *ternaryExpr.falseExpr->type))
-                m_valid = false;
+                addError("Ternary true and false expression must have same type", ternaryExpr.location);
             ternaryExpr.type = std::move(Parsing::deepCopy(*ternaryExpr.trueExpr->type));
             return Parsing::deepCopy(ternaryExpr);
         }
         if (!areValidNonArithmeticTypesInTernaryExpr(ternaryExpr)) {
-            m_valid = false;
+            addError("Are not valid non arithmetic types in ternary", ternaryExpr.location);
             return Parsing::deepCopy(ternaryExpr);
         }
         if (trueType != Type::Pointer) {
@@ -543,10 +552,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::AddrOffExpr& add
 {
     addrOffExpr.reference = convertArrayType(*addrOffExpr.reference);
 
-    if (!m_valid)
+    if (hasError())
         return Parsing::deepCopy(addrOffExpr);
     if (addrOffExpr.reference->kind == Parsing::Expr::Kind::AddrOf) {
-        m_valid = false;
+        addError("Cannot have address of of address of operation", addrOffExpr.location);
         return Parsing::deepCopy(addrOffExpr);
     }
     addrOffExpr.type = std::make_unique<Parsing::PointerType>(
@@ -558,10 +567,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::DereferenceExpr&
 {
     dereferenceExpr.reference = convertArrayType(*dereferenceExpr.reference);
 
-    if (!m_valid)
+    if (hasError())
         return Parsing::deepCopy(dereferenceExpr);
     if (dereferenceExpr.reference->type->type != Type::Pointer) {
-        m_valid = false;
+        addError("Cannot dereference non pointer", dereferenceExpr.location);
         return Parsing::deepCopy(dereferenceExpr);
     }
     const auto referencedPtrType = dynCast<const Parsing::PointerType>(dereferenceExpr.reference->type.get());
@@ -574,7 +583,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& s
     subscriptExpr.referencing = convertArrayType(*subscriptExpr.referencing);
     subscriptExpr.index = convertArrayType(*subscriptExpr.index);
 
-    if (!m_valid)
+    if (hasError())
         return Parsing::deepCopy(subscriptExpr);
 
     const Type referencingType = subscriptExpr.referencing->type->type;
@@ -597,7 +606,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& s
         return result;
     }
     else {
-        m_valid = false;
+        addError("Cannot convert subscript to non pointer", subscriptExpr.location);
         return Parsing::deepCopy(subscriptExpr);
     }
 
@@ -605,12 +614,16 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& s
     return Parsing::deepCopy(subscriptExpr);
 }
 
-bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl) const
+bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)
 {
-    if (varDecl.storage == Storage::Extern && varDecl.init != nullptr)
+    if (varDecl.storage == Storage::Extern && varDecl.init != nullptr) {
+        addError("Initiated extern variable", varDecl.location);
         return true;
-    if (varDecl.storage == Storage::Static && m_definedFunctions.contains(varDecl.name))
+    }
+    if (varDecl.storage == Storage::Static && m_definedFunctions.contains(varDecl.name)) {
+        addError("Static variable with same name as defined function", varDecl.location);
         return true;
+    }
     return false;
 }
 } // namespace Semantics

@@ -77,8 +77,8 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& pro
     if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
         return {StateCode::VariableResolution, errors};
     Semantics::TypeResolution typeResolution;
-    if (!typeResolution.validate(program))
-        return {StateCode::TypeResolution, {}};
+    if (const std::vector<Error> errors = typeResolution.validate(program); !errors.empty())
+        return {StateCode::TypeResolution, errors};
     Semantics::LvalueVerification lvalueVerification;
     if (const std::vector<Error> errors = lvalueVerification.resolve(program); !errors.empty())
         return {StateCode::LValueVerification, errors};
