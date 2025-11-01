@@ -115,6 +115,23 @@ bool areEquivalent(const ArrayType& left, const ArrayType& right)
     return areEquivalent(*left.elementType, *right.elementType);
 }
 
+std::unique_ptr<TypeBase> convertArrayFirstDimToPtr(const TypeBase& typeBase)
+{
+    const TypeBase* ptrBase = &typeBase;
+    if (typeBase.type == Type::Array) {
+        const auto arrayType = dynCast<const ArrayType>(&typeBase);
+        return std::make_unique<PointerType>(deepCopy(*arrayType->elementType));
+    }
+    return deepCopy(*ptrBase);
+}
+
+bool areEquivalentArrayConversion(const TypeBase& left, const TypeBase& right)
+{
+    const std::unique_ptr<TypeBase> leftPtr = convertArrayFirstDimToPtr(left);
+    const std::unique_ptr<TypeBase> rightPtr = convertArrayFirstDimToPtr(right);
+    return areEquivalent(*leftPtr, *rightPtr);
+}
+
 std::unique_ptr<Expr> deepCopy(const Expr& expr)
 {
     switch (expr.kind) {

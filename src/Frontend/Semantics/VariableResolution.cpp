@@ -21,39 +21,39 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
 void VariableResolution::visit(Parsing::FunDeclaration& funDecl)
 {
     const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookup(funDecl.name);
-    validateFuncDecl(funDecl, m_symbolTable, prevEntry, m_errors);
+    validateFuncDecl(funDecl, m_symbolTable, prevEntry);
     addFuncToSymbolTable(funDecl, prevEntry);
-    ScopeGuard scopeGuard(m_symbolTable);
-    m_symbolTable.setArgs(funDecl);
-    ASTTraverser::visit(funDecl);
-    m_symbolTable.clearArgs();
+    if (funDecl.body) {
+        FunctionGuard functionGuard(m_symbolTable, funDecl);
+        ScopeGuard guard(m_symbolTable);
+        funDecl.body->accept(*this);
+    }
 }
 
-void validateFuncDecl(const Parsing::FunDeclaration& funDecl,
-                     const SymbolTable& symbolTable,
-                     const SymbolTable::ReturnedEntry& returnedEntry,
-                     std::vector<Error>& errors)
+void VariableResolution::validateFuncDecl(const Parsing::FunDeclaration& funDecl,
+                                          const SymbolTable& symbolTable,
+                                          const SymbolTable::ReturnedEntry& returnedEntry)
 {
     if (funDecl.storage == Storage::Static && symbolTable.inFunc())
-        errors.emplace_back("Cannot declare a static function inside another function", funDecl.location);
+        addError("Cannot declare a static function inside another function", funDecl.location);
     if (duplicatesInArgs(funDecl.params))
-        errors.emplace_back("Declare function of the same name as arg", funDecl.location);
+        addError("Declare function of the same name as arg", funDecl.location);
     if (symbolTable.inFunc() && funDecl.body != nullptr)
-        errors.emplace_back("Define function in body of another one", funDecl.location);
+        addError("Define function in body of another one", funDecl.location);
     if (!returnedEntry.contains())
         return;
     if (returnedEntry.isDefined() && funDecl.body != nullptr)
-        errors.emplace_back("Function defined more than once", funDecl.location);
+        addError("Function defined more than once", funDecl.location);
     if (returnedEntry.typeBase->type != funDecl.type->type && returnedEntry.isFromCurrentScope())
-        errors.emplace_back("Function defined more than once", funDecl.location);
+        addError("Function defined more than once", funDecl.location);
     if (returnedEntry.typeBase->type != funDecl.type->type && returnedEntry.isGlobal())
-        errors.emplace_back("Functions with different return types", funDecl.location);
+        addError("Functions with different return types", funDecl.location);
     if (returnedEntry.hasExternalLinkage() && funDecl.storage == Storage::Static)
-        errors.emplace_back("Functions with different linkage", funDecl.location);
+        addError("Functions with different linkage", funDecl.location);
     if (returnedEntry.typeBase->type == Type::Function) {
         const auto funcType = dynCast<const Parsing::FuncType>(returnedEntry.typeBase.get());
         if (funcType->params.size() != funDecl.params.size())
-            errors.emplace_back("Functions with different parameter count", funDecl.location);
+            addError("Functions with different parameter count", funDecl.location);
     }
 }
 
@@ -83,55 +83,55 @@ void VariableResolution::visit(Parsing::ForStmt& forStmt)
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookup(varDecl.name);
-    validateVarDecl(varDecl, m_symbolTable, prevEntry, m_errors);
+    validateVarDecl(varDecl, m_symbolTable, prevEntry);
     addVarToSymbolTable(varDecl, prevEntry);
     ASTTraverser::visit(varDecl);
 }
 
-void validateVarDecl(const Parsing::VarDecl& varDecl,
-                     const SymbolTable& symbolTable,
-                     const SymbolTable::ReturnedEntry& prevEntry,
-                     std::vector<Error>& errors)
+void VariableResolution::validateVarDecl(const Parsing::VarDecl& varDecl,
+                                         const SymbolTable& symbolTable,
+                                         const SymbolTable::ReturnedEntry& prevEntry)
 {
     if (prevEntry.isInArgs())
-        errors.emplace_back("Variable declarations with the same name as arg", varDecl.location);
+        addError("Variable declarations with the same name as arg", varDecl.location);
     if (!prevEntry.contains())
         return;
     if (!symbolTable.inFunc()) {
-        validateVarDeclGlobal(varDecl, prevEntry, errors);
+        validateVarDeclGlobal(varDecl, prevEntry);
         return;
     }
     if (isIllegalVarRedecl(varDecl, prevEntry))
-        errors.emplace_back("Illegal variable redeclaration in same scope", varDecl.location);
+        addError("Illegal variable redeclaration in same scope", varDecl.location);
     if (varDecl.storage == Storage::Extern
         && prevEntry.hasExternalLinkage()
         && prevEntry.typeBase->type != varDecl.type->type)
-        errors.emplace_back("Two variable declarations with external linkage of same type",
+        addError("Two variable declarations with external linkage of same type",
                             varDecl.location);
     if (prevEntry.typeBase->type != varDecl.type->type &&
         prevEntry.isFromCurrentScope() &&
         varDecl.storage != Storage::Extern)
-        errors.emplace_back("Illegal variable redeclaration in same scope", varDecl.location);
+        addError("Illegal variable redeclaration in same scope", varDecl.location);
 }
 
-void validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
-                          const SymbolTable::ReturnedEntry& prevEntry,
-                          std::vector<Error>& errors)
+void VariableResolution::validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
+                                               const SymbolTable::ReturnedEntry& prevEntry)
 {
     if (prevEntry.typeBase->type != varDecl.type->type)
-        errors.emplace_back("Previous global variable declaration of same name and type", varDecl.location);
+        addError("Previous global variable declaration of same name and type", varDecl.location);
     if (varDecl.init != nullptr && prevEntry.isDefined())
-        errors.emplace_back("Cannot define global variable more than once", varDecl.location);
+        addError("Cannot define global variable more than once", varDecl.location);
     if (hasInternalLinkageVar(varDecl) && !prevEntry.hasInternalLinkage())
-        errors.emplace_back("Conflicting variable linkage", varDecl.location);
+        addError("Conflicting variable linkage", varDecl.location);
     if (varDecl.storage == Storage::None && prevEntry.hasInternalLinkage())
-        errors.emplace_back("Conflicting variable linkage", varDecl.location);
+        addError("Conflicting variable linkage", varDecl.location);
+    if (varDecl.type->type == Type::Array && !Parsing::areEquivalent(*varDecl.type, *prevEntry.typeBase))
+        addError("Cannot define arrays with different types", varDecl.location);
 }
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
     const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookup(varExpr.name);
-    if (isValidVarExpr(varExpr.location, returnedEntry, m_errors)) {
+    if (isValidVarExpr(varExpr.location, returnedEntry)) {
         if (returnedEntry.hasExternalLinkage() && !returnedEntry.isGlobal())
             varExpr.referingTo = ReferingTo::Extern;
         else if (!returnedEntry.isInArgs())
@@ -145,18 +145,16 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
     ASTTraverser::visit(varExpr);
 }
 
-bool isValidVarExpr(const i64 location,
-                    const SymbolTable::ReturnedEntry& returnedEntry,
-                    std::vector<Error>& errors)
+bool VariableResolution::isValidVarExpr(const i64 location, const SymbolTable::ReturnedEntry& returnedEntry)
 {
     if (returnedEntry.isInArgs())
         return true;
     if (!returnedEntry.contains()) {
-        errors.emplace_back("Cannot find variable declaration", location);
+        addError("Cannot find variable declaration", location);
         return false;
     }
     if (returnedEntry.typeBase->type == Type::Function) {
-        errors.emplace_back("Refers to function", location);
+        addError("Refers to function", location);
         return false;
     }
     return true;
@@ -165,23 +163,21 @@ bool isValidVarExpr(const i64 location,
 void VariableResolution::visit(Parsing::FuncCallExpr& funcCallExpr)
 {
     const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookup(funcCallExpr.name);
-    if (isValidFuncCall(funcCallExpr.location, returnedEntry, m_errors)) {
+    if (isValidFuncCall(funcCallExpr.location, returnedEntry)) {
         const auto funcType = dynCast<const Parsing::FuncType>(returnedEntry.typeBase.get());
         funcCallExpr.type = Parsing::deepCopy(*funcType->returnType);
     }
     ASTTraverser::visit(funcCallExpr);
 }
 
-bool isValidFuncCall(const i64 location,
-                     const SymbolTable::ReturnedEntry& returnedEntry,
-                     std::vector<Error>& errors)
+bool VariableResolution::isValidFuncCall(const i64 location, const SymbolTable::ReturnedEntry& returnedEntry)
 {
     if (!returnedEntry.contains()) {
-        errors.emplace_back("Cannot find function declaration", location);
+        addError("Cannot find function declaration", location);
         return false;
     }
     if (returnedEntry.typeBase->type != Type::Function) {
-        errors.emplace_back("Does not refer to function", location);
+        addError("Does not refer to function", location);
         return false;
     }
     return true;

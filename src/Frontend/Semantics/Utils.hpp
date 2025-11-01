@@ -8,6 +8,6 @@ void assignTypeToArithmeticBinaryExpr(Parsing::BinaryExpr& binaryExpr);
 bool canConvertToNullPtr(const Parsing::ConstExpr& constExpr);
 bool canConvertToNullPtr(const Parsing::Expr& expr);
 bool canConvertToPtr(const Parsing::ConstExpr& constExpr);
-bool isBinaryComparison(const Parsing::BinaryExpr& binaryExpr);
+bool isBinaryComparison(Parsing::BinaryExpr::Operator oper);
 
 } // Parsing

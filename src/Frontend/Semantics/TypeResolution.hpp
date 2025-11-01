@@ -96,6 +96,9 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<Parsing::Expr> handleBinaryPtr(Parsing::BinaryExpr& binaryExpr, Type leftType,
+                                                   Type rightType,
+                                                   Type commonType);
     std::unique_ptr<Parsing::Expr> convert(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::AssignmentExpr& assignmentExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::TernaryExpr& ternaryExpr);
@@ -154,6 +157,7 @@ inline bool isIllegalPointerCompoundAssignOperation(const Parsing::AssignmentExp
            oper == Oper::DivideAssign || oper == Oper::ModuloAssign;
 }
 
-bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr);
+bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr,
+    Type leftType, Type rightType, Type commonType);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
 } // Semantics

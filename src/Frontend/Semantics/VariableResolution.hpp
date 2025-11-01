@@ -18,6 +18,16 @@ class VariableResolution : public Parsing::ASTTraverser {
             : table(t) { table.addScope(); }
         ~ScopeGuard() { table.removeScope(); }
     };
+    struct FunctionGuard {
+        SymbolTable& table;
+        Parsing::FunDeclaration& funDecl;
+        FunctionGuard(SymbolTable& table, Parsing::FunDeclaration& funDecl)
+            : table(table), funDecl(funDecl)
+        {
+            table.setArgs(funDecl);
+        }
+        ~FunctionGuard() { table.clearArgs(); }
+    };
     SymbolTable& m_symbolTable;
     i32 m_nameCounter = 0;
     std::vector<Error> m_errors;
@@ -38,27 +48,22 @@ public:
         const Parsing::FunDeclaration& funDecl,
         const SymbolTable::ReturnedEntry& prevEntry
     ) const;
+    void validateVarDecl(
+        const Parsing::VarDecl& varDecl,
+        const SymbolTable& symbolTable,
+        const SymbolTable::ReturnedEntry& prevEntry);
+    void validateFuncDecl(const Parsing::FunDeclaration& funDecl,
+                         const SymbolTable& symbolTable,
+                         const SymbolTable::ReturnedEntry& returnedEntry);
+    void validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
+                               const SymbolTable::ReturnedEntry& prevEntry);
+    bool isValidFuncCall(i64 location, const SymbolTable::ReturnedEntry& returnedEntry);
+    bool isValidVarExpr(i64 location, const SymbolTable::ReturnedEntry& returnedEntry);
 private:
     std::string makeTemporaryName(const std::string &name);
+    void addError(const std::string& msg, const i64 location) { m_errors.emplace_back(msg, location); }
 };
 
-void validateVarDecl(
-    const Parsing::VarDecl& varDecl,
-    const SymbolTable& symbolTable,
-    const SymbolTable::ReturnedEntry& prevEntry,
-    std::vector<Error>& errors
-);
-void validateFuncDecl(const Parsing::FunDeclaration& funDecl,
-                     const SymbolTable& symbolTable,
-                     const SymbolTable::ReturnedEntry& returnedEntry,
-                     std::vector<Error>& errors);
-void validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
-                           const SymbolTable::ReturnedEntry& prevEntry,
-                           std::vector<Error>& errors);
-bool isValidFuncCall(i64 location,
-                     const SymbolTable::ReturnedEntry& returnedEntry,
-                     std::vector<Error>& errors);
-bool isValidVarExpr(i64 location, const SymbolTable::ReturnedEntry& returnedEntry, std::vector<Error>& errors);
 bool duplicatesInArgs(const std::vector<std::string>& args);
 inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry)
 {

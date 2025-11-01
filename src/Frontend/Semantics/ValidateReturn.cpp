@@ -3,6 +3,8 @@
 #include "DynCast.hpp"
 #include "Utils.hpp"
 
+#include <cassert>
+
 namespace Semantics {
 std::vector<Error> ValidateReturn::programValidate(Parsing::Program& program)
 {
@@ -43,6 +45,9 @@ void ValidateReturn::visit(Parsing::FunDeclaration& funDecl)
         returnStmt->expr = std::make_unique<Parsing::CastExpr>(
             Parsing::deepCopy(*funcType->returnType), std::move(returnStmt->expr));
     }
+    assert(funcType->returnType->type);
+    assert(returnStmt->expr->type);
+    assert(returnStmt->expr->type->type);
     if (funcType->returnType->type == Type::Pointer || returnStmt->expr->type->type == Type::Pointer) {
         if (!Parsing::areEquivalent(*funcType->returnType, *returnStmt->expr->type)) {
             m_errors.emplace_back("Return type does not conform to function return type ",

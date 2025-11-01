@@ -22,7 +22,7 @@ void assignTypeToArithmeticBinaryExpr(Parsing::BinaryExpr& binaryExpr)
         binaryExpr.type = std::make_unique<Parsing::VarType>(leftType);
         return;
     }
-    if (isBinaryComparison(binaryExpr)) {
+    if (isBinaryComparison(binaryExpr.op)) {
         if (commonType == Type::Double || isSigned(commonType))
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
         else
@@ -56,17 +56,17 @@ bool canConvertToNullPtr(const Parsing::Expr& expr)
 
 bool canConvertToPtr(const Parsing::ConstExpr& constExpr)
 {
-    if (!isInteger(constExpr.type->type))
+    if (!isIntegerType(constExpr.type->type))
         return false;
     return canConvertToNullPtr(constExpr);
 }
 
-bool isBinaryComparison(const Parsing::BinaryExpr& binaryExpr)
+bool isBinaryComparison(const Parsing::BinaryExpr::Operator oper)
 {
     using Operator = Parsing::BinaryExpr::Operator;
-    return binaryExpr.op == Operator::Equal || binaryExpr.op == Operator::NotEqual ||
-           binaryExpr.op == Operator::LessThan || binaryExpr.op == Operator::LessOrEqual ||
-           binaryExpr.op == Operator::GreaterThan || binaryExpr.op == Operator::GreaterOrEqual;
+    return oper == Operator::Equal       || oper == Operator::NotEqual ||
+           oper == Operator::LessThan    || oper == Operator::LessOrEqual ||
+           oper == Operator::GreaterThan || oper == Operator::GreaterOrEqual;
 }
 
 } // Semantics

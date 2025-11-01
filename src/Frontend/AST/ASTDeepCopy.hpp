@@ -15,6 +15,7 @@ namespace Parsing {
 [[nodiscard]] bool areEquivalent(const FuncType& left, const FuncType& right);
 [[nodiscard]] bool areEquivalent(const PointerType& left, const PointerType& right);
 [[nodiscard]] bool areEquivalent(const ArrayType& left, const ArrayType& right);
+[[nodiscard]] bool areEquivalentArrayConversion(const TypeBase& left, const TypeBase& right);
 
 [[nodiscard]] std::unique_ptr<Expr> deepCopy(const Expr& expr);
 [[nodiscard]] std::unique_ptr<Expr> deepCopy(const ConstExpr& expr);
