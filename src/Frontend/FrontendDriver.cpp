@@ -16,8 +16,6 @@
 #include <fstream>
 #include <iostream>
 
-#include "TypeCheckAndConvert.hpp"
-
 static std::vector<Error> lex(TokenStore& tokenStore, const std::filesystem::path& inputFile);
 static std::vector<Error> parse(const TokenStore& tokenStore, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
@@ -75,8 +73,6 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
 
 std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& program, SymbolTable& symbolTable)
 {
-    Semantics::TypeCheckAndConvert typeCheckAndConvert;
-    typeCheckAndConvert.convert(program);
     Semantics::VariableResolution variableResolution(symbolTable);
     if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
         return {StateCode::VariableResolution, errors};

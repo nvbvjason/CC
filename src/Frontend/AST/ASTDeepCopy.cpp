@@ -97,10 +97,16 @@ bool areEquivalent(const TypeBase& left, const TypeBase& right)
             const auto typeFunctionRight = dynCast<const FuncType>(&right);
             return areEquivalent(*typeFunctionLeft, *typeFunctionRight);
         }
-        default:
+        case Type::Array: {
+            const auto typeFunctionLeft = dynCast<const ArrayType>(&left);
+            const auto typeFunctionRight = dynCast<const ArrayType>(&right);
+            return areEquivalent(*typeFunctionLeft->elementType, *typeFunctionRight->elementType);
+        }
+        default: {
             const auto typeVarRight = dynCast<const VarType>(&left);
             const auto typeVarLeft = dynCast<const VarType>(&right);
             return areEquivalent(*typeVarRight, *typeVarLeft);
+        }
     }
 }
 

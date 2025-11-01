@@ -71,19 +71,36 @@ public:
 
     void visit(Parsing::FunDeclaration& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
-    void visit(Parsing::DeclForInit& declForInit) override;
-
-    void visit(Parsing::FuncCallExpr& funCallExpr) override;
     bool isIllegalVarDecl(const Parsing::VarDecl& varDecl) const;
-    void visit(Parsing::VarExpr& varExpr) override;
-    void visit(Parsing::UnaryExpr& unaryExpr) override;
-    void visit(Parsing::BinaryExpr& binaryExpr) override;
-    void visit(Parsing::AssignmentExpr& assignmentExpr) override;
-    void visit(Parsing::CastExpr& castExpr) override;
-    void visit(Parsing::TernaryExpr& ternaryExpr) override;
-    void visit(Parsing::AddrOffExpr& addrOffExpr) override;
-    void visit(Parsing::DereferenceExpr& dereferenceExpr) override;
-    void visit(Parsing::SubscriptExpr& subscriptExpr) override;
+    void visit(Parsing::DeclForInit& declForInit) override;
+    void visit(Parsing::ExprForInit& exprForInit) override;
+
+    void visit(Parsing::SingleInitializer& singleInitializer) override;
+    void visit(Parsing::CompoundInitializer& compoundInitializer) override;
+
+    void visit(Parsing::ReturnStmt& stmt) override;
+    void visit(Parsing::ExprStmt& stmt) override;
+    void visit(Parsing::IfStmt& ifStmt) override;
+    void visit(Parsing::CaseStmt& stmt) override;
+    void visit(Parsing::WhileStmt& stmt) override;
+    void visit(Parsing::DoWhileStmt& stmt) override;
+    void visit(Parsing::ForStmt& stmt) override;
+    void visit(Parsing::SwitchStmt& stmt) override;
+
+    std::unique_ptr<Parsing::Expr> convertArrayType(Parsing::Expr& expr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
+
+    std::unique_ptr<Parsing::Expr> convert(Parsing::ConstExpr& expr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::BinaryExpr& binaryExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::AssignmentExpr& assignmentExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::TernaryExpr& ternaryExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::FuncCallExpr& funCallExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::DereferenceExpr& dereferenceExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::AddrOffExpr& addrOffExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::SubscriptExpr& expr);
 
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
     static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDeclaration& funDecl);
