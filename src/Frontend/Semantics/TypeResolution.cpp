@@ -483,8 +483,13 @@ bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
         addError("Is double compound assign operator", assignmentExpr.location);
         return false;
     }
-    if (leftType == Type::Pointer && rightType == Type::Pointer)
-        return Parsing::areEquivalent(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type);
+    if (leftType == Type::Pointer && rightType == Type::Pointer) {
+        if (!Parsing::areEquivalent(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type)) {
+            addError("Cannot assign pointer of different types", assignmentExpr.location);
+            return false;
+        }
+        return true;
+    }
     if (leftType == Type::Pointer) {
         if (canConvertToNullPtr(*assignmentExpr.rhs)) {
             assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
