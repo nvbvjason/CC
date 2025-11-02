@@ -82,3 +82,16 @@ This compiler is built as a series of modular, interdependent passes to ensure s
 ## Motivation
 
 I knew that compilers are challenging projects and wanted to know more about them by building one for a real language.
+
+## Usage
+
+- `-h`               - Print help to the console.
+- `--printTokens`    - Print the tokens produced by the lexer.
+- `--printAst`       - Print the abstract syntax tree.
+- `--printAstAfter`  - Print the converted abstract syntax tree afSemantic analysis.
+- `--printTacky`     - Print the intermediate representation.
+- `--printAsm`       - Print the assembly representation before register fixing.
+- `--printAsmAfter`  - Print the assembly representation after register fixing.
+- `--lex`            - Stop after the lexing stage.
+- `--parse`          - Stop after the parsing stage.
+- `--codegen`        - Stop after the writing the assembly file.

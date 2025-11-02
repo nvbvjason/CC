@@ -162,12 +162,16 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 static void printHelp()
 {
     const char* helpText =
-        "-printTokens     - Print the tokens produced by the lexer.\n"
-        "-printAst        - Print the abstract syntax tree.\n"
-        "-printAstAfter   - Print the converted abstract syntax tree after Semantic analysis.\n"
-        "-printTacky      - Print the intermediate representation.\n"
-        "-printAsm        - Print the assembly representation before register fixes.\n"
-        "-printAsmAfter   - Print the assembly representation after register fixes.\n"
+        "-h               - Print help to the console.\n"
+        "--printTokens    - Print the tokens produced by the lexer.\n"
+        "--printAst       - Print the abstract syntax tree.\n"
+        "--printAstAfter  - Print the converted abstract syntax tree after Semantic analysis.\n"
+        "--printTacky     - Print the intermediate representation.\n"
+        "--printAsm       - Print the assembly representation before register fixes.\n"
+        "--printAsmAfter  - Print the assembly representation after register fixes.\n"
+        "--lex            - Stop after the lexing stage.\n"
+        "--parse          - Stop after the parsing stage.\n"
+        "--codegen        - Stop after the writing the assembly file.\n"
     ;
     std::cout << helpText << '\n';
 }
