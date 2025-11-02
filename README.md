@@ -1,3 +1,5 @@
+# CC
+
 ## Language Specification
 
 The compiler supports a substantial subset of C with the following grammar:
@@ -65,3 +67,16 @@ The compiler supports a substantial subset of C with the following grammar:
 ```
 
 Needs GCC for preprocessing and linking.
+
+### 🏗️ Compiler Architecture and Pipeline
+
+This compiler is built as a series of modular, interdependent passes to ensure separation of concerns and maintainability.
+
+| Stage | Purpose | Key Accomplishments Demonstrated |
+| :--- | :--- | :--- |
+| **1. Lexer** | Converts the raw source code text into a stream of meaningful **Tokens** (e.g., identifiers, keywords, constants). | Handles different base constants, complex identifiers, and token stream storage. |
+| **2. Parser** | Converts the token stream into an **Abstract Syntax Tree (AST)**, enforcing the grammar and operator precedence. | Mastery of recursive descent for complex C declarators, expressions, and control flow. |
+| **3. Type Resolution** | Traverses the AST to perform semantic checks: verifying variable scope, confirming type validity, and handling **implicit/explicit type conversions**. | Implemented a robust **Symbol Table** to manage static/global/local scope and type system logic. |
+| **4. IR Generation** | Translates the valid AST into a simpler **Intermediate Representation (IR)** for optimization and machine-independent processing. | Abstracted complex C concepts like `for`/`while` loops and switch statements into simple jump/label structures. |
+| **5. Code Generation** | Converts the IR into **Assembly Code** (e.g., x86 or ARM) for the target architecture. | Handled register allocation, memory layout, and correct assembly generation for all control flow and function calls. |
+| **6. Linker** | *Uses the external GCC toolchain to combine assembly with standard libraries into a final executable.* | *Indicates an understanding of the overall build process.* |
