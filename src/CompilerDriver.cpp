@@ -20,6 +20,7 @@ static bool isCommandLineArgumentValid(const std::string& argument);
 static void assemble(const std::string& asmFile, const std::string& outputFile);
 static void linkLib(const std::string& asmFile, const std::string& outputFile, const std::string& argument);
 static void makeLib(const std::string& asmFile, const std::string& outputFile);
+static void printHelp();
 void fixAsm(const CodeGen::Program& codegenProgram);
 
 i32 CompilerDriver::run()
@@ -36,6 +37,10 @@ StateCode CompilerDriver::wrappedRun()
     std::string argument;
     if (StateCode errorCode = validateAndSetArg(argument); errorCode != StateCode::Continue)
         return errorCode;
+    if (argument == "--help" || argument == "-h") {
+        printHelp();
+        return StateCode::Done;
+    }
     const std::string inputFile = m_args.back();
     FrontendDriver frontend(argument, inputFile);
     auto [irProgramOptional, err] = frontend.run();
@@ -152,6 +157,19 @@ static bool isCommandLineArgumentValid(const std::string &argument)
         "--lex", "--parse", "--tacky", "--codegen", "--printTacky", "--validate",
         "--assemble", "--printAsm", "--printAsmAfter", "-c", "--printAstAfter", "--printTokens"};
     return std::ranges::contains(validArguments, argument);
+}
+
+static void printHelp()
+{
+    const char* helpText =
+        "-printTokens     - Print the tokens produced by the lexer.\n"
+        "-printAst        - Print the abstract syntax tree.\n"
+        "-printAstAfter   - Print the converted abstract syntax tree after Semantic analysis.\n"
+        "-printTacky      - Print the intermediate representation.\n"
+        "-printAsm        - Print the assembly representation before register fixes.\n"
+        "-printAsmAfter   - Print the assembly representation after register fixes.\n"
+    ;
+    std::cout << helpText << '\n';
 }
 
 void assemble(const std::string& asmFile, const std::string& outputFile)

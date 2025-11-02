@@ -10,7 +10,7 @@
 /*
 
 program = Program(function_definition)
-assembly_type = Byte | Word | Longword | Quadword | Double
+assembly_type = Byte | Word | Longword | Quadword | Double | ByteArray(int size, int alignment)
 top_level = Function(identifier name, bool global, instruction* instructions)
           | StaticVariable(identifier name, bool global, int alignment, int init)
           | StaticConstant(identifier name, int alignment, static init)
@@ -43,9 +43,11 @@ operand = Imm(int)
         | Pseudo(identifier)
         | Memory(reg, int)
         | Data(identifier)
+        | PseudoMem(Identifier, int)
+        | Indexed(reg base, reg index, int scale)
 cond_code = E | NE | G | GE | L | LE | A | AE | B | BE
-reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP | BP |
-      XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 | XMM14 | XMM15
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP | BP
+    | XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 | XMM14 | XMM15
 
 */
 
@@ -65,7 +67,7 @@ struct Identifier {
 
 struct Operand {
     enum class Kind : u8 {
-        Imm, Register, Pseudo, Memory, Data
+        Imm, Register, Pseudo, Memory, Data, PseudoMem, Indexed
     };
     enum class RegKind : u8 {
         AX, CX, DX, DI, SI, R8, R9, R10, R11, SP, BP,
@@ -142,6 +144,33 @@ struct DataOperand final : Operand {
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Data; }
 
     DataOperand() = delete;
+};
+
+struct PseudoMemOperand final : Operand {
+    const Identifier identifier;
+    const i64 size;
+    ReferingTo referingTo = ReferingTo::Local;
+    bool local;
+
+    PseudoMemOperand(Identifier identifier, const i64 size, const AsmType type, const bool local)
+        : Operand(Kind::PseudoMem, type), identifier(std::move(identifier)), size(size), local(local) {}
+
+    static bool classOf(const Operand* operand) { return operand->kind == Kind::PseudoMem; }
+
+    PseudoMemOperand() = delete;
+};
+
+struct IndexedOperand final : Operand {
+    RegKind regKind;
+    RegKind indexRegKind;
+    i64 scale;
+
+    IndexedOperand(const RegKind rK, const RegKind indexRegKind, const i64 scale, const AsmType type)
+        : Operand(Kind::Indexed, type), regKind(rK), indexRegKind(indexRegKind), scale(scale) {}
+
+    static bool classOf(const Operand* operand) { return operand->kind == Kind::Indexed; }
+
+    IndexedOperand() = delete;
 };
 
 struct Inst {
@@ -237,7 +266,7 @@ struct Cvttsd2siInst final : Inst {
     Cvttsd2siInst(
         std::shared_ptr<Operand> src,
         std::shared_ptr<Operand> dst,
-        AsmType dstType)
+        const AsmType dstType)
         : Inst(Kind::Cvttsd2si), src(std::move(src)), dst(std::move(dst)), dstType(dstType) {}
 
     void accept(InstVisitor& visitor) override;
@@ -443,7 +472,7 @@ protected:
         : kind(t) {}
 };
 
-struct Function : TopLevel {
+struct Function final : TopLevel {
     std::string name;
     std::vector<std::unique_ptr<Inst>> instructions;
     i64 stackAlloc = 0;
@@ -456,7 +485,7 @@ struct Function : TopLevel {
     Function() = delete;
 };
 
-struct StaticVariable : TopLevel {
+struct StaticVariable final : TopLevel {
     std::string name;
     u64 init = 0;
     AsmType type;
@@ -469,7 +498,7 @@ struct StaticVariable : TopLevel {
     StaticVariable() = delete;
 };
 
-struct ConstVariable : TopLevel {
+struct ConstVariable final : TopLevel {
     Identifier name;
     i32 alignment;
     double staticInit;

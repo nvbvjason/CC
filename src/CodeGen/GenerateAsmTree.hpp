@@ -105,11 +105,15 @@ private:
     {
         insts.emplace_back(std::make_unique<BinaryInst>(left, right, oper, type));
     }
-    void emplaceCvtsi2sd(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst, const AsmType type)
+    void emplaceCvtsi2sd(const std::shared_ptr<Operand>& src,
+                         const std::shared_ptr<Operand>& dst,
+                         const AsmType type)
     {
         insts.emplace_back(std::make_unique<Cvtsi2sdInst>(src, dst, type));
     }
-    void emplaceCvttsd2si(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst, const AsmType type)
+    void emplaceCvttsd2si(const std::shared_ptr<Operand>& src,
+                          const std::shared_ptr<Operand>& dst,
+                          const AsmType type)
     {
         insts.emplace_back(std::make_unique<Cvttsd2siInst>(src, dst, type));
     }
@@ -125,11 +129,15 @@ private:
     {
         insts.emplace_back(std::make_unique<IdivInst>(src, type));
     }
-    void emplaceMove(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst, const AsmType type)
+    void emplaceMove(const std::shared_ptr<Operand>& src,
+                     const std::shared_ptr<Operand>& dst,
+                     const AsmType type)
     {
         insts.emplace_back(std::make_unique<MoveInst>(src, dst, type));
     }
-    void emplaceMoveZeroExtend(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst, const AsmType type)
+    void emplaceMoveZeroExtend(const std::shared_ptr<Operand>& src,
+                               const std::shared_ptr<Operand>& dst,
+                               const AsmType type)
     {
         insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, dst, type));
     }
@@ -141,11 +149,15 @@ private:
     {
         insts.emplace_back(std::make_unique<PushInst>(src));
     }
-    void emplaceLea(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst, const AsmType type)
+    void emplaceLea(const std::shared_ptr<Operand>& src,
+                    const std::shared_ptr<Operand>& dst,
+                    const AsmType type)
     {
         insts.emplace_back(std::make_unique<LeaInst>(src, dst, type));
     }
-    void emplaceCmp(const std::shared_ptr<Operand>& lhs, const std::shared_ptr<Operand>& rhs, const AsmType type)
+    void emplaceCmp(const std::shared_ptr<Operand>& lhs,
+                    const std::shared_ptr<Operand>& rhs,
+                    const AsmType type)
     {
         insts.emplace_back(std::make_unique<CmpInst>(lhs, rhs, type));
     }

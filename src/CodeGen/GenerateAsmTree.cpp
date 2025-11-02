@@ -39,9 +39,9 @@ std::unique_ptr<TopLevel> GenerateAsmTree::genTopLevel(const Ir::TopLevel& topLe
             const auto staticVariable = dynCast<const Ir::StaticVariable>(&topLevel);
             return genStaticVariable(*staticVariable);
         }
-        assert("generateTopLevel idk type");
+        default:
+            std::abort();
     }
-    std::unreachable();
 }
 
 std::unique_ptr<TopLevel> GenerateAsmTree::genFunction(const Ir::Function& function)
@@ -99,7 +99,8 @@ std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVari
     const auto value = dynCast<const Ir::ValueConst>(staticVariable.value.get());
     if (type == Type::Double) {
         const Identifier identifier(staticVariable.name);
-        auto staticVar = std::make_unique<StaticVariable>(staticVariable.name, AsmType::Double, staticVariable.global);
+        auto staticVar = std::make_unique<StaticVariable>(
+            staticVariable.name, AsmType::Double, staticVariable.global);
         const double init = std::get<double>(value->value);
         staticVar->init = std::bit_cast<i64>(init);
         return staticVar;
