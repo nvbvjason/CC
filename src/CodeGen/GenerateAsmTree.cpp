@@ -411,42 +411,6 @@ void GenerateAsmTree::genUnaryNotInteger(const Ir::UnaryInst& irUnary)
     emplaceSetCC(BinaryInst::CondCode::E, dst);
 }
 
-void GenerateAsmTree::genBinary(const Ir::BinaryInst& irBinary)
-{
-    using IrOper = Ir::BinaryInst::Operation;
-    switch (irBinary.operation) {
-        case IrOper::Add:
-        case IrOper::Subtract:
-        case IrOper::Multiply:
-        case IrOper::BitwiseAnd:
-        case IrOper::BitwiseOr:
-        case IrOper::BitwiseXor:
-            genBinaryBasic(irBinary);
-            break;
-        case IrOper::LeftShift:
-        case IrOper::RightShift:
-            genBinaryShift(irBinary);
-            break;
-        case IrOper::Divide:
-            genBinaryDivide(irBinary);
-            break;
-        case IrOper::Remainder:
-            genBinaryRemainder(irBinary);
-            break;
-        case IrOper::Equal:
-        case IrOper::NotEqual:
-        case IrOper::LessThan:
-        case IrOper::LessOrEqual:
-        case IrOper::GreaterThan:
-        case IrOper::GreaterOrEqual:
-            genBinaryCond(irBinary);
-            break;
-        default:
-            assert("Unsupported binary operation");
-            std::unreachable();
-    }
-}
-
 void GenerateAsmTree::genZeroExtend(const Ir::ZeroExtendInst& zeroExtend)
 {
     std::shared_ptr<Operand> src = genOperand(zeroExtend.src);
@@ -569,6 +533,42 @@ void GenerateAsmTree::genTruncate(const Ir::TruncateInst& truncate)
     std::shared_ptr<Operand> src1 = genOperand(truncate.src);
     std::shared_ptr<Operand> src2 = genOperand(truncate.dst);
     emplaceMove(src1, src2, AsmType::LongWord);
+}
+
+void GenerateAsmTree::genBinary(const Ir::BinaryInst& irBinary)
+{
+    using IrOper = Ir::BinaryInst::Operation;
+    switch (irBinary.operation) {
+        case IrOper::Add:
+        case IrOper::Subtract:
+        case IrOper::Multiply:
+        case IrOper::BitwiseAnd:
+        case IrOper::BitwiseOr:
+        case IrOper::BitwiseXor:
+            genBinaryBasic(irBinary);
+            break;
+        case IrOper::LeftShift:
+        case IrOper::RightShift:
+            genBinaryShift(irBinary);
+            break;
+        case IrOper::Divide:
+            genBinaryDivide(irBinary);
+            break;
+        case IrOper::Remainder:
+            genBinaryRemainder(irBinary);
+            break;
+        case IrOper::Equal:
+        case IrOper::NotEqual:
+        case IrOper::LessThan:
+        case IrOper::LessOrEqual:
+        case IrOper::GreaterThan:
+        case IrOper::GreaterOrEqual:
+            genBinaryCond(irBinary);
+            break;
+        default:
+            assert("Unsupported binary operation");
+            std::unreachable();
+    }
 }
 
 void GenerateAsmTree::genBinaryCond(const Ir::BinaryInst& irBinary)

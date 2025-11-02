@@ -28,6 +28,8 @@ instruction = Return(val)
             | GetAddress(val src, val dst)
             | Load(val src, val dst)
             | Store(val src, val dst)
+            | AddPtr(val ptr, val index, int scale, val dst)
+            | CopyToOffset(val src, identifier dst, int offset)
             | Jump(identifier target)
             | JumpIfZero(val condition, identifier target)
             | JumpIfNotZero(val condition, identifier target)
@@ -104,9 +106,9 @@ protected:
 };
 
 struct ValueInitializer final : Initializer {
-    std::unique_ptr<Value> value;
+    std::shared_ptr<Value> value;
 
-    explicit ValueInitializer(std::unique_ptr<Value> value)
+    explicit ValueInitializer(std::shared_ptr<Value> value)
         : Initializer(Kind::Value), value(std::move(value)) {}
 
     static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Value; }
@@ -115,7 +117,7 @@ struct ValueInitializer final : Initializer {
 struct ZeroInitializer final : Initializer {
     i64 size;
 
-    explicit ZeroInitializer(i64 size)
+    explicit ZeroInitializer(const i64 size)
         : Initializer(Kind::Zero), size(size) {}
 
     static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Zero; }

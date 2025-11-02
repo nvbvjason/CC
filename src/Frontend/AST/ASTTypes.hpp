@@ -8,7 +8,7 @@
 
 namespace Parsing {
 
-struct VarType : TypeBase {
+struct VarType final : TypeBase {
     explicit VarType(const Type type)
         : TypeBase(type, Kind::Var) {}
 
@@ -18,7 +18,7 @@ struct VarType : TypeBase {
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Var; }
 };
 
-struct FuncType : TypeBase {
+struct FuncType final : TypeBase {
     std::vector<std::unique_ptr<TypeBase>> params;
     std::unique_ptr<TypeBase> returnType;
 
@@ -31,7 +31,7 @@ struct FuncType : TypeBase {
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Func; }
 };
 
-struct PointerType : TypeBase {
+struct PointerType final : TypeBase {
     std::unique_ptr<TypeBase> referenced;
 
     explicit PointerType(std::unique_ptr<TypeBase>&& r)
@@ -43,7 +43,7 @@ struct PointerType : TypeBase {
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Pointer; }
 };
 
-struct ArrayType : TypeBase {
+struct ArrayType final : TypeBase {
     std::unique_ptr<TypeBase> elementType;
     i64 size;
 
@@ -55,6 +55,5 @@ struct ArrayType : TypeBase {
 
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Array; }
 };
-
 
 } // Parsing

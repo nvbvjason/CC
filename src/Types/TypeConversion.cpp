@@ -38,7 +38,7 @@ bool isSigned(const Type t)
     }
 }
 
-i32 getSize(const Type t)
+i64 getSize(const Type t)
 {
     assert(t != Type::Invalid);
     assert(t != Type::Function);
