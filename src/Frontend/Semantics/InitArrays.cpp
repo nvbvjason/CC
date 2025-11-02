@@ -29,7 +29,6 @@ void initArray(Parsing::VarDecl& array)
     const i64 size = std::accumulate(dimensions.begin(), dimensions.end(), i64{1}, std::multiplies<>{});
     auto arrayInit = array.init.get();
     std::vector<std::unique_ptr<Parsing::Initializer>> staticInitializer;
-    std::vector<i64> scaling = getScales(dimensions, size);
     i64 at = 0;
     std::stack<Node, std::vector<Node>> stack;
     stack.emplace(arrayInit, 0);
@@ -77,16 +76,6 @@ std::vector<i64> getDimensions(const Parsing::VarDecl& array)
         type = arrayType->elementType.get();
     } while (type->kind == Parsing::TypeBase::Kind::Array);
     return dimensions;
-}
-
-std::vector<i64> getScales(const std::vector<i64>& dimensions, i64 size)
-{
-    std::vector<i64> scaling;
-    for (const i64 dim : dimensions) {
-        size /= dim;
-        scaling.emplace_back(size);
-    }
-    return scaling;
 }
 
 } // Semantics

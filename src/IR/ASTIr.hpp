@@ -90,12 +90,44 @@ struct ValueConst final : Value {
     ValueConst() = delete;
 };
 
+struct Initializer {
+    enum class Kind {
+        Value, Zero
+    };
+    Kind kind;
+
+    Initializer() = delete;
+protected:
+
+    explicit Initializer(const Kind kind)
+        : kind(kind) {}
+};
+
+struct ValueInitializer final : Initializer {
+    std::unique_ptr<Value> value;
+
+    explicit ValueInitializer(std::unique_ptr<Value> value)
+        : Initializer(Kind::Value), value(std::move(value)) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Value; }
+};
+
+struct ZeroInitializer final : Initializer {
+    i64 size;
+
+    explicit ZeroInitializer(i64 size)
+        : Initializer(Kind::Zero), size(size) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Zero; }
+};
+
 struct Instruction {
     enum class Kind {
         Return,
         SignExtend, Truncate, ZeroExtend,
         DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble,
         Unary, Binary, Copy, GetAddress, Load, Store,
+        AddPtr, CopyToOffset,
         Jump, JumpIfZero, JumpIfNotZero, Label,
         FunCall
     };
@@ -280,6 +312,38 @@ struct StoreInst final : Instruction {
     StoreInst() = delete;
 };
 
+struct AddPtrInst final : Instruction {
+    std::shared_ptr<Value> ptr;
+    std::shared_ptr<Value> index;
+    std::shared_ptr<Value> dst;
+    i64 scale;
+
+    AddPtrInst(std::shared_ptr<Value> src, std::shared_ptr<Value> index,
+               std::shared_ptr<Value> dst, const i64 scale)
+        : Instruction(Kind::AddPtr, Type::Pointer),
+          ptr(std::move(src)),
+          index(std::move(index)),
+          dst(std::move(dst)),
+          scale(scale) {}
+
+    static bool classOf(const Instruction* inst) { return inst->kind == Kind::AddPtr; }
+
+    AddPtrInst() = delete;
+};
+
+struct CopyToOffsetInst final : Instruction {
+    std::shared_ptr<Value> src;
+    Identifier iden;
+    i64 offset;
+
+    CopyToOffsetInst(std::shared_ptr<Value> src, Identifier iden, const i64 offset, const Type t)
+        : Instruction(Kind::CopyToOffset, t), src(std::move(src)), iden(std::move(iden)), offset(offset) {}
+
+    static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyToOffset; }
+
+    CopyToOffsetInst() = delete;
+};
+
 struct JumpInst final : Instruction {
     Identifier target;
     explicit JumpInst(Identifier target)
@@ -339,7 +403,7 @@ struct FunCallInst final : Instruction {
 
 struct TopLevel {
     enum class Kind {
-        Function, StaticVariable
+        Function, StaticVariable, StaticArray
     };
     Kind kind;
 
@@ -351,7 +415,7 @@ protected:
         : kind(t) {}
 };
 
-struct Function : TopLevel {
+struct Function final : TopLevel {
     std::string name;
     std::vector<Identifier> args;
     std::vector<Type> argTypes;
@@ -365,7 +429,7 @@ struct Function : TopLevel {
     Function() = delete;
 };
 
-struct StaticVariable : TopLevel {
+struct StaticVariable final : TopLevel {
     std::string name;
     std::shared_ptr<Value> value;
     const Type type;
@@ -380,6 +444,24 @@ struct StaticVariable : TopLevel {
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticVariable; }
 
     StaticVariable() = delete;
+};
+
+struct StaticArray final : TopLevel {
+    std::string name;
+    std::vector<std::unique_ptr<Initializer>> initializers;
+    const Type type;
+    const bool global;
+    explicit StaticArray(std::string identifier,
+                         std::vector<std::unique_ptr<Initializer>>&& initializers,
+                         const Type ty,
+                         const bool isGlobal)
+        : TopLevel(Kind::StaticArray), name
+                (std::move(identifier)), initializers(std::move(initializers)),
+          type(ty), global(isGlobal) {}
+
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticArray; }
+
+    StaticArray() = delete;
 };
 
 struct Program {
