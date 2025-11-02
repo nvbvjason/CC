@@ -733,6 +733,36 @@ void GenerateAsmTree::genBinaryShift(const Ir::BinaryInst& irBinary)
     emplaceBinary(rhs, dst, oper, lhs->type);
 }
 
+void GenerateAsmTree::genAddPtr(const Ir::AddPtrInst& addPtrInst)
+{
+    if (addPtrInst.index->kind == Ir::Value::Kind::Constant)
+        genAddPtrConstIndex(addPtrInst);
+}
+
+void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
+{
+    const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
+    const auto ptr = genOperand(addPtrInst.ptr);
+    const auto constValue = dynCast<Ir::ValueConst>(addPtrInst.index.get());
+    const auto scale = getSize(addPtrInst.ptr->type);
+    const i64 index = std::get<i64>(constValue->value) * scale;
+    const auto memoryOp = std::make_shared<MemoryOperand>(
+        RegType::AX, index, Operators::getAsmType(addPtrInst.ptr->type));
+
+    std::shared_ptr<Operand> dst = genOperand(addPtrInst.ptr);
+    emplaceMove(ptr, regAX, Operators::getAsmType(addPtrInst.ptr->type));
+    emplaceLea(memoryOp, dst, Operators::getAsmType(addPtrInst.ptr->type));
+}
+
+void GenerateAsmTree::genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst)
+{
+    const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, Operators::getAsmType(addPtrInst.type));
+}
+
+void GenerateAsmTree::genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst)
+{
+}
+
 void GenerateAsmTree::genReturn(const Ir::ReturnInst& returnInst)
 {
     const std::shared_ptr<Operand> val = genOperand(returnInst.returnValue);
