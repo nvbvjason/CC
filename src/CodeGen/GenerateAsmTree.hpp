@@ -74,6 +74,8 @@ public:
     void genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst);
     void genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst);
 
+    void genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset);
+
     void genJump(const Ir::JumpInst& irJump);
     void genJumpIfZero(const Ir::JumpIfZeroInst& jumpIfZero);
     void genJumpIfZeroDouble(const Ir::JumpIfZeroInst& jumpIfZero);
@@ -105,7 +107,8 @@ private:
         insts.emplace_back(std::make_unique<UnaryInst>(target, oper, type));
     }
     void emplaceBinary(const std::shared_ptr<Operand>& left,
-                       const std::shared_ptr<Operand>& right, const BinaryInst::Operator oper,
+                       const std::shared_ptr<Operand>& right,
+                       const BinaryInst::Operator oper,
                        const AsmType type)
     {
         insts.emplace_back(std::make_unique<BinaryInst>(left, right, oper, type));
@@ -195,8 +198,6 @@ private:
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
 i32 getStackPadding(size_t numArgs);
 
-[[nodiscard]] i32 replacingPseudoRegisters(const Function& function);
-void fixUpInstructions(Function& function, i32 stackAlloc);
 std::string makeTemporaryPseudoName();
 
 } // CodeGen

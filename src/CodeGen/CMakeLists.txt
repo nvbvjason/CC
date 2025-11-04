@@ -6,6 +6,8 @@ add_library(CodeGen STATIC
         PseudoRegisterReplacer.cpp
         Operators.hpp
         FixUpInstructions.cpp
+        CodeGenDriver.cpp
+        CodeGenDriver.hpp
 )
 
 target_include_directories(CodeGen PUBLIC

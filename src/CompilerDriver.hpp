@@ -17,9 +17,9 @@ public:
         : m_args(std::vector<std::string>(argv, argv + argc)) {}
 
     StateCode validateAndSetArg(std::string& argument) const;
-    [[nodiscard]] i32 run();
+    [[nodiscard]] i32 run() const;
 private:
-    [[nodiscard]] StateCode wrappedRun();
+    [[nodiscard]] StateCode wrappedRun() const;
     StateCode writeAssmFile(const std::string& inputFile, const std::string& output, const std::string& argument);
 };
 

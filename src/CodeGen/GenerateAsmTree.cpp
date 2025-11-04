@@ -737,6 +737,11 @@ void GenerateAsmTree::genAddPtr(const Ir::AddPtrInst& addPtrInst)
 {
     if (addPtrInst.index->kind == Ir::Value::Kind::Constant)
         genAddPtrConstIndex(addPtrInst);
+    if (addPtrInst.index->type == Type::I32 || addPtrInst.index->type == Type::I64 ||
+        addPtrInst.index->type == Type::U32 || addPtrInst.index->type == Type::U64) {
+        genAddPtrVariableIndex1_2_4_8(addPtrInst);
+    }
+    genAddPtrVariableIndexAndOtherScale(addPtrInst);
 }
 
 void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
@@ -744,7 +749,7 @@ void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
     const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
     const auto ptr = genOperand(addPtrInst.ptr);
     const auto constValue = dynCast<Ir::ValueConst>(addPtrInst.index.get());
-    const auto scale = getSize(addPtrInst.ptr->type);
+    const i64 scale = getSize(addPtrInst.ptr->type);
     const i64 index = std::get<i64>(constValue->value) * scale;
     const auto memoryOp = std::make_shared<MemoryOperand>(
         RegType::AX, index, Operators::getAsmType(addPtrInst.ptr->type));
@@ -756,11 +761,50 @@ void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
 
 void GenerateAsmTree::genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst)
 {
+    const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
     const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, Operators::getAsmType(addPtrInst.type));
+    const auto ptr = genOperand(addPtrInst.ptr);
+    const auto index = genOperand(addPtrInst.index);
+    const i64 scale = getSize(addPtrInst.ptr->type);
+    const auto immScale = std::make_shared<ImmOperand>(scale, AsmType::QuadWord);
+    const AsmType type = Operators::getAsmType(addPtrInst.ptr->type);
+    const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, immScale->value, type);
+    const auto dst = genOperand(addPtrInst.ptr);
+
+    emplaceMove(ptr, regAX, AsmType::QuadWord);
+    emplaceMove(index, regDX, AsmType::QuadWord);
+    emplaceBinary(immScale, regDX, BinaryInst::Operator::Mul, AsmType::QuadWord);
+    emplaceLea(indexed, dst, type);
 }
 
 void GenerateAsmTree::genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst)
 {
+    const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
+    const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, Operators::getAsmType(addPtrInst.type));
+    const auto ptr = genOperand(addPtrInst.ptr);
+    const auto index = genOperand(addPtrInst.index);
+    const i64 scale = getSize(addPtrInst.ptr->type);
+    const AsmType type = Operators::getAsmType(addPtrInst.ptr->type);
+    const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, scale, type);
+    const auto dst = genOperand(addPtrInst.ptr);
+
+    emplaceMove(ptr, regAX, type);
+    emplaceMove(index, regDX, type);
+    emplaceLea(indexed, dst, type);
+}
+
+void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
+{
+    const auto src = genOperand(copyToOffset.src);
+    const AsmType srcType = src->type;
+    const auto copyToOffSetSrc = dynCast<Ir::ValueVar>(copyToOffset.src.get());
+    const auto pseudoMem = std::make_shared<PseudoMemOperand>(
+        Identifier(copyToOffset.iden.value),
+        copyToOffset.offset,
+        src->type,
+        copyToOffSetSrc->referingTo == ReferingTo::Local);
+
+    emplaceMove(src, pseudoMem, srcType);
 }
 
 void GenerateAsmTree::genReturn(const Ir::ReturnInst& returnInst)
@@ -902,20 +946,6 @@ std::shared_ptr<Operand> GenerateAsmTree::genDoubleLocalConst(double value, i32 
         Identifier(constLabel), alignment, value, true));
     m_constantDoubles.emplace_hint(it, value, constLabel.value);
     return std::make_shared<DataOperand>(constLabel, AsmType::Double, true);
-}
-
-i32 replacingPseudoRegisters(const Function& function)
-{
-    PseudoRegisterReplacer pseudoRegisterReplacer;
-    for (const auto& inst : function.instructions)
-        inst->accept(pseudoRegisterReplacer);
-    return pseudoRegisterReplacer.stackPointer();
-}
-
-void fixUpInstructions(Function& function, const i32 stackAlloc)
-{
-    FixUpInstructions fixUpInstructions(function.instructions, stackAlloc);
-    fixUpInstructions.fixUp();
 }
 
 std::shared_ptr<Operand> GenerateAsmTree::getZeroOperand(const AsmType type)
