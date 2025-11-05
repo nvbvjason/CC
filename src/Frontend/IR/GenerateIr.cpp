@@ -493,6 +493,10 @@ std::unique_ptr<ExprResult> GenerateIr::genInst(const Parsing::Expr& parsingExpr
             const auto addrOfExpr = dynCast<const Parsing::AddrOffExpr>(&parsingExpr);
             return genAddrOfInst(*addrOfExpr);
         }
+        case ExprKind::Subscript: {
+            const auto subscriptExpr = dynCast<const Parsing::SubscriptExpr>(&parsingExpr);
+            return genSubscript(*subscriptExpr);
+        }
         default:
             assert("Unexpected expression type ir generateInst");
     }

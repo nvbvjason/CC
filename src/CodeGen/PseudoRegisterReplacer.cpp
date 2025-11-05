@@ -11,10 +11,10 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
             return;
         }
         if (!m_pseudoMap.contains(pseudo->identifier.value)) {
-            if (pseudo->type == AsmType::LongWord)
+            if (pseudo->type.kind == AsmType::Kind::LongWord)
                 m_stackPtr -= 4;
-            if (pseudo->type == AsmType::QuadWord ||
-                pseudo->type == AsmType::Double) {
+            if (pseudo->type.kind == AsmType::Kind::QuadWord ||
+                pseudo->type.kind == AsmType::Kind::Double) {
                 m_stackPtr -= 8;
             }
             constexpr i32 requiredAlignment = 8;

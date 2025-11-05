@@ -9,7 +9,6 @@
 
 class CompilerDriver {
     std::vector<std::string> m_args;
-    std::string m_outputFileName;
 public:
     CompilerDriver() = delete;
     CompilerDriver(const CompilerDriver& other) = delete;

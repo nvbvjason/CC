@@ -354,11 +354,11 @@ std::string to_string(const Inst::CondCode& condCode)
 
 std::string to_string(const AsmType type)
 {
-    switch (type) {
-        case AsmType::Byte:     return "Byte";
-        case AsmType::LongWord: return "LongWord";
-        case AsmType::QuadWord: return "QuadWord";
-        case AsmType::Double:   return "Double";
+    switch (type.kind) {
+        case AsmType::Kind::Byte:     return "Byte";
+        case AsmType::Kind::LongWord: return "LongWord";
+        case AsmType::Kind::QuadWord: return "QuadWord";
+        case AsmType::Kind::Double:   return "Double";
         default:                return "Unknown AssemblyType";
     }
 }

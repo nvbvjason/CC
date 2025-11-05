@@ -4,13 +4,50 @@
 #include "FixUpInstructions.hpp"
 #include "GenerateAsmTree.hpp"
 #include "PseudoRegisterReplacer.hpp"
-#include "StateCode.hpp"
 
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 
 namespace CodeGen {
+
+void run(const Ir::Program& irProgram,
+         const std::string& argument,
+         const std::string& inputFile)
+{
+    Program codegenProgram = codegen(irProgram);
+    if (argument == "--codegen")
+        return;
+    if (argument == "--printAsm") {
+        AsmPrinter printer;
+        std::cout << printer.printProgram(codegenProgram);
+        return;
+    }
+    fixAsm(codegenProgram);
+    if (argument == "--printAsmAfter") {
+        AsmPrinter printer;
+        std::cout << printer.printProgram(codegenProgram);
+        return;
+    }
+    std::string output = asmProgram(codegenProgram);
+    std::string outputFileName = writeAsmFile(inputFile, output);
+    if (argument == "--assemble")
+        return;
+    if (argument == "-c")
+        makeLib(outputFileName, inputFile.substr(0, inputFile.length() - 2));
+    else if (argument.starts_with("-l"))
+        linkLib(outputFileName, inputFile.substr(0, inputFile.length() - 2), argument);
+    else
+        assemble(outputFileName, inputFile.substr(0, inputFile.length() - 2));
+}
+
+Program codegen(const Ir::Program& irProgram)
+{
+    Program codegenProgram;
+    GenerateAsmTree generateAsmTree;
+    generateAsmTree.genProgram(irProgram, codegenProgram);
+    return codegenProgram;
+}
 
 i32 replacingPseudoRegisters(const Function& function)
 {
@@ -37,43 +74,21 @@ void fixAsm(const Program& codegenProgram)
     }
 }
 
-Program codegen(const Ir::Program& irProgram)
+std::string writeAsmFile(const std::string& inputFile, const std::string& output)
 {
-    Program codegenProgram;
-    GenerateAsmTree generateAsmTree;
-    generateAsmTree.genProgram(irProgram, codegenProgram);
-    return codegenProgram;
-}
-
-void run(const Ir::Program& irProgram,
-         const std::string& argument,
-         const std::string& inputFile,
-         const std::string& outputFileName)
-{
-    Program codegenProgram = codegen(irProgram);
-    if (argument == "--codegen")
-        return;
-    if (argument == "--printAsm") {
-        AsmPrinter printer;
-        std::cout << printer.printProgram(codegenProgram);
-        return;
+    std::string stem = std::filesystem::path(inputFile).stem().string();
+    const std::string inputFolder = std::filesystem::path(inputFile).parent_path().string();
+    std::filesystem::path inputPath(inputFile);
+    std::filesystem::path outputPath = inputPath.parent_path() / (inputPath.stem().string() + ".s");
+    std::string outputFileName = outputPath.string();
+    std::ofstream ofs(outputFileName);
+    if (!ofs) {
+        std::cerr << "Error: Could not open output file " << outputFileName << '\n';
+        return outputFileName;
     }
-    fixAsm(codegenProgram);
-    if (argument == "--printAsmAfter") {
-        AsmPrinter printer;
-        std::cout << printer.printProgram(codegenProgram);
-        return;
-    }
-    std::string output = asmProgram(codegenProgram);
-    writeAsmFile(inputFile, output, argument);
-    if (argument == "--assemble")
-        return;
-    if (argument == "-c")
-        makeLib(outputFileName, inputFile.substr(0, inputFile.length() - 2));
-    else if (argument.starts_with("-l"))
-        linkLib(outputFileName, inputFile.substr(0, inputFile.length() - 2), argument);
-    else
-        assemble(outputFileName, inputFile.substr(0, inputFile.length() - 2));
+    ofs << output;
+    ofs.close();
+    return outputFileName;
 }
 
 void assemble(const std::string& asmFile, const std::string& outputFile)
@@ -92,21 +107,5 @@ void makeLib(const std::string& asmFile, const std::string& outputFile)
 {
     const std::string command = "gcc -c " + asmFile + " -o " + outputFile + ".o";
     std::system(command.c_str());
-}
-
-void writeAsmFile(const std::string& inputFile, const std::string& output, std::string& outputFileName)
-{
-    std::string stem = std::filesystem::path(inputFile).stem().string();
-    const std::string inputFolder = std::filesystem::path(inputFile).parent_path().string();
-    std::filesystem::path inputPath(inputFile);
-    std::filesystem::path outputPath = inputPath.parent_path() / (inputPath.stem().string() + ".s");
-    outputFileName = outputPath.string();
-    std::ofstream ofs(outputFileName);
-    if (!ofs) {
-        std::cerr << "Error: Could not open output file " << outputFileName << '\n';
-        return;
-    }
-    ofs << output;
-    ofs.close();
 }
 } // CodeGen

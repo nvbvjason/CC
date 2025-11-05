@@ -13,7 +13,7 @@ void asmStaticVariableDouble(std::string& result, const StaticVariable& variable
 void asmStaticConstant(std::string& result, const ConstVariable& variable);
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction);
 std::string asmOperand(const std::shared_ptr<Operand>& operand);
-std::string asmRegister(AsmType type, Operand::RegKind reg);
+std::string asmRegister(const AsmType& type, Operand::RegKind reg);
 std::string asmUnaryOperator(UnaryInst::Operator oper, AsmType type);
 std::string asmBinaryOperator(BinaryInst::Operator oper, AsmType type);
 std::string asmFormatLabel(const std::string& name);

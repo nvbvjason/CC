@@ -55,8 +55,64 @@ namespace CodeGen {
 
 struct InstVisitor;
 
-enum class AsmType : u8 {
-    Byte, Word, LongWord, QuadWord, Double
+struct AsmType {
+    enum class Kind : u8 {
+        Byte, Word, LongWord, QuadWord, Double, ByteArray
+    };
+    const Kind kind;
+
+    AsmType() = delete;
+
+protected:
+    explicit AsmType(const Kind k)
+        : kind(k) {}
+};
+
+struct ByteType final : AsmType {
+    explicit ByteType()
+        : AsmType(Kind::Byte) {}
+
+    static bool classOf(const AsmType* type) { return type->kind == Kind::Byte; }
+};
+
+struct WordType final : AsmType {
+    explicit WordType()
+        : AsmType(Kind::Byte) {}
+
+    static bool classOf(const AsmType* type) { return type->kind == Kind::Word; }
+};
+
+struct LongWordType final : AsmType {
+    explicit LongWordType()
+        : AsmType(Kind::LongWord) {}
+
+    static bool classOf(const AsmType* type) { return type->kind == Kind::LongWord; }
+};
+
+struct QuadWordType final : AsmType {
+    explicit QuadWordType()
+        : AsmType(Kind::QuadWord) {}
+
+    static bool classOf(const AsmType* type) { return type->kind == Kind::QuadWord; }
+};
+
+struct DoubleType final : AsmType {
+    explicit DoubleType()
+        : AsmType(Kind::Double) {}
+
+    static bool classOf(const AsmType* type) { return type->kind == Kind::Double; }
+};
+
+struct ByteArray final : AsmType {
+    i32 alignment;
+    i64 size;
+
+    explicit ByteArray(const i32 alignment, const i64 size)
+        : AsmType(Kind::ByteArray), alignment(alignment), size(size) {}
+
+    static bool classOf(const AsmType* type) { return type->kind == Kind::ByteArray; }
+
+    ByteArray() = delete;
 };
 
 struct Identifier {
@@ -74,25 +130,25 @@ struct Operand {
         XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM14, XMM15
     };
     Kind kind;
-    AsmType type;
+    const AsmType type;
     const bool isSigned = true;
 
     virtual ~Operand() = default;
 
     Operand() = delete;
 protected:
-    Operand(const Kind k, const AsmType t)
-      : kind(k), type(t) {}
+    explicit Operand(const Kind k, const AsmType asmType)
+      : kind(k), type(asmType) {}
 
-    Operand(const Kind k, const AsmType t, const bool isSigned)
-        : kind(k), type(t), isSigned(isSigned) {}
+    Operand(const Kind k, const AsmType asmType, const bool isSigned)
+        : kind(k), type(asmType), isSigned(isSigned) {}
 };
 
 struct ImmOperand final : Operand {
     u64 value;
 
-    explicit ImmOperand(const u64 value, const AsmType type)
-        : Operand(Kind::Imm, type, false), value(value) {}
+    explicit ImmOperand(const u64 value, const AsmType asmType)
+        : Operand(Kind::Imm, asmType, false), value(value) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Imm; }
 
@@ -102,8 +158,8 @@ struct ImmOperand final : Operand {
 struct RegisterOperand final : Operand {
     RegKind regKind;
 
-    explicit RegisterOperand(const RegKind rK, const AsmType t)
-        : Operand(Kind::Register, t), regKind(rK) {}
+    explicit RegisterOperand(const RegKind rK, const AsmType asmType)
+        : Operand(Kind::Register, asmType), regKind(rK) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Register; }
 
@@ -114,9 +170,8 @@ struct PseudoOperand final : Operand {
     Identifier identifier;
     ReferingTo referingTo = ReferingTo::Local;
     bool local;
-    PseudoOperand(Identifier identifier, const ReferingTo referingTo,
-                  const AsmType t, const bool local)
-        : Operand(Kind::Pseudo, t), identifier(std::move(identifier)),
+    PseudoOperand(Identifier identifier, const ReferingTo referingTo, const AsmType asmType, const bool local)
+        : Operand(Kind::Pseudo, asmType), identifier(std::move(identifier)),
           referingTo(referingTo), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Pseudo; }
@@ -138,8 +193,8 @@ struct MemoryOperand final : Operand {
 struct DataOperand final : Operand {
     Identifier identifier;
     bool local;
-    DataOperand(Identifier iden, const AsmType t, const bool local)
-        : Operand(Kind::Data, t), identifier(std::move(iden)), local(local) {}
+    DataOperand(Identifier iden, const AsmType asmType, const bool local)
+        : Operand(Kind::Data, asmType), identifier(std::move(iden)), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Data; }
 
@@ -152,7 +207,7 @@ struct PseudoMemOperand final : Operand {
     ReferingTo referingTo = ReferingTo::Local;
     bool local;
 
-    PseudoMemOperand(Identifier identifier, const i64 size, const AsmType type, const bool local)
+    PseudoMemOperand(Identifier identifier, const i64 size, const bool local, const AsmType type)
         : Operand(Kind::PseudoMem, type), identifier(std::move(identifier)), size(size), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::PseudoMem; }
@@ -165,8 +220,8 @@ struct IndexedOperand final : Operand {
     RegKind indexRegKind;
     i64 scale;
 
-    IndexedOperand(const RegKind rK, const RegKind indexRegKind, const i64 scale, const AsmType type)
-        : Operand(Kind::Indexed, type), regKind(rK), indexRegKind(indexRegKind), scale(scale) {}
+    IndexedOperand(const RegKind rK, const RegKind indexRegKind, const i64 scale, const AsmType asmType)
+        : Operand(Kind::Indexed, asmType), regKind(rK), indexRegKind(indexRegKind), scale(scale) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Indexed; }
 

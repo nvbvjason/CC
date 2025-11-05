@@ -9,9 +9,9 @@ void FixUpInstructions::fixStackAlignment()
         i32 allocationSize = -stackAlloc;
         allocationSize += 16 - allocationSize % 16;
         m_copy.emplace_back(std::make_unique<BinaryInst>(
-            std::make_shared<ImmOperand>(allocationSize, AsmType::LongWord),
-            std::make_shared<RegisterOperand>(RegType::SP, AsmType::QuadWord),
-            BinaryInst::Operator::Sub, AsmType::QuadWord));
+            std::make_shared<ImmOperand>(allocationSize, LongWordType()),
+            std::make_shared<RegisterOperand>(RegType::SP, QuadWordType()),
+            BinaryInst::Operator::Sub, QuadWordType()));
     }
 }
 
@@ -77,13 +77,13 @@ void FixUpInstructions::fixMoveSX(MoveSXInst& moveSX)
     std::shared_ptr<Operand> src = moveSX.src;
     if (src->kind == Operand::Kind::Imm) {
         insert(std::make_unique<MoveInst>(
-            src, genSrcOperand(AsmType::LongWord), AsmType::LongWord));
-        src = genSrcOperand(AsmType::LongWord);
+            src, genSrcOperand(LongWordType()), LongWordType()));
+        src = genSrcOperand(LongWordType());
     }
     if (isOnTheStack(moveSX.dst->kind)) {
-        std::shared_ptr<Operand> dst = genDstOperand(AsmType::QuadWord);
+        std::shared_ptr<Operand> dst = genDstOperand(QuadWordType());
         insert(std::make_unique<MoveSXInst>(src, dst));
-        insert(std::make_unique<MoveInst>(dst, moveSX.dst, AsmType::QuadWord));
+        insert(std::make_unique<MoveInst>(dst, moveSX.dst, QuadWordType()));
         return;
     }
     insert(std::make_unique<MoveSXInst>(src, moveSX.dst));
@@ -92,19 +92,19 @@ void FixUpInstructions::fixMoveSX(MoveSXInst& moveSX)
 void FixUpInstructions::fixMoveZero(MoveZeroExtendInst& moveZero)
 {
     if (moveZero.dst->kind == Operand::Kind::Register) {
-        insert(std::make_unique<MoveInst>(moveZero.src, moveZero.dst, AsmType::QuadWord));
+        insert(std::make_unique<MoveInst>(moveZero.src, moveZero.dst, QuadWordType()));
         return;
     }
-    insert(std::make_unique<MoveInst>(moveZero.src, genDstOperand(AsmType::LongWord), AsmType::LongWord));
-    insert(std::make_unique<MoveInst>(genDstOperand(AsmType::QuadWord), moveZero.dst, AsmType::QuadWord));
+    insert(std::make_unique<MoveInst>(moveZero.src, genDstOperand(LongWordType()), LongWordType()));
+    insert(std::make_unique<MoveInst>(genDstOperand(QuadWordType()), moveZero.dst, QuadWordType()));
 }
 
 void FixUpInstructions::fixLea(LeaInst& lea)
 {
     if (isOnTheStack(lea.dst->kind)) {
-        std::shared_ptr<Operand> dst = genDstOperand(AsmType::QuadWord);
-        insert(std::make_unique<LeaInst>(lea.src, dst, AsmType::QuadWord));
-        insert(std::make_unique<MoveInst>(dst, lea.dst, AsmType::QuadWord));
+        std::shared_ptr<Operand> dst = genDstOperand(QuadWordType());
+        insert(std::make_unique<LeaInst>(lea.src, dst, QuadWordType()));
+        insert(std::make_unique<MoveInst>(dst, lea.dst, QuadWordType()));
         return;
     }
     insert(std::make_unique<LeaInst>(lea));
@@ -116,7 +116,7 @@ void FixUpInstructions::fixBinary(BinaryInst& binary)
         binaryShift(binary);
     else if (binary.oper == BinaryInst::Operator::Mul)
         binaryMul(binary);
-    else if (binary.type == AsmType::Double)
+    else if (binary.type.kind == AsmType::Kind::Double)
         binaryDoubleOthers(binary);
     else
         binaryOthers(binary);
@@ -125,7 +125,7 @@ void FixUpInstructions::fixBinary(BinaryInst& binary)
 void FixUpInstructions::binaryShift(BinaryInst& binaryInst)
 {
     auto regCX = std::make_shared<RegisterOperand>(RegType::CX, binaryInst.type);
-    auto regCL = std::make_shared<RegisterOperand>(RegType::CX, AsmType::Byte);
+    auto regCL = std::make_shared<RegisterOperand>(RegType::CX, ByteType());
 
     insert(std::make_unique<MoveInst>(binaryInst.lhs, regCX, binaryInst.type));
     insert(std::make_unique<BinaryInst>(regCL, binaryInst.rhs, binaryInst.oper, binaryInst.type));
@@ -168,7 +168,7 @@ void FixUpInstructions::binaryOthers(BinaryInst& binaryInst)
 
 void FixUpInstructions::fixCmp(CmpInst& cmpInst)
 {
-    if (cmpInst.rhs->kind != Operand::Kind::Register && cmpInst.type == AsmType::Double) {
+    if (cmpInst.rhs->kind != Operand::Kind::Register && cmpInst.type.kind == AsmType::Kind::Double) {
         std::shared_ptr<Operand> dst = genDstOperand(cmpInst.type);
         insert(std::make_unique<MoveInst>(cmpInst.rhs, dst, cmpInst.type));
         insert(std::make_unique<CmpInst>(cmpInst.lhs, dst, cmpInst.type));
@@ -226,24 +226,24 @@ void FixUpInstructions::fixCvtsi2sd(Cvtsi2sdInst& cvtsi2sd)
         src = srcReg;
     }
     if (cvtsi2sd.dst->kind == Operand::Kind::Register) {
-        insert(std::make_unique<Cvtsi2sdInst>(src, cvtsi2sd.dst, AsmType::Double));
+        insert(std::make_unique<Cvtsi2sdInst>(src, cvtsi2sd.dst, DoubleType()));
         return;
     }
-    std::shared_ptr<Operand> dst = genDstOperand(AsmType::Double);
+    std::shared_ptr<Operand> dst = genDstOperand(DoubleType());
     insert(std::make_unique<Cvtsi2sdInst>(src, dst, cvtsi2sd.srcType));
-    insert(std::make_unique<MoveInst>(dst, cvtsi2sd.dst, AsmType::Double));
+    insert(std::make_unique<MoveInst>(dst, cvtsi2sd.dst, DoubleType()));
 }
 
 std::shared_ptr<RegisterOperand> FixUpInstructions::genSrcOperand(AsmType type)
 {
-    if (type == AsmType::Double)
+    if (type.kind == AsmType::Kind::Double)
         return std::make_shared<RegisterOperand>(RegType::XMM14, type);
     return std::make_shared<RegisterOperand>(RegType::R10, type);
 }
 
 std::shared_ptr<RegisterOperand> FixUpInstructions::genDstOperand(AsmType type)
 {
-    if (type == AsmType::Double)
+    if (type.kind == AsmType::Kind::Double)
         return std::make_shared<RegisterOperand>(RegType::XMM15, type);
     return std::make_shared<RegisterOperand>(RegType::R11, type);
 }

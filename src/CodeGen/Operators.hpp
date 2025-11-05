@@ -2,6 +2,12 @@
 
 #include "AsmAST.hpp"
 #include "ASTIr.hpp"
+#include "Frontend/AST/ASTBase.hpp"
+#include "Frontend/AST/ASTTypes.hpp"
+
+namespace Parsing {
+    struct TypeBase;
+}
 
 namespace CodeGen::Operators {
 
@@ -9,6 +15,7 @@ UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
 BinaryInst::Operator getShiftOperator(Ir::BinaryInst::Operation type, bool isSigned);
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
+AsmType getAsmType(const Parsing::TypeBase& type);
 AsmType getAsmType(Type type);
 
 inline UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
@@ -88,14 +95,25 @@ inline BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const
     }
 }
 
-inline AsmType getAsmType(Type type)
+inline AsmType getAsmType(const Parsing::TypeBase& typeBase)
+{
+    if (typeBase.type == Type::I32 || typeBase.type == Type::U32)
+        return LongWordType();
+    if (typeBase.type == Type::I64 || typeBase.type == Type::U64 || typeBase.type == Type::Pointer)
+        return QuadWordType();
+    if (typeBase.type == Type::Double)
+        return DoubleType();
+    std::abort();
+}
+
+inline AsmType getAsmType(const Type type)
 {
     if (type == Type::I32 || type == Type::U32)
-        return AsmType::LongWord;
+        return LongWordType();
     if (type == Type::I64 || type == Type::U64 || type == Type::Pointer)
-        return AsmType::QuadWord;
+        return QuadWordType();
     if (type == Type::Double)
-        return AsmType::Double;
+        return DoubleType();
     std::abort();
 }
 

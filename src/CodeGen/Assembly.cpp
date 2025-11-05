@@ -38,11 +38,11 @@ std::string asmProgram(const Program& program)
 
 void asmStaticVariable(std::string& result, const StaticVariable& variable)
 {
-    if (variable.type == AsmType::LongWord)
+    if (variable.type.kind == AsmType::Kind::LongWord)
         return asmStaticVariableLong(result, variable);
-    if (variable.type == AsmType::QuadWord)
+    if (variable.type.kind == AsmType::Kind::QuadWord)
         return asmStaticVariableQuad(result, variable);
-    if (variable.type == AsmType::Double)
+    if (variable.type.kind == AsmType::Kind::Double)
         return asmStaticVariableDouble(result, variable);
 }
 
@@ -173,9 +173,9 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Cdq: {
             const auto cdqInst = dynCast<CdqInst>(instruction.get());
-            if (cdqInst->type == AsmType::LongWord)
+            if (cdqInst->type.kind == AsmType::Kind::LongWord)
                 result += asmFormatInstruction("cdq");
-            if (cdqInst->type == AsmType::QuadWord)
+            if (cdqInst->type.kind == AsmType::Kind::QuadWord)
                 result += asmFormatInstruction("cqo");
             return;
         }
@@ -187,9 +187,9 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         }
         case Inst::Kind::Div: {
             const auto divInst = dynCast<DivInst>(instruction.get());
-            if (divInst->type == AsmType::LongWord)
+            if (divInst->type.kind == AsmType::Kind::LongWord)
                 result += asmFormatInstruction("divl", asmOperand(divInst->operand));
-            if (divInst->type == AsmType::QuadWord)
+            if (divInst->type.kind == AsmType::Kind::QuadWord)
                 result += asmFormatInstruction("divq", asmOperand(divInst->operand));
             return;
         }
@@ -202,7 +202,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Cmp: {
             const auto cmpInst = dynCast<CmpInst>(instruction.get());
             const std::string operands = asmOperand(cmpInst->lhs) + ", " + asmOperand(cmpInst->rhs);
-            if (cmpInst->lhs->type == AsmType::Double)
+            if (cmpInst->lhs->type.kind == AsmType::Kind::Double)
                 result += asmFormatInstruction("comisd", operands);
             else
                 result += asmFormatInstruction(addType("cmp", cmpInst->lhs->type), operands);
@@ -267,7 +267,7 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
         }
         case Operand::Kind::Data: {
             const auto dataOperand = dynCast<DataOperand>(operand.get());
-            if (dataOperand->local && dataOperand->type == AsmType::Double)
+            if (dataOperand->local && dataOperand->type.kind == AsmType::Kind::Double)
                 return createLabel(dataOperand->identifier.value) + "(%rip)";
             return dataOperand->identifier.value + "(%rip)";
         }
@@ -276,7 +276,7 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
     }
 }
 
-std::string asmRegister(const AsmType type, const Operand::RegKind reg)
+std::string asmRegister(const AsmType& type, const Operand::RegKind reg)
 {
     using Type = Operand::RegKind;
     if (reg == Type::BP)
@@ -313,11 +313,11 @@ std::string asmRegister(const AsmType type, const Operand::RegKind reg)
         return "invalid_register";
 
     const auto& names = it->second;
-    switch (type) {
-        case AsmType::Byte:     return names[0];
-        case AsmType::Word:     return names[1];
-        case AsmType::LongWord: return names[2];
-        case AsmType::QuadWord: return names[3];
+    switch (type.kind) {
+        case AsmType::Kind::Byte:     return names[0];
+        case AsmType::Kind::Word:     return names[1];
+        case AsmType::Kind::LongWord: return names[2];
+        case AsmType::Kind::QuadWord: return names[3];
         default: return "invalid_size";
     }
 }
@@ -336,11 +336,11 @@ std::string asmUnaryOperator(const UnaryInst::Operator oper, const AsmType type)
 std::string asmBinaryOperator(const BinaryInst::Operator oper, const AsmType type)
 {
     using Operator = BinaryInst::Operator;
-    if (oper == Operator::BitwiseXor && type == AsmType::Double)
+    if (oper == Operator::BitwiseXor && type.kind == AsmType::Kind::Double)
         return "xorpd";
-    if (oper == Operator::Mul && type == AsmType::Double)
+    if (oper == Operator::Mul && type.kind == AsmType::Kind::Double)
         return "mulsd";
-    if (oper == Operator::DivDouble && type == AsmType::Double)
+    if (oper == Operator::DivDouble && type.kind == AsmType::Kind::Double)
         return "divsd";
     switch (oper) {
         case Operator::Mul:                 return addType("imul", type);
@@ -408,12 +408,12 @@ std::string asmFormatInstruction(const std::string& mnemonic,
 
 std::string addType(const std::string& instruction, const AsmType type)
 {
-    switch (type) {
-        case AsmType::LongWord:
+    switch (type.kind) {
+        case AsmType::Kind::LongWord:
             return instruction + "l";
-        case AsmType::QuadWord:
+        case AsmType::Kind::QuadWord:
             return instruction + "q";
-        case AsmType::Double:
+        case AsmType::Kind::Double:
             return instruction + "sd";
         default:
             return instruction + " not set addType";

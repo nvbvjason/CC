@@ -47,7 +47,7 @@ StateCode CompilerDriver::wrappedRun() const
         printIr(irProgram);
         return StateCode::Done;
     }
-    CodeGen::run(irProgram, argument);
+    CodeGen::run(irProgram, argument, inputFile);
     return StateCode::Done;
 }
 
@@ -88,7 +88,7 @@ static bool isCommandLineArgumentValid(const std::string &argument)
 
 static void printHelp()
 {
-    const char* helpText =
+    const auto helpText =
         "-h               - Print help to the console.\n"
         "--printTokens    - Print the tokens produced by the lexer.\n"
         "--printAst       - Print the abstract syntax tree.\n"
