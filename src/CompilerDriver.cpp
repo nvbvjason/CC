@@ -27,7 +27,7 @@ i32 CompilerDriver::run() const
 StateCode CompilerDriver::wrappedRun() const
 {
     std::string argument;
-    if (StateCode errorCode = validateAndSetArg(argument); errorCode != StateCode::Continue)
+    if (const StateCode errorCode = validateAndSetArg(argument); errorCode != StateCode::Continue)
         return errorCode;
     if (argument == "--help" || argument == "-h") {
         printHelp();
@@ -38,7 +38,7 @@ StateCode CompilerDriver::wrappedRun() const
     auto [irProgramOptional, err] = frontend.run();
     if (!irProgramOptional.has_value())
         return err;
-    Ir::Program irProgram = std::move(irProgramOptional.value());
+    const Ir::Program irProgram = std::move(irProgramOptional.value());
     if (err != StateCode::Continue)
         return err;
     if (argument == "--tacky")

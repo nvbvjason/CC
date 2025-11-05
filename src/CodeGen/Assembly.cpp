@@ -271,6 +271,12 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
                 return createLabel(dataOperand->identifier.value) + "(%rip)";
             return dataOperand->identifier.value + "(%rip)";
         }
+        case Operand::Kind::Indexed: {
+            const auto indexedOperand = dynCast<IndexedOperand>(operand.get());
+            return "(" + asmRegister(indexedOperand->type, indexedOperand->regKind) + ", " +
+                         asmRegister(indexedOperand->type, indexedOperand->indexRegKind) + ", " +
+                            std::to_string(indexedOperand->scale) + ")";
+        }
         default:
             return "not set asmOperand";
     }
