@@ -5,10 +5,10 @@
 #### Clone repo:
 `git clone https://github.com/nvbvjason/CC.git`
 
-#### Build:
-`cd CC`
-`cmake -B build -S .`
-`cmake --build build  --target CC`
+#### Build: 
+- `cd CC`
+- `cmake -B build -S .`
+- `cmake --build build  --target CC`
 
 #### Build example file:
 `./build/src/CC examples/hello_world.c`
