@@ -2,7 +2,8 @@
 
 ## Quick start guide
 
-- git clone https://github.com/nvbvjason/CC.git
+- git clone --recurse-submodules https://github.com/nvbvjason/CC.git
+- cd CC
 - cmake -B build -S .
 - cmake --build build
 - ./build/src/CC examples/hello_world.c
