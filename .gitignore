@@ -10,4 +10,5 @@
 test/external/*
 !test/external/.gitkeep
 
-perf.data
+examples/*
+!examples/*.c
