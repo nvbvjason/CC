@@ -77,7 +77,7 @@ struct ByteType final : AsmType {
 
 struct WordType final : AsmType {
     explicit WordType()
-        : AsmType(Kind::Byte) {}
+        : AsmType(Kind::Word) {}
 
     static bool classOf(const AsmType* type) { return type->kind == Kind::Word; }
 };

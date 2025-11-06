@@ -31,10 +31,10 @@ TEST(AssemblyTests, addType)
             : expected(std::move(expected)), type(type) {}
     };
     const std::vector<TestDataAddType> tests = {
-        {"addl", AsmType::LongWord},
-        {"addq", AsmType::QuadWord},
-        {"addsd", AsmType::Double},
-        {"add not set addType", AsmType::Byte},
+        {"addl", CodeGen::LongWordType()},
+        {"addq", CodeGen::QuadWordType()},
+        {"addsd", CodeGen::DoubleType()},
+        {"add not set addType", CodeGen::ByteType()},
     };
     const std::string start = "add";
     for (const TestDataAddType& test : tests) {
@@ -81,69 +81,69 @@ TEST(AssemblyTests, asmRegister)
             : expected(std::move(expected)), type(type), reg(reg) {}
     };
     const std::vector<TestDataAsmRegister> tests = {
-        {"%rbp", AsmType::Double, RegKind::BP},
+        {"%rbp", CodeGen::DoubleType(), RegKind::BP},
 
-        {"%xmm0", AsmType::Double, RegKind::XMM0},
-        {"%xmm1", AsmType::Double, RegKind::XMM1},
-        {"%xmm2", AsmType::Double, RegKind::XMM2},
-        {"%xmm3", AsmType::Double, RegKind::XMM3},
-        {"%xmm4", AsmType::Double, RegKind::XMM4},
-        {"%xmm5", AsmType::Double, RegKind::XMM5},
-        {"%xmm6", AsmType::Double, RegKind::XMM6},
-        {"%xmm7", AsmType::Double, RegKind::XMM7},
-        {"%xmm14", AsmType::Double, RegKind::XMM14},
-        {"%xmm15", AsmType::Double, RegKind::XMM15},
+        {"%xmm0", CodeGen::DoubleType(), RegKind::XMM0},
+        {"%xmm1", CodeGen::DoubleType(), RegKind::XMM1},
+        {"%xmm2", CodeGen::DoubleType(), RegKind::XMM2},
+        {"%xmm3", CodeGen::DoubleType(), RegKind::XMM3},
+        {"%xmm4", CodeGen::DoubleType(), RegKind::XMM4},
+        {"%xmm5", CodeGen::DoubleType(), RegKind::XMM5},
+        {"%xmm6", CodeGen::DoubleType(), RegKind::XMM6},
+        {"%xmm7", CodeGen::DoubleType(), RegKind::XMM7},
+        {"%xmm14", CodeGen::DoubleType(), RegKind::XMM14},
+        {"%xmm15", CodeGen::DoubleType(), RegKind::XMM15},
 
-        {"%al", AsmType::Byte, RegKind::AX},
-        {"%ax", AsmType::Word, RegKind::AX},
-        {"%eax", AsmType::LongWord, RegKind::AX},
-        {"%rax", AsmType::QuadWord, RegKind::AX},
+        {"%al", CodeGen::ByteType(), RegKind::AX},
+        {"%ax", CodeGen::WordType(), RegKind::AX},
+        {"%eax", CodeGen::LongWordType(), RegKind::AX},
+        {"%rax", CodeGen::QuadWordType(), RegKind::AX},
 
-        {"%cl", AsmType::Byte, RegKind::CX},
-        {"%cx", AsmType::Word, RegKind::CX},
-        {"%ecx", AsmType::LongWord, RegKind::CX},
-        {"%rcx", AsmType::QuadWord, RegKind::CX},
+        {"%cl", CodeGen::ByteType(), RegKind::CX},
+        {"%cx", CodeGen::WordType(), RegKind::CX},
+        {"%ecx", CodeGen::LongWordType(), RegKind::CX},
+        {"%rcx", CodeGen::QuadWordType(), RegKind::CX},
 
-        {"%dl", AsmType::Byte, RegKind::DX},
-        {"%dx", AsmType::Word, RegKind::DX},
-        {"%edx", AsmType::LongWord, RegKind::DX},
-        {"%rdx", AsmType::QuadWord, RegKind::DX},
+        {"%dl", CodeGen::ByteType(), RegKind::DX},
+        {"%dx", CodeGen::WordType(), RegKind::DX},
+        {"%edx", CodeGen::LongWordType(), RegKind::DX},
+        {"%rdx", CodeGen::QuadWordType(), RegKind::DX},
 
-        {"%dil", AsmType::Byte, RegKind::DI},
-        {"%di", AsmType::Word, RegKind::DI},
-        {"%edi", AsmType::LongWord, RegKind::DI},
-        {"%rdi", AsmType::QuadWord, RegKind::DI},
+        {"%dil", CodeGen::ByteType(), RegKind::DI},
+        {"%di", CodeGen::WordType(), RegKind::DI},
+        {"%edi", CodeGen::LongWordType(), RegKind::DI},
+        {"%rdi", CodeGen::QuadWordType(), RegKind::DI},
 
-        {"%sil", AsmType::Byte, RegKind::SI},
-        {"%si", AsmType::Word, RegKind::SI},
-        {"%esi", AsmType::LongWord, RegKind::SI},
-        {"%rsi", AsmType::QuadWord, RegKind::SI},
-        {"invalid_size", AsmType::Double, RegKind::SI},
+        {"%sil", CodeGen::ByteType(), RegKind::SI},
+        {"%si", CodeGen::WordType(), RegKind::SI},
+        {"%esi", CodeGen::LongWordType(), RegKind::SI},
+        {"%rsi", CodeGen::QuadWordType(), RegKind::SI},
+        {"invalid_size", CodeGen::DoubleType(), RegKind::SI},
 
-        {"%r8b", AsmType::Byte, RegKind::R8},
-        {"%r8w", AsmType::Word, RegKind::R8},
-        {"%r8d", AsmType::LongWord, RegKind::R8},
-        {"%r8", AsmType::QuadWord, RegKind::R8},
+        {"%r8b", CodeGen::ByteType(), RegKind::R8},
+        {"%r8w", CodeGen::WordType(), RegKind::R8},
+        {"%r8d", CodeGen::LongWordType(), RegKind::R8},
+        {"%r8", CodeGen::QuadWordType(), RegKind::R8},
 
-        {"%r9b", AsmType::Byte, RegKind::R9},
-        {"%r9w", AsmType::Word, RegKind::R9},
-        {"%r9d", AsmType::LongWord, RegKind::R9},
-        {"%r9", AsmType::QuadWord, RegKind::R9},
+        {"%r9b", CodeGen::ByteType(), RegKind::R9},
+        {"%r9w", CodeGen::WordType(), RegKind::R9},
+        {"%r9d", CodeGen::LongWordType(), RegKind::R9},
+        {"%r9", CodeGen::QuadWordType(), RegKind::R9},
 
-        {"%r10b", AsmType::Byte, RegKind::R10},
-        {"%r10w", AsmType::Word, RegKind::R10},
-        {"%r10d", AsmType::LongWord, RegKind::R10},
-        {"%r10", AsmType::QuadWord, RegKind::R10},
+        {"%r10b", CodeGen::ByteType(), RegKind::R10},
+        {"%r10w", CodeGen::WordType(), RegKind::R10},
+        {"%r10d", CodeGen::LongWordType(), RegKind::R10},
+        {"%r10", CodeGen::QuadWordType(), RegKind::R10},
 
-        {"%r11b", AsmType::Byte, RegKind::R11},
-        {"%r11w", AsmType::Word, RegKind::R11},
-        {"%r11d", AsmType::LongWord, RegKind::R11},
-        {"%r11", AsmType::QuadWord, RegKind::R11},
+        {"%r11b", CodeGen::ByteType(), RegKind::R11},
+        {"%r11w", CodeGen::WordType(), RegKind::R11},
+        {"%r11d", CodeGen::LongWordType(), RegKind::R11},
+        {"%r11", CodeGen::QuadWordType(), RegKind::R11},
 
-        {"%rsp", AsmType::Byte, RegKind::SP},
-        {"%rsp", AsmType::Word, RegKind::SP},
-        {"%rsp", AsmType::LongWord, RegKind::SP},
-        {"%rsp", AsmType::QuadWord, RegKind::SP},
+        {"%rsp", CodeGen::ByteType(), RegKind::SP},
+        {"%rsp", CodeGen::WordType(), RegKind::SP},
+        {"%rsp", CodeGen::LongWordType(), RegKind::SP},
+        {"%rsp", CodeGen::QuadWordType(), RegKind::SP},
     };
     for (const TestDataAsmRegister& test : tests) {
         const std::string withType = CodeGen::asmRegister(test.type, test.reg);
@@ -167,7 +167,7 @@ TEST(AssemblyTests, asmUnaryOperator)
         {"shrl", UnaryOper::Shr},
     };
     for (const TestDataUnaryOperator& test : tests) {
-        const std::string operString = CodeGen::asmUnaryOperator(test.oper, AsmType::LongWord);
+        const std::string operString = CodeGen::asmUnaryOperator(test.oper, CodeGen::LongWordType());
         EXPECT_EQ(operString, test.expected) << "Instruction mismatch for input: "
                                    << CodeGen::to_string(test.oper)<< '\n';
     }
@@ -183,19 +183,19 @@ TEST(AssemblyTests, asmBinaryOperator)
             : expected(std::move(expected)), oper(oper), type(type) {}
     };
     const std::vector<TestDataBinaryOperator> tests = {
-        {"xorpd", BinaryOper::BitwiseXor, AsmType::Double},
-        {"mulsd", BinaryOper::Mul, AsmType::Double},
-        {"divsd", BinaryOper::DivDouble, AsmType::Double},
-        {"imull", BinaryOper::Mul, AsmType::LongWord},
-        {"addl", BinaryOper::Add, AsmType::LongWord},
-        {"subl", BinaryOper::Sub, AsmType::LongWord},
-        {"andl", BinaryOper::BitwiseAnd, AsmType::LongWord},
-        {"orl", BinaryOper::BitwiseOr, AsmType::LongWord},
-        {"xorl", BinaryOper::BitwiseXor, AsmType::LongWord},
-        {"shll", BinaryOper::LeftShiftSigned, AsmType::LongWord},
-        {"sall", BinaryOper::LeftShiftUnsigned, AsmType::LongWord},
-        {"sarl", BinaryOper::RightShiftSigned, AsmType::LongWord},
-        {"shrl", BinaryOper::RightShiftUnsigned, AsmType::LongWord},
+        {"xorpd", BinaryOper::BitwiseXor, CodeGen::DoubleType()},
+        {"mulsd", BinaryOper::Mul, CodeGen::DoubleType()},
+        {"divsd", BinaryOper::DivDouble, CodeGen::DoubleType()},
+        {"imull", BinaryOper::Mul, CodeGen::LongWordType()},
+        {"addl", BinaryOper::Add, CodeGen::LongWordType()},
+        {"subl", BinaryOper::Sub, CodeGen::LongWordType()},
+        {"andl", BinaryOper::BitwiseAnd, CodeGen::LongWordType()},
+        {"orl", BinaryOper::BitwiseOr, CodeGen::LongWordType()},
+        {"xorl", BinaryOper::BitwiseXor, CodeGen::LongWordType()},
+        {"shll", BinaryOper::LeftShiftSigned, CodeGen::LongWordType()},
+        {"sall", BinaryOper::LeftShiftUnsigned, CodeGen::LongWordType()},
+        {"sarl", BinaryOper::RightShiftSigned, CodeGen::LongWordType()},
+        {"shrl", BinaryOper::RightShiftUnsigned, CodeGen::LongWordType()},
     };
     for (const TestDataBinaryOperator& test : tests) {
         const std::string operString = CodeGen::asmBinaryOperator(test.oper, test.type);
@@ -223,13 +223,13 @@ TEST(AssemblyTests, asmOperand)
     };
 
     const std::vector<TestDataOperand> tests = {
-        {"invalid pseudo", make_shared<PseudoOperand>(Iden(""), ReferingTo::Local, AsmType::LongWord, true)},
-        {"(%rip)", make_shared<DataOperand>(Iden(""), AsmType::LongWord, true)},
-        {".L(%rip)", make_shared<DataOperand>(Iden(""), AsmType::Double, true)},
-        {"$0", make_shared<ImmOperand>(0l, AsmType::QuadWord)},
-        {"%rax", make_shared<RegisterOperand>(RegKind::AX, AsmType::QuadWord)},
-        {"10(%rcx)", make_shared<MemoryOperand>(RegKind::CX, 10, AsmType::QuadWord)},
-        {"(%rcx)", make_shared<MemoryOperand>(RegKind::CX, 0, AsmType::QuadWord)},
+        {"invalid pseudo", make_shared<PseudoOperand>(Iden(""), ReferingTo::Local, CodeGen::LongWordType(), true)},
+        {"(%rip)", make_shared<DataOperand>(Iden(""), CodeGen::LongWordType(), true)},
+        {".L(%rip)", make_shared<DataOperand>(Iden(""), CodeGen::DoubleType(), true)},
+        {"$0", make_shared<ImmOperand>(0l, CodeGen::QuadWordType())},
+        {"%rax", make_shared<RegisterOperand>(RegKind::AX, CodeGen::QuadWordType())},
+        {"10(%rcx)", make_shared<MemoryOperand>(RegKind::CX, 10, CodeGen::QuadWordType())},
+        {"(%rcx)", make_shared<MemoryOperand>(RegKind::CX, 0, CodeGen::QuadWordType())},
     };
     for (const TestDataOperand& test : tests) {
         const std::string operString = CodeGen::asmOperand(test.operand);
