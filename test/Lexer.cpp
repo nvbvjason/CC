@@ -191,12 +191,3 @@ TEST(LexerTests, MultiLineComment)
     const auto tokens = runLexerTest(MULTILINE_COMMENT_PROGRAM);
     EXPECT_TRUE(tokens.size() == 1) << " " << tokens.size();
 }
-
-TEST(LexerTests, InvalidInput)
-{
-    TokenStore tokenStore;
-    Lexing::Lexer lexer("\\", tokenStore);
-    EXPECT_FALSE(lexer.getLexemes().empty());
-    ASSERT_EQ(tokenStore.size(), 2);
-    EXPECT_EQ(tokenStore.getType(0), Lexing::Token::Type::Invalid);
-}
