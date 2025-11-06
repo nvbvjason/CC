@@ -1,5 +1,15 @@
 # CC
 
+## Quick Start
+
+- git clone  --recurse-submodules https://github.com/nvbvjason/CC.git
+- cd CC
+- cmake -B build -S .
+- cmake --build build
+- ./build/src/CC examples/hello_world.c
+- ./examples/hello_world.c
+
+
 ## Language Specification
 
 The compiler supports a substantial subset of C with the following grammar:
