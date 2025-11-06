@@ -1,14 +1,20 @@
 # CC
 
-## Quick Start
+## Quick start guide
 
-- git clone  --recurse-submodules https://github.com/nvbvjason/CC.git
-- cd CC
-- cmake -B build -S .
-- cmake --build build
-- ./build/src/CC examples/hello_world.c
-- ./examples/hello_world.c
+#### Clone repo:
+`git clone https://github.com/nvbvjason/CC.git`
 
+#### Build:
+`cd CC`
+`cmake -B build -S .`
+`cmake --build build  --target CC`
+
+#### Build example file:
+`./build/src/CC examples/hello_world.c`
+
+#### Run it:
+`./examples/hello_world`
 
 ## Language Specification
 
