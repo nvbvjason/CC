@@ -1,5 +1,7 @@
 # CC
 
+Generates x86_64 for Linux from C files.
+
 ## Quick start guide
 
 #### Clone repo:
