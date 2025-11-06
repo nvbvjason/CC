@@ -1,6 +1,6 @@
 # CC
 
-Generates x86_64 for Linux from C files.
+Generates x86_64 for Linux from C files and links them with GCC.
 
 ## Quick start guide
 
