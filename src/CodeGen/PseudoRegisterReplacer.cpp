@@ -29,6 +29,11 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
             if (operand->kind == Operand::Kind::PseudoMem) {
                 const auto pseudoMem = dynCast<PseudoMemOperand>(operand.get());
                 m_stackPtr -= pseudoMem->arraySize * Operators::getAlignment(operand->type);
+                fitToAlignment();
+                m_pseudoMap[identifier] = m_stackPtr;
+                operand = std::make_shared<MemoryOperand>(
+                    Operand::RegKind::BP, m_stackPtr, operand->type);
+                return;
             }
             if (asmType == AsmType::LongWord)
                 m_stackPtr -= 4;
@@ -36,13 +41,11 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
                 asmType == AsmType::Double) {
                 m_stackPtr -= 8;
             }
-            constexpr i64 requiredAlignment = 8;
-            if (m_stackPtr % requiredAlignment != 0)
-                m_stackPtr += -requiredAlignment - m_stackPtr % requiredAlignment;
+            fitToAlignment();
             m_pseudoMap[identifier] = m_stackPtr;
         }
         operand = std::make_shared<MemoryOperand>(
-            Operand::RegKind::BP, m_pseudoMap.at(identifier) - offset, operand->type);
+            Operand::RegKind::BP, m_pseudoMap.at(identifier) + offset, operand->type);
     }
 }
 
@@ -117,5 +120,12 @@ void PseudoRegisterReplacer::visit(Cvtsi2sdInst& cvtsi2sdInst)
 {
     replaceIfPseudo(cvtsi2sdInst.src);
     replaceIfPseudo(cvtsi2sdInst.dst);
+}
+
+void PseudoRegisterReplacer::fitToAlignment()
+{
+    constexpr i64 requiredAlignment = 8;
+    if (m_stackPtr % requiredAlignment != 0)
+        m_stackPtr += -requiredAlignment - m_stackPtr % requiredAlignment;
 }
 } // namespace CodeGen

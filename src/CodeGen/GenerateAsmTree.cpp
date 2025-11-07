@@ -747,11 +747,13 @@ void GenerateAsmTree::genAddPtr(const Ir::AddPtrInst& addPtrInst)
 {
     if (addPtrInst.index->kind == Ir::Value::Kind::Constant)
         genAddPtrConstIndex(addPtrInst);
-    if (addPtrInst.index->type == Type::I32 || addPtrInst.index->type == Type::I64 ||
+    else if (addPtrInst.index->type == Type::I32 || addPtrInst.index->type == Type::I64 ||
         addPtrInst.index->type == Type::U32 || addPtrInst.index->type == Type::U64) {
         genAddPtrVariableIndex1_2_4_8(addPtrInst);
     }
-    genAddPtrVariableIndexAndOtherScale(addPtrInst);
+    else {
+        genAddPtrVariableIndexAndOtherScale(addPtrInst);
+    }
 }
 
 void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
@@ -759,12 +761,11 @@ void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
     const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
     const auto ptr = genOperand(addPtrInst.ptr);
     const auto constValue = dynCast<Ir::ValueConst>(addPtrInst.index.get());
-    const i64 scale = getSize(addPtrInst.ptr->type);
-    const i64 index = std::get<i64>(constValue->value) * scale;
+    const i64 index = std::get<i64>(constValue->value) * addPtrInst.scale;
     const auto memoryOp = std::make_shared<MemoryOperand>(
         RegType::AX, index, Operators::getAsmType(addPtrInst.ptr->type));
+    std::shared_ptr<Operand> dst = genOperand(addPtrInst.dst);
 
-    std::shared_ptr<Operand> dst = genOperand(addPtrInst.ptr);
     emplaceMove(ptr, regAX, Operators::getAsmType(addPtrInst.ptr->type));
     emplaceLea(memoryOp, dst, Operators::getAsmType(addPtrInst.ptr->type));
 }
@@ -775,11 +776,10 @@ void GenerateAsmTree::genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& 
     const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, Operators::getAsmType(addPtrInst.type));
     const auto ptr = genOperand(addPtrInst.ptr);
     const auto index = genOperand(addPtrInst.index);
-    const i64 scale = getSize(addPtrInst.ptr->type);
-    const auto immScale = std::make_shared<ImmOperand>(scale, AsmType::QuadWord);
+    const auto immScale = std::make_shared<ImmOperand>(addPtrInst.scale, AsmType::QuadWord);
     const AsmType type = Operators::getAsmType(addPtrInst.ptr->type);
     const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, immScale->value, type);
-    const auto dst = genOperand(addPtrInst.ptr);
+    const auto dst = genOperand(addPtrInst.dst);
 
     emplaceMove(ptr, regAX, AsmType::QuadWord);
     emplaceMove(index, regDX, AsmType::QuadWord);
@@ -793,13 +793,12 @@ void GenerateAsmTree::genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtr
     const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, Operators::getAsmType(addPtrInst.type));
     const auto ptr = genOperand(addPtrInst.ptr);
     const auto index = genOperand(addPtrInst.index);
-    const i64 scale = getSize(addPtrInst.ptr->type);
     const AsmType type = Operators::getAsmType(addPtrInst.ptr->type);
-    const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, scale, type);
-    const auto dst = genOperand(addPtrInst.ptr);
+    const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, addPtrInst.scale, type);
+    const auto dst = genOperand(addPtrInst.dst);
 
-    emplaceMove(ptr, regAX, type);
-    emplaceMove(index, regDX, type);
+    emplaceMove(ptr, regAX, AsmType::QuadWord);
+    emplaceMove(index, regDX, AsmType::QuadWord);
     emplaceLea(indexed, dst, type);
 }
 
