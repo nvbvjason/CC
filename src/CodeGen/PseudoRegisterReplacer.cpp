@@ -1,34 +1,35 @@
 #include "PseudoRegisterReplacer.hpp"
 #include "DynCast.hpp"
+#include "Operators.hpp"
 
 namespace CodeGen {
-    std::tuple<ReferingTo, AsmType const *, bool, std::string, i64> getPseudoValues(
-        const std::shared_ptr<Operand>& operand)
-    {
-        if (operand->kind == Operand::Kind::PseudoMem) {
-            const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
-            return {pseudoMem->referingTo, &pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->size};
-        }
-        if (operand->kind == Operand::Kind::Pseudo) {
-            const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
-            return {pseudo->referingTo, &pseudo->type, pseudo->local, pseudo->identifier.value, 0};
-        }
-        std::abort();
+
+std::tuple<ReferingTo, AsmType const *, bool, std::string, i64> getPseudoValues(
+    const std::shared_ptr<Operand>& operand)
+{
+    if (operand->kind == Operand::Kind::PseudoMem) {
+        const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
+        return {pseudoMem->referingTo, &pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->size};
     }
+    if (operand->kind == Operand::Kind::Pseudo) {
+        const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
+        return {pseudo->referingTo, &pseudo->type, pseudo->local, pseudo->identifier.value, 0};
+    }
+    std::abort();
+}
 
 void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
 {
     if (operand && (operand->kind == Operand::Kind::PseudoMem || operand->kind == Operand::Kind::Pseudo)) {
         const auto [referingTo, asmType, isLocal, identifier, offset] = getPseudoValues(operand);
-        const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
         if (referingTo == ReferingTo::Extern || referingTo == ReferingTo::Static) {
             operand = std::make_shared<DataOperand>(Identifier(identifier), *asmType, !isLocal);
             return;
         }
         if (!m_pseudoMap.contains(identifier)) {
-            if (asmType->kind == AsmType::Kind::ByteArray) {
-                const auto byteArray = dynCast<const ByteArray>(&pseudoMem->type);
-                m_stackPtr -= byteArray->size;
+            if (operand->kind == Operand::Kind::PseudoMem) {
+                const auto pseudoMem = dynCast<PseudoMemOperand>(operand.get());
+                m_stackPtr -= pseudoMem->arraySize * Operators::getAlignment(operand->type.kind);
             }
             if (asmType->kind == AsmType::Kind::LongWord)
                 m_stackPtr -= 4;

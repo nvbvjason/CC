@@ -342,9 +342,12 @@ struct CopyToOffsetInst final : Instruction {
     std::shared_ptr<Value> src;
     Identifier iden;
     i64 offset;
+    i64 sizeArray;
 
-    CopyToOffsetInst(std::shared_ptr<Value> src, Identifier iden, const i64 offset, const Type t)
-        : Instruction(Kind::CopyToOffset, t), src(std::move(src)), iden(std::move(iden)), offset(offset) {}
+    CopyToOffsetInst(std::shared_ptr<Value> src, Identifier iden,
+                     const i64 offset, const Type t, const i64 sizeArray)
+        : Instruction(Kind::CopyToOffset, t), src(std::move(src)),
+          iden(std::move(iden)), offset(offset), sizeArray(sizeArray) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyToOffset; }
 

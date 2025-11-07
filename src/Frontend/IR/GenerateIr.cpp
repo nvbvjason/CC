@@ -204,12 +204,13 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
         const auto arrayType = dynCast<Parsing::ArrayType>(varDecl->type.get());
         const Type type = arrayType->elementType->type;
         const i64 size = getSize(type);
+        const i64 arraySize = getArraySize(arrayType);
         i64 offset = 0;
         for (const auto& init : compoundInit->initializers) {
             if (init->kind == InitKind::Single) {
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(init.get());
                 const std::shared_ptr<Value> value = genInstAndConvert(*singleInit->exp);
-                emplaceCopyToOffset(value, Identifier(varDecl->name), offset, type);
+                emplaceCopyToOffset(value, Identifier(varDecl->name), offset, type, arraySize);
                 offset += size;
             }
         }

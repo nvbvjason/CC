@@ -204,11 +204,16 @@ struct DataOperand final : Operand {
 struct PseudoMemOperand final : Operand {
     const Identifier identifier;
     const i64 size;
+    const i64 arraySize = 0;
     ReferingTo referingTo = ReferingTo::Local;
     bool local;
 
     PseudoMemOperand(Identifier identifier, const i64 size, const bool local, const AsmType type)
         : Operand(Kind::PseudoMem, type), identifier(std::move(identifier)), size(size), local(local) {}
+    PseudoMemOperand(Identifier identifier, const i64 size, const i64 arraySize,
+                     const bool local, const AsmType type)
+        : Operand(Kind::PseudoMem, type), identifier(std::move(identifier)), size(size),
+          arraySize(arraySize), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::PseudoMem; }
 

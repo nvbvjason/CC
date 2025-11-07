@@ -814,10 +814,10 @@ void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
     }
     if (copyToOffset.src->kind == Ir::Value::Kind::Constant)
         referingToLocal = true;
-
     const auto pseudoMem = std::make_shared<PseudoMemOperand>(
             Identifier(copyToOffset.iden.value),
             copyToOffset.offset,
+            copyToOffset.sizeArray,
             referingToLocal,
             srcType);
 
@@ -916,9 +916,8 @@ i32 getStackPadding(const size_t numArgs)
 std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::Value>& value)
 {
     switch (value->kind) {
-        case Ir::Value::Kind::Constant: {
+        case Ir::Value::Kind::Constant:
             return getOperandFromConstant(value);
-        }
         case Ir::Value::Kind::Variable: {
             const auto valueVar = dynCast<Ir::ValueVar>(value.get());
             const bool isConst = valueVar->type == Type::Double;
