@@ -10,7 +10,7 @@ namespace Parsing {
 class ASTPrinter final : public ConstASTTraverser {
     class IndentGuard {
     public:
-        IndentGuard(int& level) : m_level(level) { ++m_level; }
+        explicit IndentGuard(int& level) : m_level(level) { ++m_level; }
         ~IndentGuard() { --m_level; }
     private:
         int& m_level;

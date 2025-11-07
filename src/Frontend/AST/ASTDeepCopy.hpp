@@ -17,6 +17,8 @@ namespace Parsing {
 [[nodiscard]] bool areEquivalent(const ArrayType& left, const ArrayType& right);
 [[nodiscard]] bool areEquivalentArrayConversion(const TypeBase& left, const TypeBase& right);
 
+[[nodiscard]] std::unique_ptr<TypeBase> convertArrayFirstDimToPtr(const TypeBase& typeBase);
+
 [[nodiscard]] std::unique_ptr<Expr> deepCopy(const Expr& expr);
 [[nodiscard]] std::unique_ptr<Expr> deepCopy(const ConstExpr& expr);
 [[nodiscard]] std::unique_ptr<Expr> deepCopy(const VarExpr& expr);

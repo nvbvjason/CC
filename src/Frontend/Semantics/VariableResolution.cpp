@@ -6,10 +6,6 @@
 
 #include <unordered_set>
 
-namespace {
-using Storage = Parsing::Declaration::StorageClass;
-}
-
 namespace Semantics {
 
 std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
@@ -140,7 +136,7 @@ void VariableResolution::visit(Parsing::VarExpr& varExpr)
             varExpr.referingTo = ReferingTo::Extern;
         if (returnedEntry.hasInternalLinkage())
             varExpr.referingTo = ReferingTo::Static;
-        varExpr.type = Parsing::deepCopy(*returnedEntry.typeBase);
+        varExpr.type = Parsing::convertArrayFirstDimToPtr(*returnedEntry.typeBase);
     }
     ASTTraverser::visit(varExpr);
 }

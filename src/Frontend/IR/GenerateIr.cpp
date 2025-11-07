@@ -140,6 +140,7 @@ std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDeclaration& 
 void GenerateIr::genBlock(const Parsing::Block& block)
 {
     for (const std::unique_ptr<Parsing::BlockItem>& item : block.body)
+
         genBlockItem(*item);
 }
 
@@ -180,6 +181,8 @@ void GenerateIr::genForInit(const Parsing::ForInit& forInit)
 
 void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
 {
+    using InitKind = Parsing::Initializer::Kind;
+
     if (decl.kind != Parsing::Declaration::Kind::VarDecl)
         return;
     const auto varDecl = dynCast<const Parsing::VarDecl>(&decl);
@@ -187,7 +190,7 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
         return genStaticLocal(*varDecl);
     if (varDecl->init == nullptr)
         return;
-    if (varDecl->init->kind == Parsing::Initializer::Kind::Single) {
+    if (varDecl->init->kind == InitKind::Single) {
         const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl->init.get());
         const std::shared_ptr<Value> value = genInstAndConvert(*singleInit->exp);
         const auto temporary = std::make_shared<ValueVar>(makeTemporaryName(), varDecl->type->type);
@@ -195,6 +198,21 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
         const Identifier iden(varDecl->name);
         const auto var = std::make_shared<ValueVar>(iden, varDecl->type->type);
         emplaceCopy(temporary, var, varDecl->type->type);
+    }
+    if (varDecl->init->kind == InitKind::Compound) {
+        const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl->init.get());
+        const auto arrayType = dynCast<Parsing::ArrayType>(varDecl->type.get());
+        const Type type = arrayType->elementType->type;
+        const i64 size = getSize(type);
+        i64 offset = 0;
+        for (const auto& init : compoundInit->initializers) {
+            if (init->kind == InitKind::Single) {
+                const auto singleInit = dynCast<Parsing::SingleInitializer>(init.get());
+                const std::shared_ptr<Value> value = genInstAndConvert(*singleInit->exp);
+                emplaceCopyToOffset(value, Identifier(varDecl->name), offset, type);
+                offset += size;
+            }
+        }
     }
 }
 

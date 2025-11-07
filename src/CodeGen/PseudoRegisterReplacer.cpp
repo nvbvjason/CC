@@ -1,29 +1,48 @@
 #include "PseudoRegisterReplacer.hpp"
+#include "DynCast.hpp"
 
 namespace CodeGen {
+    std::tuple<ReferingTo, AsmType const *, bool, std::string> getPseudoValues(
+        const std::shared_ptr<Operand>& operand)
+    {
+        if (operand->kind == Operand::Kind::PseudoMem) {
+            const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
+            return {pseudoMem->referingTo, &pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value};
+        }
+        if (operand->kind == Operand::Kind::Pseudo) {
+            const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
+            return {pseudo->referingTo, &pseudo->type, pseudo->local, pseudo->identifier.value};
+        }
+        std::abort();
+    }
+
 void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
 {
-    if (operand->kind == Operand::Kind::Pseudo && operand) {
-        const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
-        if (pseudo->referingTo == ReferingTo::Extern ||
-            pseudo->referingTo == ReferingTo::Static) {
-            operand = std::make_shared<DataOperand>(pseudo->identifier, pseudo->type, !pseudo->local);
+    if (operand && (operand->kind == Operand::Kind::PseudoMem || operand->kind == Operand::Kind::Pseudo)) {
+        const auto [referingTo, asmType, isLocal, identifier] = getPseudoValues(operand);
+        const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
+        if (referingTo == ReferingTo::Extern || referingTo == ReferingTo::Static) {
+            operand = std::make_shared<DataOperand>(Identifier(identifier), *asmType, !isLocal);
             return;
         }
-        if (!m_pseudoMap.contains(pseudo->identifier.value)) {
-            if (pseudo->type.kind == AsmType::Kind::LongWord)
+        if (!m_pseudoMap.contains(identifier)) {
+            if (asmType->kind == AsmType::Kind::ByteArray) {
+                const auto byteArray = dynCast<const ByteArray>(&pseudoMem->type);
+                m_stackPtr -= byteArray->size;
+            }
+            if (asmType->kind == AsmType::Kind::LongWord)
                 m_stackPtr -= 4;
-            if (pseudo->type.kind == AsmType::Kind::QuadWord ||
-                pseudo->type.kind == AsmType::Kind::Double) {
+            if (asmType->kind == AsmType::Kind::QuadWord ||
+                asmType->kind == AsmType::Kind::Double) {
                 m_stackPtr -= 8;
             }
-            constexpr i32 requiredAlignment = 8;
+            constexpr i64 requiredAlignment = 8;
             if (m_stackPtr % requiredAlignment != 0)
                 m_stackPtr += -requiredAlignment - m_stackPtr % requiredAlignment;
-            m_pseudoMap[pseudo->identifier.value] = m_stackPtr;
+            m_pseudoMap[identifier] = m_stackPtr;
         }
         operand = std::make_shared<MemoryOperand>(
-            Operand::RegKind::BP, m_pseudoMap.at(pseudo->identifier.value), operand->type);
+            Operand::RegKind::BP, m_pseudoMap.at(identifier), operand->type);
     }
 }
 

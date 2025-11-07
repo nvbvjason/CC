@@ -102,4 +102,9 @@ inline bool isBitShift(const Parsing::AssignmentExpr::Operator oper)
     return oper == Oper::LeftShiftAssign || oper == Oper::RightShiftAssign;
 }
 
+// inline Type getArrayType(const Parsing::ArrayType* type)
+// {
+//     Parsing::ArrayType* typeBase = type;
+// }
+
 } // Ir

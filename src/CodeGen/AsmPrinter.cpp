@@ -359,7 +359,7 @@ std::string to_string(const AsmType type)
         case AsmType::Kind::LongWord: return "LongWord";
         case AsmType::Kind::QuadWord: return "QuadWord";
         case AsmType::Kind::Double:   return "Double";
-        default:                return "Unknown AssemblyType";
+        default:                      return "Unknown AssemblyType";
     }
 }
 

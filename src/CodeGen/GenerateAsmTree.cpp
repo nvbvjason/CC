@@ -217,6 +217,16 @@ void GenerateAsmTree::genInst(const std::unique_ptr<Ir::Instruction>& inst)
             genGetAddress(*irGetAddress);
             break;
         }
+        case Kind::AddPtr: {
+            const auto irAddPtr = dynCast<const Ir::AddPtrInst>(inst.get());
+            genAddPtr(*irAddPtr);
+            break;
+        }
+        case Kind::CopyToOffset: {
+            const auto irCopyToOffset = dynCast<const Ir::CopyToOffsetInst>(inst.get());
+            genCopyToOffSet(*irCopyToOffset);
+            break;
+        }
         default:
             std::abort();
     }
@@ -797,12 +807,19 @@ void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
 {
     const auto src = genOperand(copyToOffset.src);
     const AsmType srcType = src->type;
-    const auto copyToOffSetSrc = dynCast<Ir::ValueVar>(copyToOffset.src.get());
+    bool referingToLocal;
+    if (copyToOffset.src->kind == Ir::Value::Kind::Variable) {
+        const auto copyToOffSetSrcVar = dynCast<Ir::ValueVar>(copyToOffset.src.get());
+        referingToLocal = copyToOffSetSrcVar->referingTo == ReferingTo::Local;
+    }
+    if (copyToOffset.src->kind == Ir::Value::Kind::Constant)
+        referingToLocal = true;
+
     const auto pseudoMem = std::make_shared<PseudoMemOperand>(
-        Identifier(copyToOffset.iden.value),
-        copyToOffset.offset,
-        copyToOffSetSrc->referingTo == ReferingTo::Local,
-        srcType);
+            Identifier(copyToOffset.iden.value),
+            copyToOffset.offset,
+            referingToLocal,
+            srcType);
 
     emplaceMove(src, pseudoMem, srcType);
 }
