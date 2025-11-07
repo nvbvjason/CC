@@ -14,6 +14,7 @@ static Identifier makeTemporaryName();
 static Identifier makeTemporaryName(Value& value);
 static std::string generateCaseLabelName(std::string before);
 static i64 getArraySize(Parsing::TypeBase* type);
+static Type getArrayType(Parsing::TypeBase* type);
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
 {
@@ -140,7 +141,6 @@ std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FunDeclaration& 
 void GenerateIr::genBlock(const Parsing::Block& block)
 {
     for (const std::unique_ptr<Parsing::BlockItem>& item : block.body)
-
         genBlockItem(*item);
 }
 
@@ -660,6 +660,10 @@ std::unique_ptr<ExprResult> GenerateIr::genVarInst(const Parsing::VarExpr& varEx
     const Identifier iden(varExpr.name);
     auto var = std::make_shared<ValueVar>(iden, varExpr.type->type);
     var->referingTo = varExpr.referingTo;
+    if (var->type == Type::Array) {
+        var->size = getArraySize(varExpr.type.get());
+        var->type = getArrayType(varExpr.type.get());
+    }
     return std::make_unique<PlainOperand>(var);
 }
 
@@ -965,6 +969,15 @@ i64 getArraySize(Parsing::TypeBase* type)
         type = arrayType->elementType.get();
     } while (type->kind == Parsing::TypeBase::Kind::Array);
     return result;
+}
+
+Type getArrayType(Parsing::TypeBase* type)
+{
+    do {
+        const auto arrayType = dynCast<Parsing::ArrayType>(type);
+        type = arrayType->elementType.get();
+    } while (type->kind == Parsing::TypeBase::Kind::Array);
+    return type->type;
 }
 
 } // IR

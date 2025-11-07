@@ -922,13 +922,16 @@ std::shared_ptr<Operand> GenerateAsmTree::genOperand(const std::shared_ptr<Ir::V
         case Ir::Value::Kind::Variable: {
             const auto valueVar = dynCast<Ir::ValueVar>(value.get());
             const bool isConst = valueVar->type == Type::Double;
-            // if (valueVar->type == Type::Array) {
-            //     return std::make_shared<PseudoMemOperand>(
-            //         Identifier(valueVar->value.value),
-            //         ,
-            //         isConst
-            //     );
-            // }
+            if (valueVar->size != 0) {
+                return std::make_shared<PseudoMemOperand>(
+                    Identifier(valueVar->value.value),
+                    valueVar->size,
+                    isConst,
+                    ByteArray(
+                        Operators::getAlignment(Operators::getAsmType(valueVar->type).kind)
+                        , valueVar->size)
+                );
+            }
             return std::make_shared<PseudoOperand>(
                 Identifier(valueVar->value.value),
                 valueVar->referingTo,

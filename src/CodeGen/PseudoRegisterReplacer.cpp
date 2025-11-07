@@ -2,16 +2,16 @@
 #include "DynCast.hpp"
 
 namespace CodeGen {
-    std::tuple<ReferingTo, AsmType const *, bool, std::string> getPseudoValues(
+    std::tuple<ReferingTo, AsmType const *, bool, std::string, i64> getPseudoValues(
         const std::shared_ptr<Operand>& operand)
     {
         if (operand->kind == Operand::Kind::PseudoMem) {
             const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
-            return {pseudoMem->referingTo, &pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value};
+            return {pseudoMem->referingTo, &pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->size};
         }
         if (operand->kind == Operand::Kind::Pseudo) {
             const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
-            return {pseudo->referingTo, &pseudo->type, pseudo->local, pseudo->identifier.value};
+            return {pseudo->referingTo, &pseudo->type, pseudo->local, pseudo->identifier.value, 0};
         }
         std::abort();
     }
@@ -19,7 +19,7 @@ namespace CodeGen {
 void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
 {
     if (operand && (operand->kind == Operand::Kind::PseudoMem || operand->kind == Operand::Kind::Pseudo)) {
-        const auto [referingTo, asmType, isLocal, identifier] = getPseudoValues(operand);
+        const auto [referingTo, asmType, isLocal, identifier, offset] = getPseudoValues(operand);
         const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
         if (referingTo == ReferingTo::Extern || referingTo == ReferingTo::Static) {
             operand = std::make_shared<DataOperand>(Identifier(identifier), *asmType, !isLocal);
@@ -42,7 +42,7 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
             m_pseudoMap[identifier] = m_stackPtr;
         }
         operand = std::make_shared<MemoryOperand>(
-            Operand::RegKind::BP, m_pseudoMap.at(identifier), operand->type);
+            Operand::RegKind::BP, m_pseudoMap.at(identifier) - offset, operand->type);
     }
 }
 

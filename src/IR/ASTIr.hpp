@@ -66,8 +66,13 @@ protected:
 struct ValueVar final : Value {
     ReferingTo referingTo = ReferingTo::Local;
     Identifier value;
-    explicit ValueVar(Identifier v, const Type t)
+    i64 size = 0;
+
+    ValueVar(Identifier v, const Type t)
         : Value(t, Kind::Variable), value(std::move(v)) {}
+
+    ValueVar(Identifier v, const Type t, const i64 size)
+        : Value(t, Kind::Variable), value(std::move(v)), size(size) {}
 
     static bool classOf(const Value* value) { return value->kind == Kind::Variable; }
 
