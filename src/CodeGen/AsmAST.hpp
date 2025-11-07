@@ -55,64 +55,8 @@ namespace CodeGen {
 
 struct InstVisitor;
 
-struct AsmType {
-    enum class Kind : u8 {
-        Byte, Word, LongWord, QuadWord, Double, ByteArray
-    };
-    const Kind kind;
-
-    AsmType() = delete;
-
-protected:
-    explicit AsmType(const Kind k)
-        : kind(k) {}
-};
-
-struct ByteType final : AsmType {
-    explicit ByteType()
-        : AsmType(Kind::Byte) {}
-
-    static bool classOf(const AsmType* type) { return type->kind == Kind::Byte; }
-};
-
-struct WordType final : AsmType {
-    explicit WordType()
-        : AsmType(Kind::Word) {}
-
-    static bool classOf(const AsmType* type) { return type->kind == Kind::Word; }
-};
-
-struct LongWordType final : AsmType {
-    explicit LongWordType()
-        : AsmType(Kind::LongWord) {}
-
-    static bool classOf(const AsmType* type) { return type->kind == Kind::LongWord; }
-};
-
-struct QuadWordType final : AsmType {
-    explicit QuadWordType()
-        : AsmType(Kind::QuadWord) {}
-
-    static bool classOf(const AsmType* type) { return type->kind == Kind::QuadWord; }
-};
-
-struct DoubleType final : AsmType {
-    explicit DoubleType()
-        : AsmType(Kind::Double) {}
-
-    static bool classOf(const AsmType* type) { return type->kind == Kind::Double; }
-};
-
-struct ByteArray final : AsmType {
-    i32 alignment;
-    i64 size;
-
-    explicit ByteArray(const i32 alignment, const i64 size)
-        : AsmType(Kind::ByteArray), alignment(alignment), size(size) {}
-
-    static bool classOf(const AsmType* type) { return type->kind == Kind::ByteArray; }
-
-    ByteArray() = delete;
+enum class AsmType : u8 {
+    Byte, Word, LongWord, QuadWord, Double
 };
 
 struct Identifier {

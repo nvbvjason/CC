@@ -36,6 +36,5 @@ private:
     void replaceIfPseudo(std::shared_ptr<Operand>& operand);
 };
 
-std::tuple<ReferingTo, AsmType const *, bool, std::string, i64> getPseudoValues(
-    const std::shared_ptr<Operand>& operand);
+std::tuple<ReferingTo, AsmType, bool, std::string, i64> getPseudoValues(const std::shared_ptr<Operand>& operand);
 } // CodeGen

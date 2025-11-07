@@ -4,16 +4,15 @@
 
 namespace CodeGen {
 
-std::tuple<ReferingTo, AsmType const *, bool, std::string, i64> getPseudoValues(
-    const std::shared_ptr<Operand>& operand)
+std::tuple<ReferingTo, AsmType, bool, std::string, i64> getPseudoValues(const std::shared_ptr<Operand>& operand)
 {
     if (operand->kind == Operand::Kind::PseudoMem) {
         const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
-        return {pseudoMem->referingTo, &pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->size};
+        return {pseudoMem->referingTo, pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->size};
     }
     if (operand->kind == Operand::Kind::Pseudo) {
         const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
-        return {pseudo->referingTo, &pseudo->type, pseudo->local, pseudo->identifier.value, 0};
+        return {pseudo->referingTo, pseudo->type, pseudo->local, pseudo->identifier.value, 0};
     }
     std::abort();
 }
@@ -23,18 +22,18 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
     if (operand && (operand->kind == Operand::Kind::PseudoMem || operand->kind == Operand::Kind::Pseudo)) {
         const auto [referingTo, asmType, isLocal, identifier, offset] = getPseudoValues(operand);
         if (referingTo == ReferingTo::Extern || referingTo == ReferingTo::Static) {
-            operand = std::make_shared<DataOperand>(Identifier(identifier), *asmType, !isLocal);
+            operand = std::make_shared<DataOperand>(Identifier(identifier), asmType, !isLocal);
             return;
         }
         if (!m_pseudoMap.contains(identifier)) {
             if (operand->kind == Operand::Kind::PseudoMem) {
                 const auto pseudoMem = dynCast<PseudoMemOperand>(operand.get());
-                m_stackPtr -= pseudoMem->arraySize * Operators::getAlignment(operand->type.kind);
+                m_stackPtr -= pseudoMem->arraySize * Operators::getAlignment(operand->type);
             }
-            if (asmType->kind == AsmType::Kind::LongWord)
+            if (asmType == AsmType::LongWord)
                 m_stackPtr -= 4;
-            if (asmType->kind == AsmType::Kind::QuadWord ||
-                asmType->kind == AsmType::Kind::Double) {
+            else if (asmType == AsmType::QuadWord ||
+                asmType == AsmType::Double) {
                 m_stackPtr -= 8;
             }
             constexpr i64 requiredAlignment = 8;

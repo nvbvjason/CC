@@ -17,7 +17,7 @@ BinaryInst::Operator getShiftOperator(Ir::BinaryInst::Operation type, bool isSig
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
 AsmType getAsmType(const Parsing::TypeBase& type);
 AsmType getAsmType(Type type);
-i32 getAlignment(AsmType::Kind type);
+i32 getAlignment(AsmType type);
 
 inline UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 {
@@ -99,29 +99,27 @@ inline BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const
 inline AsmType getAsmType(const Parsing::TypeBase& typeBase)
 {
     if (typeBase.type == Type::I32 || typeBase.type == Type::U32)
-        return LongWordType();
+        return AsmType::LongWord;
     if (typeBase.type == Type::I64 || typeBase.type == Type::U64 || typeBase.type == Type::Pointer)
-        return QuadWordType();
+        return AsmType::QuadWord;
     if (typeBase.type == Type::Double)
-        return DoubleType();
+        return AsmType::Double;
     std::abort();
 }
 
 inline AsmType getAsmType(const Type type)
 {
     if (type == Type::I32 || type == Type::U32)
-        return LongWordType();
+        return AsmType::LongWord;
     if (type == Type::I64 || type == Type::U64 || type == Type::Pointer)
-        return QuadWordType();
+        return AsmType::QuadWord;
     if (type == Type::Double)
-        return DoubleType();
+        return AsmType::Double;
     std::abort();
 }
 
-inline i32 getAlignment(const AsmType::Kind type)
+inline i32 getAlignment(const AsmType type)
 {
-    using AsmType = AsmType::Kind;
-
     switch (type) {
         case AsmType::Byte:     return 1;
         case AsmType::Word:     return 2;
