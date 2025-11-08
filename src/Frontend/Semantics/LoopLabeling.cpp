@@ -6,10 +6,18 @@
 #include <cassert>
 
 namespace Semantics {
-std::vector<Error> LoopLabeling::programValidate(Parsing::Program& program)
+std::tuple<std::vector<Error>, std::vector<Parsing::VarDecl*>> LoopLabeling::programValidate(
+    Parsing::Program& program)
 {
     ASTTraverser::visit(program);
-    return std::move(errors);
+    return {std::move(errors), std::move(varDecls)};
+}
+
+void LoopLabeling::visit(Parsing::VarDecl& varDecl)
+{
+    if (varDecl.init && varDecl.init->kind == Parsing::Initializer::Kind::Compound)
+        varDecls.emplace_back(&varDecl);
+    ASTTraverser::visit(varDecl);
 }
 
 void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)

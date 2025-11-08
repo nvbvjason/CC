@@ -79,10 +79,8 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& pro
     if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
         return {StateCode::VariableResolution, errors};
     Semantics::TypeResolution typeResolution;
-    if (auto [errors, varDecls] = typeResolution.validate(program); !errors.empty()) {
-        Semantics::initArrays(varDecls);
+    if (const std::vector<Error> errors = typeResolution.validate(program); !errors.empty())
         return {StateCode::TypeResolution, errors};
-    }
     Semantics::LvalueVerification lvalueVerification;
     if (const std::vector<Error> errors = lvalueVerification.resolve(program); !errors.empty())
         return {StateCode::LValueVerification, errors};
@@ -93,8 +91,10 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& pro
     if (const std::vector<Error> errors = labelsUnique.programValidate(program); !errors.empty())
         return {StateCode::LabelsUnique, errors};
     Semantics::LoopLabeling loopLabeling;
-    if (const std::vector<Error> errors = loopLabeling.programValidate(program); !errors.empty())
+    auto [errors, varDecls] = loopLabeling.programValidate(program);
+    if (!errors.empty())
         return {StateCode::LoopLabeling, errors};
+    Semantics::initArrays(varDecls);
     return {StateCode::Done, {}};
 }
 

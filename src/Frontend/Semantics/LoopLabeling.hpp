@@ -42,7 +42,10 @@ class LoopLabeling : public Parsing::ASTTraverser {
     std::string continueLabel;
     std::string switchLabel;
 public:
-    std::vector<Error> programValidate(Parsing::Program& program);
+    std::tuple<std::vector<Error>, std::vector<Parsing::VarDecl*>> programValidate(
+        Parsing::Program& program);
+
+    void visit(Parsing::VarDecl& varDecl) override;
 
     void visit(Parsing::BreakStmt&) override;
     void visit(Parsing::ContinueStmt&) override;

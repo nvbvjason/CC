@@ -10,12 +10,11 @@ using BinaryOp = Parsing::BinaryExpr::Operator;
 }
 
 namespace Semantics {
-std::tuple<std::vector<Error>, std::vector<Parsing::VarDecl*>> TypeResolution::validate(Parsing::Program& program)
+std::vector<Error> TypeResolution::validate(Parsing::Program& program)
 {
     m_errors = std::vector<Error>();
-    m_arrayDecls = std::vector<Parsing::VarDecl*>();
     ASTTraverser::visit(program);
-    return {std::move(m_errors), std::move(m_arrayDecls)};
+    return std::move(m_errors);
 }
 
 void TypeResolution::visit(Parsing::FunDeclaration& funDecl)
@@ -146,7 +145,6 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
                 }
             }
         }
-        m_arrayDecls.emplace_back(&varDecl);
         return;
     }
     assignTypeToArithmeticUnaryExpr(varDecl);
