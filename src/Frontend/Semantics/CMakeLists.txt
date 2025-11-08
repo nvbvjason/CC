@@ -7,8 +7,6 @@ add_library(Semantics STATIC
         TypeResolution.cpp
         Utils.hpp
         Utils.cpp
-        InitArrays.cpp
-        InitArrays.hpp
 )
 
 target_include_directories(Semantics PUBLIC

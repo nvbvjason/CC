@@ -36,25 +36,23 @@ class LoopLabeling : public Parsing::ASTTraverser {
     std::vector<Error> errors;
     std::unordered_set<std::string> m_default;
     std::unordered_map<std::string, std::vector<std::variant<i32, i64, u32, u64>>> switchCases;
-    std::vector<Parsing::VarDecl*> varDecls;
     Type conditionType = Type::I32;
     std::string breakLabel;
     std::string continueLabel;
     std::string switchLabel;
 public:
-    std::tuple<std::vector<Error>, std::vector<Parsing::VarDecl*>> programValidate(
-        Parsing::Program& program);
+    std::vector<Error> programValidate(Parsing::Program& program);
 
     void visit(Parsing::VarDecl& varDecl) override;
 
-    void visit(Parsing::BreakStmt&) override;
-    void visit(Parsing::ContinueStmt&) override;
-    void visit(Parsing::DefaultStmt&) override;
+    void visit(Parsing::BreakStmt& breakStmt) override;
+    void visit(Parsing::ContinueStmt& continueStmt) override;
+    void visit(Parsing::DefaultStmt& defaultStmt) override;
     void visit(Parsing::CaseStmt&) override;
-    void visit(Parsing::WhileStmt&) override;
-    void visit(Parsing::DoWhileStmt&) override;
-    void visit(Parsing::ForStmt&) override;
-    void visit(Parsing::SwitchStmt&) override;
+    void visit(Parsing::WhileStmt& whileStmt) override;
+    void visit(Parsing::DoWhileStmt& doWhileStmt) override;
+    void visit(Parsing::ForStmt& forStmt) override;
+    void visit(Parsing::SwitchStmt& switchStmt) override;
 private:
     static bool isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt);
     static bool isNonConstantInSwitchCase(const Parsing::CaseStmt& caseStmt);
@@ -76,5 +74,9 @@ inline std::string LoopLabeling::makeTemporary(const std::string& name)
     static i32 m_counter = 0;
     return name + '.' + std::to_string(m_counter++);
 }
+
+static void initArray(Parsing::VarDecl& array);
+static std::vector<i64> getDimensions(const Parsing::VarDecl& array);
+static std::vector<i64> getScales(const std::vector<i64>& dimensions, i64 size);
 
 } // Semantics

@@ -2,22 +2,31 @@
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
+#include "ASTDeepCopy.hpp"
 
 #include <cassert>
+#include <numeric>
+#include <stack>
 
 namespace Semantics {
-std::tuple<std::vector<Error>, std::vector<Parsing::VarDecl*>> LoopLabeling::programValidate(
-    Parsing::Program& program)
+struct Node {
+    Parsing::Initializer* init;
+    i64 at;
+    Node() = delete;
+    Node(Parsing::Initializer* init, const i64 at)
+        : init(init), at{at} {}
+};
+
+std::vector<Error> LoopLabeling::programValidate(Parsing::Program& program)
 {
     ASTTraverser::visit(program);
-    return {std::move(errors), std::move(varDecls)};
+    return std::move(errors);
 }
 
 void LoopLabeling::visit(Parsing::VarDecl& varDecl)
 {
     if (varDecl.init && varDecl.init->kind == Parsing::Initializer::Kind::Compound)
-        varDecls.emplace_back(&varDecl);
-    ASTTraverser::visit(varDecl);
+        initArray(varDecl);
 }
 
 void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
@@ -148,5 +157,60 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     breakLabel = breakTemp;
     switchLabel = switchTemp;
     conditionType = conditionTypeTemp;
+}
+
+void initArray(Parsing::VarDecl& array)
+{
+    std::vector<i64> dimensions = getDimensions(array);
+    const i64 size = std::accumulate(dimensions.begin(), dimensions.end(), i64{1}, std::multiplies<>{});
+    auto arrayInit = array.init.get();
+    std::vector<std::unique_ptr<Parsing::Initializer>> staticInitializer;
+    i64 at = 0;
+    std::stack<Node, std::vector<Node>> stack;
+    stack.emplace(arrayInit, 0);
+    do {
+        auto[init, atCompound] = stack.top();
+        stack.pop();
+        switch (init->kind) {
+            case Parsing::Initializer::Kind::Compound: {
+                auto compoundInit = dynCast<Parsing::CompoundInitializer>(init);
+                if (compoundInit->initializers.size() <= atCompound) {
+                    const i64 dimension = dimensions[stack.size()];
+                    staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(
+                        dimension - atCompound));
+                }
+                else {
+                    stack.emplace(init, atCompound + 1);
+                    stack.emplace(compoundInit->initializers[atCompound].get(), atCompound);
+                }
+                break;
+            }
+            case Parsing::Initializer::Kind::Single: {
+                auto singleInit = dynCast<Parsing::SingleInitializer>(init);
+                staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
+                    Parsing::deepCopy(*singleInit->exp)));
+                ++at;
+                break;
+            }
+            default:
+                std::abort();
+        }
+    } while (!stack.empty());
+    if (at + 1 < size)
+        staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(size - at - 1));
+    auto newArrayInit = std::make_unique<Parsing::CompoundInitializer>(std::move(staticInitializer));
+    array.init = std::move(newArrayInit);
+}
+
+std::vector<i64> getDimensions(const Parsing::VarDecl& array)
+{
+    std::vector<i64> dimensions;
+    Parsing::TypeBase* type = array.type.get();
+    do {
+        const auto arrayType = dynCast<Parsing::ArrayType>(type);
+        dimensions.emplace_back(arrayType->size);
+        type = arrayType->elementType.get();
+    } while (type->kind == Parsing::TypeBase::Kind::Array);
+    return dimensions;
 }
 } // Semantics
