@@ -67,12 +67,12 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
 std::unique_ptr<TopLevel> GenerateIr::genStaticArray(const Parsing::VarDecl& varDecl, const bool defined)
 {
     std::vector<std::unique_ptr<Initializer>> initializers;
-    const Type type = varDecl.type->type;
+    const Type innerType = getArrayType(varDecl.type.get());
     if (!defined) {
         auto zeroInit = std::make_unique<ZeroInitializer>(getArraySize(varDecl.type.get()));
         initializers.emplace_back(std::move(zeroInit));
         return std::make_unique<StaticArray>(
-            varDecl.name, std::move(initializers), type, varDecl.storage != Storage::Static);
+            varDecl.name, std::move(initializers), innerType, varDecl.storage != Storage::Static);
     }
     const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
     for (const auto& initializer : compoundInit->initializers) {
@@ -87,18 +87,60 @@ std::unique_ptr<TopLevel> GenerateIr::genStaticArray(const Parsing::VarDecl& var
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(initializer.get());
                 auto value = genInstAndConvert(*singleInit->exp);
                 initializers.emplace_back(std::make_unique<ValueInitializer>(value));
+                break;
             }
             default:
                 std::abort();
         }
     }
     return std::make_unique<StaticArray>(
-        varDecl.name, std::move(initializers), type, varDecl.storage != Storage::Static);
+        varDecl.name, std::move(initializers), innerType, varDecl.storage != Storage::Static);
+}
+
+std::unique_ptr<TopLevel> GenerateIr::genStaticInit(const Parsing::VarDecl& varDecl, const bool defined)
+{
+    if (varDecl.type->type == Type::Array) {
+        const Type innerType = getArrayType(varDecl.type.get());
+        auto initializers = genStaticArrayInit(varDecl, defined);
+        return std::make_unique<StaticArray>(varDecl.name, std::move(initializers), innerType, false);
+    }
+    std::shared_ptr<Value> value = genStaticVariableInit(varDecl, defined);
+    return std::make_unique<StaticVariable>(varDecl.name, value, varDecl.type->type, false);
+}
+
+std::vector<std::unique_ptr<Initializer>> GenerateIr::genStaticArrayInit(
+    const Parsing::VarDecl& varDecl, const bool defined)
+{
+    std::vector<std::unique_ptr<Initializer>> initializers;
+    if (!defined) {
+        const i64 size = getArraySize(varDecl.type.get());
+        initializers.emplace_back(std::make_unique<ZeroInitializer>(size));
+        return initializers;
+    }
+    const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
+    for (const auto& stuff : compoundInit->initializers) {
+        switch (stuff->kind) {
+            case Parsing::Initializer::Kind::Single: {
+                const auto singleInit = dynCast<Parsing::SingleInitializer>(stuff.get());
+                const auto value = genInstAndConvert(*singleInit->exp);
+                initializers.emplace_back(std::make_unique<ValueInitializer>(value));
+                break;
+            }
+            case Parsing::Initializer::Kind::Zero: {
+                const auto zeroInit = dynCast<Parsing::ZeroInitializer>(stuff.get());
+                initializers.emplace_back(std::make_unique<ZeroInitializer>(zeroInit->size));
+                break;
+            }
+            default:
+                std::abort();
+        }
+    }
+    return initializers;
 }
 
 std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl& varDecl, const bool defined)
 {
-    if (defined && varDecl.init->kind == Parsing::Initializer::Kind::Single) {
+    if (defined) {
         auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
         return genInstAndConvert(*singleInit->exp);
     }
@@ -202,7 +244,7 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
     if (varDecl->init->kind == InitKind::Compound) {
         const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl->init.get());
         const auto arrayType = dynCast<Parsing::ArrayType>(varDecl->type.get());
-        const Type type = arrayType->elementType->type;
+        const Type type = getArrayType(varDecl->type.get());
         const i64 size = getSize(type);
         const i64 arraySize = getArraySize(arrayType);
         i64 offset = 0;
@@ -220,9 +262,7 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
 void GenerateIr::genStaticLocal(const Parsing::VarDecl& varDecl)
 {
     const bool defined = varDecl.init != nullptr;
-    std::shared_ptr<Value> value = genStaticVariableInit(varDecl, defined);
-    auto variable = std::make_unique<StaticVariable>(
-        varDecl.name, value, varDecl.type->type, false);
+    auto variable = genStaticInit(varDecl, defined);
     m_topLevels.push_back(std::move(variable));
     m_symbolTable.addEntry(varDecl.name,
                               varDecl.name,
@@ -782,44 +822,28 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryOrInst(const Parsing::BinaryExp
 
 std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrInst(const Parsing::BinaryExpr& binaryExpr)
 {
-    if (binaryExpr.lhs->type->type == Type::Pointer && binaryExpr.rhs->type->type == Type::Pointer)
-        return genBinaryPtrSubInst(binaryExpr);
     if (binaryExpr.op == Parsing::BinaryExpr::Operator::And)
         return genBinaryAndInst(binaryExpr);
     if (binaryExpr.op == Parsing::BinaryExpr::Operator::Or)
         return genBinaryOrInst(binaryExpr);
+    if (binaryExpr.lhs->type->type == Type::Pointer && binaryExpr.rhs->type->type == Type::Pointer)
+        return genBinaryPtrSubInst(binaryExpr);
     return genBinaryPtrAddInst(binaryExpr);
-}
-
-std::tuple<Parsing::Expr*, Parsing::Expr*> GenerateIr::getPtrIndexForAdd(const Parsing::BinaryExpr& binaryExpr)
-{
-    Parsing::Expr* ptrSide = nullptr;
-    Parsing::Expr* indexSide = nullptr;
-    if (binaryExpr.lhs->type->type == Type::Pointer) {
-        ptrSide = binaryExpr.lhs.get();
-        indexSide = binaryExpr.rhs.get();
-    }
-    else {
-        assert(binaryExpr.rhs->type->type == Type::Pointer);
-        indexSide = binaryExpr.lhs.get();
-        ptrSide = binaryExpr.rhs.get();
-    }
-    return {ptrSide, indexSide};
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr)
 {
-    const auto[ptrSide, indexSide] = getPtrIndexForAdd(binaryExpr);
+    const auto[ptrSide, indexSide] = switchIndexAndAddIfNecessary(binaryExpr);
     const std::shared_ptr<Value> ptr = genInstAndConvert(*ptrSide);
     const std::shared_ptr<Value> index = genInstAndConvert(*indexSide);
     const auto ptrType = dynCast<const Parsing::PointerType>(ptrSide->type.get());
-    Type type = ptrType->type;
+    const Type type = ptrType->type;
     if (binaryExpr.op == Parsing::BinaryExpr::Operator::Subtract) {
-        const auto dst = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), index->type);
-        emplaceUnary(UnaryInst::Operation::Negate, index, dst, index->type);
+        const auto dst = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), Type::Pointer);
+        emplaceUnary(UnaryInst::Operation::Negate, index, dst, Type::Pointer);
     }
     const i64 size = getSize(type);
-    auto result = std::make_shared<ValueVar>(makeTemporaryName(), type);
+    auto result = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
     emplaceAddPtr(ptr, index, result, size);
     return std::make_unique<PlainOperand>(result);
 }
@@ -892,6 +916,7 @@ std::unique_ptr<ExprResult> GenerateIr::genFuncCallInst(const Parsing::FuncCallE
         emplaceFunCall(Identifier(funcCallExpr.name), std::move(arguments), dst, Type::Pointer);
         return std::make_unique<PlainOperand>(dst);
     }
+    std::abort();
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genAddrOfInst(const Parsing::AddrOffExpr& addrOffExpr)
@@ -917,15 +942,56 @@ std::unique_ptr<ExprResult> GenerateIr::genAddrOfInst(const Parsing::AddrOffExpr
     std::unreachable();
 }
 
+i64 scaleBaseType(Parsing::TypeBase* typeBase)
+{
+    switch (typeBase->type) {
+        case Type::I32:
+        case Type::U32:
+            return 4;
+        case Type::I64:
+        case Type::U64:
+        case Type::Double:
+            return 8;
+    }
+    std::abort();
+}
+
+i64 getReferencedTypeSize(Parsing::TypeBase* typeBase)
+{
+    std::vector<i64> scales;
+    while (typeBase->kind != Parsing::TypeBase::Kind::Var) {
+        switch (typeBase->kind) {
+            case Parsing::TypeBase::Kind::Pointer: {
+                const auto ptrType = dynCast<const Parsing::PointerType>(typeBase);
+                typeBase = ptrType->referenced.get();
+                break;
+            }
+            case Parsing::TypeBase::Kind::Array: {
+                const auto arrayType = dynCast<Parsing::ArrayType>(typeBase);
+                scales.emplace_back(arrayType->size);
+                typeBase = arrayType->elementType.get();
+                break;
+            }
+            default:
+                std::abort();
+        }
+    }
+    i64 scale = 1;
+    scale *= scaleBaseType(typeBase);
+    for (size_t i = 1; i < scales.size(); ++i)
+        scale *= scales[i];
+    return scale;
+}
+
 std::unique_ptr<ExprResult> GenerateIr::genSubscript(const Parsing::SubscriptExpr& subscriptExpr)
 {
     const std::shared_ptr<Value> ptr = genInstAndConvert(*subscriptExpr.referencing);
     const std::shared_ptr<Value> index = genInstAndConvert(*subscriptExpr.index);
-    const Type type = subscriptExpr.type->type;
-    const i64 size = getSize(type);
-    auto result = std::make_shared<ValueVar>(makeTemporaryName(), type);
-    emplaceAddPtr(ptr, index, result, size);
-    return std::make_unique<DereferencedPointer>(result, type);
+    Parsing::TypeBase* typeBase = subscriptExpr.type.get();
+    const i64 scale = getReferencedTypeSize(typeBase);
+    auto result = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
+    emplaceAddPtr(ptr, index, result, scale);
+    return std::make_unique<DereferencedPointer>(result, Type::Pointer);
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr)
@@ -981,4 +1047,19 @@ Type getArrayType(Parsing::TypeBase* type)
     return type->type;
 }
 
+std::tuple<Parsing::Expr*, Parsing::Expr*> switchIndexAndAddIfNecessary(const Parsing::BinaryExpr& binaryExpr)
+{
+    Parsing::Expr* ptrSide = nullptr;
+    Parsing::Expr* indexSide = nullptr;
+    if (binaryExpr.lhs->type->type == Type::Pointer) {
+        ptrSide = binaryExpr.lhs.get();
+        indexSide = binaryExpr.rhs.get();
+    }
+    else {
+        assert(binaryExpr.rhs->type->type == Type::Pointer);
+        indexSide = binaryExpr.lhs.get();
+        ptrSide = binaryExpr.rhs.get();
+    }
+    return {ptrSide, indexSide};
+}
 } // IR

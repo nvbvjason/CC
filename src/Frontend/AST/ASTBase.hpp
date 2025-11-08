@@ -18,7 +18,7 @@ struct TypeBase {
     enum class Kind {
         Var, Func, Pointer, Array
     };
-    Kind kind;
+    const Kind kind;
     Type type;
 
     virtual ~TypeBase() = default;
@@ -35,7 +35,7 @@ struct BlockItem : ASTNode {
     enum class Kind : u8 {
         Declaration, Statement
     };
-    Kind kind;
+    const Kind kind;
 
     virtual ~BlockItem() = default;
     virtual void accept(ASTVisitor& visitor) = 0;
@@ -53,7 +53,7 @@ struct ForInit : ASTNode {
     enum class Kind {
         Declaration, Expression
     };
-    Kind kind;
+    const Kind kind;
 
     virtual ~ForInit() = default;
     virtual void accept(ASTVisitor& visitor) = 0;
@@ -72,7 +72,7 @@ struct Expr : ASTNode {
         Constant, Var, Cast, Unary, Binary, Assignment, Ternary, FunctionCall,
         Dereference, AddrOf, Subscript
     };
-    Kind kind;
+    const Kind kind;
     std::unique_ptr<TypeBase> type = nullptr;
 
     virtual ~Expr() = default;
@@ -98,7 +98,7 @@ struct Stmt : ASTNode {
         Break, Continue, Label, Case, Default, While, DoWhile, For, Switch,
         Null
     };
-    Kind kind;
+    const Kind kind;
 
     virtual ~Stmt() = default;
 
@@ -122,7 +122,7 @@ struct Declaration : ASTNode {
         Extern,
         Static
     };
-    Kind kind;
+    const Kind kind;
     StorageClass storage = StorageClass::None;
 
     virtual ~Declaration() = default;
@@ -142,7 +142,7 @@ struct Initializer {
     enum class Kind {
         Single, Compound, Zero
     };
-    Kind kind;
+    const Kind kind;
 
     virtual ~Initializer() = default;
 

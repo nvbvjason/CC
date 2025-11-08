@@ -33,6 +33,7 @@ public:
     void genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs);
     [[nodiscard]] std::unique_ptr<TopLevel> genFunction(const Ir::Function& function);
     [[nodiscard]] std::vector<bool> genFunctionPushIntoRegs(const Ir::Function& function);
+
     void genInst(const std::unique_ptr<Ir::Instruction>& inst);
     void genUnary(const Ir::UnaryInst& irUnary);
     void genUnaryBasic(const Ir::UnaryInst& irUnary);
@@ -196,6 +197,8 @@ private:
 };
 
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
+std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray);
+u64 getSingleInitValue(Type type, const Ir::ValueConst* value);
 i32 getStackPadding(size_t numArgs);
 
 std::string makeTemporaryPseudoName();

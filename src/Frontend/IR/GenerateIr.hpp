@@ -21,9 +21,13 @@ public:
     void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
     std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
     std::unique_ptr<TopLevel> functionIr(const Parsing::FunDeclaration& parsingFunction);
+
     std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl);
     std::unique_ptr<TopLevel> genStaticArray(const Parsing::VarDecl& varDecl, bool defined);
+    std::unique_ptr<TopLevel> genStaticInit(const Parsing::VarDecl& varDecl, bool defined);
+    std::vector<std::unique_ptr<Initializer>> genStaticArrayInit(const Parsing::VarDecl& varDecl, bool defined);
     std::shared_ptr<Value> genStaticVariableInit(const Parsing::VarDecl& varDecl, bool defined);
+
     void genBlock(const Parsing::Block& block);
     void genBlockItem(const Parsing::BlockItem& blockItem);
     void genDeclaration(const Parsing::Declaration& decl);
@@ -60,7 +64,6 @@ public:
     std::unique_ptr<ExprResult> genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryPtrInst(const Parsing::BinaryExpr& binaryExpr);
-    std::tuple<Parsing::Expr*, Parsing::Expr*> getPtrIndexForAdd(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryPtrSubInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genAssignInst(const Parsing::AssignmentExpr& assignmentExpr);
@@ -176,4 +179,7 @@ private:
         insts.emplace_back(std::make_unique<FunCallInst>(iden, src, dst, type));
     }
 };
+
+i64 getReferencedTypeSize(Parsing::TypeBase* typeBase);
+std::tuple<Parsing::Expr*, Parsing::Expr*> switchIndexAndAddIfNecessary(const Parsing::BinaryExpr& binaryExpr);
 } // IR

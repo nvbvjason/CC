@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AsmAST.hpp"
+#include "ASTIr.hpp"
 
 namespace CodeGen {
 
@@ -11,6 +12,7 @@ void asmStaticVariableLong(std::string& result, const StaticVariable& variable);
 void asmStaticVariableQuad(std::string& result, const StaticVariable& variable);
 void asmStaticVariableDouble(std::string& result, const StaticVariable& variable);
 void asmStaticConstant(std::string& result, const ConstVariable& variable);
+void asmStaticArray(std::string& result, const ArrayVariable& array);
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction);
 std::string asmOperand(const std::shared_ptr<Operand>& operand);
 std::string asmRegister(const AsmType& type, Operand::RegKind reg);
@@ -23,5 +25,6 @@ std::string asmFormatInstruction(const std::string& mnemonic,
 std::string createLabel(const std::string& name);
 std::string addType(const std::string& instruction, AsmType type);
 std::string condCode(BinaryInst::CondCode condCode);
+std::string getTypeName(AsmType type);
 
 } // CodeGen

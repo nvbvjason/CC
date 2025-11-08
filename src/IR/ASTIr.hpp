@@ -55,7 +55,7 @@ struct Value {
         Variable, Constant
     };
     Type type;
-    Kind kind;
+    const Kind kind;
     Value() = delete;
     virtual ~Value() = default;
 protected:
@@ -101,7 +101,7 @@ struct Initializer {
     enum class Kind {
         Value, Zero
     };
-    Kind kind;
+    const Kind kind;
 
     Initializer() = delete;
 protected:
@@ -138,7 +138,7 @@ struct Instruction {
         Jump, JumpIfZero, JumpIfNotZero, Label,
         FunCall
     };
-    Kind kind;
+    const Kind kind;
     Type type;
 
     Instruction() = delete;
@@ -415,7 +415,7 @@ struct TopLevel {
     enum class Kind {
         Function, StaticVariable, StaticArray
     };
-    Kind kind;
+    const Kind kind;
 
     TopLevel() = delete;
 
@@ -444,12 +444,12 @@ struct StaticVariable final : TopLevel {
     std::shared_ptr<Value> value;
     const Type type;
     const bool global;
-    explicit StaticVariable(std::string identifier,
-                            const std::shared_ptr<Value>& value,
-                            const Type ty,
-                            const bool isGlobal)
-        : TopLevel(Kind::StaticVariable), name
-                (std::move(identifier)), value(value), type(ty), global(isGlobal) {}
+    StaticVariable(std::string identifier,
+                   const std::shared_ptr<Value>& value,
+                   const Type ty,
+                   const bool isGlobal)
+        : TopLevel(Kind::StaticVariable), name(std::move(identifier)),
+                value(value), type(ty), global(isGlobal) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticVariable; }
 

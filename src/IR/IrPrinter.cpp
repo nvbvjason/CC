@@ -214,7 +214,7 @@ std::string IrPrinter::print(const ValueConst& val)
     std::unreachable();
 }
 
-std::string to_string(UnaryInst::Operation op)
+std::string to_string(const UnaryInst::Operation op)
 {
     using Operation = UnaryInst::Operation;
     switch (op) {
@@ -225,7 +225,7 @@ std::string to_string(UnaryInst::Operation op)
     return "UnknownUnaryOp";
 }
 
-std::string to_string(BinaryInst::Operation op)
+std::string to_string(const BinaryInst::Operation op)
 {
     using Operation = BinaryInst::Operation;
     switch (op) {
@@ -260,6 +260,7 @@ std::string to_string(const Type type)
         case Type::U64:      return "u64";
         case Type::Double:   return "double";
         case Type::Pointer:  return "pointer";
+        case Type::Array:    return "array";
         default:
             std::unreachable();
     }

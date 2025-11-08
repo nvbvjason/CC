@@ -39,6 +39,10 @@ std::unique_ptr<TopLevel> GenerateAsmTree::genTopLevel(const Ir::TopLevel& topLe
             const auto staticVariable = dynCast<const Ir::StaticVariable>(&topLevel);
             return genStaticVariable(*staticVariable);
         }
+        case Type::StaticArray: {
+            const auto staticArray = dynCast<const Ir::StaticArray>(&topLevel);
+            return genStaticArray(*staticArray);
+        }
         default:
             std::abort();
     }
@@ -93,29 +97,56 @@ void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std
     }
 }
 
+u64 getSingleInitValue(const Type type, const Ir::ValueConst* const value)
+{
+    if (type == Type::I32)
+        return std::get<i32>(value->value);
+    if (type == Type::I64)
+        return std::get<i64>(value->value);
+    if (type == Type::U32)
+        return std::get<u32>(value->value);
+    if (type == Type::U64 || type == Type::Pointer)
+        return std::get<u64>(value->value);
+    if (type == Type::Double) {
+        const double init = std::get<double>(value->value);
+        return std::bit_cast<i64>(init);
+    }
+    std::abort();
+}
+
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable)
 {
     const Type type = staticVariable.type;
     const auto value = dynCast<const Ir::ValueConst>(staticVariable.value.get());
-    if (type == Type::Double) {
-        const Identifier identifier(staticVariable.name);
-        auto staticVar = std::make_unique<StaticVariable>(
-            staticVariable.name, AsmType::Double, staticVariable.global);
-        const double init = std::get<double>(value->value);
-        staticVar->init = std::bit_cast<i64>(init);
-        return staticVar;
-    }
     auto result = std::make_unique<StaticVariable>(
-        staticVariable.name, Operators::getAsmType(staticVariable.type), staticVariable.global);
-    if (type == Type::I32)
-        result->init = std::get<i32>(value->value);
-    if (type == Type::I64)
-        result->init = std::get<i64>(value->value);
-    if (type == Type::U32)
-        result->init = std::get<u32>(value->value);
-    if (type == Type::U64 || type == Type::Pointer)
-        result->init = std::get<u64>(value->value);
+        staticVariable.name, Operators::getAsmType(type), staticVariable.global);
+    result->init = getSingleInitValue(type, value);
     return result;
+}
+
+std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray)
+{
+    std::vector<std::unique_ptr<Initializer>> initializers;
+    const Type type = staticArray.type;
+    for (const auto& init : staticArray.initializers) {
+        switch (init->kind) {
+            case Ir::Initializer::Kind::Value: {
+                const auto value = dynCast<Ir::ValueInitializer>(init.get());
+                const auto constValue = dynCast<Ir::ValueConst>(value->value.get());
+                initializers.emplace_back(std::make_unique<ValueInitializer>(
+                    getSingleInitValue(constValue->type, constValue)));
+                break;
+            }
+            case Ir::Initializer::Kind::Zero: {
+                const auto zero = dynCast<Ir::ZeroInitializer>(init.get());
+                initializers.emplace_back(std::make_unique<ZeroInitializer>(zero->size));
+                break;
+            }
+        }
+    }
+    return std::make_unique<ArrayVariable>(
+        Identifier(staticArray.name), 16, std::move(initializers),
+        staticArray.global, Operators::getAsmType(staticArray.type));
 }
 
 void GenerateAsmTree::genInst(const std::unique_ptr<Ir::Instruction>& inst)
@@ -747,8 +778,8 @@ void GenerateAsmTree::genAddPtr(const Ir::AddPtrInst& addPtrInst)
 {
     if (addPtrInst.index->kind == Ir::Value::Kind::Constant)
         genAddPtrConstIndex(addPtrInst);
-    else if (addPtrInst.index->type == Type::I32 || addPtrInst.index->type == Type::I64 ||
-        addPtrInst.index->type == Type::U32 || addPtrInst.index->type == Type::U64) {
+    else if (addPtrInst.scale == 1 || addPtrInst.scale == 4 ||
+             addPtrInst.scale == 2 || addPtrInst.scale == 8) {
         genAddPtrVariableIndex1_2_4_8(addPtrInst);
     }
     else {
@@ -775,11 +806,12 @@ void GenerateAsmTree::genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& 
     const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
     const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, Operators::getAsmType(addPtrInst.type));
     const auto ptr = genOperand(addPtrInst.ptr);
-    const auto index = genOperand(addPtrInst.index);
+    const std::shared_ptr<Operand> index = genOperand(addPtrInst.index);
     const auto immScale = std::make_shared<ImmOperand>(addPtrInst.scale, AsmType::QuadWord);
     const AsmType type = Operators::getAsmType(addPtrInst.ptr->type);
-    const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, immScale->value, type);
-    const auto dst = genOperand(addPtrInst.dst);
+    constexpr i64 byteSize = 1;
+    const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, byteSize, type);
+    const std::shared_ptr<Operand> dst = genOperand(addPtrInst.dst);
 
     emplaceMove(ptr, regAX, AsmType::QuadWord);
     emplaceMove(index, regDX, AsmType::QuadWord);
@@ -792,10 +824,10 @@ void GenerateAsmTree::genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtr
     const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
     const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, Operators::getAsmType(addPtrInst.type));
     const auto ptr = genOperand(addPtrInst.ptr);
-    const auto index = genOperand(addPtrInst.index);
+    const std::shared_ptr<Operand> index = genOperand(addPtrInst.index);
     const AsmType type = Operators::getAsmType(addPtrInst.ptr->type);
     const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, addPtrInst.scale, type);
-    const auto dst = genOperand(addPtrInst.dst);
+    const std::shared_ptr<Operand> dst = genOperand(addPtrInst.dst);
 
     emplaceMove(ptr, regAX, AsmType::QuadWord);
     emplaceMove(index, regDX, AsmType::QuadWord);

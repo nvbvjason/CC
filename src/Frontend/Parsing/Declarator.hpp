@@ -9,7 +9,7 @@ struct AbstractDeclarator {
     enum class Kind {
         Pointer, Base, Array
     };
-    Kind kind;
+    const Kind kind;
 
     AbstractDeclarator() = delete;
 
@@ -52,7 +52,7 @@ struct Declarator {
     enum class Kind {
         Identifier, Pointer, Function, Array
     };
-    Kind kind;
+    const Kind kind;
 
     Declarator() = delete;
 protected:

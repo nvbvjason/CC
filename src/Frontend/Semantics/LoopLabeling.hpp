@@ -36,6 +36,7 @@ class LoopLabeling : public Parsing::ASTTraverser {
     std::vector<Error> errors;
     std::unordered_set<std::string> m_default;
     std::unordered_map<std::string, std::vector<std::variant<i32, i64, u32, u64>>> switchCases;
+    std::vector<Parsing::VarDecl*> varDecls;
     Type conditionType = Type::I32;
     std::string breakLabel;
     std::string continueLabel;

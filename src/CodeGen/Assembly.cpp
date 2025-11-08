@@ -28,6 +28,11 @@ std::string asmProgram(const Program& program)
                 asmFunction(result, *function);
                 continue;
             }
+            case TopLevel::Kind::StaticArray: {
+                const auto array = dynCast<const ArrayVariable>(topLevel.get());
+                asmStaticArray(result, *array);
+                continue;
+            }
             default:
                 std::abort();
         }
@@ -103,6 +108,33 @@ void asmStaticConstant(std::string& result, const ConstVariable& variable)
                 + " # " + std::to_string(variable.staticInit));
     result += '\n';
 }
+
+void asmStaticArray(std::string& result, const ArrayVariable& array)
+{
+    if (array.isGlobal)
+        result += asmFormatInstruction(".globl", array.name.value);
+    result += asmFormatInstruction(".data");
+    result += asmFormatLabel(array.name.value);
+    result += asmFormatInstruction(".align", std::to_string(array.alignment));
+    const std::string typeName = '.' + getTypeName(array.type);
+    for (const auto& init : array.initializers) {
+        switch (init->kind) {
+            case Initializer::Kind::Zero: {
+                const auto zero = dynCast<const ZeroInitializer>(init.get());
+                result += asmFormatInstruction(".zero", std::to_string(zero->size));
+                break;
+            }
+            case Initializer::Kind::Value: {
+                const auto value = dynCast<ValueInitializer>(init.get());
+                result += asmFormatInstruction(typeName, std::to_string(value->init));
+                break;
+            }
+        }
+    }
+    result += '\n';
+}
+
+
 
 void asmFunction(std::string& result, const Function& functionNode)
 {
@@ -425,5 +457,16 @@ std::string addType(const std::string& instruction, const AsmType type)
             return instruction + " not set addType";
     }
 }
+
+std::string getTypeName(const AsmType type)
+{
+    switch (type) {
+        case AsmType::LongWord:   return "long";
+        case AsmType::QuadWord:   return "quad";
+        case AsmType::Double:     return "quad";
+    }
+    std::abort();
+}
+
 
 } // CodeGen

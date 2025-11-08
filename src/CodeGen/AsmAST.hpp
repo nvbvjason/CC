@@ -73,7 +73,7 @@ struct Operand {
         AX, CX, DX, DI, SI, R8, R9, R10, R11, SP, BP,
         XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM14, XMM15
     };
-    Kind kind;
+    const Kind kind;
     const AsmType type;
     const bool isSigned = true;
 
@@ -114,6 +114,7 @@ struct PseudoOperand final : Operand {
     Identifier identifier;
     ReferingTo referingTo = ReferingTo::Local;
     bool local;
+
     PseudoOperand(Identifier identifier, const ReferingTo referingTo, const AsmType asmType, const bool local)
         : Operand(Kind::Pseudo, asmType), identifier(std::move(identifier)),
           referingTo(referingTo), local(local) {}
@@ -126,6 +127,7 @@ struct PseudoOperand final : Operand {
 struct MemoryOperand final : Operand {
     RegKind regKind;
     i64 value;
+
     MemoryOperand(const RegKind rK, const i64 value, const AsmType type)
         : Operand(Kind::Memory, type), regKind(rK), value(value) {}
 
@@ -137,6 +139,7 @@ struct MemoryOperand final : Operand {
 struct DataOperand final : Operand {
     Identifier identifier;
     bool local;
+
     DataOperand(Identifier iden, const AsmType asmType, const bool local)
         : Operand(Kind::Data, asmType), identifier(std::move(iden)), local(local) {}
 
@@ -177,6 +180,42 @@ struct IndexedOperand final : Operand {
     IndexedOperand() = delete;
 };
 
+struct Initializer {
+    enum class Kind : u8 {
+        Zero, Value
+    };
+    const Kind kind;
+
+    Initializer() = delete;
+
+    virtual ~Initializer() = default;
+protected:
+    explicit Initializer(const Kind kind)
+        : kind(kind) {}
+};
+
+struct ZeroInitializer final : Initializer {
+    const i64 size;
+
+    explicit ZeroInitializer(const i64 size)
+        : Initializer(Kind::Zero), size(size) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Zero; }
+
+    ZeroInitializer() = delete;
+};
+
+struct ValueInitializer final : Initializer {
+    const u64 init;
+
+    explicit ValueInitializer(const u64 init)
+        : Initializer(Kind::Value), init(init) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Value; }
+
+    ValueInitializer() = delete;
+};
+
 struct Inst {
     enum class Kind : u8 {
         Move, MoveSX, MoveZeroExtend, Lea,
@@ -187,7 +226,7 @@ struct Inst {
     enum class CondCode : u8 {
         E, NE, G, GE, L, LE, A, AE, B, BE, PF
     };
-    Kind kind;
+    const Kind kind;
 
     virtual ~Inst() = default;
 
@@ -464,9 +503,9 @@ struct ReturnInst final : Inst {
 
 struct TopLevel {
     enum class Kind {
-        Function, StaticVariable, StaticConstant,
+        Function, StaticVariable, StaticConstant, StaticArray
     };
-    Kind kind;
+    const Kind kind;
 
     TopLevel() = delete;
 
@@ -505,16 +544,37 @@ struct StaticVariable final : TopLevel {
 struct ConstVariable final : TopLevel {
     Identifier name;
     i32 alignment;
-    double staticInit;
-    bool local;
+    const double staticInit;
+    const bool local;
 
     ConstVariable(Identifier name, const i32 alignment, const double staticInit, const bool local)
-        : TopLevel(Kind::StaticConstant), name(std::move(name)), alignment(alignment)
-                                          , staticInit(staticInit), local(local) {}
+        : TopLevel(Kind::StaticConstant), name(std::move(name)), alignment(alignment),
+                                            staticInit(staticInit), local(local) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticConstant; }
 
     ConstVariable() = delete;
+};
+
+struct ArrayVariable final : TopLevel {
+    Identifier name;
+    i32 alignment;
+    std::vector<std::unique_ptr<Initializer>> initializers;
+    const bool isGlobal;
+    const AsmType type;
+
+    ArrayVariable(Identifier name,
+                  const i32 alignment,
+                  std::vector<std::unique_ptr<Initializer>>&& initializers,
+                  const bool local,
+                  const AsmType type)
+        : TopLevel(Kind::StaticArray), name(std::move(name)), alignment(alignment),
+                                         initializers(std::move(initializers)),
+                                         isGlobal(local), type(type) {}
+
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticArray; }
+
+    ArrayVariable() = delete;
 };
 
 struct Program {

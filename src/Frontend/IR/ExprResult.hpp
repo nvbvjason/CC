@@ -10,7 +10,7 @@ struct ExprResult {
     enum class Kind {
         PlainOperand, DereferencedPointer,
     };
-    Kind kind;
+    const Kind kind;
 
     ExprResult() = delete;
 protected:
