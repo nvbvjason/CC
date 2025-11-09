@@ -258,6 +258,11 @@ void GenerateAsmTree::genInst(const std::unique_ptr<Ir::Instruction>& inst)
             genCopyToOffSet(*irCopyToOffset);
             break;
         }
+        case Kind::Allocate: {
+            const auto allocate = dynCast<const Ir::AllocateInst>(inst.get());
+            genAllocate(*allocate);
+            break;
+        }
         default:
             std::abort();
     }
@@ -847,12 +852,17 @@ void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
         referingToLocal = true;
     const auto pseudoMem = std::make_shared<PseudoMemOperand>(
             Identifier(copyToOffset.iden.value),
-            copyToOffset.offset,
-            copyToOffset.sizeArray,
+            copyToOffset.alignment,
+            copyToOffset.size,
             referingToLocal,
             srcType);
 
     emplaceMove(src, pseudoMem, srcType);
+}
+
+void GenerateAsmTree::genAllocate(const Ir::AllocateInst& allocate)
+{
+
 }
 
 void GenerateAsmTree::genReturn(const Ir::ReturnInst& returnInst)

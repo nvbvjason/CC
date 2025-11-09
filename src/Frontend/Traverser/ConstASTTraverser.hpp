@@ -12,7 +12,7 @@ public:
 
     // Declaration
     void visit(const VarDecl& varDecl) override;
-    void visit(const FunDeclaration& funDecl) override;
+    void visit(const FuncDeclaration& funDecl) override;
 
     // BlockItem
     void visit(const StmtBlockItem& stmtBlockItem) override;

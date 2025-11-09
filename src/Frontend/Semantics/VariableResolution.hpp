@@ -20,8 +20,8 @@ class VariableResolution : public Parsing::ASTTraverser {
     };
     struct FunctionGuard {
         SymbolTable& table;
-        Parsing::FunDeclaration& funDecl;
-        FunctionGuard(SymbolTable& table, Parsing::FunDeclaration& funDecl)
+        Parsing::FuncDeclaration& funDecl;
+        FunctionGuard(SymbolTable& table, Parsing::FuncDeclaration& funDecl)
             : table(table), funDecl(funDecl)
         {
             table.setArgs(funDecl);
@@ -35,7 +35,7 @@ public:
     explicit VariableResolution(SymbolTable& symbolTable)
         : m_symbolTable(symbolTable) {}
     std::vector<Error> resolve(Parsing::Program& program);
-    void visit(Parsing::FunDeclaration& funDecl) override;
+    void visit(Parsing::FuncDeclaration& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
@@ -45,14 +45,14 @@ public:
 
     void addVarToSymbolTable(Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry);
     void addFuncToSymbolTable(
-        const Parsing::FunDeclaration& funDecl,
+        const Parsing::FuncDeclaration& funDecl,
         const SymbolTable::ReturnedEntry& prevEntry
     ) const;
     void validateVarDecl(
         const Parsing::VarDecl& varDecl,
         const SymbolTable& symbolTable,
         const SymbolTable::ReturnedEntry& prevEntry);
-    void validateFuncDecl(const Parsing::FunDeclaration& funDecl,
+    void validateFuncDecl(const Parsing::FuncDeclaration& funDecl,
                          const SymbolTable& symbolTable,
                          const SymbolTable::ReturnedEntry& returnedEntry);
     void validateVarDeclGlobal(const Parsing::VarDecl& varDecl,

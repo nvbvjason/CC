@@ -24,7 +24,7 @@ void ConstASTTraverser::visit(const VarDecl& varDecl)
         varDecl.init->accept(*this);
 }
 
-void ConstASTTraverser::visit(const FunDeclaration& funDecl)
+void ConstASTTraverser::visit(const FuncDeclaration& funDecl)
 {
     if (funDecl.body)
         funDecl.body->accept(*this);

@@ -75,8 +75,6 @@ public:
     void genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst);
     void genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst);
 
-    void genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset);
-
     void genJump(const Ir::JumpInst& irJump);
     void genJumpIfZero(const Ir::JumpIfZeroInst& jumpIfZero);
     void genJumpIfZeroDouble(const Ir::JumpIfZeroInst& jumpIfZero);
@@ -89,6 +87,8 @@ public:
     void genLoad(const Ir::LoadInst& load);
     void genStore(const Ir::StoreInst& store);
     void genLabel(const Ir::LabelInst& irLabel);
+    void genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset);
+    void genAllocate(const Ir::AllocateInst& allocate);
 
     void genFunCall(const Ir::FunCallInst& funcCall);
     std::vector<bool> genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall);

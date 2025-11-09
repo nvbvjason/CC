@@ -31,14 +31,14 @@
 <statement>             ::= "return" <exp> ";"
                           | <exp> ";"
                           | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
-                          | "switch" ( <exp> ")" <statement>
+                          | "switch" "(" <exp> ")" <statement>
                           | "goto" <identifier> ";"
                           | <block>
                           | "break" ";"
                           | "continue" ";"
                           | <identifier> ":" <statement>
                           | "case" <exp> ":" <statement>
-                          | default ":" <statement>
+                          | "default" ":" <statement>
                           | "while" "(" <exp> ")" <statement>
                           | "do" <statement> "while" "(" <exp> ")" ";"
                           | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>

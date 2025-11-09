@@ -34,10 +34,10 @@ instruction = Mov(assembly_type, operand src, operand dst)
             | Call(identifier)
             | Ret
 unary_operator = Neg | Not | Shr
-binary_operator = Add | Sub | Mult |
-                  BitwiseOr | BitwiseAnd | BitwiseXor |
-                  LeftShiftSigned | RightShiftSigned | LeftShiftUnsigned | RightShiftUnsigned |
-                  DivDouble
+binary_operator = Add | Sub | Mult
+                | BitwiseOr | BitwiseAnd | BitwiseXor
+                | LeftShiftSigned | RightShiftSigned | LeftShiftUnsigned | RightShiftUnsigned
+                | DivDouble
 operand = Imm(int)
         | Reg(reg)
         | Pseudo(identifier)
@@ -150,17 +150,15 @@ struct DataOperand final : Operand {
 
 struct PseudoMemOperand final : Operand {
     const Identifier identifier;
-    const i64 size;
-    const i64 arraySize = 0;
+    const i64 alignment;
+    const i64 size = 0;
     ReferingTo referingTo = ReferingTo::Local;
     bool local;
 
-    PseudoMemOperand(Identifier identifier, const i64 size, const bool local, const AsmType type)
-        : Operand(Kind::PseudoMem, type), identifier(std::move(identifier)), size(size), local(local) {}
-    PseudoMemOperand(Identifier identifier, const i64 size, const i64 arraySize,
+    PseudoMemOperand(Identifier identifier, const i64 alignment, const i64 size,
                      const bool local, const AsmType type)
-        : Operand(Kind::PseudoMem, type), identifier(std::move(identifier)), size(size),
-          arraySize(arraySize), local(local) {}
+        : Operand(Kind::PseudoMem, type), identifier(std::move(identifier)), alignment(alignment),
+          size(size), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::PseudoMem; }
 

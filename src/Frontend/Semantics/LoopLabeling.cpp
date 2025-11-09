@@ -9,14 +9,6 @@
 #include <stack>
 
 namespace Semantics {
-struct Node {
-    Parsing::Initializer* init;
-    i64 at;
-    Node() = delete;
-    Node(Parsing::Initializer* init, const i64 at)
-        : init(init), at{at} {}
-};
-
 std::vector<Error> LoopLabeling::programValidate(Parsing::Program& program)
 {
     ASTTraverser::visit(program);
@@ -159,47 +151,83 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     conditionType = conditionTypeTemp;
 }
 
+struct Node {
+    Parsing::Initializer* init;
+    const i64 at;
+    const i32 depth;
+    Node() = delete;
+    Node(Parsing::Initializer* init, const i64 at, const i32 depth)
+        : init(init), at(at), depth (depth) {}
+};
+
 void initArray(Parsing::VarDecl& array)
 {
     std::vector<i64> dimensions = getDimensions(array);
     const i64 size = std::accumulate(dimensions.begin(), dimensions.end(), i64{1}, std::multiplies<>{});
     auto arrayInit = array.init.get();
     std::vector<std::unique_ptr<Parsing::Initializer>> staticInitializer;
-    i64 at = 0;
+    i64 atInFlattened = 0;
     std::stack<Node, std::vector<Node>> stack;
-    stack.emplace(arrayInit, 0);
+    stack.emplace(arrayInit, 0, 0);
     do {
-        auto[init, atCompound] = stack.top();
+        const auto[init, atInCompound, depth] = stack.top();
         stack.pop();
         switch (init->kind) {
             case Parsing::Initializer::Kind::Compound: {
-                auto compoundInit = dynCast<Parsing::CompoundInitializer>(init);
-                if (compoundInit->initializers.size() <= atCompound) {
-                    const i64 dimension = dimensions[stack.size()];
-                    staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(
-                        dimension - atCompound));
+                const auto compoundInit = dynCast<Parsing::CompoundInitializer>(init);
+                if (compoundInit->initializers.size() <= atInCompound) {
+                    const i64 dimension = dimensions[depth];
+                    if (atInCompound < dimension) {
+                        staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(
+                            dimension - atInCompound));
+                        atInFlattened += dimension - atInCompound;
+                    }
                 }
                 else {
-                    stack.emplace(init, atCompound + 1);
-                    stack.emplace(compoundInit->initializers[atCompound].get(), atCompound);
+                    stack.emplace(init, atInCompound + 1, depth);
+                    stack.emplace(compoundInit->initializers[atInCompound].get(), 0, depth + 1);
                 }
                 break;
             }
             case Parsing::Initializer::Kind::Single: {
-                auto singleInit = dynCast<Parsing::SingleInitializer>(init);
+                const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
                 staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
                     Parsing::deepCopy(*singleInit->exp)));
-                ++at;
+                ++atInFlattened;
                 break;
             }
             default:
                 std::abort();
         }
     } while (!stack.empty());
-    if (at + 1 < size)
-        staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(size - at - 1));
+    if (atInFlattened < size)
+        staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(size - atInFlattened));
+    staticInitializer = combineZeroInits(staticInitializer);
     auto newArrayInit = std::make_unique<Parsing::CompoundInitializer>(std::move(staticInitializer));
     array.init = std::move(newArrayInit);
+}
+
+std::vector<std::unique_ptr<Parsing::Initializer>> combineZeroInits(
+    std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer)
+{
+    std::vector<std::unique_ptr<Parsing::Initializer>> newInitializers;
+    for (size_t i = 0; i < staticInitializer.size(); ++i) {
+        if (staticInitializer[i]->kind == Parsing::Initializer::Kind::Single) {
+            const auto sinleInit = dynCast<Parsing::SingleInitializer>(staticInitializer[i].get());
+            newInitializers.emplace_back(std::make_unique<Parsing::SingleInitializer>(
+                Parsing::deepCopy(*sinleInit->exp)));
+            continue;
+        }
+        i64 length = 0;
+        while (i < staticInitializer.size() && staticInitializer[i]->kind == Parsing::Initializer::Kind::Zero) {
+            const auto zeroInit = dynCast<Parsing::ZeroInitializer>(staticInitializer[i].get());
+            length += zeroInit->size;
+            ++i;
+        }
+        --i;
+        newInitializers.emplace_back(std::make_unique<Parsing::ZeroInitializer>(length));
+    }
+    return newInitializers;
 }
 
 std::vector<i64> getDimensions(const Parsing::VarDecl& array)
@@ -211,6 +239,7 @@ std::vector<i64> getDimensions(const Parsing::VarDecl& array)
         dimensions.emplace_back(arrayType->size);
         type = arrayType->elementType.get();
     } while (type->kind == Parsing::TypeBase::Kind::Array);
+    dimensions.emplace_back(1);
     return dimensions;
 }
 } // Semantics

@@ -112,7 +112,7 @@ void ASTPrinter::visit(const VarDecl& varDecl)
     ConstASTTraverser::visit(varDecl);
 }
 
-void ASTPrinter::visit(const FunDeclaration& funDecl)
+void ASTPrinter::visit(const FuncDeclaration& funDecl)
 {
     IndentGuard guard(m_indentLevel);
     addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storage));

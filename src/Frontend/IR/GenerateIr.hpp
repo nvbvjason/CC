@@ -20,7 +20,7 @@ public:
         : m_symbolTable(symbolTable) {}
     void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
     std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
-    std::unique_ptr<TopLevel> functionIr(const Parsing::FunDeclaration& parsingFunction);
+    std::unique_ptr<TopLevel> functionIr(const Parsing::FuncDeclaration& parsingFunction);
 
     std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl);
     std::unique_ptr<TopLevel> genStaticArray(const Parsing::VarDecl& varDecl, bool defined);
@@ -53,7 +53,7 @@ public:
 
     std::unique_ptr<ExprResult> genInst(const Parsing::Expr& parsingExpr);
     std::shared_ptr<Value> genInstAndConvert(const Parsing::Expr& parsingExpr);
-    std::shared_ptr<ValueVar> castValue(std::shared_ptr<Value> result, Type towards, Type from);
+    std::shared_ptr<ValueVar> castValue(const std::shared_ptr<Value>& result, Type towards, Type from);
 
     std::unique_ptr<ExprResult> genCastInst(const Parsing::CastExpr& castExpr);
     std::unique_ptr<ExprResult> genUnaryInst(const Parsing::UnaryExpr& unaryExpr);
@@ -69,15 +69,18 @@ public:
     std::unique_ptr<ExprResult> genAssignInst(const Parsing::AssignmentExpr& assignmentExpr);
     void genCompoundAssignWithoutDeref(const Parsing::AssignmentExpr& assignmentExpr,
                                        std::shared_ptr<Value>& rhs,
-                                       std::shared_ptr<Value> lhs);
+                                       const std::shared_ptr<Value>& lhs);
     std::unique_ptr<ExprResult> genTernaryInst(const Parsing::TernaryExpr& ternaryExpr);
     std::unique_ptr<ExprResult> genFuncCallInst(const Parsing::FuncCallExpr& funcCallExpr);
     std::unique_ptr<ExprResult> genAddrOfInst(const Parsing::AddrOffExpr& addrOffExpr);
     std::unique_ptr<ExprResult> genSubscript(const Parsing::SubscriptExpr& subscriptExpr);
     std::unique_ptr<ExprResult> genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr);
-    static std::unique_ptr<ExprResult> genConstInst(const Parsing::ConstExpr& constExpr);
+    static std::unique_ptr<ExprResult> genConstPlainOperand(const Parsing::ConstExpr& constExpr);
     static std::unique_ptr<ExprResult> genVarInst(const Parsing::VarExpr& varExpr);
 private:
+    void allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl);
+    void directlyPushConstant32Bit(const Parsing::VarDecl& varDecl, const std::shared_ptr<Value>& value);
+
     void emplaceReturn(const std::shared_ptr<Value>& src, const Type type)
     {
         insts.emplace_back(std::make_unique<ReturnInst>(src, type));
@@ -177,6 +180,10 @@ private:
                         const Type type)
     {
         insts.emplace_back(std::make_unique<FunCallInst>(iden, src, dst, type));
+    }
+    void emplaceAllocate(const i64 size, const std::string& iden, const Type type)
+    {
+        insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden), type));
     }
 };
 

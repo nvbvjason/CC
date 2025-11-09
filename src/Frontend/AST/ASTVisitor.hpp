@@ -12,7 +12,7 @@ public:
 
     // Declaration
     virtual void visit(VarDecl&) = 0;
-    virtual void visit(FunDeclaration&) = 0;
+    virtual void visit(FuncDeclaration&) = 0;
 
     virtual void visit(Block&) = 0;
 
@@ -73,7 +73,7 @@ public:
 
     // Declaration
     virtual void visit(const VarDecl&) = 0;
-    virtual void visit(const FunDeclaration&) = 0;
+    virtual void visit(const FuncDeclaration&) = 0;
 
     virtual void visit(const Block&) = 0;
 

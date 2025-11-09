@@ -25,7 +25,7 @@ public:
 
     // Declartion
     void visit(const VarDecl& varDecl) override;
-    void visit(const FunDeclaration& funDecl) override;
+    void visit(const FuncDeclaration& funDecl) override;
 
     void visit(const Block& block) override;
 

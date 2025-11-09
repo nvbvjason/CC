@@ -71,7 +71,7 @@ class TypeResolution final : public Parsing::ASTTraverser {
 public:
     std::vector<Error> validate(Parsing::Program& program);
 
-    void visit(Parsing::FunDeclaration& funDecl) override;
+    void visit(Parsing::FuncDeclaration& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
     bool isIllegalVarDecl(const Parsing::VarDecl& varDecl);
     void visit(Parsing::DeclForInit& declForInit) override;
@@ -109,7 +109,7 @@ public:
 
     bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
-    [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDeclaration& funDecl);
+    [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDeclaration& funDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 private:
     void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }

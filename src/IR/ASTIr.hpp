@@ -35,6 +35,7 @@ instruction = Return(val)
             | JumpIfNotZero(val condition, identifier target)
             | Label(identifier)
             | FunCall(identifier fun_name, val* args, val dst)
+            | PushStackSlot(identifier name, int size)
 val = Constant(init, type) | Var(identifier, type)
 unary_operator = Complement | Negate | Not
 binary_operator = Add | Subtract | Multiply | Divide | Remainder |
@@ -136,7 +137,7 @@ struct Instruction {
         Unary, Binary, Copy, GetAddress, Load, Store,
         AddPtr, CopyToOffset,
         Jump, JumpIfZero, JumpIfNotZero, Label,
-        FunCall
+        FunCall, Allocate
     };
     const Kind kind;
     Type type;
@@ -257,7 +258,7 @@ struct BinaryInst final : Instruction {
         BitwiseAnd, BitwiseOr, BitwiseXor,
         LeftShift, RightShift,
         And, Or, Equal, NotEqual,
-        LessThan, LessOrEqual, GreaterThan, GreaterOrEqual,
+        LessThan, LessOrEqual, GreaterThan, GreaterOrEqual
     };
     Operation operation;
     std::shared_ptr<Value> lhs;
@@ -341,13 +342,13 @@ struct AddPtrInst final : Instruction {
 struct CopyToOffsetInst final : Instruction {
     std::shared_ptr<Value> src;
     Identifier iden;
-    i64 offset;
-    i64 sizeArray;
+    i64 alignment;
+    i64 size;
 
     CopyToOffsetInst(std::shared_ptr<Value> src, Identifier iden,
                      const i64 offset, const Type t, const i64 sizeArray)
         : Instruction(Kind::CopyToOffset, t), src(std::move(src)),
-          iden(std::move(iden)), offset(offset), sizeArray(sizeArray) {}
+          iden(std::move(iden)), alignment(offset), size(sizeArray) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyToOffset; }
 
@@ -409,6 +410,18 @@ struct FunCallInst final : Instruction {
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::FunCall; }
 
     FunCallInst() = delete;
+};
+
+struct AllocateInst final : Instruction {
+    const i64 size;
+    const Identifier iden;
+
+    AllocateInst(const i64 size, Identifier iden, const Type type)
+        : Instruction(Kind::Allocate, type), size(size), iden(std::move(iden)) {}
+
+    static bool classOf(const Instruction* inst) { return inst->kind == Kind::Allocate; }
+
+    AllocateInst() = delete;
 };
 
 struct TopLevel {
@@ -476,6 +489,7 @@ struct StaticArray final : TopLevel {
 
 struct Program {
     std::vector<std::unique_ptr<TopLevel>> topLevels;
+    std::vector<std::unique_ptr<Value>> values;
     Program() = default;
 
     Program(Program&&) = default;

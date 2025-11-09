@@ -68,7 +68,7 @@ struct Program;
 
 // Declaration
 struct Declaration;
-struct FunDeclaration;
+struct FuncDeclaration;
 struct VarDecl;
 
 struct Block;
