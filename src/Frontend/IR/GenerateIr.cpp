@@ -14,6 +14,7 @@ static Identifier makeTemporaryName();
 static Identifier makeTemporaryName(Value& value);
 static std::string generateCaseLabelName(std::string before);
 static i64 getArraySize(Parsing::TypeBase* type);
+static i64 getArrayAlignment(i64 size, Type type);
 static Type getArrayType(Parsing::TypeBase* type);
 static std::shared_ptr<Value> genConstValue(const Parsing::ConstExpr& constExpr);
 static std::shared_ptr<Value> genZeroValueForType(Type type);
@@ -105,19 +106,22 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl* const varDecl)
     const Type type = getArrayType(varDecl->type.get());
     const i64 size = getSize(type);
     const i64 arraySize = getArraySize(arrayType);
+    const i64 alignment = getArrayAlignment(arraySize, type);
     i64 offset = 0;
     const auto zeroConst = genZeroValueForType(type);
     for (const auto& init : compoundInit->initializers) {
         if (init->kind == Parsing::Initializer::Kind::Single) {
             const auto singleInit = dynCast<Parsing::SingleInitializer>(init.get());
             const std::shared_ptr<Value> value = genInstAndConvert(*singleInit->expr);
-            emplaceCopyToOffset(value, Identifier(varDecl->name), offset, type, arraySize);
+            emplaceCopyToOffset(
+                value, Identifier(varDecl->name), offset, arraySize, alignment, type);
             offset += size;
         }
         if (init->kind == Parsing::Initializer::Kind::Zero) {
             const auto zeroInit = dynCast<Parsing::ZeroInitializer>(init.get());
             for (size_t i = 0; i < zeroInit->size; ++i) {
-                emplaceCopyToOffset(zeroConst, Identifier(varDecl->name), offset, type, arraySize);
+                emplaceCopyToOffset(
+                    zeroConst, Identifier(varDecl->name), offset, arraySize, alignment, type);
                 offset += size;
             }
         }
@@ -1075,6 +1079,14 @@ Type getArrayType(Parsing::TypeBase* type)
         type = arrayType->elementType.get();
     } while (type->kind == Parsing::TypeBase::Kind::Array);
     return type->type;
+}
+
+i64 getArrayAlignment(const i64 size, const Type type)
+{
+    const i64 realSize = size * getSize(type);
+    if (16 <= realSize)
+        return 16;
+    return getSize(type);
 }
 
 std::tuple<Parsing::Expr*, Parsing::Expr*> switchIndexAndAddIfNecessary(const Parsing::BinaryExpr& binaryExpr)

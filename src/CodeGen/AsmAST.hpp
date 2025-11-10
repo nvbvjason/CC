@@ -151,15 +151,24 @@ struct DataOperand final : Operand {
 
 struct PseudoMemOperand final : Operand {
     const Identifier identifier;
-    const i64 alignment;
+    const i64 offset;
     const i64 size = 0;
+    const i64 alignment;
     ReferingTo referingTo = ReferingTo::Local;
     bool local;
 
-    PseudoMemOperand(Identifier identifier, const i64 alignment, const i64 size,
-                     const bool local, const AsmType type)
-        : Operand(Kind::PseudoMem, type), identifier(std::move(identifier)), alignment(alignment),
-          size(size), local(local) {}
+    PseudoMemOperand(Identifier identifier,
+                     const i64 offset,
+                     const i64 size,
+                     const i64 alignment,
+                     const bool local,
+                     const AsmType type)
+        : Operand(Kind::PseudoMem, type),
+            identifier(std::move(identifier)),
+            offset(offset),
+            size(size),
+            alignment(alignment),
+            local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::PseudoMem; }
 

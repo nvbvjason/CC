@@ -267,7 +267,7 @@ std::string to_string(const PseudoMemOperand& pseudoMemOperand)
 {
     return "PseudoMem(" + pseudoMemOperand.identifier.value + ", " +
                           to_string(pseudoMemOperand.type) + ", " +
-                          std::to_string(pseudoMemOperand.alignment)  + ")";
+                          std::to_string(pseudoMemOperand.offset)  + ")";
 }
 
 std::string to_string(const MemoryOperand& memoryOperand)

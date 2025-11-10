@@ -8,7 +8,7 @@ std::tuple<ReferingTo, AsmType, bool, std::string, i64> getPseudoValues(const st
 {
     if (operand->kind == Operand::Kind::PseudoMem) {
         const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
-        return {pseudoMem->referingTo, pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->alignment};
+        return {pseudoMem->referingTo, pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->offset};
     }
     if (operand->kind == Operand::Kind::Pseudo) {
         const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
@@ -28,7 +28,12 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
         if (!m_pseudoMap.contains(identifier)) {
             if (operand->kind == Operand::Kind::PseudoMem) {
                 const auto pseudoMem = dynCast<PseudoMemOperand>(operand.get());
-                m_stackPtr -= pseudoMem->size * Operators::getSize(asmType);
+                i64 arraySize = pseudoMem->size * Operators::getSize(asmType);
+                if (arraySize % pseudoMem->alignment != 0) {
+                    arraySize -= arraySize % pseudoMem->alignment;
+                    arraySize += pseudoMem->alignment;
+                }
+                m_stackPtr -= arraySize;
                 fitToAlignment();
                 m_pseudoMap[identifier] = m_stackPtr;
                 operand = std::make_shared<MemoryOperand>(

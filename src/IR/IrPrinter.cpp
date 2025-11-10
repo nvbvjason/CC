@@ -158,7 +158,7 @@ void IrPrinter::print(const CopyToOffsetInst& inst)
     addLine("CopyToOffsetInst: " +
             print(*inst.src) + " -> " +
             print(inst.iden) + " offset " +
-            std::to_string(inst.alignment) + ", " +
+            std::to_string(inst.offset) + ", " +
             to_string(inst.type));
 }
 

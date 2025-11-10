@@ -127,7 +127,6 @@ std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVari
 std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray)
 {
     std::vector<std::unique_ptr<Initializer>> initializers;
-    const Type type = staticArray.type;
     for (const auto& init : staticArray.initializers) {
         switch (init->kind) {
             case Ir::Initializer::Kind::Value: {
@@ -852,8 +851,9 @@ void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
         referingToLocal = true;
     const auto pseudoMem = std::make_shared<PseudoMemOperand>(
             Identifier(copyToOffset.iden.value),
-            copyToOffset.alignment,
+            copyToOffset.offset,
             copyToOffset.size,
+            copyToOffset.alignment,
             referingToLocal,
             srcType);
 

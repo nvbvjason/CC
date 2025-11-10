@@ -341,14 +341,19 @@ struct AddPtrInst final : Instruction {
 
 struct CopyToOffsetInst final : Instruction {
     std::shared_ptr<Value> src;
-    Identifier iden;
-    i64 alignment;
-    i64 size;
+    const Identifier iden;
+    const i64 offset;
+    const i64 size;
+    const i64 alignment;
 
-    CopyToOffsetInst(std::shared_ptr<Value> src, Identifier iden,
-                     const i64 offset, const Type t, const i64 sizeArray)
+    CopyToOffsetInst(std::shared_ptr<Value> src,
+                     Identifier iden,
+                     const i64 offset,
+                     const i64 sizeArray,
+                     const i64 alignment,
+                     const Type t)
         : Instruction(Kind::CopyToOffset, t), src(std::move(src)),
-          iden(std::move(iden)), alignment(offset), size(sizeArray) {}
+          iden(std::move(iden)), offset(offset), size(sizeArray), alignment(alignment) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyToOffset; }
 

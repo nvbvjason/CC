@@ -155,10 +155,11 @@ private:
     void emplaceCopyToOffset(const std::shared_ptr<Value>& src,
                              const Identifier& iden,
                              const i64 offset,
-                             const Type type,
-                             const i64 arraySize)
+                             const i64 arraySize,
+                             const i64 alignment,
+                             const Type type)
     {
-        insts.emplace_back(std::make_unique<CopyToOffsetInst>(src, iden, offset, type, arraySize));
+        insts.emplace_back(std::make_unique<CopyToOffsetInst>(src, iden, offset, arraySize, alignment, type));
     }
     void emplaceJump(const Identifier& iden)
     {
