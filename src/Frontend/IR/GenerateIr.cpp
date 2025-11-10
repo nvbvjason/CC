@@ -13,9 +13,6 @@ namespace Ir {
 static Identifier makeTemporaryName();
 static Identifier makeTemporaryName(Value& value);
 static std::string generateCaseLabelName(std::string before);
-static i64 getArraySize(Parsing::TypeBase* type);
-static i64 getArrayAlignment(i64 size, Type type);
-static Type getArrayType(Parsing::TypeBase* type);
 static std::shared_ptr<Value> genConstValue(const Parsing::ConstExpr& constExpr);
 static std::shared_ptr<Value> genZeroValueForType(Type type);
 
@@ -1064,34 +1061,6 @@ static std::string generateCaseLabelName(std::string before)
 {
     std::ranges::replace(before, '-', '_');
     return before;
-}
-
-i64 getArraySize(Parsing::TypeBase* type)
-{
-    i64 result = 1;
-    do {
-        const auto arrayType = dynCast<Parsing::ArrayType>(type);
-        result *= arrayType->size;
-        type = arrayType->elementType.get();
-    } while (type->kind == Parsing::TypeBase::Kind::Array);
-    return result;
-}
-
-Type getArrayType(Parsing::TypeBase* type)
-{
-    do {
-        const auto arrayType = dynCast<Parsing::ArrayType>(type);
-        type = arrayType->elementType.get();
-    } while (type->kind == Parsing::TypeBase::Kind::Array);
-    return type->type;
-}
-
-i64 getArrayAlignment(const i64 size, const Type type)
-{
-    const i64 realSize = size * getSize(type);
-    if (16 <= realSize)
-        return 16;
-    return getSize(type);
 }
 
 std::tuple<Parsing::Expr*, Parsing::Expr*> switchIndexAndAddIfNecessary(const Parsing::BinaryExpr& binaryExpr)

@@ -3,6 +3,7 @@
 #include "TypeConversion.hpp"
 #include "Utils.hpp"
 #include "ASTDeepCopy.hpp"
+#include "AstToIrOperators.hpp"
 
 namespace {
 using BinaryOp = Parsing::BinaryExpr::Operator;
@@ -27,8 +28,9 @@ void TypeResolution::visit(Parsing::FuncDeclaration& funDecl)
     std::vector<std::unique_ptr<Parsing::TypeBase>> paramsTypes;
     for (auto & param : funcType->params) {
         if (param->type == Type::Array) {
-            auto arrayType = dynCast<Parsing::ArrayType>(param.get());
-            auto pointerType = std::make_unique<Parsing::PointerType>(Parsing::deepCopy(*arrayType->elementType));
+            const auto arrayType = dynCast<Parsing::ArrayType>(param.get());
+            auto pointerType = std::make_unique<Parsing::PointerType>(
+                Parsing::deepCopy(*arrayType->elementType));
             param = std::move(pointerType);
         }
     }
@@ -66,8 +68,8 @@ bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::Fu
     }
     const auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
     for (size_t i = 0; i < funDecl.params.size(); ++i) {
-        auto paramTypeEntry = funcEntry.paramTypes[i].get();
-        auto paramTypeFunc = funcType->params[i].get();
+        const auto paramTypeEntry = funcEntry.paramTypes[i].get();
+        const auto paramTypeFunc = funcType->params[i].get();
         if (!Parsing::areEquivalentArrayConversion(*paramTypeEntry, *paramTypeFunc)) {
             addError("Incompatible parameter types in function declarations", funDecl.location);
             return false;
@@ -135,12 +137,18 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         if (arrayType->size < compoundInit->initializers.size())
             addError("Compound initializer cannot be longer than array size", varDecl.location);
 
-        for (const auto & initializer : compoundInit->initializers) {
+        const Type arrayTypeInner = Ir::getArrayType(varDecl.type.get());
+
+        for (const auto& initializer : compoundInit->initializers) {
             if (initializer->kind == Parsing::Initializer::Kind::Single) {
                 auto singleInit = dynCast<Parsing::SingleInitializer>(initializer.get());
                 if (arrayType->elementType->type == Type::Pointer && singleInit->expr->type->type == Type::Double) {
                     addError("Cannot init ptr with double", varDecl.location);
                     break;
+                }
+                if (singleInit->expr->type->type != arrayTypeInner) {
+                    singleInit->expr = std::make_unique<Parsing::CastExpr>(singleInit->expr->location,
+                        Parsing::deepCopy(*arrayType->elementType), std::move(singleInit->expr));
                 }
             }
         }
@@ -500,7 +508,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
     if (binaryExpr.op == BinaryOp::Add || binaryExpr.op == BinaryOp::Subtract) {
         if (isIntegerType(rightType)) {
             if (rightType != Type::I64)
-                binaryExpr.rhs = convertOrCastToType<i64>(*binaryExpr.rhs.get(), Type::I64);
+                binaryExpr.rhs = convertOrCastToType<i64>(*binaryExpr.rhs, Type::I64);
             binaryExpr.type = Parsing::deepCopy(*binaryExpr.lhs->type);
         }
         else if (isIntegerType(leftType)) {
@@ -509,7 +517,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
                 return Parsing::deepCopy(binaryExpr);
             }
             if (leftType != Type::I64)
-                binaryExpr.lhs = convertOrCastToType<i64>(*binaryExpr.lhs.get(), Type::I64);
+                binaryExpr.lhs = convertOrCastToType<i64>(*binaryExpr.lhs, Type::I64);
             binaryExpr.type = Parsing::deepCopy(*binaryExpr.rhs->type);
         }
         return Parsing::deepCopy(binaryExpr);
@@ -611,11 +619,10 @@ bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
             assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
                 Parsing::deepCopy(*assignmentExpr.lhs->type), std::move(assignmentExpr.rhs));
         }
-        else if (assignmentExpr.lhs->kind == Parsing::Expr::Kind::Subscript) {
+        else if (assignmentExpr.lhs->kind == Parsing::Expr::Kind::Subscript)
             return true;
-        }
         else if ((assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign) &&
-                    isIntegerType(rightType)) {
+                 isIntegerType(rightType)) {
             return true;
         }
         else {
@@ -733,7 +740,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& s
     }
     const auto subscriptExprPtr = dynCast<Parsing::SubscriptExpr>(result.get());
     if (subscriptExprPtr->index->type->type != Type::I64)
-        subscriptExprPtr->index = convertOrCastToType<i64>(*subscriptExprPtr->index.get(), Type::I64);
+        subscriptExprPtr->index = convertOrCastToType<i64>(*subscriptExprPtr->index, Type::I64);
     const auto ptrType = dynCast<Parsing::PointerType>(subscriptExprPtr->referencing->type.get());
     result->type = Parsing::deepCopy(*ptrType->referenced);
     return result;

@@ -126,6 +126,8 @@ void ASTPrinter::visit(const FuncDeclaration& funDecl)
     }
     addLine(args);
     ConstASTTraverser::visit(funDecl);
+    addLine("");
+    addLine("");
 }
 
 void ASTPrinter::visit(const Block& block)
