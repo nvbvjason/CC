@@ -187,10 +187,6 @@ private:
     {
         insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden), type));
     }
-    void emplaceZeroOut(const i64 size, const Type type)
-    {
-        insts.emplace_back(std::make_unique<ZeroOutInst>(size, type));
-    }
 };
 
 i64 getReferencedTypeSize(Parsing::TypeBase* typeBase);

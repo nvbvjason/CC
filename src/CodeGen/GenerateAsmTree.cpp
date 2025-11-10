@@ -1023,9 +1023,11 @@ std::shared_ptr<ImmOperand> GenerateAsmTree::getImmOperandFromValue(const Ir::Va
     if (valueConst.type == Type::U64)
         return std::make_shared<ImmOperand>(std::get<u64>(valueConst.value), AsmType::QuadWord);
     if (valueConst.type == Type::I32)
-        return std::make_shared<ImmOperand>(std::get<i32>(valueConst.value), AsmType::LongWord);
+        return std::make_shared<ImmOperand>(
+            std::bit_cast<u32>(std::get<i32>(valueConst.value)), AsmType::LongWord);
     if (valueConst.type == Type::I64)
-        return std::make_shared<ImmOperand>(std::get<i64>(valueConst.value), AsmType::QuadWord);
+        return std::make_shared<ImmOperand>(
+            std::bit_cast<u64>(std::get<i64>(valueConst.value)), AsmType::QuadWord);
     std::abort();
 }
 

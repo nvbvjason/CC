@@ -408,6 +408,16 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::UnaryExpr& unary
         unaryExpr.type = std::make_unique<Parsing::VarType>(s_boolType);
     else
         unaryExpr.type = Parsing::deepCopy(*unaryExpr.operand->type);
+
+    // if (unaryExpr.operand->kind == Parsing::Expr::Kind::Constant) {
+    //     const auto constExpr = dynCast<Parsing::ConstExpr>(unaryExpr.operand.get());
+    //     if (constExpr->type->type == Type::I32 && unaryExpr.op == Operator::Negate) {
+    //         const i32 newValue = -constExpr->getValue<i32>();
+    //         return std::make_unique<Parsing::ConstExpr>(
+    //             constExpr->location, newValue, std::make_unique<Parsing::VarType>(Type::I32));
+    //     }
+    // }
+
     return Parsing::deepCopy(unaryExpr);
 }
 

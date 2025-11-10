@@ -24,8 +24,8 @@ public:
     void visit(SetCCInst& setCCInst) override;
     void visit(PushPseudoInst&) override;
     void visit(PushInst& pushInst) override;
-    void visit(Cvttsd2siInst&) override;
-    void visit(Cvtsi2sdInst&) override;
+    void visit(Cvttsd2siInst& cvttsd2siInst) override;
+    void visit(Cvtsi2sdInst& cvtsi2sdInst) override;
 
     void visit(CallInst&) override {}
     void visit(CdqInst&) override {}

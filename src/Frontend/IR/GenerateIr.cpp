@@ -61,15 +61,6 @@ void GenerateIr::directlyPushConstant32Bit(const Parsing::VarDecl& varDecl, cons
     emplaceCopy(value, var, varDecl.type->type);
 }
 
-i64 getZeroInit8ByteAmount(const Parsing::Initializer& init, const Type type)
-{
-    const auto zeroInit = dynCast<const Parsing::ZeroInitializer>(&init);
-    i64 result = zeroInit->size;
-    if (type == Type::I32 || type == Type::U32)
-        result = (result + 1) / 2;
-    return result;
-}
-
 void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
 {
     using InitKind = Parsing::Initializer::Kind;
@@ -99,7 +90,7 @@ void GenerateIr::genSingleDeclaration(const Parsing::VarDecl* const varDecl)
         (varDecl->type->type == Type::I32 || varDecl->type->type == Type::U32)) {
         directlyPushConstant32Bit(*varDecl, value);
         return;
-        }
+    }
     const auto temporary = std::make_shared<ValueVar>(makeTemporaryName(), varDecl->type->type);
     emplaceCopy(value, temporary, varDecl->type->type);
     const Identifier iden(varDecl->name);
@@ -115,6 +106,7 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl* const varDecl)
     const i64 size = getSize(type);
     const i64 arraySize = getArraySize(arrayType);
     i64 offset = 0;
+    const auto zeroConst = genZeroValueForType(type);
     for (const auto& init : compoundInit->initializers) {
         if (init->kind == Parsing::Initializer::Kind::Single) {
             const auto singleInit = dynCast<Parsing::SingleInitializer>(init.get());
@@ -124,8 +116,10 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl* const varDecl)
         }
         if (init->kind == Parsing::Initializer::Kind::Zero) {
             const auto zeroInit = dynCast<Parsing::ZeroInitializer>(init.get());
-            emplaceZeroOut(zeroInit->size, type);
-            offset += zeroInit->size;
+            for (size_t i = 0; i < zeroInit->size; ++i) {
+                emplaceCopyToOffset(zeroConst, Identifier(varDecl->name), offset, type, arraySize);
+                offset += size;
+            }
         }
     }
 }
