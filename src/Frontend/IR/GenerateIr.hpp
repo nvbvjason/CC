@@ -30,6 +30,8 @@ public:
 
     void genBlock(const Parsing::Block& block);
     void genBlockItem(const Parsing::BlockItem& blockItem);
+    void genSingleDeclaration(const Parsing::VarDecl* varDecl);
+    void genCompoundLocalInit(const Parsing::VarDecl* varDecl);
     void genDeclaration(const Parsing::Declaration& decl);
     void genStaticLocal(const Parsing::VarDecl& varDecl);
 
@@ -184,6 +186,10 @@ private:
     void emplaceAllocate(const i64 size, const std::string& iden, const Type type)
     {
         insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden), type));
+    }
+    void emplaceZeroOut(const i64 size, const Type type)
+    {
+        insts.emplace_back(std::make_unique<ZeroOutInst>(size, type));
     }
 };
 

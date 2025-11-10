@@ -424,9 +424,9 @@ struct Program {
 };
 
 struct SingleInitializer final : Initializer {
-    std::unique_ptr<Expr> exp;
+    std::unique_ptr<Expr> expr;
     explicit SingleInitializer(std::unique_ptr<Expr>&& exp)
-        : Initializer(Kind::Single), exp(std::move(exp)) {}
+        : Initializer(Kind::Single), expr(std::move(exp)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

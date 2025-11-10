@@ -862,7 +862,7 @@ void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
 
 void GenerateAsmTree::genAllocate(const Ir::AllocateInst& allocate)
 {
-
+    emplacePushPseudo(allocate.size, Operators::getAsmType(allocate.type), allocate.iden.value);
 }
 
 void GenerateAsmTree::genReturn(const Ir::ReturnInst& returnInst)

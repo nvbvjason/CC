@@ -22,6 +22,7 @@ public:
     void visit(DivInst& div) override;
     void visit(CmpInst& cmpInst) override;
     void visit(SetCCInst& setCCInst) override;
+    void visit(PushPseudoInst&) override;
     void visit(PushInst& pushInst) override;
     void visit(Cvttsd2siInst&) override;
     void visit(Cvtsi2sdInst&) override;

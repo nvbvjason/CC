@@ -59,7 +59,7 @@ void ASTTraverser::visit(ArrayType& arrayType)
 
 void ASTTraverser::visit(SingleInitializer& singleInitializer)
 {
-    singleInitializer.exp->accept(*this);
+    singleInitializer.expr->accept(*this);
 }
 
 void ASTTraverser::visit(CompoundInitializer& compoundInitializer)

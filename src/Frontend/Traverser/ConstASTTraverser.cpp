@@ -60,7 +60,7 @@ void ConstASTTraverser::visit(const ArrayType& arrayType)
 
 void ConstASTTraverser::visit(const SingleInitializer& singleInitializer)
 {
-    singleInitializer.exp->accept(*this);
+    singleInitializer.expr->accept(*this);
 }
 
 void ConstASTTraverser::visit(const CompoundInitializer& compoundInitializer)

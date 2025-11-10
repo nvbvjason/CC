@@ -30,6 +30,7 @@ instruction = Mov(assembly_type, operand src, operand dst)
             | JmpCC(cond_code, identifier)
             | SetCC(cond_code, operand)
             | Label(identifier)
+            | PseudoPush(Identifier, size, alignment)
             | Push(operand)
             | Call(identifier)
             | Ret
@@ -219,7 +220,7 @@ struct Inst {
         Move, MoveSX, MoveZeroExtend, Lea,
         Cvttsd2si, Cvtsi2sd,
         Unary, Binary, Cmp, Idiv, Div, Cdq, Jmp, JmpCC, SetCC, Label,
-        Push, Call, Ret
+        PushPseudo, Push, Call, Ret
     };
     enum class CondCode : u8 {
         E, NE, G, GE, L, LE, A, AE, B, BE, PF
@@ -469,6 +470,22 @@ struct LabelInst final : Inst {
     LabelInst() = delete;
 };
 
+struct PushPseudoInst final : Inst {
+    const i64 size;
+    const i64 alignment;
+    const AsmType type;
+    Identifier identifier;
+
+    PushPseudoInst(const i64 size, const i64 alignment, const AsmType type, Identifier identifier)
+        : Inst(Kind::PushPseudo), size(size), alignment(alignment),
+                                    type(type), identifier(std::move(identifier)) {}
+
+    void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::PushPseudo; }
+
+    PushPseudoInst() = delete;
+};
+
 struct PushInst final : Inst {
     std::shared_ptr<Operand> operand;
     explicit PushInst(std::shared_ptr<Operand> operand)
@@ -598,6 +615,7 @@ struct InstVisitor {
     virtual void visit(JmpCCInst&) = 0;
     virtual void visit(SetCCInst&) = 0;
     virtual void visit(LabelInst&) = 0;
+    virtual void visit(PushPseudoInst&) = 0;
     virtual void visit(PushInst&) = 0;
     virtual void visit(CallInst&) = 0;
     virtual void visit(ReturnInst&) = 0;
@@ -619,6 +637,7 @@ inline void JmpInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void JmpCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void SetCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void LabelInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
+inline void PushPseudoInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void PushInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void CallInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void ReturnInst::accept(InstVisitor& visitor) { visitor.visit(*this); }

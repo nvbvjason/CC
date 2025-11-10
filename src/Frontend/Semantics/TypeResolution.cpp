@@ -113,9 +113,9 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         if (hasError())
             return;
 
-        if (!Parsing::areEquivalent(*varDecl.type, *singleInit->exp->type)) {
+        if (!Parsing::areEquivalent(*varDecl.type, *singleInit->expr->type)) {
             if (varDecl.type->type == Type::Pointer) {
-                if (!canConvertToNullPtr(*singleInit->exp)) {
+                if (!canConvertToNullPtr(*singleInit->expr)) {
                     addError("Cannot convert pointer init to pointer", varDecl.location);
                     return;
                 }
@@ -139,7 +139,7 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         for (size_t i = 0; i < compoundInit->initializers.size(); ++i) {
             if (compoundInit->initializers[i]->kind == Parsing::Initializer::Kind::Single) {
                 auto singleInit = dynCast<Parsing::SingleInitializer>(compoundInit->initializers[i].get());
-                if (arrayType->elementType->type == Type::Pointer && singleInit->exp->type->type == Type::Double) {
+                if (arrayType->elementType->type == Type::Pointer && singleInit->expr->type->type == Type::Double) {
                     addError("Cannot init ptr with double", varDecl.location);
                     break;
                 }
@@ -154,9 +154,9 @@ void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
 {
     if (varDecl.init->kind == Parsing::Initializer::Kind::Single) {
         auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
-        if (singleInit->exp->kind == Parsing::Expr::Kind::Constant &&
-            varDecl.type->type != singleInit->exp->type->type) {
-            const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->exp.get());
+        if (singleInit->expr->kind == Parsing::Expr::Kind::Constant &&
+            varDecl.type->type != singleInit->expr->type->type) {
+            const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->expr.get());
             if (varDecl.type->type == Type::U32)
                 convertConstantExpr<u32, Type::U32>(varDecl, *constExpr);
             else if (varDecl.type->type == Type::U64)
@@ -169,18 +169,18 @@ void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
                 convertConstantExpr<double, Type::Double>(varDecl, *constExpr);
             return;
             }
-        if (varDecl.type->type != singleInit->exp->type->type) {
+        if (varDecl.type->type != singleInit->expr->type->type) {
             varDecl.init = std::make_unique<Parsing::SingleInitializer>(
                 std::make_unique<Parsing::CastExpr>(
                 std::make_unique<Parsing::VarType>(varDecl.type->type),
-                std::move(singleInit->exp)));
+                std::move(singleInit->expr)));
         }
     }
 }
 
 void TypeResolution::visit(Parsing::SingleInitializer& singleInitializer)
 {
-    singleInitializer.exp = convertArrayType(*singleInitializer.exp);
+    singleInitializer.expr = convertArrayType(*singleInitializer.expr);
 }
 
 void TypeResolution::visit(Parsing::CompoundInitializer& compoundInitializer)

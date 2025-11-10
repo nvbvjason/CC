@@ -154,6 +154,10 @@ private:
     {
         insts.emplace_back(std::make_unique<MoveSXInst>(src, dst));
     }
+    void emplacePushPseudo(const i64 size, const AsmType type, const std::string& iden)
+    {
+        insts.emplace_back(std::make_unique<PushPseudoInst>(size, 16, type, Identifier(iden)));
+    }
     void emplacePush(const std::shared_ptr<Operand>& src)
     {
         insts.emplace_back(std::make_unique<PushInst>(src));

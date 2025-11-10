@@ -137,7 +137,7 @@ struct Instruction {
         Unary, Binary, Copy, GetAddress, Load, Store,
         AddPtr, CopyToOffset,
         Jump, JumpIfZero, JumpIfNotZero, Label,
-        FunCall, Allocate
+        FunCall, Allocate, ZeroOut
     };
     const Kind kind;
     Type type;
@@ -422,6 +422,17 @@ struct AllocateInst final : Instruction {
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::Allocate; }
 
     AllocateInst() = delete;
+};
+
+struct ZeroOutInst final : Instruction {
+    const i64 size;
+
+    explicit ZeroOutInst(const i64 size, const Type type)
+        : Instruction(Kind::ZeroOut, type), size(size) {}
+
+    static bool classOf(const Instruction* inst) { return inst->kind == Kind::ZeroOut; }
+
+    ZeroOutInst() = delete;
 };
 
 struct TopLevel {

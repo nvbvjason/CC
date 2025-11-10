@@ -3,11 +3,6 @@
 #include "AsmAST.hpp"
 #include "ASTIr.hpp"
 #include "Frontend/AST/ASTBase.hpp"
-#include "Frontend/AST/ASTTypes.hpp"
-
-namespace Parsing {
-    struct TypeBase;
-}
 
 namespace CodeGen::Operators {
 
@@ -17,7 +12,7 @@ BinaryInst::Operator getShiftOperator(Ir::BinaryInst::Operation type, bool isSig
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
 AsmType getAsmType(const Parsing::TypeBase& type);
 AsmType getAsmType(Type type);
-i32 getAlignment(AsmType type);
+i64 getSize(AsmType type);
 
 inline UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 {
@@ -118,7 +113,7 @@ inline AsmType getAsmType(const Type type)
     std::abort();
 }
 
-inline i32 getAlignment(const AsmType type)
+inline i64 getSize(const AsmType type)
 {
     switch (type) {
         case AsmType::Byte:     return 1;

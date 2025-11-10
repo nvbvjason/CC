@@ -16,6 +16,7 @@ static std::string generateCaseLabelName(std::string before);
 static i64 getArraySize(Parsing::TypeBase* type);
 static Type getArrayType(Parsing::TypeBase* type);
 static std::shared_ptr<Value> genConstValue(const Parsing::ConstExpr& constExpr);
+static std::shared_ptr<Value> genZeroValueForType(Type type);
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
 {
@@ -60,6 +61,15 @@ void GenerateIr::directlyPushConstant32Bit(const Parsing::VarDecl& varDecl, cons
     emplaceCopy(value, var, varDecl.type->type);
 }
 
+i64 getZeroInit8ByteAmount(const Parsing::Initializer& init, const Type type)
+{
+    const auto zeroInit = dynCast<const Parsing::ZeroInitializer>(&init);
+    i64 result = zeroInit->size;
+    if (type == Type::I32 || type == Type::U32)
+        result = (result + 1) / 2;
+    return result;
+}
+
 void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
 {
     using InitKind = Parsing::Initializer::Kind;
@@ -75,34 +85,47 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
     }
     if (varDecl->init == nullptr)
         return;
-    if (varDecl->init->kind == InitKind::Single) {
-        const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl->init.get());
-        const std::shared_ptr<Value> value = genInstAndConvert(*singleInit->exp);
-        if (value->kind == Value::Kind::Constant &&
-            (varDecl->type->type == Type::I32 || varDecl->type->type == Type::U32)) {
-            directlyPushConstant32Bit(*varDecl, value);
-            return;
+    if (varDecl->init->kind == InitKind::Single)
+        genSingleDeclaration(varDecl);
+    if (varDecl->init->kind == InitKind::Compound)
+        genCompoundLocalInit(varDecl);
+}
+
+void GenerateIr::genSingleDeclaration(const Parsing::VarDecl* const varDecl)
+{
+    const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl->init.get());
+    const std::shared_ptr<Value> value = genInstAndConvert(*singleInit->expr);
+    if (value->kind == Value::Kind::Constant &&
+        (varDecl->type->type == Type::I32 || varDecl->type->type == Type::U32)) {
+        directlyPushConstant32Bit(*varDecl, value);
+        return;
         }
-        const auto temporary = std::make_shared<ValueVar>(makeTemporaryName(), varDecl->type->type);
-        emplaceCopy(value, temporary, varDecl->type->type);
-        const Identifier iden(varDecl->name);
-        const auto var = std::make_shared<ValueVar>(iden, varDecl->type->type);
-        emplaceCopy(temporary, var, varDecl->type->type);
-    }
-    if (varDecl->init->kind == InitKind::Compound) {
-        const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl->init.get());
-        const auto arrayType = dynCast<Parsing::ArrayType>(varDecl->type.get());
-        const Type type = getArrayType(varDecl->type.get());
-        const i64 size = getSize(type);
-        const i64 arraySize = getArraySize(arrayType);
-        i64 offset = 0;
-        for (const auto& init : compoundInit->initializers) {
-            if (init->kind == InitKind::Single) {
-                const auto singleInit = dynCast<Parsing::SingleInitializer>(init.get());
-                const std::shared_ptr<Value> value = genInstAndConvert(*singleInit->exp);
-                emplaceCopyToOffset(value, Identifier(varDecl->name), offset, type, arraySize);
-                offset += size;
-            }
+    const auto temporary = std::make_shared<ValueVar>(makeTemporaryName(), varDecl->type->type);
+    emplaceCopy(value, temporary, varDecl->type->type);
+    const Identifier iden(varDecl->name);
+    const auto var = std::make_shared<ValueVar>(iden, varDecl->type->type);
+    emplaceCopy(temporary, var, varDecl->type->type);
+}
+
+void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl* const varDecl)
+{
+    const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl->init.get());
+    const auto arrayType = dynCast<Parsing::ArrayType>(varDecl->type.get());
+    const Type type = getArrayType(varDecl->type.get());
+    const i64 size = getSize(type);
+    const i64 arraySize = getArraySize(arrayType);
+    i64 offset = 0;
+    for (const auto& init : compoundInit->initializers) {
+        if (init->kind == Parsing::Initializer::Kind::Single) {
+            const auto singleInit = dynCast<Parsing::SingleInitializer>(init.get());
+            const std::shared_ptr<Value> value = genInstAndConvert(*singleInit->expr);
+            emplaceCopyToOffset(value, Identifier(varDecl->name), offset, type, arraySize);
+            offset += size;
+        }
+        if (init->kind == Parsing::Initializer::Kind::Zero) {
+            const auto zeroInit = dynCast<Parsing::ZeroInitializer>(init.get());
+            emplaceZeroOut(zeroInit->size, type);
+            offset += zeroInit->size;
         }
     }
 }
@@ -159,7 +182,7 @@ std::vector<std::unique_ptr<Initializer>> GenerateIr::genStaticArrayInit(
         switch (stuff->kind) {
             case Parsing::Initializer::Kind::Single: {
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(stuff.get());
-                const auto value = genInstAndConvert(*singleInit->exp);
+                const auto value = genInstAndConvert(*singleInit->expr);
                 initializers.emplace_back(std::make_unique<ValueInitializer>(value));
                 break;
             }
@@ -189,10 +212,15 @@ std::unique_ptr<TopLevel> GenerateIr::genStaticInit(const Parsing::VarDecl& varD
 std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl& varDecl, const bool defined)
 {
     if (defined) {
-        auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
-        return genInstAndConvert(*singleInit->exp);
+        const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+        return genInstAndConvert(*singleInit->expr);
     }
-    switch (varDecl.type->type) {
+    return genZeroValueForType(varDecl.type->type);
+}
+
+std::shared_ptr<Value> genZeroValueForType(const Type type)
+{
+    switch (type) {
         case Type::I32:
             return std::make_shared<ValueConst>(0);
         case Type::I64:
@@ -833,10 +861,10 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrInst(const Parsing::BinaryEx
 
 std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr)
 {
-    const auto[ptrSide, indexSide] = switchIndexAndAddIfNecessary(binaryExpr);
-    const std::shared_ptr<Value> ptr = genInstAndConvert(*ptrSide);
-    const std::shared_ptr<Value> index = genInstAndConvert(*indexSide);
-    const auto ptrType = dynCast<const Parsing::PointerType>(ptrSide->type.get());
+    const auto[ptrExpr, indexExpr] = switchIndexAndAddIfNecessary(binaryExpr);
+    const std::shared_ptr<Value> ptr = genInstAndConvert(*ptrExpr);
+    const std::shared_ptr<Value> index = genInstAndConvert(*indexExpr);
+    const auto ptrType = dynCast<const Parsing::PointerType>(ptrExpr->type.get());
     const Type type = ptrType->type;
     if (binaryExpr.op == Parsing::BinaryExpr::Operator::Subtract) {
         const auto dst = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), Type::Pointer);
@@ -968,7 +996,7 @@ i64 getReferencedTypeSize(Parsing::TypeBase* typeBase)
                 std::abort();
         }
     }
-    i64 scale = 1;
+    i64 scale = getSize(typeBase->type);
     for (size_t i = 1; i < scales.size(); ++i)
         scale *= scales[i];
     return scale;

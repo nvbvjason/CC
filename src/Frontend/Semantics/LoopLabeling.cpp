@@ -192,7 +192,7 @@ void initArray(Parsing::VarDecl& array)
             case Parsing::Initializer::Kind::Single: {
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
                 staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-                    Parsing::deepCopy(*singleInit->exp)));
+                    Parsing::deepCopy(*singleInit->expr)));
                 ++atInFlattened;
                 break;
             }
@@ -207,21 +207,48 @@ void initArray(Parsing::VarDecl& array)
     array.init = std::move(newArrayInit);
 }
 
+bool isZeroSingleInit(const Parsing::Initializer& init)
+{
+    if (init.kind != Parsing::Initializer::Kind::Single)
+        return false;
+    const auto singleInit = dynCast<const Parsing::SingleInitializer>(&init);
+    if (singleInit->expr->kind != Parsing::Expr::Kind::Constant)
+        return false;
+    const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->expr.get());
+    switch (constExpr->type->type) {
+        case Type::I32: return 0 == constExpr->getValue<i32>();
+        case Type::I64: return 0 == constExpr->getValue<i64>();
+        case Type::U32: return 0 == constExpr->getValue<u32>();
+        case Type::U64: return 0 == constExpr->getValue<u64>();
+        default:
+            return false;
+    }
+}
+
 std::vector<std::unique_ptr<Parsing::Initializer>> combineZeroInits(
     std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer)
 {
+    using InitKind = Parsing::Initializer::Kind;
+
     std::vector<std::unique_ptr<Parsing::Initializer>> newInitializers;
     for (size_t i = 0; i < staticInitializer.size(); ++i) {
-        if (staticInitializer[i]->kind == Parsing::Initializer::Kind::Single) {
+        if (staticInitializer[i]->kind == InitKind::Single && !isZeroSingleInit(*staticInitializer[i])) {
             const auto sinleInit = dynCast<Parsing::SingleInitializer>(staticInitializer[i].get());
             newInitializers.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-                Parsing::deepCopy(*sinleInit->exp)));
+                Parsing::deepCopy(*sinleInit->expr)));
             continue;
         }
         i64 length = 0;
-        while (i < staticInitializer.size() && staticInitializer[i]->kind == Parsing::Initializer::Kind::Zero) {
-            const auto zeroInit = dynCast<Parsing::ZeroInitializer>(staticInitializer[i].get());
-            length += zeroInit->size;
+        while (i < staticInitializer.size()) {
+            if (staticInitializer[i]->kind == InitKind::Single) {
+                if (!isZeroSingleInit(*staticInitializer[i]))
+                    break;
+                ++length;
+            }
+            if (staticInitializer[i]->kind == InitKind::Zero) {
+                const auto zeroInit = dynCast<Parsing::ZeroInitializer>(staticInitializer[i].get());
+                length += zeroInit->size;
+            }
             ++i;
         }
         --i;

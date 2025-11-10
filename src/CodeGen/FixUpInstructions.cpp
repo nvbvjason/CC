@@ -54,6 +54,8 @@ void FixUpInstructions::fixUp()
             case Inst::Cvtsi2sd:
                 fixCvtsi2sd(*dynCast<Cvtsi2sdInst>(inst.get()));
                 break;
+            case Inst::PushPseudo:
+                break;
             default:
                 m_copy.emplace_back(std::move(inst));
         }

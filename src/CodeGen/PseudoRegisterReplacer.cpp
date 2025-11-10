@@ -28,19 +28,14 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
         if (!m_pseudoMap.contains(identifier)) {
             if (operand->kind == Operand::Kind::PseudoMem) {
                 const auto pseudoMem = dynCast<PseudoMemOperand>(operand.get());
-                m_stackPtr -= pseudoMem->size * Operators::getAlignment(operand->type);
+                m_stackPtr -= pseudoMem->size * Operators::getSize(asmType);
                 fitToAlignment();
                 m_pseudoMap[identifier] = m_stackPtr;
                 operand = std::make_shared<MemoryOperand>(
                     Operand::RegKind::BP, m_stackPtr, operand->type);
                 return;
             }
-            if (asmType == AsmType::LongWord)
-                m_stackPtr -= 4;
-            else if (asmType == AsmType::QuadWord ||
-                asmType == AsmType::Double) {
-                m_stackPtr -= 8;
-            }
+            m_stackPtr -= 1 * Operators::getSize(asmType);
             fitToAlignment();
             m_pseudoMap[identifier] = m_stackPtr;
         }
@@ -103,6 +98,12 @@ void PseudoRegisterReplacer::visit(CmpInst& cmpInst)
 void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 {
     replaceIfPseudo(setCCInst.operand);
+}
+
+void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
+{
+    m_stackPtr += pushPseudoInst.size * Operators::getSize(pushPseudoInst.type);
+    m_pseudoMap[pushPseudoInst.identifier.value] = m_stackPtr;
 }
 
 void PseudoRegisterReplacer::visit(PushInst& pushInst)
