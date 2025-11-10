@@ -1,6 +1,5 @@
 #include "TypeResolution.hpp"
 #include "ASTIr.hpp"
-#include "DynCast.hpp"
 #include "TypeConversion.hpp"
 #include "Utils.hpp"
 #include "ASTDeepCopy.hpp"
@@ -500,10 +499,8 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
 
     if (binaryExpr.op == BinaryOp::Add || binaryExpr.op == BinaryOp::Subtract) {
         if (isIntegerType(rightType)) {
-            if (rightType != Type::I64) {
-                binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(binaryExpr.location,
-                    std::make_unique<Parsing::VarType>(Type::I64), std::move(binaryExpr.rhs));
-            }
+            if (rightType != Type::I64)
+                binaryExpr.rhs = convertOrCastToType<i64>(*binaryExpr.rhs.get(), Type::I64);
             binaryExpr.type = Parsing::deepCopy(*binaryExpr.lhs->type);
         }
         else if (isIntegerType(leftType)) {
@@ -511,10 +508,8 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
                 addError("Cannot subtract a pointer form an integer type", binaryExpr.location);
                 return Parsing::deepCopy(binaryExpr);
             }
-            if (leftType != Type::I64) {
-                binaryExpr.lhs = std::make_unique<Parsing::CastExpr>(binaryExpr.location,
-                    std::make_unique<Parsing::VarType>(Type::I64), std::move(binaryExpr.lhs));
-            }
+            if (leftType != Type::I64)
+                binaryExpr.lhs = convertOrCastToType<i64>(*binaryExpr.lhs.get(), Type::I64);
             binaryExpr.type = Parsing::deepCopy(*binaryExpr.rhs->type);
         }
         return Parsing::deepCopy(binaryExpr);
@@ -711,31 +706,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::DereferenceExpr&
     return Parsing::deepCopy(dereferenceExpr);
 }
 
-void TypeResolution::convertSubscriptIndexToI64(Parsing::SubscriptExpr* const subscriptExprPtr)
-{
-    if (subscriptExprPtr->index->kind != Parsing::Expr::Kind::Constant) {
-        subscriptExprPtr->index = std::make_unique<Parsing::CastExpr>(
-            subscriptExprPtr->index->location,
-            std::make_unique<Parsing::VarType>(Type::I64),
-            std::move(subscriptExprPtr->index));
-        return;
-    }
 
-    const auto constExpr = dynCast<Parsing::ConstExpr>(subscriptExprPtr->index.get());
-    i64 value;
-    if (constExpr->type->type == Type::I32)
-        value = static_cast<i64>(constExpr->getValue<i32>());
-    else if (constExpr->type->type == Type::U32)
-        value = static_cast<i64>(constExpr->getValue<u32>());
-    else if (constExpr->type->type == Type::U64)
-        value = static_cast<i64>(constExpr->getValue<u64>());
-    else
-        std::abort();
-    subscriptExprPtr->index = std::make_unique<Parsing::ConstExpr>(
-        constExpr->location,
-        value,
-        std::make_unique<Parsing::VarType>(Type::I64));
-}
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& subscriptExpr)
 {
@@ -762,7 +733,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& s
     }
     const auto subscriptExprPtr = dynCast<Parsing::SubscriptExpr>(result.get());
     if (subscriptExprPtr->index->type->type != Type::I64)
-        convertSubscriptIndexToI64(subscriptExprPtr);
+        subscriptExprPtr->index = convertOrCastToType<i64>(*subscriptExprPtr->index.get(), Type::I64);
     const auto ptrType = dynCast<Parsing::PointerType>(subscriptExprPtr->referencing->type.get());
     result->type = Parsing::deepCopy(*ptrType->referenced);
     return result;

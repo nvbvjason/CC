@@ -5,38 +5,51 @@
 #include "ASTTypes.hpp"
 #include "TypeConversion.hpp"
 #include "ASTDeepCopy.hpp"
+#include "Error.hpp"
+#include "DynCast.hpp"
 
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "Error.hpp"
-
  namespace Semantics {
+
+template<typename TargetType>
+TargetType getValueFromConst(const Parsing::ConstExpr& constExpr)
+{
+    switch (constExpr.type->type) {
+        case Type::I32:     return std::get<i32>(constExpr.value);
+        case Type::I64:     return std::get<i64>(constExpr.value);
+        case Type::U32:     return std::get<u32>(constExpr.value);
+        case Type::U64:     return std::get<u64>(constExpr.value);
+        case Type::Double:  return std::get<double>(constExpr.value);
+        default:
+            std::abort();
+    }
+}
+
+template<typename TargetType>
+std::unique_ptr<Parsing::Expr> convertOrCastToType(Parsing::Expr& expr, const Type type)
+{
+    if (expr.kind != Parsing::Expr::Kind::Constant) {
+        return std::make_unique<Parsing::CastExpr>(
+            expr.location,
+            std::make_unique<Parsing::VarType>(type),
+            Parsing::deepCopy(expr));
+    }
+
+    const auto constExpr = dynCast<Parsing::ConstExpr>(&expr);
+    const i64 value = getValueFromConst<TargetType>(*constExpr);
+    return std::make_unique<Parsing::ConstExpr>(
+        constExpr->location,
+        value,
+        std::make_unique<Parsing::VarType>(type));
+}
 
 template<typename TargetType, Type TargetKind>
 void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
 {
-    TargetType value;
-    switch (constExpr.type->type) {
-        case Type::I32:
-            value = std::get<i32>(constExpr.value);
-            break;
-        case Type::I64:
-            value = std::get<i64>(constExpr.value);
-            break;
-        case Type::U32:
-            value = std::get<u32>(constExpr.value);
-            break;
-        case Type::U64:
-            value = std::get<u64>(constExpr.value);
-            break;
-        case Type::Double:
-            value = std::get<double>(constExpr.value);
-            break;
-        default:
-            std::abort();
-    }
+    const TargetType value = getValueFromConst<TargetType>(constExpr);
     varDecl.init = std::make_unique<Parsing::SingleInitializer>(
             std::make_unique<Parsing::ConstExpr>(
         value, std::make_unique<Parsing::VarType>(TargetKind)));
@@ -104,7 +117,6 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::TernaryExpr& ternaryExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::FuncCallExpr& funCallExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::DereferenceExpr& dereferenceExpr);
-    static void convertSubscriptIndexToI64(Parsing::SubscriptExpr* subscriptExprPtr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::AddrOffExpr& addrOffExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::SubscriptExpr& subscriptExpr);
 
@@ -161,4 +173,5 @@ inline bool isIllegalPointerCompoundAssignOperation(const Parsing::AssignmentExp
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr,
     Type leftType, Type rightType, Type commonType);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
+
 } // Semantics
