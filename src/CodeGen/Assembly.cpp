@@ -37,7 +37,7 @@ std::string asmProgram(const Program& program)
                 std::abort();
         }
     }
-    result += ".section .note.GNU-stack,\"\",@progbits\n";
+    result += asmFormatInstruction(".section .note.GNU-stack,\"\",@progbits\n");
     return result;
 }
 
@@ -429,8 +429,8 @@ std::string condCode(const BinaryInst::CondCode condCode)
 }
 
 std::string asmFormatInstruction(const std::string& mnemonic,
-                      const std::string& operands,
-                      const std::string& comment)
+                                 const std::string& operands,
+                                 const std::string& comment)
 {
     constexpr int mnemonicWidth = 12;
     constexpr int operandsWidth = 16;

@@ -862,15 +862,13 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::Binar
     const auto[ptrExpr, indexExpr] = switchIndexAndAddIfNecessary(binaryExpr);
     const std::shared_ptr<Value> ptr = genInstAndConvert(*ptrExpr);
     const std::shared_ptr<Value> index = genInstAndConvert(*indexExpr);
-    const auto ptrType = dynCast<const Parsing::PointerType>(ptrExpr->type.get());
-    const Type type = ptrType->type;
     if (binaryExpr.op == Parsing::BinaryExpr::Operator::Subtract) {
         const auto dst = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), Type::Pointer);
         emplaceUnary(UnaryInst::Operation::Negate, index, dst, Type::Pointer);
     }
-    const i64 size = getSize(type);
+    const i64 scale = getReferencedTypeSize(ptrExpr->type.get());
     auto result = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
-    emplaceAddPtr(ptr, index, result, size);
+    emplaceAddPtr(ptr, index, result, scale);
     return std::make_unique<PlainOperand>(result);
 }
 

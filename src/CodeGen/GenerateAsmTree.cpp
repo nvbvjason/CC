@@ -805,6 +805,21 @@ void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
     emplaceLea(memoryOp, dst, Operators::getAsmType(addPtrInst.ptr->type));
 }
 
+void GenerateAsmTree::genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst)
+{
+    const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
+    const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, Operators::getAsmType(addPtrInst.type));
+    const auto ptr = genOperand(addPtrInst.ptr);
+    const std::shared_ptr<Operand> index = genOperand(addPtrInst.index);
+    const AsmType type = Operators::getAsmType(addPtrInst.ptr->type);
+    const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, addPtrInst.scale, type);
+    const std::shared_ptr<Operand> dst = genOperand(addPtrInst.dst);
+
+    emplaceMove(ptr, regAX, AsmType::QuadWord);
+    emplaceMove(index, regDX, AsmType::QuadWord);
+    emplaceLea(indexed, dst, type);
+}
+
 void GenerateAsmTree::genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst)
 {
     const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
@@ -820,21 +835,6 @@ void GenerateAsmTree::genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& 
     emplaceMove(ptr, regAX, AsmType::QuadWord);
     emplaceMove(index, regDX, AsmType::QuadWord);
     emplaceBinary(immScale, regDX, BinaryInst::Operator::Mul, AsmType::QuadWord);
-    emplaceLea(indexed, dst, type);
-}
-
-void GenerateAsmTree::genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst)
-{
-    const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(addPtrInst.type));
-    const auto regDX = std::make_shared<RegisterOperand>(RegType::DX, Operators::getAsmType(addPtrInst.type));
-    const auto ptr = genOperand(addPtrInst.ptr);
-    const std::shared_ptr<Operand> index = genOperand(addPtrInst.index);
-    const AsmType type = Operators::getAsmType(addPtrInst.ptr->type);
-    const auto indexed = std::make_shared<IndexedOperand>(RegType::AX, RegType::DX, addPtrInst.scale, type);
-    const std::shared_ptr<Operand> dst = genOperand(addPtrInst.dst);
-
-    emplaceMove(ptr, regAX, AsmType::QuadWord);
-    emplaceMove(index, regDX, AsmType::QuadWord);
     emplaceLea(indexed, dst, type);
 }
 

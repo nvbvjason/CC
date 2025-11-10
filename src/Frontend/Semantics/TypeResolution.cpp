@@ -136,9 +136,9 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         if (arrayType->size < compoundInit->initializers.size())
             addError("Compound initializer cannot be longer than array size", varDecl.location);
 
-        for (size_t i = 0; i < compoundInit->initializers.size(); ++i) {
-            if (compoundInit->initializers[i]->kind == Parsing::Initializer::Kind::Single) {
-                auto singleInit = dynCast<Parsing::SingleInitializer>(compoundInit->initializers[i].get());
+        for (const auto & initializer : compoundInit->initializers) {
+            if (initializer->kind == Parsing::Initializer::Kind::Single) {
+                auto singleInit = dynCast<Parsing::SingleInitializer>(initializer.get());
                 if (arrayType->elementType->type == Type::Pointer && singleInit->expr->type->type == Type::Double) {
                     addError("Cannot init ptr with double", varDecl.location);
                     break;
@@ -321,7 +321,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::Expr& expr)
     }
 }
 
-std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::ConstExpr& expr)
+std::unique_ptr<Parsing::Expr> TypeResolution::convert(const Parsing::ConstExpr& expr)
 {
     return deepCopy(expr);
 }
@@ -711,6 +711,32 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::DereferenceExpr&
     return Parsing::deepCopy(dereferenceExpr);
 }
 
+void TypeResolution::convertSubscriptIndexToI64(Parsing::SubscriptExpr* const subscriptExprPtr)
+{
+    if (subscriptExprPtr->index->kind != Parsing::Expr::Kind::Constant) {
+        subscriptExprPtr->index = std::make_unique<Parsing::CastExpr>(
+            subscriptExprPtr->index->location,
+            std::make_unique<Parsing::VarType>(Type::I64),
+            std::move(subscriptExprPtr->index));
+        return;
+    }
+
+    const auto constExpr = dynCast<Parsing::ConstExpr>(subscriptExprPtr->index.get());
+    i64 value;
+    if (constExpr->type->type == Type::I32)
+        value = static_cast<i64>(constExpr->getValue<i32>());
+    else if (constExpr->type->type == Type::U32)
+        value = static_cast<i64>(constExpr->getValue<u32>());
+    else if (constExpr->type->type == Type::U64)
+        value = static_cast<i64>(constExpr->getValue<u64>());
+    else
+        std::abort();
+    subscriptExprPtr->index = std::make_unique<Parsing::ConstExpr>(
+        constExpr->location,
+        value,
+        std::make_unique<Parsing::VarType>(Type::I64));
+}
+
 std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& subscriptExpr)
 {
     subscriptExpr.referencing = convertArrayType(*subscriptExpr.referencing);
@@ -735,11 +761,9 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& s
         return Parsing::deepCopy(subscriptExpr);
     }
     const auto subscriptExprPtr = dynCast<Parsing::SubscriptExpr>(result.get());
-    if (subscriptExprPtr->index->type->type != Type::I64) {
-        subscriptExprPtr->index = std::make_unique<Parsing::CastExpr>(subscriptExprPtr->index->location,
-        std::make_unique<Parsing::VarType>(Type::I64), std::move(subscriptExprPtr->index));
-    }
-    auto ptrType = dynCast<Parsing::PointerType>(subscriptExprPtr->referencing->type.get());
+    if (subscriptExprPtr->index->type->type != Type::I64)
+        convertSubscriptIndexToI64(subscriptExprPtr);
+    const auto ptrType = dynCast<Parsing::PointerType>(subscriptExprPtr->referencing->type.get());
     result->type = Parsing::deepCopy(*ptrType->referenced);
     return result;
 }

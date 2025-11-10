@@ -92,7 +92,7 @@ public:
     std::unique_ptr<Parsing::Expr> convertArrayType(Parsing::Expr& expr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
 
-    std::unique_ptr<Parsing::Expr> convert(Parsing::ConstExpr& expr);
+    static std::unique_ptr<Parsing::Expr> convert(const Parsing::ConstExpr& expr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
@@ -104,6 +104,7 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::TernaryExpr& ternaryExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::FuncCallExpr& funCallExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::DereferenceExpr& dereferenceExpr);
+    static void convertSubscriptIndexToI64(Parsing::SubscriptExpr* subscriptExprPtr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::AddrOffExpr& addrOffExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::SubscriptExpr& subscriptExpr);
 
