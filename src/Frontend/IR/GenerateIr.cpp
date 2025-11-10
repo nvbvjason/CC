@@ -737,18 +737,104 @@ std::unique_ptr<ExprResult> GenerateIr::genVarInst(const Parsing::VarExpr& varEx
 std::unique_ptr<ExprResult> GenerateIr::genBinaryInst(const Parsing::BinaryExpr& binaryExpr)
 {
     if (binaryExpr.lhs->type->type == Type::Pointer || binaryExpr.lhs->type->type == Type::Pointer)
-        genBinaryPtrInst(binaryExpr);
-    const BinaryInst::Operation operation = convertBinaryOperation(binaryExpr.op);
-    if (operation == BinaryInst::Operation::And)
+        return genBinaryPtrInst(binaryExpr);
+    if (binaryExpr.op == Parsing::BinaryExpr::Operator::And)
         return genBinaryAndInst(binaryExpr);
-    if (operation == BinaryInst::Operation::Or)
+    if (binaryExpr.op == Parsing::BinaryExpr::Operator::Or)
         return genBinaryOrInst(binaryExpr);
+    return genBinarySimpleInst(binaryExpr);
+}
+
+std::unique_ptr<ExprResult> GenerateIr::genBinarySimpleInst(const Parsing::BinaryExpr& binaryExpr)
+{
     const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
     const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
 
     auto dst = std::make_shared<ValueVar>(makeTemporaryName(), binaryExpr.type->type);
-
+    const BinaryInst::Operation operation = convertBinaryOperation(binaryExpr.op);
     emplaceBinary(operation, lhs, rhs, dst, binaryExpr.type->type);
+    return std::make_unique<PlainOperand>(dst);
+}
+
+std::unique_ptr<ExprResult> GenerateIr::genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr)
+{
+    auto result = std::make_shared<ValueVar>(makeTemporaryName(), binaryExpr.type->type);
+    const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
+    const Identifier falseLabelIden = makeTemporaryName();
+
+    emplaceJumpIfZero(lhs, falseLabelIden);
+    const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
+    emplaceJumpIfZero(rhs, falseLabelIden);
+    const auto oneVal = std::make_shared<ValueConst>(1);
+    emplaceCopy(oneVal, result, binaryExpr.type->type);
+    const Identifier endLabelIden = makeTemporaryName();
+    emplaceJump(endLabelIden);
+    emplaceLabel(falseLabelIden);
+    const auto zeroVal = std::make_shared<ValueConst>(0);
+    emplaceCopy(zeroVal, result, binaryExpr.type->type);
+    emplaceLabel(endLabelIden);
+    return std::make_unique<PlainOperand>(result);
+}
+
+std::unique_ptr<ExprResult> GenerateIr::genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr)
+{
+    auto result = std::make_shared<ValueVar>(makeTemporaryName(), binaryExpr.type->type);
+    const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
+    const Identifier trueLabelIden = makeTemporaryName();
+
+    emplaceJumpIfNotZero(lhs, trueLabelIden);
+    const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
+    emplaceJumpIfNotZero(rhs, trueLabelIden);
+    const auto zeroVal = std::make_shared<ValueConst>(0);
+    emplaceCopy(zeroVal, result, binaryExpr.type->type);
+    const Identifier endLabelIden = makeTemporaryName();
+    emplaceJump(endLabelIden);
+    emplaceLabel(trueLabelIden);
+    const auto oneVal = std::make_shared<ValueConst>(1);
+    emplaceCopy(oneVal, result, binaryExpr.type->type);
+    emplaceLabel(endLabelIden);
+    return std::make_unique<PlainOperand>(result);
+}
+
+std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrInst(const Parsing::BinaryExpr& binaryExpr)
+{
+    if (binaryExpr.op == Parsing::BinaryExpr::Operator::And)
+        return genBinaryAndInst(binaryExpr);
+    if (binaryExpr.op == Parsing::BinaryExpr::Operator::Or)
+        return genBinaryOrInst(binaryExpr);
+    if (binaryExpr.lhs->type->type == Type::Pointer && binaryExpr.rhs->type->type == Type::Pointer) {
+        if (binaryExpr.op == Parsing::BinaryExpr::Operator::Subtract)
+            return genBinaryPtrSubInst(binaryExpr);
+        return genBinarySimpleInst(binaryExpr);
+    }
+    return genBinaryPtrAddInst(binaryExpr);
+}
+
+std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr)
+{
+    const auto[ptrExpr, indexExpr] = switchIndexAndAddIfNecessary(binaryExpr);
+    const std::shared_ptr<Value> ptr = genInstAndConvert(*ptrExpr);
+    const std::shared_ptr<Value> index = genInstAndConvert(*indexExpr);
+    if (binaryExpr.op == Parsing::BinaryExpr::Operator::Subtract) {
+        const auto dst = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), Type::Pointer);
+        emplaceUnary(UnaryInst::Operation::Negate, index, dst, Type::Pointer);
+    }
+    const i64 scale = getReferencedTypeSize(ptrExpr->type.get());
+    auto result = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
+    emplaceAddPtr(ptr, index, result, scale);
+    return std::make_unique<PlainOperand>(result);
+}
+
+std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrSubInst(const Parsing::BinaryExpr& binaryExpr)
+{
+    const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
+    const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
+    const auto diff = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
+
+    emplaceBinary(BinaryInst::Operation::Subtract, lhs, rhs, diff, lhs->type);
+    auto dst = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
+    const auto size = std::make_shared<ValueConst>(getSize(lhs->type));
+    emplaceBinary(BinaryInst::Operation::Divide, diff, size, dst, lhs->type);
     return std::make_unique<PlainOperand>(dst);
 }
 
@@ -804,85 +890,6 @@ std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentE
         }
     }
     std::unreachable();
-}
-
-std::unique_ptr<ExprResult> GenerateIr::genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr)
-{
-    auto result = std::make_shared<ValueVar>(makeTemporaryName(), binaryExpr.type->type);
-    const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
-    const Identifier falseLabelIden = makeTemporaryName();
-
-    emplaceJumpIfZero(lhs, falseLabelIden);
-    const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
-    emplaceJumpIfZero(rhs, falseLabelIden);
-    const auto oneVal = std::make_shared<ValueConst>(1);
-    emplaceCopy(oneVal, result, binaryExpr.type->type);
-    const Identifier endLabelIden = makeTemporaryName();
-    emplaceJump(endLabelIden);
-    emplaceLabel(falseLabelIden);
-    const auto zeroVal = std::make_shared<ValueConst>(0);
-    emplaceCopy(zeroVal, result, binaryExpr.type->type);
-    emplaceLabel(endLabelIden);
-    return std::make_unique<PlainOperand>(result);
-}
-
-std::unique_ptr<ExprResult> GenerateIr::genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr)
-{
-    auto result = std::make_shared<ValueVar>(makeTemporaryName(), binaryExpr.type->type);
-    const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
-    const Identifier trueLabelIden = makeTemporaryName();
-
-    emplaceJumpIfNotZero(lhs, trueLabelIden);
-    const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
-    emplaceJumpIfNotZero(rhs, trueLabelIden);
-    const auto zeroVal = std::make_shared<ValueConst>(0);
-    emplaceCopy(zeroVal, result, binaryExpr.type->type);
-    const Identifier endLabelIden = makeTemporaryName();
-    emplaceJump(endLabelIden);
-    emplaceLabel(trueLabelIden);
-    const auto oneVal = std::make_shared<ValueConst>(1);
-    emplaceCopy(oneVal, result, binaryExpr.type->type);
-    emplaceLabel(endLabelIden);
-    return std::make_unique<PlainOperand>(result);
-}
-
-std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrInst(const Parsing::BinaryExpr& binaryExpr)
-{
-    if (binaryExpr.op == Parsing::BinaryExpr::Operator::And)
-        return genBinaryAndInst(binaryExpr);
-    if (binaryExpr.op == Parsing::BinaryExpr::Operator::Or)
-        return genBinaryOrInst(binaryExpr);
-    if (binaryExpr.lhs->type->type == Type::Pointer && binaryExpr.rhs->type->type == Type::Pointer)
-        return genBinaryPtrSubInst(binaryExpr);
-    return genBinaryPtrAddInst(binaryExpr);
-}
-
-std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr)
-{
-    const auto[ptrExpr, indexExpr] = switchIndexAndAddIfNecessary(binaryExpr);
-    const std::shared_ptr<Value> ptr = genInstAndConvert(*ptrExpr);
-    const std::shared_ptr<Value> index = genInstAndConvert(*indexExpr);
-    if (binaryExpr.op == Parsing::BinaryExpr::Operator::Subtract) {
-        const auto dst = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), Type::Pointer);
-        emplaceUnary(UnaryInst::Operation::Negate, index, dst, Type::Pointer);
-    }
-    const i64 scale = getReferencedTypeSize(ptrExpr->type.get());
-    auto result = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
-    emplaceAddPtr(ptr, index, result, scale);
-    return std::make_unique<PlainOperand>(result);
-}
-
-std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrSubInst(const Parsing::BinaryExpr& binaryExpr)
-{
-    const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
-    const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
-    const auto diff = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
-
-    emplaceBinary(BinaryInst::Operation::Subtract, lhs, rhs, diff, lhs->type);
-    auto dst = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
-    const auto size = std::make_shared<ValueConst>(getSize(lhs->type));
-    emplaceBinary(BinaryInst::Operation::Divide, diff, size, dst, lhs->type);
-    return std::make_unique<PlainOperand>(dst);
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genConstPlainOperand(const Parsing::ConstExpr& constExpr)

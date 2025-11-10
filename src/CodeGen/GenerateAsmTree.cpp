@@ -799,7 +799,7 @@ void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
     const i64 index = std::get<i64>(constValue->value) * addPtrInst.scale;
     const auto memoryOp = std::make_shared<MemoryOperand>(
         RegType::AX, index, Operators::getAsmType(addPtrInst.ptr->type));
-    std::shared_ptr<Operand> dst = genOperand(addPtrInst.dst);
+    const std::shared_ptr<Operand> dst = genOperand(addPtrInst.dst);
 
     emplaceMove(ptr, regAX, Operators::getAsmType(addPtrInst.ptr->type));
     emplaceLea(memoryOp, dst, Operators::getAsmType(addPtrInst.ptr->type));

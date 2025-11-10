@@ -134,8 +134,6 @@ void asmStaticArray(std::string& result, const ArrayVariable& array)
     result += '\n';
 }
 
-
-
 void asmFunction(std::string& result, const Function& functionNode)
 {
     if (functionNode.isGlobal)

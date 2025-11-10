@@ -62,12 +62,15 @@ public:
     std::unique_ptr<ExprResult> genUnaryBasicInst(const Parsing::UnaryExpr& unaryExpr);
     std::unique_ptr<ExprResult> genUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr);
     std::unique_ptr<ExprResult> genUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr);
+
     std::unique_ptr<ExprResult> genBinaryInst(const Parsing::BinaryExpr& binaryExpr);
+    std::unique_ptr<ExprResult> genBinarySimpleInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryPtrInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryPtrSubInst(const Parsing::BinaryExpr& binaryExpr);
+
     std::unique_ptr<ExprResult> genAssignInst(const Parsing::AssignmentExpr& assignmentExpr);
     void genCompoundAssignWithoutDeref(const Parsing::AssignmentExpr& assignmentExpr,
                                        std::shared_ptr<Value>& rhs,
@@ -79,6 +82,7 @@ public:
     std::unique_ptr<ExprResult> genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr);
     static std::unique_ptr<ExprResult> genConstPlainOperand(const Parsing::ConstExpr& constExpr);
     static std::unique_ptr<ExprResult> genVarInst(const Parsing::VarExpr& varExpr);
+
 private:
     void allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl);
     void directlyPushConstant32Bit(const Parsing::VarDecl& varDecl, const std::shared_ptr<Value>& value);
