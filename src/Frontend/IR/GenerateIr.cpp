@@ -799,12 +799,11 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrInst(const Parsing::BinaryEx
         return genBinaryAndInst(binaryExpr);
     if (binaryExpr.op == Parsing::BinaryExpr::Operator::Or)
         return genBinaryOrInst(binaryExpr);
-    if (binaryExpr.lhs->type->type == Type::Pointer && binaryExpr.rhs->type->type == Type::Pointer) {
-        if (binaryExpr.op == Parsing::BinaryExpr::Operator::Subtract)
-            return genBinaryPtrSubInst(binaryExpr);
-        return genBinarySimpleInst(binaryExpr);
-    }
-    return genBinaryPtrAddInst(binaryExpr);
+    if (binaryExpr.op == Parsing::BinaryExpr::Operator::Subtract)
+        return genBinaryPtrSubInst(binaryExpr);
+    if (binaryExpr.op == Parsing::BinaryExpr::Operator::Add)
+        return genBinaryPtrAddInst(binaryExpr);
+    return genBinarySimpleInst(binaryExpr);
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr)
@@ -997,7 +996,7 @@ i64 getReferencedTypeSize(Parsing::TypeBase* typeBase)
         }
     }
     i64 scale = getSize(typeBase->type);
-    for (size_t i = 1; i < scales.size(); ++i)
+    for (size_t i = 0; i < scales.size(); ++i)
         scale *= scales[i];
     return scale;
 }
