@@ -10,23 +10,26 @@ namespace Parsing {
 std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase)
 {
     assert(typeBase.type != Type::Invalid);
-    switch (typeBase.type) {
-        case Type::Pointer: {
+    switch (typeBase.kind) {
+        case TypeBase::Kind::Pointer: {
             const auto typePtr = dynCast<const PointerType>(&typeBase);
             auto referencedCopy = deepCopy(*typePtr->referenced);
             return std::make_unique<PointerType>(std::move(referencedCopy));
         }
-        case Type::Function: {
+        case TypeBase::Kind::Func: {
             const auto typeFunction = dynCast<const FuncType>(&typeBase);
             return deepCopy(*typeFunction);
         }
-        case Type::Array: {
+        case TypeBase::Kind::Array: {
             const auto typeArray = dynCast<const ArrayType>(&typeBase);
             return deepCopy(*typeArray);
         }
-        default:
+        case TypeBase::Kind::Var: {
             const auto typeVar = dynCast<const VarType>(&typeBase);
-        return deepCopy(*typeVar);
+            return deepCopy(*typeVar);
+        }
+        default:
+            std::abort();
     }
 }
 
@@ -214,7 +217,7 @@ std::unique_ptr<Expr> deepCopy(const VarExpr& expr)
 std::unique_ptr<Expr> deepCopy(const CastExpr& expr)
 {
     return std::make_unique<CastExpr>(
-        expr.location, deepCopy(*expr.type), deepCopy(*expr.expr));
+        expr.location, deepCopy(*expr.type), deepCopy(*expr.innerExpr));
 }
 
 std::unique_ptr<Expr> deepCopy(const UnaryExpr& expr)

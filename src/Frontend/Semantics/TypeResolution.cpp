@@ -82,7 +82,38 @@ bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::Fu
     return true;
 }
 
-void TypeResolution::handelCompoundInit(Parsing::VarDecl& varDecl)
+void TypeResolution::visit(Parsing::VarDecl& varDecl)
+{
+    if (isIllegalVarDecl(varDecl))
+        return;
+    if (m_global && varDecl.storage == Storage::Static)
+        m_globalStaticVars.insert(varDecl.name);
+    if (!m_global && !m_globalStaticVars.contains(varDecl.name))
+        m_definedFunctions.insert(varDecl.name);
+    m_isConst = true;
+
+    if (varDecl.init)
+        varDecl.init->accept(*this);
+
+    if (hasError())
+        return;
+    if (illegalNonConstInitialization(varDecl, m_isConst, m_global)) {
+        addError("Is illegal non const variable initilization", varDecl.location);
+        return;
+    }
+    if (varDecl.init == nullptr)
+        return;
+    if (varDecl.init->kind == Parsing::Initializer::Kind::Single) {
+        handleSingleInit(varDecl);
+    }
+    else {
+        handelCompoundInit(varDecl);
+        return;
+    }
+    assignTypeToArithmeticUnaryExpr(varDecl);
+}
+
+void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
 {
     const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
     if (varDecl.type->type != Type::Array) {
@@ -136,37 +167,6 @@ void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
             );
         }
     }
-}
-
-void TypeResolution::visit(Parsing::VarDecl& varDecl)
-{
-    if (isIllegalVarDecl(varDecl))
-        return;
-    if (m_global && varDecl.storage == Storage::Static)
-        m_globalStaticVars.insert(varDecl.name);
-    if (!m_global && !m_globalStaticVars.contains(varDecl.name))
-        m_definedFunctions.insert(varDecl.name);
-    m_isConst = true;
-
-    if (varDecl.init)
-        varDecl.init->accept(*this);
-
-    if (hasError())
-        return;
-    if (illegalNonConstInitialization(varDecl, m_isConst, m_global)) {
-        addError("Is illegal non const variable initilization", varDecl.location);
-        return;
-    }
-    if (varDecl.init == nullptr)
-        return;
-    if (varDecl.init->kind == Parsing::Initializer::Kind::Single) {
-        handleSingleInit(varDecl);
-    }
-    else {
-        handelCompoundInit(varDecl);
-        return;
-    }
-    assignTypeToArithmeticUnaryExpr(varDecl);
 }
 
 void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
@@ -508,6 +508,11 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
             if (leftType != Type::I64)
                 binaryExpr.lhs = convertOrCastToType(*binaryExpr.lhs, Type::I64);
             binaryExpr.type = Parsing::deepCopy(*binaryExpr.rhs->type);
+            auto returnExpr = std::make_unique<Parsing::BinaryExpr>(binaryExpr.location,
+                binaryExpr.op, std::move(binaryExpr.rhs), std::move(binaryExpr.lhs));
+            if (binaryExpr.type)
+                returnExpr->type =  std::move(binaryExpr.type);
+            return returnExpr;
         }
         return Parsing::deepCopy(binaryExpr);
     }
@@ -567,18 +572,23 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::AssignmentExpr& 
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::CastExpr& castExpr)
 {
-    castExpr.expr = convertArrayType(*castExpr.expr);
+    castExpr.innerExpr = convertArrayType(*castExpr.innerExpr);
 
     if (hasError())
         return Parsing::deepCopy(castExpr);
     const Type outerType = castExpr.type->type;
-    const Type innerType = castExpr.expr->type->type;
+    const Type innerType = castExpr.innerExpr->type->type;
     if (outerType == Type::Double && innerType == Type::Pointer)
         addError("Cannot convert pointer to double", castExpr.location);
     if (outerType == Type::Pointer && innerType == Type::Double)
         addError("Cannot convert double to pointer", castExpr.location);
     if (isArithmetic(outerType) && isArithmetic(innerType))
-        return convertOrCastToType(*castExpr.expr, outerType);
+        return convertOrCastToType(*castExpr.innerExpr, outerType);
+    if (outerType == Type::Pointer && innerType == Type::Pointer) {
+        auto innerTypeCopy = Parsing::deepCopy(*castExpr.type);
+        castExpr.innerExpr->type = std::move(innerTypeCopy);
+        return Parsing::deepCopy(*castExpr.innerExpr);
+    }
     return Parsing::deepCopy(castExpr);
 }
 

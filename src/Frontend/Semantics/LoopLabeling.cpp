@@ -211,24 +211,6 @@ void initArray(Parsing::VarDecl& array)
     array.init = std::move(newArrayInit);
 }
 
-bool isZeroSingleInit(const Parsing::Initializer& init)
-{
-    if (init.kind != Parsing::Initializer::Kind::Single)
-        return false;
-    const auto singleInit = dynCast<const Parsing::SingleInitializer>(&init);
-    if (singleInit->expr->kind != Parsing::Expr::Kind::Constant)
-        return false;
-    const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->expr.get());
-    switch (constExpr->type->type) {
-        case Type::I32: return 0 == constExpr->getValue<i32>();
-        case Type::I64: return 0 == constExpr->getValue<i64>();
-        case Type::U32: return 0 == constExpr->getValue<u32>();
-        case Type::U64: return 0 == constExpr->getValue<u64>();
-        default:
-            return false;
-    }
-}
-
 std::vector<std::unique_ptr<Parsing::Initializer>> combineZeroInits(
     std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer)
 {
@@ -259,6 +241,24 @@ std::vector<std::unique_ptr<Parsing::Initializer>> combineZeroInits(
         newInitializers.emplace_back(std::make_unique<Parsing::ZeroInitializer>(length));
     }
     return newInitializers;
+}
+
+bool isZeroSingleInit(const Parsing::Initializer& init)
+{
+    if (init.kind != Parsing::Initializer::Kind::Single)
+        return false;
+    const auto singleInit = dynCast<const Parsing::SingleInitializer>(&init);
+    if (singleInit->expr->kind != Parsing::Expr::Kind::Constant)
+        return false;
+    const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->expr.get());
+    switch (constExpr->type->type) {
+        case Type::I32: return 0 == constExpr->getValue<i32>();
+        case Type::I64: return 0 == constExpr->getValue<i64>();
+        case Type::U32: return 0 == constExpr->getValue<u32>();
+        case Type::U64: return 0 == constExpr->getValue<u64>();
+        default:
+            return false;
+    }
 }
 
 std::vector<i64> getDimensions(const Parsing::VarDecl& array)

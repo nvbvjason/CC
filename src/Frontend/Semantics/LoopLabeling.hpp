@@ -78,6 +78,7 @@ inline std::string LoopLabeling::makeTemporary(const std::string& name)
 static void initArray(Parsing::VarDecl& array);
 static std::vector<i64> getDimensions(const Parsing::VarDecl& array);
 static std::vector<i64> getScales(const std::vector<i64>& dimensions, i64 size);
+static bool isZeroSingleInit(const Parsing::Initializer& init);
 static std::vector<std::unique_ptr<Parsing::Initializer>> combineZeroInits(
     std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer);
 

@@ -1,5 +1,6 @@
 #include "Assembly.hpp"
 #include "DynCast.hpp"
+#include "Operators.hpp"
 
 #include <array>
 #include <string>
@@ -114,14 +115,16 @@ void asmStaticArray(std::string& result, const ArrayVariable& array)
     if (array.isGlobal)
         result += asmFormatInstruction(".globl", array.name.value);
     result += asmFormatInstruction(".data");
-    result += asmFormatLabel(array.name.value);
     result += asmFormatInstruction(".align", std::to_string(array.alignment));
+    result += asmFormatLabel(array.name.value);
     const std::string typeName = '.' + getTypeName(array.type);
     for (const auto& init : array.initializers) {
         switch (init->kind) {
             case Initializer::Kind::Zero: {
                 const auto zero = dynCast<const ZeroInitializer>(init.get());
-                result += asmFormatInstruction(".zero", std::to_string(zero->size));
+                result += asmFormatInstruction(
+                    ".zero",
+                    std::to_string(zero->size * Operators::getSizeAsmType(array.type)));
                 break;
             }
             case Initializer::Kind::Value: {

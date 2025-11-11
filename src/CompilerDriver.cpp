@@ -65,6 +65,7 @@ StateCode CompilerDriver::validateAndSetArg(std::string& argument) const
         argument = m_args[1];
     if (!isCommandLineArgumentValid(argument)) {
         std::cerr << "Invalid argument: " << argument << '\n';
+        printHelp();
         return StateCode::InvalidCommandlineArgs;
     }
     return StateCode::Continue;

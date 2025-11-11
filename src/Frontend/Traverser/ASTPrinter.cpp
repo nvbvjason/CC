@@ -137,6 +137,12 @@ void ASTPrinter::visit(const Block& block)
     ConstASTTraverser::visit(block);
 }
 
+void ASTPrinter::visit(const ZeroInitializer& zeroInitializer)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine(std::to_string(zeroInitializer.size) + " zero init");
+}
+
 void ASTPrinter::visit(const VarType& varType)
 {
     addLine(varTypeToString(varType.type));

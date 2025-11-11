@@ -12,7 +12,7 @@ BinaryInst::Operator getShiftOperator(Ir::BinaryInst::Operation type, bool isSig
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
 AsmType getAsmType(const Parsing::TypeBase& type);
 AsmType getAsmType(Type type);
-i64 getSize(AsmType type);
+i64 getSizeAsmType(AsmType type);
 
 inline UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 {
@@ -113,7 +113,7 @@ inline AsmType getAsmType(const Type type)
     std::abort();
 }
 
-inline i64 getSize(const AsmType type)
+inline i64 getSizeAsmType(const AsmType type)
 {
     switch (type) {
         case AsmType::Byte:     return 1;

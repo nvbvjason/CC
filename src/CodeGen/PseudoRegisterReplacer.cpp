@@ -28,7 +28,7 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
         if (!m_pseudoMap.contains(identifier)) {
             if (operand->kind == Operand::Kind::PseudoMem) {
                 const auto pseudoMem = dynCast<PseudoMemOperand>(operand.get());
-                i64 arraySize = pseudoMem->size * Operators::getSize(asmType);
+                i64 arraySize = pseudoMem->size * Operators::getSizeAsmType(asmType);
                 if (arraySize % pseudoMem->alignment != 0) {
                     arraySize -= arraySize % pseudoMem->alignment;
                     arraySize += pseudoMem->alignment;
@@ -40,7 +40,7 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
                     Operand::RegKind::BP, m_stackPtr, operand->type);
                 return;
             }
-            m_stackPtr -= 1 * Operators::getSize(asmType);
+            m_stackPtr -= 1 * Operators::getSizeAsmType(asmType);
             fitToAlignment();
             m_pseudoMap[identifier] = m_stackPtr;
         }
@@ -107,7 +107,7 @@ void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 
 void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
 {
-    m_stackPtr += pushPseudoInst.size * Operators::getSize(pushPseudoInst.type);
+    m_stackPtr += pushPseudoInst.size * Operators::getSizeAsmType(pushPseudoInst.type);
     m_pseudoMap[pushPseudoInst.identifier.value] = m_stackPtr;
 }
 

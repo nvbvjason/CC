@@ -192,6 +192,11 @@ void IrPrinter::print(const FunCallInst &inst)
     addLine("args: " + args);
 }
 
+void IrPrinter::print(const AllocateInst& inst)
+{
+    addLine("Allocate:" + print(inst.iden) + ", " + std::to_string(inst.size));
+}
+
 std::string IrPrinter::print(const ValueVar& val)
 {
     if (val.type == Type::I32)
@@ -290,6 +295,7 @@ void IrPrinter::print(const Instruction& instruction) {
         case Kind::JumpIfNotZero:   print(*dynCast<const JumpIfNotZeroInst>(&instruction)); break;
         case Kind::Label:           print(*dynCast<const LabelInst>(&instruction)); break;
         case Kind::FunCall:         print(*dynCast<const FunCallInst>(&instruction)); break;
+        case Kind::Allocate:        print(*dynCast<const AllocateInst>(&instruction)); break;
         default:
             m_oss << "Unknown Instruction\n";
             break;

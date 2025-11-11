@@ -53,6 +53,7 @@ private:
     void print(const JumpIfNotZeroInst& inst);
     void print(const LabelInst& inst);
     void print(const FunCallInst& inst);
+    void print(const AllocateInst& inst);
 
     void addLine(const std::string &line);
     std::string getIndent() const;

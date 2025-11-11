@@ -158,8 +158,9 @@ std::unique_ptr<TopLevel> GenerateIr::genStaticArray(const Parsing::VarDecl& var
 {
     const Type innerType = getArrayType(varDecl.type.get());
     std::vector<std::unique_ptr<Initializer>> initializers = genStaticArrayInit(varDecl, defined);
-    return std::make_unique<StaticArray>(
+    auto variable = std::make_unique<StaticArray>(
         varDecl.name, std::move(initializers), innerType, varDecl.storage != Storage::Static);
+    return variable;
 }
 
 std::vector<std::unique_ptr<Initializer>> GenerateIr::genStaticArrayInit(
@@ -604,9 +605,9 @@ std::shared_ptr<Value> GenerateIr::genInstAndConvert(const Parsing::Expr& parsin
 
 std::unique_ptr<ExprResult> GenerateIr::genCastInst(const Parsing::CastExpr& castExpr)
 {
-    const std::shared_ptr<Value> result = genInstAndConvert(*castExpr.expr);
+    const std::shared_ptr<Value> result = genInstAndConvert(*castExpr.innerExpr);
     const Type type = castExpr.type->type;
-    const Type innerType = castExpr.expr->type->type;
+    const Type innerType = castExpr.innerExpr->type->type;
     auto dst = castValue(result, type, innerType);
     return std::make_unique<PlainOperand>(dst);
 }
@@ -810,10 +811,7 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::Binar
     const auto[ptrExpr, indexExpr] = switchIndexAndAddIfNecessary(binaryExpr);
     const std::shared_ptr<Value> ptr = genInstAndConvert(*ptrExpr);
     const std::shared_ptr<Value> index = genInstAndConvert(*indexExpr);
-    if (binaryExpr.op == Parsing::BinaryExpr::Operator::Subtract) {
-        const auto dst = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), Type::Pointer);
-        emplaceUnary(UnaryInst::Operation::Negate, index, dst, Type::Pointer);
-    }
+
     const i64 scale = getReferencedTypeSize(ptrExpr->type.get());
     auto result = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
     emplaceAddPtr(ptr, index, result, scale);
@@ -824,12 +822,12 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrSubInst(const Parsing::Binar
 {
     const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
     const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
-    const auto diff = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
 
-    emplaceBinary(BinaryInst::Operation::Subtract, lhs, rhs, diff, lhs->type);
-    auto dst = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
-    const auto size = std::make_shared<ValueConst>(getTypeSize(lhs->type));
-    emplaceBinary(BinaryInst::Operation::Divide, diff, size, dst, lhs->type);
+    const auto rhsNegated = std::make_shared<ValueVar>(makeTemporaryName(), Type::I64);
+    const auto dst = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
+    emplaceUnary(UnaryInst::Operation::Negate, rhs, rhsNegated, Type::Pointer);
+    const i64 scale = getReferencedTypeSize(binaryExpr.lhs->type.get());
+    emplaceAddPtr(lhs, rhsNegated, dst, scale);
     return std::make_unique<PlainOperand>(dst);
 }
 
@@ -1071,8 +1069,8 @@ std::tuple<Parsing::Expr*, Parsing::Expr*> switchIndexAndAddIfNecessary(const Pa
     }
     else {
         assert(binaryExpr.rhs->type->type == Type::Pointer);
-        indexSide = binaryExpr.lhs.get();
         ptrSide = binaryExpr.rhs.get();
+        indexSide = binaryExpr.lhs.get();
     }
     return {ptrSide, indexSide};
 }

@@ -152,7 +152,7 @@ void ASTTraverser::visit(SwitchStmt& switchStmt)
 // Expression
 void ASTTraverser::visit(CastExpr& castExpr)
 {
-    castExpr.expr->accept(*this);
+    castExpr.innerExpr->accept(*this);
 }
 
 void ASTTraverser::visit(UnaryExpr& unaryExpr)

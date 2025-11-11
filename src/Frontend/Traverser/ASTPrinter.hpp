@@ -29,6 +29,8 @@ public:
 
     void visit(const Block& block) override;
 
+    void visit(const ZeroInitializer& zeroInitializer) override;
+
     // Type
     void visit(const VarType& varType) override;
     void visit(const FuncType& functionType) override;

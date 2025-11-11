@@ -77,9 +77,8 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
-    std::unique_ptr<Parsing::Expr> handleBinaryPtr(Parsing::BinaryExpr& binaryExpr, Type leftType,
-                                                   Type rightType,
-                                                   Type commonType);
+    std::unique_ptr<Parsing::Expr> handleBinaryPtr(Parsing::BinaryExpr& binaryExpr,
+        Type leftType, Type rightType, Type commonType);
     std::unique_ptr<Parsing::Expr> convert(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::AssignmentExpr& assignmentExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::TernaryExpr& ternaryExpr);
@@ -91,7 +90,7 @@ public:
     bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
     [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDeclaration& funDecl);
-    void handelCompoundInit(Parsing::VarDecl& varDecl);
+    void handelCompoundInit(const Parsing::VarDecl& varDecl);
     void handleSingleInit(Parsing::VarDecl& varDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 private:
