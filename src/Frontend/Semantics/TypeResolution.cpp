@@ -179,16 +179,8 @@ void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
         return;
     if (!isArithmetic(varDecl.type->type))
         return;
-    if (singleInit->expr->kind == Parsing::Expr::Kind::Constant) {
-        const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->expr.get());
-        auto newExpr = convertOrCastToType(*constExpr, varDecl.type->type);
-        varDecl.init = std::make_unique<Parsing::SingleInitializer>(std::move(newExpr));
-        return;
-    }
-    varDecl.init = std::make_unique<Parsing::SingleInitializer>(
-        std::make_unique<Parsing::CastExpr>(
-        std::make_unique<Parsing::VarType>(varDecl.type->type),
-        std::move(singleInit->expr)));
+    auto newExpr = convertOrCastToType(*singleInit->expr, varDecl.type->type);
+    varDecl.init = std::make_unique<Parsing::SingleInitializer>(std::move(newExpr));
 }
 
 void TypeResolution::visit(Parsing::SingleInitializer& singleInitializer)
@@ -554,7 +546,8 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::AssignmentExpr& 
         return Parsing::deepCopy(assignmentExpr);
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
-    if (rightType == Type::Pointer && (assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign)) {
+    if ((assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign) &&
+        rightType == Type::Pointer) {
         addError("Cannot have pointer as right hand side of compound assign", assignmentExpr.rhs->location);
         return Parsing::deepCopy(assignmentExpr);
     }
@@ -584,6 +577,8 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::CastExpr& castEx
         addError("Cannot convert pointer to double", castExpr.location);
     if (outerType == Type::Pointer && innerType == Type::Double)
         addError("Cannot convert double to pointer", castExpr.location);
+    if (isArithmetic(outerType) && isArithmetic(innerType))
+        return convertOrCastToType(*castExpr.expr, outerType);
     return Parsing::deepCopy(castExpr);
 }
 

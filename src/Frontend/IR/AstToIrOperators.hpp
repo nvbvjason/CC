@@ -3,6 +3,7 @@
 #include "ASTExpr.hpp"
 #include "ASTIr.hpp"
 #include "DynCast.hpp"
+#include "Types/TypeConversion.hpp"
 
 namespace Ir {
 inline UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
@@ -126,10 +127,10 @@ inline Type getArrayType(Parsing::TypeBase* type)
 
 inline i64 getArrayAlignment(const i64 size, const Type type)
 {
-    const i64 realSize = size * getSize(type);
+    const i64 realSize = size * getTypeSize(type);
     if (16 <= realSize)
         return 16;
-    return getSize(type);
+    return getTypeSize(type);
 }
 
 } // Ir

@@ -932,7 +932,7 @@ void GenerateAsmTree::genFunCallPushArgs(const Ir::FunCallInst& funcCall)
         std::shared_ptr<Operand> src = genOperand(funcCall.args[i]);
         if (src->kind == Operand::Kind::Imm ||
             src->kind == Operand::Kind::Register ||
-            getSize(funcCall.args[i]->type) == 8 ) {
+            getTypeSize(funcCall.args[i]->type) == 8 ) {
             emplacePush(src);
         }
         else {

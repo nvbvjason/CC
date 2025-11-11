@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <stdexcept>
 
 namespace Ir {
 static Identifier makeTemporaryName();
@@ -101,7 +100,7 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl* const varDecl)
     const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl->init.get());
     const auto arrayType = dynCast<Parsing::ArrayType>(varDecl->type.get());
     const Type type = getArrayType(varDecl->type.get());
-    const i64 size = getSize(type);
+    const i64 size = getTypeSize(type);
     const i64 arraySize = getArraySize(arrayType);
     const i64 alignment = getArrayAlignment(arraySize, type);
     i64 offset = 0;
@@ -624,9 +623,9 @@ std::shared_ptr<ValueVar> GenerateIr::castValue(
         emplaceDoubleToUInt(result, dst, towards);
     else if (isSigned(towards) && from == Type::Double)
         emplaceDoubleToInt(result, dst, towards);
-    else if (getSize(towards) == getSize(from))
+    else if (getTypeSize(towards) == getTypeSize(from))
         emplaceCopy(result, dst, towards);
-    else if (getSize(towards) < getSize(from))
+    else if (getTypeSize(towards) < getTypeSize(from))
         emplaceTruncate(result, dst, from);
     else if (isSigned(from))
         emplaceSignExtend(result, dst, towards);
@@ -829,7 +828,7 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrSubInst(const Parsing::Binar
 
     emplaceBinary(BinaryInst::Operation::Subtract, lhs, rhs, diff, lhs->type);
     auto dst = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
-    const auto size = std::make_shared<ValueConst>(getSize(lhs->type));
+    const auto size = std::make_shared<ValueConst>(getTypeSize(lhs->type));
     emplaceBinary(BinaryInst::Operation::Divide, diff, size, dst, lhs->type);
     return std::make_unique<PlainOperand>(dst);
 }
@@ -995,7 +994,7 @@ i64 getReferencedTypeSize(Parsing::TypeBase* typeBase)
                 std::abort();
         }
     }
-    i64 scale = getSize(typeBase->type);
+    i64 scale = getTypeSize(typeBase->type);
     for (const i64 i : scales)
         scale *= i;
     return scale;

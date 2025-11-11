@@ -3,6 +3,8 @@
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
 #include "ASTDeepCopy.hpp"
+#include "AstToIrOperators.hpp"
+#include "Utils.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -163,6 +165,7 @@ struct Node {
 void initArray(Parsing::VarDecl& array)
 {
     std::vector<i64> dimensions = getDimensions(array);
+    const Type innerArrayType = Ir::getArrayType(array.type.get());
     const i64 size = std::accumulate(dimensions.begin(), dimensions.end(), i64{1}, std::multiplies<>{});
     auto arrayInit = array.init.get();
     std::vector<std::unique_ptr<Parsing::Initializer>> staticInitializer;
@@ -191,8 +194,9 @@ void initArray(Parsing::VarDecl& array)
             }
             case Parsing::Initializer::Kind::Single: {
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
+                auto newExpr = convertOrCastToType(*singleInit->expr, innerArrayType);
                 staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-                    Parsing::deepCopy(*singleInit->expr)));
+                    std::move(newExpr)));
                 ++atInFlattened;
                 break;
             }
