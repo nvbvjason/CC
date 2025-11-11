@@ -24,5 +24,6 @@ bool canConvertToNullPtr(const Parsing::ConstExpr& constExpr);
 bool canConvertToNullPtr(const Parsing::Expr& expr);
 bool canConvertToPtr(const Parsing::ConstExpr& constExpr);
 bool isBinaryComparison(Parsing::BinaryExpr::Operator oper);
+std::unique_ptr<Parsing::Expr> convertToArithmeticType(const Parsing::Expr& expr, Type targetType);
 
 } // Parsing

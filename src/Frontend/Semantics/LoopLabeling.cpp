@@ -194,9 +194,22 @@ void initArray(Parsing::VarDecl& array)
             }
             case Parsing::Initializer::Kind::Single: {
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
-                auto newExpr = convertOrCastToType(*singleInit->expr, innerArrayType);
-                staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-                    std::move(newExpr)));
+                std::unique_ptr<Parsing::Expr> newExpr = nullptr;
+                if (singleInit->expr->kind != Parsing::Expr::Kind::Cast)
+                    newExpr = convertOrCastToType(*singleInit->expr, innerArrayType);
+                else {
+                    const auto castExpr = dynCast<Parsing::CastExpr>(singleInit->expr.get());
+                    if (castExpr->innerExpr->kind == Parsing::Expr::Kind::Constant)
+                        newExpr = convertToArithmeticType(*castExpr->innerExpr, innerArrayType);
+                }
+                if (newExpr) {
+                    staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
+                        std::move(newExpr)));
+                }
+                else {
+                    staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
+                        std::move(singleInit->expr)));
+                }
                 ++atInFlattened;
                 break;
             }
@@ -212,7 +225,7 @@ void initArray(Parsing::VarDecl& array)
 }
 
 std::vector<std::unique_ptr<Parsing::Initializer>> combineZeroInits(
-    std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer)
+    const std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer)
 {
     using InitKind = Parsing::Initializer::Kind;
 

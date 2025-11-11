@@ -68,15 +68,8 @@ bool isBinaryComparison(const Parsing::BinaryExpr::Operator oper)
            oper == Operator::GreaterThan || oper == Operator::GreaterOrEqual;
 }
 
-std::unique_ptr<Parsing::Expr> convertOrCastToType(const Parsing::Expr& expr, const Type targetType)
+std::unique_ptr<Parsing::Expr> convertToArithmeticType(const Parsing::Expr& expr, const Type targetType)
 {
-    if (expr.kind != Parsing::Expr::Kind::Constant) {
-        return std::make_unique<Parsing::CastExpr>(
-            expr.location,
-            std::make_unique<Parsing::VarType>(targetType),
-            Parsing::deepCopy(expr));
-    }
-
     const auto constExpr = dynCast<const Parsing::ConstExpr>(&expr);
     std::variant<i32, i64, u32, u64, double> convertedValue;
 
@@ -104,6 +97,18 @@ std::unique_ptr<Parsing::Expr> convertOrCastToType(const Parsing::Expr& expr, co
         constExpr->location,
         convertedValue,
         std::make_unique<Parsing::VarType>(targetType));
+}
+
+std::unique_ptr<Parsing::Expr> convertOrCastToType(const Parsing::Expr& expr, const Type targetType)
+{
+    if (expr.kind != Parsing::Expr::Kind::Constant) {
+        return std::make_unique<Parsing::CastExpr>(
+            expr.location,
+            std::make_unique<Parsing::VarType>(targetType),
+            Parsing::deepCopy(expr));
+    }
+
+    return convertToArithmeticType(expr, targetType);
 }
 
 } // Semantics
