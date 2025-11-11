@@ -12,12 +12,11 @@ void assignTypeToArithmeticBinaryExpr(Parsing::BinaryExpr& binaryExpr)
     const Type leftType = binaryExpr.lhs->type->type;
     const Type rightType = binaryExpr.rhs->type->type;
     const Type commonType = getCommonType(leftType, rightType);
+
     if (commonType != leftType)
-        binaryExpr.lhs = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.lhs));
+        binaryExpr.lhs = convertOrCastToType(*binaryExpr.lhs, commonType);
     if (commonType != rightType)
-        binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(commonType), std::move(binaryExpr.rhs));
+        binaryExpr.rhs = convertOrCastToType(*binaryExpr.rhs, commonType);
     if (binaryExpr.op == BinaryOp::LeftShift || binaryExpr.op == BinaryOp::RightShift) {
         binaryExpr.type = std::make_unique<Parsing::VarType>(leftType);
         return;

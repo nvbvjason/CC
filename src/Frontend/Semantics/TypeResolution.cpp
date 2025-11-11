@@ -84,12 +84,12 @@ bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::Fu
 
 void TypeResolution::handelCompoundInit(Parsing::VarDecl& varDecl)
 {
-    auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
+    const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
     if (varDecl.type->type != Type::Array) {
         addError("Cannot have compound initializer on non array", varDecl.location);
         return;
     }
-    auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
+    const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
     if (arrayType->size < compoundInit->initializers.size())
         addError("Compound initializer cannot be longer than array size", varDecl.location);
 
@@ -103,12 +103,13 @@ void TypeResolution::handelCompoundInit(Parsing::VarDecl& varDecl)
                 break;
             }
             if (singleInit->expr->type->type != arrayTypeInner) {
-                singleInit->expr = std::make_unique<Parsing::CastExpr>(singleInit->expr->location,
-                                                                       Parsing::deepCopy(*arrayType->elementType), std::move(singleInit->expr));
+                singleInit->expr = std::make_unique<Parsing::CastExpr>(
+                    singleInit->expr->location,
+                    Parsing::deepCopy(*arrayType->elementType),
+                    std::move(singleInit->expr));
             }
         }
     }
-    return;
 }
 
 void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
@@ -271,7 +272,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertArrayType(Parsing::Expr& e
     auto genExpr = convert(expr);
     if (genExpr->type && genExpr->type->type == Type::Array && genExpr->kind != Parsing::Expr::Kind::AddrOf) {
         if (genExpr->kind != Parsing::Expr::Kind::AddrOf) {
-            auto arrayType = dynCast<Parsing::ArrayType>(genExpr->type.get());
+            const auto arrayType = dynCast<Parsing::ArrayType>(genExpr->type.get());
             auto addressOf = std::make_unique<Parsing::AddrOffExpr>(genExpr->location, Parsing::deepCopy(*genExpr));
             addressOf->type = std::make_unique<Parsing::PointerType>(Parsing::deepCopy(*arrayType->elementType));
             return addressOf;
@@ -527,11 +528,11 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
     if (leftType != Type::Pointer || rightType != Type::Pointer) {
         if (leftType != Type::Pointer) {
             binaryExpr.lhs = std::make_unique<Parsing::CastExpr>(binaryExpr.lhs->location,
-                                                                 std::move(Parsing::deepCopy(*binaryExpr.rhs->type)), std::move(binaryExpr.lhs));
+                std::move(Parsing::deepCopy(*binaryExpr.rhs->type)), std::move(binaryExpr.lhs));
         }
         if (rightType != Type::Pointer) {
             binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(binaryExpr.rhs->location,
-                                                                 std::move(Parsing::deepCopy(*binaryExpr.lhs->type)), std::move(binaryExpr.rhs));
+                std::move(Parsing::deepCopy(*binaryExpr.lhs->type)), std::move(binaryExpr.rhs));
         }
     }
 
@@ -565,8 +566,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::AssignmentExpr& 
         return Parsing::deepCopy(assignmentExpr);
     if (leftType != rightType && assignmentExpr.op == Parsing::AssignmentExpr::Operator::Assign &&
         leftType != Type::Pointer) {
-        assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
-            std::make_unique<Parsing::VarType>(leftType), std::move(assignmentExpr.rhs));
+        assignmentExpr.rhs = convertOrCastToType(*assignmentExpr.rhs, leftType);
     }
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
     return Parsing::deepCopy(assignmentExpr);
