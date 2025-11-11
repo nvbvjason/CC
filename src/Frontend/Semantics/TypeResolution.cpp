@@ -82,6 +82,61 @@ bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::Fu
     return true;
 }
 
+void TypeResolution::handelCompoundInit(Parsing::VarDecl& varDecl)
+{
+    auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
+    if (varDecl.type->type != Type::Array) {
+        addError("Cannot have compound initializer on non array", varDecl.location);
+        return;
+    }
+    auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
+    if (arrayType->size < compoundInit->initializers.size())
+        addError("Compound initializer cannot be longer than array size", varDecl.location);
+
+    const Type arrayTypeInner = Ir::getArrayType(varDecl.type.get());
+
+    for (const auto& initializer : compoundInit->initializers) {
+        if (initializer->kind == Parsing::Initializer::Kind::Single) {
+            const auto singleInit = dynCast<Parsing::SingleInitializer>(initializer.get());
+            if (arrayType->elementType->type == Type::Pointer && singleInit->expr->type->type == Type::Double) {
+                addError("Cannot init ptr with double", varDecl.location);
+                break;
+            }
+            if (singleInit->expr->type->type != arrayTypeInner) {
+                singleInit->expr = std::make_unique<Parsing::CastExpr>(singleInit->expr->location,
+                                                                       Parsing::deepCopy(*arrayType->elementType), std::move(singleInit->expr));
+            }
+        }
+    }
+    return;
+}
+
+void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
+{
+    auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+
+    if (varDecl.type->type == Type::Array) {
+        addError("Cannot initialize array with single init", varDecl.location);
+        return;
+    }
+
+    if (hasError())
+        return;
+
+    if (!Parsing::areEquivalent(*varDecl.type, *singleInit->expr->type)) {
+        if (varDecl.type->type == Type::Pointer) {
+            if (!canConvertToNullPtr(*singleInit->expr)) {
+                addError("Cannot convert pointer init to pointer", varDecl.location);
+                return;
+            }
+            auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
+            varDecl.init = std::make_unique<Parsing::SingleInitializer>(
+                std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr))
+            );
+        }
+    }
+}
+
 void TypeResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (isIllegalVarDecl(varDecl))
@@ -104,54 +159,10 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     if (varDecl.init == nullptr)
         return;
     if (varDecl.init->kind == Parsing::Initializer::Kind::Single) {
-        auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
-
-        if (varDecl.type->type == Type::Array) {
-            addError("Cannot initialize array with single init", varDecl.location);
-            return;
-        }
-
-        if (hasError())
-            return;
-
-        if (!Parsing::areEquivalent(*varDecl.type, *singleInit->expr->type)) {
-            if (varDecl.type->type == Type::Pointer) {
-                if (!canConvertToNullPtr(*singleInit->expr)) {
-                    addError("Cannot convert pointer init to pointer", varDecl.location);
-                    return;
-                }
-                auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
-                varDecl.init = std::make_unique<Parsing::SingleInitializer>(
-                    std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr))
-                );
-            }
-        }
+        handleSingleInit(varDecl);
     }
     else {
-        auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
-        if (varDecl.type->type != Type::Array) {
-            addError("Cannot have compound initializer on non array", varDecl.location);
-            return;
-        }
-        auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
-        if (arrayType->size < compoundInit->initializers.size())
-            addError("Compound initializer cannot be longer than array size", varDecl.location);
-
-        const Type arrayTypeInner = Ir::getArrayType(varDecl.type.get());
-
-        for (const auto& initializer : compoundInit->initializers) {
-            if (initializer->kind == Parsing::Initializer::Kind::Single) {
-                auto singleInit = dynCast<Parsing::SingleInitializer>(initializer.get());
-                if (arrayType->elementType->type == Type::Pointer && singleInit->expr->type->type == Type::Double) {
-                    addError("Cannot init ptr with double", varDecl.location);
-                    break;
-                }
-                if (singleInit->expr->type->type != arrayTypeInner) {
-                    singleInit->expr = std::make_unique<Parsing::CastExpr>(singleInit->expr->location,
-                        Parsing::deepCopy(*arrayType->elementType), std::move(singleInit->expr));
-                }
-            }
-        }
+        handelCompoundInit(varDecl);
         return;
     }
     assignTypeToArithmeticUnaryExpr(varDecl);
@@ -159,30 +170,24 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
 
 void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
 {
-    if (varDecl.init->kind == Parsing::Initializer::Kind::Single) {
-        auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
-        if (singleInit->expr->kind == Parsing::Expr::Kind::Constant &&
-            varDecl.type->type != singleInit->expr->type->type) {
-            const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->expr.get());
-            if (varDecl.type->type == Type::U32)
-                convertConstantExpr<u32, Type::U32>(varDecl, *constExpr);
-            else if (varDecl.type->type == Type::U64)
-                convertConstantExpr<u64, Type::U64>(varDecl, *constExpr);
-            else if (varDecl.type->type == Type::I32)
-                convertConstantExpr<i32, Type::I32>(varDecl, *constExpr);
-            else if (varDecl.type->type == Type::I64)
-                convertConstantExpr<i64, Type::I64>(varDecl, *constExpr);
-            else if (varDecl.type->type == Type::Double)
-                convertConstantExpr<double, Type::Double>(varDecl, *constExpr);
-            return;
-            }
-        if (varDecl.type->type != singleInit->expr->type->type) {
-            varDecl.init = std::make_unique<Parsing::SingleInitializer>(
-                std::make_unique<Parsing::CastExpr>(
-                std::make_unique<Parsing::VarType>(varDecl.type->type),
-                std::move(singleInit->expr)));
-        }
+    if (varDecl.init->kind != Parsing::Initializer::Kind::Single)
+        return;
+
+    const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+    if (varDecl.type->type == singleInit->expr->type->type)
+        return;
+    if (!isArithmetic(varDecl.type->type))
+        return;
+    if (singleInit->expr->kind == Parsing::Expr::Kind::Constant) {
+        const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->expr.get());
+        auto newExpr = convertOrCastToType(*constExpr, varDecl.type->type);
+        varDecl.init = std::make_unique<Parsing::SingleInitializer>(std::move(newExpr));
+        return;
     }
+    varDecl.init = std::make_unique<Parsing::SingleInitializer>(
+        std::make_unique<Parsing::CastExpr>(
+        std::make_unique<Parsing::VarType>(varDecl.type->type),
+        std::move(singleInit->expr)));
 }
 
 void TypeResolution::visit(Parsing::SingleInitializer& singleInitializer)
@@ -416,15 +421,6 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::UnaryExpr& unary
     else
         unaryExpr.type = Parsing::deepCopy(*unaryExpr.operand->type);
 
-    // if (unaryExpr.operand->kind == Parsing::Expr::Kind::Constant) {
-    //     const auto constExpr = dynCast<Parsing::ConstExpr>(unaryExpr.operand.get());
-    //     if (constExpr->type->type == Type::I32 && unaryExpr.op == Operator::Negate) {
-    //         const i32 newValue = -constExpr->getValue<i32>();
-    //         return std::make_unique<Parsing::ConstExpr>(
-    //             constExpr->location, newValue, std::make_unique<Parsing::VarType>(Type::I32));
-    //     }
-    // }
-
     return Parsing::deepCopy(unaryExpr);
 }
 
@@ -508,7 +504,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
     if (binaryExpr.op == BinaryOp::Add || binaryExpr.op == BinaryOp::Subtract) {
         if (isIntegerType(rightType)) {
             if (rightType != Type::I64)
-                binaryExpr.rhs = convertOrCastToType<i64>(*binaryExpr.rhs, Type::I64);
+                binaryExpr.rhs = convertOrCastToType(*binaryExpr.rhs, Type::I64);
             binaryExpr.type = Parsing::deepCopy(*binaryExpr.lhs->type);
         }
         else if (isIntegerType(leftType)) {
@@ -517,7 +513,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
                 return Parsing::deepCopy(binaryExpr);
             }
             if (leftType != Type::I64)
-                binaryExpr.lhs = convertOrCastToType<i64>(*binaryExpr.lhs, Type::I64);
+                binaryExpr.lhs = convertOrCastToType(*binaryExpr.lhs, Type::I64);
             binaryExpr.type = Parsing::deepCopy(*binaryExpr.rhs->type);
         }
         return Parsing::deepCopy(binaryExpr);
@@ -740,7 +736,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& s
     }
     const auto subscriptExprPtr = dynCast<Parsing::SubscriptExpr>(result.get());
     if (subscriptExprPtr->index->type->type != Type::I64)
-        subscriptExprPtr->index = convertOrCastToType<i64>(*subscriptExprPtr->index, Type::I64);
+        subscriptExprPtr->index = convertOrCastToType(*subscriptExprPtr->index, Type::I64);
     const auto ptrType = dynCast<Parsing::PointerType>(subscriptExprPtr->referencing->type.get());
     result->type = Parsing::deepCopy(*ptrType->referenced);
     return result;

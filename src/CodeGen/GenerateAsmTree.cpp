@@ -706,8 +706,7 @@ void GenerateAsmTree::genUnsignedBinaryDivide(const Ir::BinaryInst& irBinary)
     const auto zero = getZeroOperand(src1->type);
     const auto regAX = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(irBinary.type));
     const auto regDX = std::make_shared<RegisterOperand>(
-        RegType::DX, Operators::getAsmType(irBinary.type)
-        );
+        RegType::DX, Operators::getAsmType(irBinary.type));
     const std::shared_ptr<Operand> src2 = genOperand(irBinary.rhs);
     const std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
 

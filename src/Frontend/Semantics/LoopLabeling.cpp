@@ -177,7 +177,7 @@ void initArray(Parsing::VarDecl& array)
                 const auto compoundInit = dynCast<Parsing::CompoundInitializer>(init);
                 if (compoundInit->initializers.size() <= atInCompound) {
                     const i64 dimension = dimensions[depth];
-                    if (atInCompound < dimension) {
+                    if (atInCompound + 1 < dimension) {
                         staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(
                             dimension - atInCompound));
                         atInFlattened += dimension - atInCompound;

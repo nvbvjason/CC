@@ -6,48 +6,16 @@
 #include "TypeConversion.hpp"
 #include "ASTDeepCopy.hpp"
 #include "Error.hpp"
-#include "DynCast.hpp"
+#include "Utils.hpp"
 
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
- namespace Semantics {
-
-template<typename TargetType>
-TargetType getValueFromConst(const Parsing::ConstExpr& constExpr)
-{
-    switch (constExpr.type->type) {
-        case Type::I32:     return std::get<i32>(constExpr.value);
-        case Type::I64:     return std::get<i64>(constExpr.value);
-        case Type::U32:     return std::get<u32>(constExpr.value);
-        case Type::U64:     return std::get<u64>(constExpr.value);
-        case Type::Double:  return std::get<double>(constExpr.value);
-        default:
-            std::abort();
-    }
-}
-
-template<typename TargetType>
-std::unique_ptr<Parsing::Expr> convertOrCastToType(Parsing::Expr& expr, const Type type)
-{
-    if (expr.kind != Parsing::Expr::Kind::Constant) {
-        return std::make_unique<Parsing::CastExpr>(
-            expr.location,
-            std::make_unique<Parsing::VarType>(type),
-            Parsing::deepCopy(expr));
-    }
-
-    const auto constExpr = dynCast<Parsing::ConstExpr>(&expr);
-    const i64 value = getValueFromConst<TargetType>(*constExpr);
-    return std::make_unique<Parsing::ConstExpr>(
-        constExpr->location,
-        value,
-        std::make_unique<Parsing::VarType>(type));
-}
+namespace Semantics {
 
 template<typename TargetType, Type TargetKind>
-void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
+void convertConstantExprRudolf(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
 {
     const TargetType value = getValueFromConst<TargetType>(constExpr);
     varDecl.init = std::make_unique<Parsing::SingleInitializer>(
@@ -123,6 +91,8 @@ public:
     bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
     [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDeclaration& funDecl);
+    void handelCompoundInit(Parsing::VarDecl& varDecl);
+    void handleSingleInit(Parsing::VarDecl& varDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 private:
     void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }

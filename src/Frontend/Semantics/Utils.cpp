@@ -69,4 +69,42 @@ bool isBinaryComparison(const Parsing::BinaryExpr::Operator oper)
            oper == Operator::GreaterThan || oper == Operator::GreaterOrEqual;
 }
 
+std::unique_ptr<Parsing::Expr> convertOrCastToType(const Parsing::Expr& expr, const Type targetType)
+{
+    if (expr.kind != Parsing::Expr::Kind::Constant) {
+        return std::make_unique<Parsing::CastExpr>(
+            expr.location,
+            std::make_unique<Parsing::VarType>(targetType),
+            Parsing::deepCopy(expr));
+    }
+
+    const auto constExpr = dynCast<const Parsing::ConstExpr>(&expr);
+    std::variant<i32, i64, u32, u64, double> convertedValue;
+
+    switch (targetType) {
+        case Type::I32:
+            convertedValue = getValueFromConst<i32>(*constExpr);
+            break;
+        case Type::I64:
+            convertedValue = getValueFromConst<i64>(*constExpr);
+            break;
+        case Type::U32:
+            convertedValue = getValueFromConst<u32>(*constExpr);
+            break;
+        case Type::U64:
+            convertedValue = getValueFromConst<u64>(*constExpr);
+            break;
+        case Type::Double:
+            convertedValue = getValueFromConst<double>(*constExpr);
+            break;
+        default:
+            std::abort();
+    }
+
+    return std::make_unique<Parsing::ConstExpr>(
+        constExpr->location,
+        convertedValue,
+        std::make_unique<Parsing::VarType>(targetType));
+}
+
 } // Semantics

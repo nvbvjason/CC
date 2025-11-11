@@ -39,7 +39,6 @@ public:
     void visit(const StmtBlockItem& stmtBlockItem) override;
     void visit(const DeclBlockItem& declBlockItem) override;
 
-
     // ForInit
     void visit(const DeclForInit& declForInit) override;
     void visit(const ExprForInit& exprForInit) override;

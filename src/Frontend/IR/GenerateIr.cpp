@@ -996,8 +996,8 @@ i64 getReferencedTypeSize(Parsing::TypeBase* typeBase)
         }
     }
     i64 scale = getSize(typeBase->type);
-    for (size_t i = 0; i < scales.size(); ++i)
-        scale *= scales[i];
+    for (const i64 i : scales)
+        scale *= i;
     return scale;
 }
 

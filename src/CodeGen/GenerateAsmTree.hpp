@@ -72,8 +72,8 @@ public:
 
     void genAddPtr(const Ir::AddPtrInst& addPtrInst);
     void genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst);
-    void genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst);
     void genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst);
+    void genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst);
 
     void genJump(const Ir::JumpInst& irJump);
     void genJumpIfZero(const Ir::JumpIfZeroInst& jumpIfZero);
