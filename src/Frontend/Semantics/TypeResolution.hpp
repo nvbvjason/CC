@@ -77,8 +77,11 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<Parsing::Expr> handleAddSubtractPtrToIntegerTypes(Parsing::BinaryExpr& binaryExpr,
+                                                                    Type leftType, Type rightType);
+    std::unique_ptr<Parsing::Expr> handlePtrToPtrBinaryOperations(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> handleBinaryPtr(Parsing::BinaryExpr& binaryExpr,
-        Type leftType, Type rightType, Type commonType);
+                                                   Type leftType, Type rightType, Type commonType);
     std::unique_ptr<Parsing::Expr> convert(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::AssignmentExpr& assignmentExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::TernaryExpr& ternaryExpr);
@@ -137,6 +140,21 @@ inline bool isIllegalPointerCompoundAssignOperation(const Parsing::AssignmentExp
     using Oper = Parsing::AssignmentExpr::Operator;
     return oper == Oper::BitwiseAndAssign || oper == Oper::BitwiseOrAssign ||
            oper == Oper::DivideAssign || oper == Oper::ModuloAssign;
+}
+
+inline bool isUnallowedPtrBinaryOperation(const Parsing::BinaryExpr::Operator oper)
+{
+    using Oper = Parsing::BinaryExpr::Operator;
+    return oper == Oper::Modulo || oper == Oper::Multiply ||
+           oper == Oper::Divide ||
+           oper == Oper::BitwiseOr || oper == Oper::BitwiseXor;
+}
+
+inline bool isUnallowedComparisonBetweenPtrAndInteger(const Parsing::BinaryExpr::Operator oper)
+{
+    using Oper = Parsing::BinaryExpr::Operator;
+    return oper == Oper::GreaterThan || oper == Oper::GreaterOrEqual ||
+           oper == Oper::LessThan || oper == Oper::LessOrEqual;
 }
 
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr,

@@ -31,7 +31,7 @@ void assignTypeToArithmeticBinaryExpr(Parsing::BinaryExpr& binaryExpr)
     binaryExpr.type = std::make_unique<Parsing::VarType>(commonType);
 }
 
-bool canConvertToNullPtr(const Parsing::ConstExpr& constExpr)
+bool isZeroArithmeticType(const Parsing::ConstExpr& constExpr)
 {
     const Type type  = constExpr.type->type;
     if (type == Type::I32)
@@ -42,6 +42,8 @@ bool canConvertToNullPtr(const Parsing::ConstExpr& constExpr)
         return 0 == std::get<i64>(constExpr.value);
     if (type == Type::U64)
         return 0 == std::get<u64>(constExpr.value);
+    if (type == Type::Double)
+        return 0.0 == std::get<double>(constExpr.value);
     return false;
 }
 
@@ -50,14 +52,9 @@ bool canConvertToNullPtr(const Parsing::Expr& expr)
     if (expr.kind != Parsing::Expr::Kind::Constant)
         return false;
     const auto constExpr = dynCast<const Parsing::ConstExpr>(&expr);
-    return canConvertToNullPtr(*constExpr);
-}
-
-bool canConvertToPtr(const Parsing::ConstExpr& constExpr)
-{
-    if (!isIntegerType(constExpr.type->type))
+    if (!isIntegerType(constExpr->type->type))
         return false;
-    return canConvertToNullPtr(constExpr);
+    return isZeroArithmeticType(*constExpr);
 }
 
 bool isBinaryComparison(const Parsing::BinaryExpr::Operator oper)

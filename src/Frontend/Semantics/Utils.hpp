@@ -20,7 +20,7 @@ TargetType getValueFromConst(const Parsing::ConstExpr& constExpr)
 
 std::unique_ptr<Parsing::Expr> convertOrCastToType(const Parsing::Expr& expr, Type targetType);
 void assignTypeToArithmeticBinaryExpr(Parsing::BinaryExpr& binaryExpr);
-bool canConvertToNullPtr(const Parsing::ConstExpr& constExpr);
+bool isZeroArithmeticType(const Parsing::ConstExpr& constExpr);
 bool canConvertToNullPtr(const Parsing::Expr& expr);
 bool canConvertToPtr(const Parsing::ConstExpr& constExpr);
 bool isBinaryComparison(Parsing::BinaryExpr::Operator oper);

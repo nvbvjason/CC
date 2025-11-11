@@ -455,88 +455,88 @@ bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExp
     return false;
 }
 
+std::unique_ptr<Parsing::Expr> TypeResolution::handleAddSubtractPtrToIntegerTypes(Parsing::BinaryExpr& binaryExpr, const Type leftType, const Type rightType)
+{
+    if (isIntegerType(rightType)) {
+        if (rightType != Type::I64)
+            binaryExpr.rhs = convertOrCastToType(*binaryExpr.rhs, Type::I64);
+        binaryExpr.type = Parsing::deepCopy(*binaryExpr.lhs->type);
+    }
+    else if (isIntegerType(leftType)) {
+        if (binaryExpr.op == BinaryOp::Subtract) {
+            addError("Cannot subtract a pointer form an integer type", binaryExpr.location);
+            return Parsing::deepCopy(binaryExpr);
+        }
+        if (leftType != Type::I64)
+            binaryExpr.lhs = convertOrCastToType(*binaryExpr.lhs, Type::I64);
+        binaryExpr.type = Parsing::deepCopy(*binaryExpr.rhs->type);
+        auto returnExpr = std::make_unique<Parsing::BinaryExpr>(binaryExpr.location,
+            binaryExpr.op, std::move(binaryExpr.rhs), std::move(binaryExpr.lhs));
+        if (binaryExpr.type)
+            returnExpr->type =  std::move(binaryExpr.type);
+        return returnExpr;
+    }
+    return Parsing::deepCopy(binaryExpr);
+}
+
+std::unique_ptr<Parsing::Expr> TypeResolution::handlePtrToPtrBinaryOperations(Parsing::BinaryExpr& binaryExpr)
+{
+    if (Parsing::areEquivalent(*binaryExpr.lhs->type, *binaryExpr.rhs->type)) {
+        if (isBinaryComparison(binaryExpr.op)) {
+            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
+            return Parsing::deepCopy(binaryExpr);
+        }
+        if (binaryExpr.op == BinaryOp::Subtract) {
+            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I64);
+            return Parsing::deepCopy(binaryExpr);
+        }
+    }
+    addError("Cannot apply operator to pointers", binaryExpr.location);
+    return Parsing::deepCopy(binaryExpr);
+}
+
 std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryExpr& binaryExpr,
                                                                const Type leftType,
                                                                const Type rightType,
                                                                const Type commonType)
 {
-    if (binaryExpr.op == BinaryOp::Modulo || binaryExpr.op == BinaryOp::Multiply ||
-        binaryExpr.op == BinaryOp::Divide ||
-        binaryExpr.op == BinaryOp::BitwiseOr || binaryExpr.op == BinaryOp::BitwiseXor) {
+    if (isUnallowedPtrBinaryOperation(binaryExpr.op)) {
         addError("Cannot apply operator to pointer", binaryExpr.location);
         return Parsing::deepCopy(binaryExpr);
     }
 
-    if (leftType == Type::Pointer && rightType == Type::Pointer) {
-        if (Parsing::areEquivalent(*binaryExpr.lhs->type, *binaryExpr.rhs->type)) {
-            if (isBinaryComparison(binaryExpr.op)) {
-                binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
-                return Parsing::deepCopy(binaryExpr);
-            }
-            if (binaryExpr.op == BinaryOp::Subtract) {
-                binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I64);
-                return Parsing::deepCopy(binaryExpr);
-            }
-        }
-        addError("Cannot apply operator to pointers", binaryExpr.location);
-        return Parsing::deepCopy(binaryExpr);
-    }
+    if (leftType == Type::Pointer && rightType == Type::Pointer)
+        return handlePtrToPtrBinaryOperations(binaryExpr);
 
     if (leftType == Type::Double || rightType == Type::Double) {
         addError("Cannot have binary on double and pointer", binaryExpr.location);
         return Parsing::deepCopy(binaryExpr);
     }
 
-    if ((binaryExpr.op == BinaryOp::GreaterThan || binaryExpr.op == BinaryOp::GreaterOrEqual ||
-         binaryExpr.op == BinaryOp::LessThan    || binaryExpr.op == BinaryOp::LessOrEqual) &&
-         (isIntegerType(leftType) || isIntegerType(rightType))) {
+    if (isUnallowedComparisonBetweenPtrAndInteger(binaryExpr.op)) {
         addError("Cannot apply operator to pointer", binaryExpr.location);
         return Parsing::deepCopy(binaryExpr);
     }
 
-    if (binaryExpr.op == BinaryOp::Add || binaryExpr.op == BinaryOp::Subtract) {
-        if (isIntegerType(rightType)) {
-            if (rightType != Type::I64)
-                binaryExpr.rhs = convertOrCastToType(*binaryExpr.rhs, Type::I64);
-            binaryExpr.type = Parsing::deepCopy(*binaryExpr.lhs->type);
-        }
-        else if (isIntegerType(leftType)) {
-            if (binaryExpr.op == BinaryOp::Subtract) {
-                addError("Cannot subtract a pointer form an integer type", binaryExpr.location);
-                return Parsing::deepCopy(binaryExpr);
-            }
-            if (leftType != Type::I64)
-                binaryExpr.lhs = convertOrCastToType(*binaryExpr.lhs, Type::I64);
-            binaryExpr.type = Parsing::deepCopy(*binaryExpr.rhs->type);
-            auto returnExpr = std::make_unique<Parsing::BinaryExpr>(binaryExpr.location,
-                binaryExpr.op, std::move(binaryExpr.rhs), std::move(binaryExpr.lhs));
-            if (binaryExpr.type)
-                returnExpr->type =  std::move(binaryExpr.type);
-            return returnExpr;
-        }
-        return Parsing::deepCopy(binaryExpr);
-    }
+    if (binaryExpr.op == BinaryOp::Add || binaryExpr.op == BinaryOp::Subtract)
+        return handleAddSubtractPtrToIntegerTypes(binaryExpr, leftType, rightType);
 
     if (!areValidNonArithmeticTypesInBinaryExpr(binaryExpr, leftType, rightType, commonType)) {
         addError("Cannot apply operator to non-arithmetic types", binaryExpr.location);
         return Parsing::deepCopy(binaryExpr);
     }
 
-    if (leftType != Type::Pointer || rightType != Type::Pointer) {
-        if (leftType != Type::Pointer) {
-            binaryExpr.lhs = std::make_unique<Parsing::CastExpr>(binaryExpr.lhs->location,
-                std::move(Parsing::deepCopy(*binaryExpr.rhs->type)), std::move(binaryExpr.lhs));
-        }
-        if (rightType != Type::Pointer) {
-            binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(binaryExpr.rhs->location,
-                std::move(Parsing::deepCopy(*binaryExpr.lhs->type)), std::move(binaryExpr.rhs));
-        }
+    if (leftType != Type::Pointer) {
+        binaryExpr.lhs = std::make_unique<Parsing::CastExpr>(binaryExpr.lhs->location,
+            std::move(Parsing::deepCopy(*binaryExpr.rhs->type)), std::move(binaryExpr.lhs));
+    }
+    if (rightType != Type::Pointer) {
+        binaryExpr.rhs = std::make_unique<Parsing::CastExpr>(binaryExpr.rhs->location,
+            std::move(Parsing::deepCopy(*binaryExpr.lhs->type)), std::move(binaryExpr.rhs));
     }
 
-    if (binaryExpr.op == BinaryOp::Equal || binaryExpr.op == BinaryOp::NotEqual) {
+    if (binaryExpr.op == BinaryOp::Equal || binaryExpr.op == BinaryOp::NotEqual)
         binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
-        return Parsing::deepCopy(binaryExpr);
-    }
     return Parsing::deepCopy(binaryExpr);
 }
 
