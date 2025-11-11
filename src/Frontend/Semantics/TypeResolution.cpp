@@ -514,7 +514,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
     }
 
     if (isUnallowedComparisonBetweenPtrAndInteger(binaryExpr.op)) {
-        addError("Cannot apply operator to pointer", binaryExpr.location);
+        addError("Unallowed comparison operator between pointer and integer types", binaryExpr.location);
         return Parsing::deepCopy(binaryExpr);
     }
 

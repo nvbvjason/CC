@@ -808,11 +808,10 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrInst(const Parsing::BinaryEx
 
 std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr)
 {
-    const auto[ptrExpr, indexExpr] = switchIndexAndAddIfNecessary(binaryExpr);
-    const std::shared_ptr<Value> ptr = genInstAndConvert(*ptrExpr);
-    const std::shared_ptr<Value> index = genInstAndConvert(*indexExpr);
+    const std::shared_ptr<Value> ptr = genInstAndConvert(*binaryExpr.lhs);
+    const std::shared_ptr<Value> index = genInstAndConvert(*binaryExpr.rhs);
 
-    const i64 scale = getReferencedTypeSize(ptrExpr->type.get());
+    const i64 scale = getReferencedTypeSize(binaryExpr.lhs->type.get());
     auto result = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
     emplaceAddPtr(ptr, index, result, scale);
     return std::make_unique<PlainOperand>(result);
@@ -1057,21 +1056,5 @@ static std::string generateCaseLabelName(std::string before)
 {
     std::ranges::replace(before, '-', '_');
     return before;
-}
-
-std::tuple<Parsing::Expr*, Parsing::Expr*> switchIndexAndAddIfNecessary(const Parsing::BinaryExpr& binaryExpr)
-{
-    Parsing::Expr* ptrSide = nullptr;
-    Parsing::Expr* indexSide = nullptr;
-    if (binaryExpr.lhs->type->type == Type::Pointer) {
-        ptrSide = binaryExpr.lhs.get();
-        indexSide = binaryExpr.rhs.get();
-    }
-    else {
-        assert(binaryExpr.rhs->type->type == Type::Pointer);
-        ptrSide = binaryExpr.rhs.get();
-        indexSide = binaryExpr.lhs.get();
-    }
-    return {ptrSide, indexSide};
 }
 } // IR

@@ -162,6 +162,28 @@ struct Node {
         : init(init), at(at), depth (depth) {}
 };
 
+static void emplaceNewSingleInit(const Type innerArrayType,
+                                 std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,
+                                 Parsing::SingleInitializer* const singleInit)
+{
+    std::unique_ptr<Parsing::Expr> newExpr = nullptr;
+    if (singleInit->expr->kind != Parsing::Expr::Kind::Cast)
+        newExpr = convertOrCastToType(*singleInit->expr, innerArrayType);
+    else {
+        const auto castExpr = dynCast<Parsing::CastExpr>(singleInit->expr.get());
+        if (castExpr->innerExpr->kind == Parsing::Expr::Kind::Constant)
+            newExpr = convertToArithmeticType(*castExpr->innerExpr, innerArrayType);
+    }
+    if (newExpr) {
+        staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
+            std::move(newExpr)));
+    }
+    else {
+        staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
+            std::move(singleInit->expr)));
+    }
+}
+
 void initArray(Parsing::VarDecl& array)
 {
     std::vector<i64> dimensions = getDimensions(array);
@@ -194,22 +216,7 @@ void initArray(Parsing::VarDecl& array)
             }
             case Parsing::Initializer::Kind::Single: {
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
-                std::unique_ptr<Parsing::Expr> newExpr = nullptr;
-                if (singleInit->expr->kind != Parsing::Expr::Kind::Cast)
-                    newExpr = convertOrCastToType(*singleInit->expr, innerArrayType);
-                else {
-                    const auto castExpr = dynCast<Parsing::CastExpr>(singleInit->expr.get());
-                    if (castExpr->innerExpr->kind == Parsing::Expr::Kind::Constant)
-                        newExpr = convertToArithmeticType(*castExpr->innerExpr, innerArrayType);
-                }
-                if (newExpr) {
-                    staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-                        std::move(newExpr)));
-                }
-                else {
-                    staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-                        std::move(singleInit->expr)));
-                }
+                emplaceNewSingleInit(innerArrayType, staticInitializer, singleInit);
                 ++atInFlattened;
                 break;
             }

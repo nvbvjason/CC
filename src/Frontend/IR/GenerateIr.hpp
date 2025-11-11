@@ -195,5 +195,4 @@ private:
 };
 
 i64 getReferencedTypeSize(Parsing::TypeBase* typeBase);
-std::tuple<Parsing::Expr*, Parsing::Expr*> switchIndexAndAddIfNecessary(const Parsing::BinaryExpr& binaryExpr);
 } // IR
