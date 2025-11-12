@@ -107,7 +107,8 @@ void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 
 void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
 {
-    m_stackPtr += pushPseudoInst.size * Operators::getSizeAsmType(pushPseudoInst.type);
+    m_stackPtr -= pushPseudoInst.size * Operators::getSizeAsmType(pushPseudoInst.type);
+    fitToAlignment();
     m_pseudoMap[pushPseudoInst.identifier.value] = m_stackPtr;
 }
 
