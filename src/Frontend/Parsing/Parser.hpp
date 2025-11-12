@@ -8,29 +8,29 @@
     <declarator>            ::= "*" <declarator> | <direct-declarator>
     <direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
     <declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
-    <param-list>            ::= "(" "void ")" | "(" <param> [ "," <param> ] ")"
+    <param-list>            ::= "(" "void" ")" | "(" <param> [ "," <param> ] ")"
     <param>                 ::= { <type-specifier> }+ <declarator>
     <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
     <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double"
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
-    <block_item>            ::= <statement> | <declaration>
+    <block-item>            ::= <statement> | <declaration>
     <initializer>           ::= <exp> | "{" <initializer> { "," <initializer> } [ "," ] ")"
     <for-init>              ::= <variable-declaration> | <exp> ";"
     <statement>             ::= "return" <exp> ";"
                               | <exp> ";"
                               | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
-                              | "switch" ( <exp> ")" <statement>
+                              | "switch" "(" <exp> ")" <statement>
                               | "goto" <identifier> ";"
                               | <block>
                               | "break" ";"
                               | "continue" ";"
                               | <identifier> ":" <statement>
                               | "case" <exp> ":" <statement>
-                              | default ":" <statement>
+                              | "default" ":" <statement>
                               | "while" "(" <exp> ")" <statement>
                               | "do" <statement> "while" "(" <exp> ")" ";"
-                              | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>
+                              | "for" "(" <for-init> [ <exp> ] ";" [ <exp> ] ")" <statement>
                               | ";"
     <exp>                   ::= <unary_exp>
                               | <exp> <binary-op> <exp>
@@ -56,9 +56,9 @@
     <const>                 ::= <int> | <long> | <uint> | <ulong> | <double>
     <identifier>            ::= ? An identifier token ?
     <int>                   ::= ? A int token ?
-    <long>                  ::= ? A int or long token ?
+    <long>                  ::= ? A long token ?
     <uint>                  ::= ? An unsigned int token ?
-    <ulong>                 ::= ? An unsigned int or unsigned long token ?
+    <ulong>                 ::= ? An unsigned long token ?
     <double>                ::= ? A floating-point constant token ?
 */
 

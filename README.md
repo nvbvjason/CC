@@ -2,12 +2,20 @@
 
 ## Quick start guide
 
-- git clone --recurse-submodules https://github.com/nvbvjason/CC.git
-- cd CC
-- cmake -B build -S .
-- cmake --build build
-- ./build/src/CC examples/hello_world.c
-- ./examples/hello_world.c
+
+#### Clone repo:
+`git clone https://github.com/nvbvjason/CC.git`
+
+#### Build:
+- `cd CC`
+- `cmake -B build -S .`
+- `cmake --build build  --target CC`
+
+#### Build example file:
+`./build/src/CC examples/hello_world.c`
+
+#### Run it:
+`./examples/hello_world`
 
 ## Language Specification
 
@@ -16,17 +24,19 @@
 ```ebnf
 <program>               ::= { <declaration> }
 <declaration>           ::= <function_declaration> | <variable_declaration>
-<variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
+<variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
 <function_declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
 <declarator>            ::= "*" <declarator> | <direct-declarator>
-<direct-declarator>     ::= <simple-declarator> [ <param-list> ]
-<param-list>            ::= "(" "void ")" | "(" <param> [ "," <param> ] ")"
+<direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
+<declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
+<param-list>            ::= "(" "void" ")" | "(" <param> [ "," <param> ] ")"
 <param>                 ::= { <type-specifier> }+ <declarator>
 <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
 <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double"
 <specifier>             ::= <type-specifier> | "static" | "extern"
 <block>                 ::= "{" { <block-item> } "}"
-<block_item>            ::= <statement> | <declaration>
+<block-item>            ::= <statement> | <declaration>
+<initializer>           ::= <exp> | "{" <initializer> { "," <initializer> } [ "," ] ")"
 <for-init>              ::= <variable-declaration> | <exp> ";"
 <statement>             ::= "return" <exp> ";"
                           | <exp> ";"
@@ -41,15 +51,15 @@
                           | "default" ":" <statement>
                           | "while" "(" <exp> ")" <statement>
                           | "do" <statement> "while" "(" <exp> ")" ";"
-                          | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>
+                          | "for" "(" <for-init> [ <exp> ] ";" [ <exp> ] ")" <statement>
                           | ";"
 <exp>                   ::= <unary_exp>
-                          | <exp> <binop> <exp>
+                          | <exp> <binary-op> <exp>
                           | <exp> "?" <exp> ":" <exp>
 <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                           | <unary-exp>
-<unary-exp>             ::= <postfix-exp> | <unop> <unary-exp>
-<postfix-exp>           ::= <factor> | <postfix_exp> <postfixop>
+<unary-exp>             ::= <postfix-exp> | <unary-op> <cast-exp>
+<postfix-exp>           ::= <factor> | <postfix_exp> <postfix-op>
 <factor>                ::= <const>
                           | <identifier>
                           | <identifier> "(" [ <argument-list> ] ")"
@@ -57,19 +67,19 @@
 <argument-list>         ::= <exp> { "," <exp> }
 <abstract-declarator>   ::= "*" [ <abstract-declarator> ]
                           | <direct-abstract-declarator>
-<direct-abstarct-declarator> ::= "(" <abstract-declarator> ")"
-<unop>                  ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
-<postfixop>             ::= "--" | "++"
-<binop>                 ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
+<direct-abstract-declarator> ::= "(" <abstract-declarator> ")"
+<unary-op>               ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
+<postfix-op>             ::= "--" | "++"
+<binary-op>              ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
                           | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
                           | "+=" | "-=" | "*=" | "/=" | "%="
                           | "&=" | "|=" | "^=" | "<<=" | ">>="
 <const>                 ::= <int> | <long> | <uint> | <ulong> | <double>
 <identifier>            ::= ? An identifier token ?
 <int>                   ::= ? A int token ?
-<long>                  ::= ? A int or long token ?
+<long>                  ::= ? A long token ?
 <uint>                  ::= ? An unsigned int token ?
-<ulong>                 ::= ? An unsigned int or unsigned long token ?
+<ulong>                 ::= ? An unsigned long token ?
 <double>                ::= ? A floating-point constant token ?
 ```
 
