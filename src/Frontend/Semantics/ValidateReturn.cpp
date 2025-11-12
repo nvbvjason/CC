@@ -49,7 +49,7 @@ void ValidateReturn::visit(Parsing::FuncDeclaration& funDecl)
     assert(returnStmt->expr->type);
     assert(returnStmt->expr->type->type);
     if (funcType->returnType->type == Type::Pointer || returnStmt->expr->type->type == Type::Pointer) {
-        if (!Parsing::areEquivalent(*funcType->returnType, *returnStmt->expr->type)) {
+        if (!Parsing::areEquivalentTypes(*funcType->returnType, *returnStmt->expr->type)) {
             m_errors.emplace_back("Return type does not conform to function return type ",
                                 returnStmt->expr->location);
             return;

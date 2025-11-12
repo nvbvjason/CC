@@ -10,11 +10,11 @@ namespace Parsing {
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const PointerType& pointerType);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const ArrayType& arrayType);
 
-[[nodiscard]] bool areEquivalent(const TypeBase& left, const TypeBase& right);
-[[nodiscard]] bool areEquivalent(const VarType& left, const VarType& right);
-[[nodiscard]] bool areEquivalent(const FuncType& left, const FuncType& right);
-[[nodiscard]] bool areEquivalent(const PointerType& left, const PointerType& right);
-[[nodiscard]] bool areEquivalent(const ArrayType& left, const ArrayType& right);
+[[nodiscard]] bool areEquivalentTypes(const TypeBase& left, const TypeBase& right);
+[[nodiscard]] bool areEquivalentTypes(const VarType& left, const VarType& right);
+[[nodiscard]] bool areEquivalentTypes(const FuncType& left, const FuncType& right);
+[[nodiscard]] bool areEquivalentTypes(const PointerType& left, const PointerType& right);
+[[nodiscard]] bool areEquivalentTypes(const ArrayType& left, const ArrayType& right);
 [[nodiscard]] bool areEquivalentArrayConversion(const TypeBase& left, const TypeBase& right);
 
 [[nodiscard]] std::unique_ptr<TypeBase> convertArrayFirstDimToPtr(const TypeBase& typeBase);

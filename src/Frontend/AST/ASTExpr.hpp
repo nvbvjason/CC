@@ -92,13 +92,13 @@ struct UnaryExpr final : Expr {
         PrefixDecrement, PostFixDecrement
     };
     Operator op;
-    std::unique_ptr<Expr> operand;
+    std::unique_ptr<Expr> innerExpr;
 
     UnaryExpr(const Operator op, std::unique_ptr<Expr> expr)
-        : Expr(Kind::Unary), op(op), operand(std::move(expr)) {}
+        : Expr(Kind::Unary), op(op), innerExpr(std::move(expr)) {}
 
     UnaryExpr(const i64 loc, const Operator op, std::unique_ptr<Expr> expr)
-        : Expr(loc, Kind::Unary), op(op), operand(std::move(expr)) {}
+        : Expr(loc, Kind::Unary), op(op), innerExpr(std::move(expr)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

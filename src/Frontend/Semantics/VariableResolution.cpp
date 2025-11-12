@@ -120,7 +120,7 @@ void VariableResolution::validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
         addError("Conflicting variable linkage", varDecl.location);
     if (varDecl.storage == Storage::None && prevEntry.hasInternalLinkage())
         addError("Conflicting variable linkage", varDecl.location);
-    if (varDecl.type->type == Type::Array && !Parsing::areEquivalent(*varDecl.type, *prevEntry.typeBase))
+    if (varDecl.type->type == Type::Array && !Parsing::areEquivalentTypes(*varDecl.type, *prevEntry.typeBase))
         addError("Cannot define arrays with different types", varDecl.location);
 }
 
@@ -196,6 +196,18 @@ void VariableResolution::addVarToSymbolTable(
     Parsing::VarDecl& varDecl,
     const SymbolTable::ReturnedEntry& prevEntry)
 {
+    if (prevEntry.typeBase && !Parsing::areEquivalentTypes(*varDecl.type, *prevEntry.typeBase)) {
+        const bool global = !m_symbolTable.inFunc();
+        const bool defined = varDecl.init != nullptr;
+        const bool internal = hasInternalLinkageVar(varDecl);
+        const bool external = hasExternalLinkageVar(varDecl, !m_symbolTable.inFunc());
+        const std::string uniqueName = makeTemporaryName(varDecl.name);
+        m_symbolTable.addEntry(
+            varDecl.name, uniqueName, *varDecl.type,
+            internal, external, global, defined);
+        varDecl.name = uniqueName;
+        return;
+    }
     const bool global = !m_symbolTable.inFunc();
     const bool defined = prevEntry.isDefined()|| varDecl.init != nullptr;
     const bool internal = prevEntry.hasInternalLinkage() || hasInternalLinkageVar(varDecl);

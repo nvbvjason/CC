@@ -275,7 +275,7 @@ void GenerateIr::genBlockItem(const Parsing::BlockItem& blockItem)
             break;
         }
         default:
-            throw std::invalid_argument("Unexpected block item type ir generateBlockItem");
+            std::abort();
     }
 }
 
@@ -646,14 +646,14 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryInst(const Parsing::UnaryExpr& u
     if (isPrefixOp(unaryExpr.op))
         return genUnaryPrefixInst(unaryExpr);
     if (unaryExpr.op == Parsing::UnaryExpr::Operator::Plus)
-        return genInst(*unaryExpr.operand);
+        return genInst(*unaryExpr.innerExpr);
     return genUnaryBasicInst(unaryExpr);
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genUnaryBasicInst(const Parsing::UnaryExpr& unaryExpr)
 {
     const UnaryInst::Operation operation = convertUnaryOperation(unaryExpr.op);
-    const std::shared_ptr<Value> src = genInstAndConvert(*unaryExpr.operand);
+    const std::shared_ptr<Value> src = genInstAndConvert(*unaryExpr.innerExpr);
     auto dst = std::make_shared<ValueVar>(makeTemporaryName(), unaryExpr.type->type);
 
     emplaceUnary(operation, src, dst, unaryExpr.type->type);
@@ -671,7 +671,7 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPostfixInst(const Parsing::Unary
         one = std::make_shared<ValueConst>(1.0);
     else
         one = std::make_shared<ValueConst>(1);
-    const std::shared_ptr original = genInst(*unaryExpr.operand);
+    const std::shared_ptr original = genInst(*unaryExpr.innerExpr);
     switch (original->kind) {
         case ExprResult::Kind::PlainOperand: {
             const auto plainOriginal = dynCast<const PlainOperand>(original.get());
@@ -703,7 +703,7 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPrefixInst(const Parsing::UnaryE
         one = std::make_shared<ValueConst>(1);
     const auto temp = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), type);
     const auto operation = getPostPrefixOperation(unaryExpr.op);
-    const std::unique_ptr<ExprResult> original = genInst(*unaryExpr.operand);
+    const std::unique_ptr<ExprResult> original = genInst(*unaryExpr.innerExpr);
     switch (original->kind) {
         case ExprResult::Kind::PlainOperand: {
             const auto originalPlain = dynCast<const PlainOperand>(original.get());
@@ -988,6 +988,12 @@ i64 getReferencedTypeSize(Parsing::TypeBase* typeBase)
             case Parsing::TypeBase::Kind::Pointer: {
                 const auto ptrType = dynCast<const Parsing::PointerType>(typeBase);
                 typeBase = ptrType->referenced.get();
+                if (typeBase->type == Type::Pointer) {
+                    i64 scale = 8;
+                    for (const i64 i : scales)
+                        scale *= i;
+                    return scale;
+                }
                 break;
             }
             case Parsing::TypeBase::Kind::Array: {
@@ -1026,8 +1032,8 @@ std::unique_ptr<ExprResult> GenerateIr::genSubscript(const Parsing::SubscriptExp
 {
     const std::shared_ptr<Value> ptr = genInstAndConvert(*subscriptExpr.referencing);
     const std::shared_ptr<Value> index = genInstAndConvert(*subscriptExpr.index);
-    Parsing::TypeBase* typeBase = subscriptExpr.type.get();
-    const i64 scale = getReferencedTypeSize(typeBase);
+    Parsing::TypeBase* referencedType = subscriptExpr.referencing->type.get();
+    const i64 scale = getReferencedTypeSize(referencedType);
     auto result = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
     emplaceAddPtr(ptr, index, result, scale);
     return std::make_unique<DereferencedPointer>(

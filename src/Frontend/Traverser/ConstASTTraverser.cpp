@@ -158,7 +158,7 @@ void ConstASTTraverser::visit(const CastExpr& castExpr)
 
 void ConstASTTraverser::visit(const UnaryExpr& unaryExpr)
 {
-    unaryExpr.operand->accept(*this);
+    unaryExpr.innerExpr->accept(*this);
 }
 
 void ConstASTTraverser::visit(const BinaryExpr& binaryExpr)

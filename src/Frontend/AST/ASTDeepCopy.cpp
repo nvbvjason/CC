@@ -59,7 +59,7 @@ std::unique_ptr<TypeBase> deepCopy(const PointerType& pointerType)
     return std::make_unique<PointerType>(deepCopy(*pointerType.referenced));
 }
 
-bool areEquivalent(const TypeBase& left, const TypeBase& right)
+bool areEquivalentTypes(const TypeBase& left, const TypeBase& right)
 {
     assert(left.type != Type::Invalid);
     assert(right.type != Type::Invalid);
@@ -69,53 +69,53 @@ bool areEquivalent(const TypeBase& left, const TypeBase& right)
         case Type::Pointer: {
             const auto typePtrLeft = dynCast<const PointerType>(&left);
             const auto typePtrRight = dynCast<const PointerType>(&right);
-            return areEquivalent(*typePtrLeft->referenced, *typePtrRight->referenced);
+            return areEquivalentTypes(*typePtrLeft->referenced, *typePtrRight->referenced);
         }
         case Type::Function: {
             const auto typeFunctionLeft = dynCast<const FuncType>(&left);
             const auto typeFunctionRight = dynCast<const FuncType>(&right);
-            return areEquivalent(*typeFunctionLeft, *typeFunctionRight);
+            return areEquivalentTypes(*typeFunctionLeft, *typeFunctionRight);
         }
         case Type::Array: {
             const auto typeFunctionLeft = dynCast<const ArrayType>(&left);
             const auto typeFunctionRight = dynCast<const ArrayType>(&right);
-            return areEquivalent(*typeFunctionLeft, *typeFunctionRight);
+            return areEquivalentTypes(*typeFunctionLeft, *typeFunctionRight);
         }
         default: {
             const auto typeVarRight = dynCast<const VarType>(&left);
             const auto typeVarLeft = dynCast<const VarType>(&right);
-            return areEquivalent(*typeVarRight, *typeVarLeft);
+            return areEquivalentTypes(*typeVarRight, *typeVarLeft);
         }
     }
 }
 
-bool areEquivalent(const VarType& left, const VarType& right)
+bool areEquivalentTypes(const VarType& left, const VarType& right)
 {
     return left.type == right.type;
 }
 
-bool areEquivalent(const FuncType& left, const FuncType& right)
+bool areEquivalentTypes(const FuncType& left, const FuncType& right)
 {
-    if (!areEquivalent(*left.returnType, *right.returnType))
+    if (!areEquivalentTypes(*left.returnType, *right.returnType))
         return false;
     if (left.params.size() != right.params.size())
         return false;
     for (std::size_t i = 0; i < left.params.size(); ++i)
-        if (!areEquivalent(*left.params[i], *right.params[i]))
+        if (!areEquivalentTypes(*left.params[i], *right.params[i]))
             return false;
     return true;
 }
 
-bool areEquivalent(const PointerType& left, const PointerType& right)
+bool areEquivalentTypes(const PointerType& left, const PointerType& right)
 {
-    return areEquivalent(*left.referenced, *right.referenced);
+    return areEquivalentTypes(*left.referenced, *right.referenced);
 }
 
-bool areEquivalent(const ArrayType& left, const ArrayType& right)
+bool areEquivalentTypes(const ArrayType& left, const ArrayType& right)
 {
     if (left.size != right.size)
         return false;
-    return areEquivalent(*left.elementType, *right.elementType);
+    return areEquivalentTypes(*left.elementType, *right.elementType);
 }
 
 std::unique_ptr<TypeBase> convertArrayFirstDimToPtr(const TypeBase& typeBase)
@@ -132,7 +132,7 @@ bool areEquivalentArrayConversion(const TypeBase& left, const TypeBase& right)
 {
     const std::unique_ptr<TypeBase> leftPtr = convertArrayFirstDimToPtr(left);
     const std::unique_ptr<TypeBase> rightPtr = convertArrayFirstDimToPtr(right);
-    return areEquivalent(*leftPtr, *rightPtr);
+    return areEquivalentTypes(*leftPtr, *rightPtr);
 }
 
 std::unique_ptr<Expr> deepCopy(const Expr& expr)
@@ -222,7 +222,7 @@ std::unique_ptr<Expr> deepCopy(const CastExpr& expr)
 
 std::unique_ptr<Expr> deepCopy(const UnaryExpr& expr)
 {
-    auto result = std::make_unique<UnaryExpr>(expr.location, expr.op, deepCopy(*expr.operand));
+    auto result = std::make_unique<UnaryExpr>(expr.location, expr.op, deepCopy(*expr.innerExpr));
     if (expr.type)
         result->type = deepCopy(*expr.type);
     return result;
