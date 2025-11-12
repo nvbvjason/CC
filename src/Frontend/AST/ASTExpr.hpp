@@ -69,16 +69,13 @@ struct VarExpr final : Expr {
 };
 
 struct CastExpr final : Expr {
-    std::unique_ptr<Expr> expr;
+    std::unique_ptr<Expr> innerExpr;
 
     CastExpr(std::unique_ptr<TypeBase>&& type, std::unique_ptr<Expr>&& expr) noexcept
-        : Expr(Kind::Cast, std::move(type)), expr(std::move(expr)) {}
+        : Expr(Kind::Cast, std::move(type)), innerExpr(std::move(expr)) {}
 
     CastExpr(const i64 loc, std::unique_ptr<TypeBase>&& type, std::unique_ptr<Expr>&& expr) noexcept
-        : Expr(loc, Kind::Cast, std::move(type)), expr(std::move(expr)) {}
-
-    explicit CastExpr(std::unique_ptr<Expr>&& expr) noexcept
-        : Expr(Kind::Cast), expr(std::move(expr)) {}
+        : Expr(loc, Kind::Cast, std::move(type)), innerExpr(std::move(expr)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -95,13 +92,13 @@ struct UnaryExpr final : Expr {
         PrefixDecrement, PostFixDecrement
     };
     Operator op;
-    std::unique_ptr<Expr> operand;
+    std::unique_ptr<Expr> innerExpr;
 
     UnaryExpr(const Operator op, std::unique_ptr<Expr> expr)
-        : Expr(Kind::Unary), op(op), operand(std::move(expr)) {}
+        : Expr(Kind::Unary), op(op), innerExpr(std::move(expr)) {}
 
     UnaryExpr(const i64 loc, const Operator op, std::unique_ptr<Expr> expr)
-        : Expr(loc, Kind::Unary), op(op), operand(std::move(expr)) {}
+        : Expr(loc, Kind::Unary), op(op), innerExpr(std::move(expr)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -240,5 +237,23 @@ struct AddrOffExpr final : Expr {
     static bool classOf(const Expr* expr) { return expr->kind == Kind::AddrOf; }
 
     AddrOffExpr() = delete;
+};
+
+struct SubscriptExpr final : Expr {
+    std::unique_ptr<Expr> referencing;
+    std::unique_ptr<Expr> index;
+
+    SubscriptExpr(std::unique_ptr<Expr> re, std::unique_ptr<Expr> index)
+        : Expr(Kind::Subscript), referencing(std::move(re)), index(std::move(index)) {}
+
+    SubscriptExpr(const i64 loc, std::unique_ptr<Expr> re, std::unique_ptr<Expr> index)
+        : Expr(loc, Kind::Subscript), referencing(std::move(re)), index(std::move(index)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::Subscript; }
+
+    SubscriptExpr() = delete;
 };
 } // Parsing

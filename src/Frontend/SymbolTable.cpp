@@ -1,6 +1,7 @@
 #include "SymbolTable.hpp"
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
+#include "ASTDeepCopy.hpp"
 
 #include <cassert>
 
@@ -50,13 +51,20 @@ std::string SymbolTable::getUniqueName(const std::string& unique) const
     assert(false && "Should always get called after contains never happen in SymbolTable::getUniqueName");
 }
 
-void SymbolTable::setArgs(const Parsing::FunDecl& funDecl)
+void SymbolTable::setArgs(Parsing::FuncDeclaration& funDecl)
 {
     m_args = funDecl.params;
     m_argTypes.clear();
-    const auto funcType = dynCast<const Parsing::FuncType>(funDecl.type.get());
-    for (const std::unique_ptr<Parsing::TypeBase>& param : funcType->params)
+    const auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
+    for (auto& param : funcType->params) {
+        if (param->type == Type::Array) {
+            const auto arrayType = dynCast<Parsing::ArrayType>(param.get());
+            auto pointerType = std::make_unique<Parsing::PointerType>(
+                Parsing::deepCopy(*arrayType->elementType));
+            param = std::move(pointerType);
+        }
         m_argTypes.emplace_back(Parsing::deepCopy(*param));
+    }
 }
 
 void SymbolTable::clearArgs()

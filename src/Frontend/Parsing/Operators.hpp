@@ -241,6 +241,11 @@ constexpr i32 getPrecedenceLevel(const BinaryExpr::Operator oper)
     }
 }
 
+constexpr i32 getPrecedenceLevel(const AssignmentExpr::Operator oper)
+{
+    return 14;
+}
+
 constexpr bool isSpecifier(const TokenType type)
 {
     switch (type) {
@@ -303,11 +308,6 @@ constexpr BinaryExpr::Operator getBinaryOperator(const AssignmentExpr::Operator 
     }
 }
 
-constexpr i32 getPrecedenceLevel(const AssignmentExpr::Operator oper)
-{
-    return 14;
-}
-
 inline Declaration::StorageClass getStorageClass(const Lexing::Token::Type tokenType)
 {
     using StorageClass = Declaration::StorageClass;
@@ -320,5 +320,20 @@ inline Declaration::StorageClass getStorageClass(const Lexing::Token::Type token
             std::abort();
     }
     assert("getVarStorageClass invalid TokenType");
+}
+
+inline bool isLiteral(const TokenType type)
+{
+    switch (type) {
+        case TokenType::IntegerLiteral:
+        case TokenType::LongLiteral:
+        case TokenType::UnsignedIntegerLiteral:
+        case TokenType::UnsignedLongLiteral:
+        case TokenType::DoubleLiteral:
+            return true;
+        default:
+            return false;
+    }
+    std::unreachable();
 }
 } // namespace Parsing::Operators

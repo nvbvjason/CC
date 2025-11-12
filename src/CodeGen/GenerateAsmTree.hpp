@@ -16,7 +16,8 @@ class GenerateAsmTree {
 
     struct DoubleEqual {
         bool operator()(const double a, const double b) const noexcept {
-            if (std::isnan(a)) return std::isnan(b);
+            if (std::isnan(a))
+                return std::isnan(b);
             return std::bit_cast<u64>(a) == std::bit_cast<u64>(b);
         }
     };
@@ -32,6 +33,7 @@ public:
     void genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs);
     [[nodiscard]] std::unique_ptr<TopLevel> genFunction(const Ir::Function& function);
     [[nodiscard]] std::vector<bool> genFunctionPushIntoRegs(const Ir::Function& function);
+
     void genInst(const std::unique_ptr<Ir::Instruction>& inst);
     void genUnary(const Ir::UnaryInst& irUnary);
     void genUnaryBasic(const Ir::UnaryInst& irUnary);
@@ -68,6 +70,11 @@ public:
     void genBinaryBasic(const Ir::BinaryInst& irBinary);
     void genBinaryShift(const Ir::BinaryInst& irBinary);
 
+    void genAddPtr(const Ir::AddPtrInst& addPtrInst);
+    void genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst);
+    void genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst);
+    void genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst);
+
     void genJump(const Ir::JumpInst& irJump);
     void genJumpIfZero(const Ir::JumpIfZeroInst& jumpIfZero);
     void genJumpIfZeroDouble(const Ir::JumpIfZeroInst& jumpIfZero);
@@ -80,6 +87,8 @@ public:
     void genLoad(const Ir::LoadInst& load);
     void genStore(const Ir::StoreInst& store);
     void genLabel(const Ir::LabelInst& irLabel);
+    void genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset);
+    void genAllocate(const Ir::AllocateInst& allocate);
 
     void genFunCall(const Ir::FunCallInst& funcCall);
     std::vector<bool> genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall);
@@ -94,13 +103,108 @@ public:
 
 private:
     void zeroOutReg(const std::shared_ptr<RegisterOperand>& reg);
+    void emplaceUnary(const std::shared_ptr<Operand>& target, UnaryInst::Operator oper, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<UnaryInst>(target, oper, type));
+    }
+    void emplaceBinary(const std::shared_ptr<Operand>& left,
+                       const std::shared_ptr<Operand>& right,
+                       const BinaryInst::Operator oper,
+                       const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<BinaryInst>(left, right, oper, type));
+    }
+    void emplaceCvtsi2sd(const std::shared_ptr<Operand>& src,
+                         const std::shared_ptr<Operand>& dst,
+                         const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<Cvtsi2sdInst>(src, dst, type));
+    }
+    void emplaceCvttsd2si(const std::shared_ptr<Operand>& src,
+                          const std::shared_ptr<Operand>& dst,
+                          const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<Cvttsd2siInst>(src, dst, type));
+    }
+    void emplaceDiv(const std::shared_ptr<Operand>& src, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<DivInst>(src, type));
+    }
+    void emplaceCdq(const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<CdqInst>(type));
+    }
+    void emplaceIdiv(const std::shared_ptr<Operand>& src, const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<IdivInst>(src, type));
+    }
+    void emplaceMove(const std::shared_ptr<Operand>& src,
+                     const std::shared_ptr<Operand>& dst,
+                     const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<MoveInst>(src, dst, type));
+    }
+    void emplaceMoveZeroExtend(const std::shared_ptr<Operand>& src,
+                               const std::shared_ptr<Operand>& dst,
+                               const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, dst, type));
+    }
+    void emplaceMoveSX(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst)
+    {
+        insts.emplace_back(std::make_unique<MoveSXInst>(src, dst));
+    }
+    void emplacePushPseudo(const i64 size, const AsmType type, const std::string& iden)
+    {
+        insts.emplace_back(std::make_unique<PushPseudoInst>(size, 16, type, Identifier(iden)));
+    }
+    void emplacePush(const std::shared_ptr<Operand>& src)
+    {
+        insts.emplace_back(std::make_unique<PushInst>(src));
+    }
+    void emplaceLea(const std::shared_ptr<Operand>& src,
+                    const std::shared_ptr<Operand>& dst,
+                    const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<LeaInst>(src, dst, type));
+    }
+    void emplaceCmp(const std::shared_ptr<Operand>& lhs,
+                    const std::shared_ptr<Operand>& rhs,
+                    const AsmType type)
+    {
+        insts.emplace_back(std::make_unique<CmpInst>(lhs, rhs, type));
+    }
+    void emplaceSetCC(BinaryInst::CondCode cond, const std::shared_ptr<Operand>& src)
+    {
+        insts.emplace_back(std::make_unique<SetCCInst>(cond, src));
+    }
+    void emplaceJmp(const Identifier& iden)
+    {
+        insts.emplace_back(std::make_unique<JmpInst>(iden));
+    }
+    void emplaceJmpCC(const Inst::CondCode cond, const Identifier& iden)
+    {
+        insts.emplace_back(std::make_unique<JmpCCInst>(cond, iden));
+    }
+    void emplaceLabel(const Identifier& iden)
+    {
+        insts.emplace_back(std::make_unique<LabelInst>(iden));
+    }
+    void emplaceCall(const Identifier& iden)
+    {
+        insts.emplace_back(std::make_unique<CallInst>(iden));
+    }
+    void emplaceReturn()
+    {
+        insts.emplace_back(std::make_unique<ReturnInst>());
+    }
 };
 
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
+std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray);
+u64 getSingleInitValue(Type type, const Ir::ValueConst* value);
 i32 getStackPadding(size_t numArgs);
 
-[[nodiscard]] i32 replacingPseudoRegisters(const Function& function);
-void fixUpInstructions(Function& function, i32 stackAlloc);
 std::string makeTemporaryPseudoName();
 
 } // CodeGen

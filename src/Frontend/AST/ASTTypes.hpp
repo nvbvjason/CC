@@ -8,7 +8,7 @@
 
 namespace Parsing {
 
-struct VarType : TypeBase {
+struct VarType final : TypeBase {
     explicit VarType(const Type type)
         : TypeBase(type, Kind::Var) {}
 
@@ -18,9 +18,10 @@ struct VarType : TypeBase {
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Var; }
 };
 
-struct FuncType : TypeBase {
+struct FuncType final : TypeBase {
     std::vector<std::unique_ptr<TypeBase>> params;
     std::unique_ptr<TypeBase> returnType;
+
     explicit FuncType(std::unique_ptr<TypeBase>&& rT, std::vector<std::unique_ptr<TypeBase>>&& params)
         : TypeBase(Type::Function, Kind::Func), params(std::move(params)), returnType(std::move(rT)) {}
 
@@ -30,7 +31,7 @@ struct FuncType : TypeBase {
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Func; }
 };
 
-struct PointerType : TypeBase {
+struct PointerType final : TypeBase {
     std::unique_ptr<TypeBase> referenced;
 
     explicit PointerType(std::unique_ptr<TypeBase>&& r)
@@ -42,14 +43,17 @@ struct PointerType : TypeBase {
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Pointer; }
 };
 
-[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase);
-[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const VarType& typeBase);
-[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType);
-[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const PointerType& pointerType);
+struct ArrayType final : TypeBase {
+    std::unique_ptr<TypeBase> elementType;
+    i64 size;
 
-[[nodiscard]] bool areEquivalent(const TypeBase& left, const TypeBase& right);
-[[nodiscard]] bool areEquivalent(const VarType& left, const VarType& right);
-[[nodiscard]] bool areEquivalent(const FuncType& left, const FuncType& right);
-[[nodiscard]] bool areEquivalent(const PointerType& left, const PointerType& right);
+    explicit ArrayType(std::unique_ptr<TypeBase>&& elementType, const i64 size)
+        : TypeBase(Type::Array, Kind::Array), elementType(std::move(elementType)), size(size) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Array; }
+};
 
 } // Parsing

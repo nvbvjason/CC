@@ -24,7 +24,7 @@ void ConstASTTraverser::visit(const VarDecl& varDecl)
         varDecl.init->accept(*this);
 }
 
-void ConstASTTraverser::visit(const FunDecl& funDecl)
+void ConstASTTraverser::visit(const FuncDeclaration& funDecl)
 {
     if (funDecl.body)
         funDecl.body->accept(*this);
@@ -51,6 +51,22 @@ void ConstASTTraverser::visit(const FuncType& functionType)
 void ConstASTTraverser::visit(const PointerType& pointerType)
 {
     pointerType.referenced->accept(*this);
+}
+
+void ConstASTTraverser::visit(const ArrayType& arrayType)
+{
+    arrayType.elementType->accept(*this);
+}
+
+void ConstASTTraverser::visit(const SingleInitializer& singleInitializer)
+{
+    singleInitializer.expr->accept(*this);
+}
+
+void ConstASTTraverser::visit(const CompoundInitializer& compoundInitializer)
+{
+    for (const auto& initializer : compoundInitializer.initializers)
+        initializer->accept(*this);
 }
 
 // ForInit
@@ -137,12 +153,12 @@ void ConstASTTraverser::visit(const SwitchStmt& switchStmt)
 // Expression
 void ConstASTTraverser::visit(const CastExpr& castExpr)
 {
-    castExpr.expr->accept(*this);
+    castExpr.innerExpr->accept(*this);
 }
 
 void ConstASTTraverser::visit(const UnaryExpr& unaryExpr)
 {
-    unaryExpr.operand->accept(*this);
+    unaryExpr.innerExpr->accept(*this);
 }
 
 void ConstASTTraverser::visit(const BinaryExpr& binaryExpr)
@@ -178,5 +194,11 @@ void ConstASTTraverser::visit(const DereferenceExpr& dereferenceExpr)
 void ConstASTTraverser::visit(const AddrOffExpr& addrOffExpr)
 {
     addrOffExpr.reference->accept(*this);
+}
+
+void ConstASTTraverser::visit(const SubscriptExpr& subscriptExpr)
+{
+    subscriptExpr.referencing->accept(*this);
+    subscriptExpr.index->accept(*this);
 }
 } // Parsing

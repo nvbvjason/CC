@@ -19,7 +19,7 @@ class GotoLabelsUnique : public Parsing::ASTTraverser {
 public:
     std::vector<Error> programValidate(Parsing::Program& program);
 
-    void visit(Parsing::FunDecl& funDecl) override;
+    void visit(Parsing::FuncDeclaration& funDecl) override;
     void visit(Parsing::GotoStmt& gotoStmt) override;
     void visit(Parsing::LabelStmt& labelStmt) override;
 };

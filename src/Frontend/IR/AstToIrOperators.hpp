@@ -2,6 +2,8 @@
 
 #include "ASTExpr.hpp"
 #include "ASTIr.hpp"
+#include "DynCast.hpp"
+#include "Types/TypeConversion.hpp"
 
 namespace Ir {
 inline UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
@@ -100,6 +102,35 @@ inline bool isBitShift(const Parsing::AssignmentExpr::Operator oper)
 {
     using Oper = Parsing::AssignmentExpr::Operator;
     return oper == Oper::LeftShiftAssign || oper == Oper::RightShiftAssign;
+}
+
+
+inline i64 getArraySize(Parsing::TypeBase* type)
+{
+    i64 result = 1;
+    do {
+        const auto arrayType = dynCast<Parsing::ArrayType>(type);
+        result *= arrayType->size;
+        type = arrayType->elementType.get();
+    } while (type->kind == Parsing::TypeBase::Kind::Array);
+    return result;
+}
+
+inline Type getArrayType(Parsing::TypeBase* type)
+{
+    do {
+        const auto arrayType = dynCast<Parsing::ArrayType>(type);
+        type = arrayType->elementType.get();
+    } while (type->kind == Parsing::TypeBase::Kind::Array);
+    return type->type;
+}
+
+inline i64 getArrayAlignment(const i64 size, const Type type)
+{
+    const i64 realSize = size * getTypeSize(type);
+    if (16 <= realSize)
+        return 16;
+    return getTypeSize(type);
 }
 
 } // Ir

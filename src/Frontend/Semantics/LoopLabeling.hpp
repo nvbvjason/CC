@@ -43,14 +43,16 @@ class LoopLabeling : public Parsing::ASTTraverser {
 public:
     std::vector<Error> programValidate(Parsing::Program& program);
 
-    void visit(Parsing::BreakStmt&) override;
-    void visit(Parsing::ContinueStmt&) override;
-    void visit(Parsing::DefaultStmt&) override;
+    void visit(Parsing::VarDecl& varDecl) override;
+
+    void visit(Parsing::BreakStmt& breakStmt) override;
+    void visit(Parsing::ContinueStmt& continueStmt) override;
+    void visit(Parsing::DefaultStmt& defaultStmt) override;
     void visit(Parsing::CaseStmt&) override;
-    void visit(Parsing::WhileStmt&) override;
-    void visit(Parsing::DoWhileStmt&) override;
-    void visit(Parsing::ForStmt&) override;
-    void visit(Parsing::SwitchStmt&) override;
+    void visit(Parsing::WhileStmt& whileStmt) override;
+    void visit(Parsing::DoWhileStmt& doWhileStmt) override;
+    void visit(Parsing::ForStmt& forStmt) override;
+    void visit(Parsing::SwitchStmt& switchStmt) override;
 private:
     static bool isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt);
     static bool isNonConstantInSwitchCase(const Parsing::CaseStmt& caseStmt);
@@ -72,5 +74,26 @@ inline std::string LoopLabeling::makeTemporary(const std::string& name)
     static i32 m_counter = 0;
     return name + '.' + std::to_string(m_counter++);
 }
+
+void initArray(Parsing::VarDecl& array);
+std::vector<i64> getDimensions(const Parsing::VarDecl& array);
+std::vector<i64> getScales(const std::vector<i64>& dimensions, i64 size);
+bool isZeroSingleInit(const Parsing::Initializer& init);
+std::vector<std::unique_ptr<Parsing::Initializer>> getZeroInits(
+    const std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,
+    const std::vector<i64>& dimensions,
+    const std::vector<std::vector<i64>>& emplacedPositions);
+std::unique_ptr<Parsing::Initializer> emplaceNewSingleInit(
+    Type innerArrayType, Parsing::SingleInitializer& singleInit);
+std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
+    getSingleInitAndPositions(Type innerArrayType, Parsing::Initializer* arrayInit);
+i64 getDistance(const std::vector<i64>& positionBefore,
+                const std::vector<i64>& position,
+                const std::vector<i64>& dimensions);
+i64 getPosition(const std::vector<i64>& position, const std::vector<i64>& dimensions);
+void emplaceZeroInitIfNecessary(const std::vector<i64>& dimensions,
+                                std::vector<i64>& positionBefore,
+                                const std::vector<i64>& position,
+                                std::vector<std::unique_ptr<Parsing::Initializer>>& newInitializers);
 
 } // Semantics

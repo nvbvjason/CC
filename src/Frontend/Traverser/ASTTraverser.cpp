@@ -17,7 +17,7 @@ void ASTTraverser::visit(VarDecl& varDecl)
 }
 
 // Declaration
-void ASTTraverser::visit(FunDecl& funDecl)
+void ASTTraverser::visit(FuncDeclaration& funDecl)
 {
     if (funDecl.body)
         funDecl.body->accept(*this);
@@ -50,6 +50,22 @@ void ASTTraverser::visit(FuncType& functionType)
 void ASTTraverser::visit(PointerType& pointerType)
 {
     pointerType.referenced->accept(*this);
+}
+
+void ASTTraverser::visit(ArrayType& arrayType)
+{
+    arrayType.elementType->accept(*this);
+}
+
+void ASTTraverser::visit(SingleInitializer& singleInitializer)
+{
+    singleInitializer.expr->accept(*this);
+}
+
+void ASTTraverser::visit(CompoundInitializer& compoundInitializer)
+{
+    for (const auto& initializer : compoundInitializer.initializers)
+        initializer->accept(*this);
 }
 
 // ForInit
@@ -136,12 +152,12 @@ void ASTTraverser::visit(SwitchStmt& switchStmt)
 // Expression
 void ASTTraverser::visit(CastExpr& castExpr)
 {
-    castExpr.expr->accept(*this);
+    castExpr.innerExpr->accept(*this);
 }
 
 void ASTTraverser::visit(UnaryExpr& unaryExpr)
 {
-    unaryExpr.operand->accept(*this);
+    unaryExpr.innerExpr->accept(*this);
 }
 
 void ASTTraverser::visit(BinaryExpr& binaryExpr)
@@ -179,4 +195,9 @@ void ASTTraverser::visit(AddrOffExpr& addrOffExpr)
     addrOffExpr.reference->accept(*this);
 }
 
+void ASTTraverser::visit(SubscriptExpr& subscriptExpr)
+{
+    subscriptExpr.referencing->accept(*this);
+    subscriptExpr.index->accept(*this);
+}
 } // Parsing

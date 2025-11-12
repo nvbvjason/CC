@@ -2,6 +2,7 @@
 
 #include "AsmAST.hpp"
 #include "ASTIr.hpp"
+#include "Frontend/AST/ASTBase.hpp"
 
 namespace CodeGen::Operators {
 
@@ -9,7 +10,9 @@ UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
 BinaryInst::Operator getShiftOperator(Ir::BinaryInst::Operation type, bool isSigned);
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
+AsmType getAsmType(const Parsing::TypeBase& type);
 AsmType getAsmType(Type type);
+i64 getSizeAsmType(AsmType type);
 
 inline UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 {
@@ -20,7 +23,7 @@ inline UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
         case IrOper::Complement:        return AsmOper::Not;
         case IrOper::Negate:            return AsmOper::Neg;
         default:
-            throw std::invalid_argument("Invalid UnaryOperator type");
+            std::abort();
     }
 }
 
@@ -37,8 +40,7 @@ inline BinaryInst::Operator binaryOperator(const Ir::BinaryInst::Operation type)
         case IrOper::BitwiseOr:    return AsmOper::BitwiseOr;
         case IrOper::BitwiseXor:   return AsmOper::BitwiseXor;
         default:
-            throw std::invalid_argument("Invalid BinaryOperation type: " +
-                std::to_string(static_cast<int>(type)));
+            std::abort();
     }
 }
 
@@ -51,16 +53,14 @@ inline BinaryInst::Operator getShiftOperator(const Ir::BinaryInst::Operation typ
             case IrOper::LeftShift:    return AsmOper::LeftShiftSigned;
             case IrOper::RightShift:   return AsmOper::RightShiftSigned;
             default:
-                throw std::invalid_argument("Invalid BinaryOperation type: " +
-                    std::to_string(static_cast<int>(type)));
+                std::abort();
         }
     }
     switch (type) {
         case IrOper::LeftShift:    return AsmOper::LeftShiftUnsigned;
         case IrOper::RightShift:   return AsmOper::RightShiftUnsigned;
         default:
-            throw std::invalid_argument("Invalid BinaryOperation type: " +
-                std::to_string(static_cast<int>(type)));
+            std::abort();
     }
 }
 
@@ -76,8 +76,8 @@ inline BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const
             case IrOper::LessOrEqual:       return BinCond::LE;
             case IrOper::GreaterThan:       return BinCond::G;
             case IrOper::GreaterOrEqual:    return BinCond::GE;
-            default:
-                throw std::invalid_argument("Invalid BinaryOperation type");
+        default:
+                std::abort();
         }
     switch (oper) {
         case IrOper::Equal:             return BinCond::E;
@@ -87,11 +87,22 @@ inline BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const
         case IrOper::GreaterThan:       return BinCond::A;
         case IrOper::GreaterOrEqual:    return BinCond::AE;
         default:
-                throw std::invalid_argument("Invalid BinaryOperation type");
+            std::abort();
     }
 }
 
-inline AsmType getAsmType(Type type)
+inline AsmType getAsmType(const Parsing::TypeBase& typeBase)
+{
+    if (typeBase.type == Type::I32 || typeBase.type == Type::U32)
+        return AsmType::LongWord;
+    if (typeBase.type == Type::I64 || typeBase.type == Type::U64 || typeBase.type == Type::Pointer)
+        return AsmType::QuadWord;
+    if (typeBase.type == Type::Double)
+        return AsmType::Double;
+    std::abort();
+}
+
+inline AsmType getAsmType(const Type type)
 {
     if (type == Type::I32 || type == Type::U32)
         return AsmType::LongWord;
@@ -99,6 +110,18 @@ inline AsmType getAsmType(Type type)
         return AsmType::QuadWord;
     if (type == Type::Double)
         return AsmType::Double;
+    std::abort();
+}
+
+inline i64 getSizeAsmType(const AsmType type)
+{
+    switch (type) {
+        case AsmType::Byte:     return 1;
+        case AsmType::Word:     return 2;
+        case AsmType::LongWord: return 4;
+        case AsmType::QuadWord: return 8;
+        case AsmType::Double:   return 8;
+    }
     std::abort();
 }
 

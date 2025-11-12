@@ -14,6 +14,8 @@ TEST(TokenTest, AllTypeNamesAreCorrect) {
         {Type::CloseParen,          "Close Paren"},
         {Type::OpenBrace,           "Open Brace"},
         {Type::CloseBrace,          "Close Brace"},
+        {Type::OpenSqBracket,       "Open SqBracket"},
+        {Type::CloseSqBracket,     "Close SqBracket"},
 
         // Punctuation & Symbols
         {Type::Semicolon,           "Semicolon"},
@@ -52,6 +54,10 @@ TEST(TokenTest, AllTypeNamesAreCorrect) {
         // Identifiers & Literals
         {Type::Identifier,          "Identifier"},
         {Type::IntegerLiteral,             "Integer"},
+        {Type::UnsignedIntegerLiteral,  "Unsigned Integer"},
+        {Type::LongLiteral,             "Long"},
+        {Type::UnsignedLongLiteral,     "Unsigned Long"},
+        {Type::DoubleLiteral,           "Double"},
 
         // Assignment
         {Type::Equal,               "Assign"},
@@ -74,6 +80,8 @@ TEST(TokenTest, AllTypeNamesAreCorrect) {
         {Type::Return,              "Return"},
         {Type::Void,                "Void"},
         {Type::IntKeyword,          "Int"},
+        {Type::LongKeyword,         "Long"},
+        {Type::DoubleKeyword,       "Double"},
         {Type::If,                  "If"},
         {Type::Else,                "Else"},
         {Type::Do,                  "Do"},

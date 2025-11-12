@@ -13,7 +13,7 @@ namespace Parsing {
 
 struct VarDecl final : Declaration {
     std::string name;
-    std::unique_ptr<Expr> init = nullptr;
+    std::unique_ptr<Initializer> init = nullptr;
     std::unique_ptr<TypeBase> type;
 
     VarDecl(const StorageClass storageClass, std::string name, std::unique_ptr<TypeBase> type)
@@ -106,13 +106,13 @@ struct Block {
     void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
-struct FunDecl final : Declaration {
+struct FuncDeclaration final : Declaration {
     std::string name;
     std::vector<std::string> params;
     std::unique_ptr<Block> body = nullptr;
     std::unique_ptr<TypeBase> type = nullptr;
 
-    FunDecl(const StorageClass storageClass,
+    FuncDeclaration(const StorageClass storageClass,
             std::string name,
             std::vector<std::string>&& ps,
             std::unique_ptr<TypeBase>&& t)
@@ -121,7 +121,7 @@ struct FunDecl final : Declaration {
             params(std::move(ps)),
             type(std::move(t)){}
 
-    FunDecl(const i64 loc,
+    FuncDeclaration(const i64 loc,
             const StorageClass storageClass,
             std::string name,
             std::vector<std::string>&& ps,
@@ -136,7 +136,7 @@ struct FunDecl final : Declaration {
 
     static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::FuncDecl; }
 
-    FunDecl() = delete;
+    FuncDeclaration() = delete;
 };
 
 struct ReturnStmt final : Stmt {
@@ -421,6 +421,41 @@ struct Program {
     ~Program() = default;
     void accept(ASTVisitor& visitor) { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
+};
+
+struct SingleInitializer final : Initializer {
+    std::unique_ptr<Expr> expr;
+    explicit SingleInitializer(std::unique_ptr<Expr>&& exp)
+        : Initializer(Kind::Single), expr(std::move(exp)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Single; }
+};
+
+struct CompoundInitializer final : Initializer {
+    std::vector<std::unique_ptr<Initializer>> initializers;
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    explicit CompoundInitializer(std::vector<std::unique_ptr<Initializer>>&& initializers)
+        : Initializer(Kind::Compound), initializers(std::move(initializers)) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Compound; }
+};
+
+struct ZeroInitializer final : Initializer {
+    const i64 size;
+
+    explicit ZeroInitializer(const i64 size)
+        : Initializer(Kind::Zero), size(size) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Zero; }
 };
 
 } // namespace Parsing

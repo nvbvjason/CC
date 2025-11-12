@@ -16,7 +16,8 @@ std::string varTypeToString(const Type kind)
         case Type::U64:     return "u long";
         case Type::Double:  return "double";
         case Type::Pointer: return "pointer";
-        default:           return "unknown";
+        case Type::Array:   return "array";
+        default:            return "unknown";
     }
 }
 
@@ -111,7 +112,7 @@ void ASTPrinter::visit(const VarDecl& varDecl)
     ConstASTTraverser::visit(varDecl);
 }
 
-void ASTPrinter::visit(const FunDecl& funDecl)
+void ASTPrinter::visit(const FuncDeclaration& funDecl)
 {
     IndentGuard guard(m_indentLevel);
     addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storage));
@@ -125,6 +126,8 @@ void ASTPrinter::visit(const FunDecl& funDecl)
     }
     addLine(args);
     ConstASTTraverser::visit(funDecl);
+    addLine("");
+    addLine("");
 }
 
 void ASTPrinter::visit(const Block& block)
@@ -132,6 +135,12 @@ void ASTPrinter::visit(const Block& block)
     IndentGuard guard(m_indentLevel);
     addLine("Block");
     ConstASTTraverser::visit(block);
+}
+
+void ASTPrinter::visit(const ZeroInitializer& zeroInitializer)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine(std::to_string(zeroInitializer.size) + " zero init");
 }
 
 void ASTPrinter::visit(const VarType& varType)
@@ -148,6 +157,11 @@ void ASTPrinter::visit(const FuncType& functionType)
 void ASTPrinter::visit(const PointerType& pointerType)
 {
     ConstASTTraverser::visit(pointerType);
+}
+
+void ASTPrinter::visit(const ArrayType& arrayType)
+{
+    ConstASTTraverser::visit(arrayType);
 }
 
 void ASTPrinter::visit(const StmtBlockItem& stmtBlockItem)
@@ -371,6 +385,13 @@ void ASTPrinter::visit(const DereferenceExpr& dereferenceExpr)
     IndentGuard guard(m_indentLevel);
     addLine("Dereference");
     ConstASTTraverser::visit(dereferenceExpr);
+}
+
+void ASTPrinter::visit(const SubscriptExpr& subscriptExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("Subscript");
+    ConstASTTraverser::visit(subscriptExpr);
 }
 
 void ASTPrinter::addLine(const std::string& line)

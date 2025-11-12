@@ -16,9 +16,9 @@ struct ASTNode {
 
 struct TypeBase {
     enum class Kind {
-        Var, Func, Pointer
+        Var, Func, Pointer, Array
     };
-    Kind kind;
+    const Kind kind;
     Type type;
 
     virtual ~TypeBase() = default;
@@ -35,7 +35,7 @@ struct BlockItem : ASTNode {
     enum class Kind : u8 {
         Declaration, Statement
     };
-    Kind kind;
+    const Kind kind;
 
     virtual ~BlockItem() = default;
     virtual void accept(ASTVisitor& visitor) = 0;
@@ -53,7 +53,7 @@ struct ForInit : ASTNode {
     enum class Kind {
         Declaration, Expression
     };
-    Kind kind;
+    const Kind kind;
 
     virtual ~ForInit() = default;
     virtual void accept(ASTVisitor& visitor) = 0;
@@ -70,9 +70,9 @@ protected:
 struct Expr : ASTNode {
     enum class Kind {
         Constant, Var, Cast, Unary, Binary, Assignment, Ternary, FunctionCall,
-        Dereference, AddrOf
+        Dereference, AddrOf, Subscript
     };
-    Kind kind;
+    const Kind kind;
     std::unique_ptr<TypeBase> type = nullptr;
 
     virtual ~Expr() = default;
@@ -98,7 +98,7 @@ struct Stmt : ASTNode {
         Break, Continue, Label, Case, Default, While, DoWhile, For, Switch,
         Null
     };
-    Kind kind;
+    const Kind kind;
 
     virtual ~Stmt() = default;
 
@@ -122,7 +122,7 @@ struct Declaration : ASTNode {
         Extern,
         Static
     };
-    Kind kind;
+    const Kind kind;
     StorageClass storage = StorageClass::None;
 
     virtual ~Declaration() = default;
@@ -136,6 +136,23 @@ protected:
         : ASTNode(0l), kind(kind), storage(storageClass) {}
     Declaration(const i64 loc, const Kind kind, const StorageClass storageClass)
         : ASTNode(loc), kind(kind), storage(storageClass) {}
+};
+
+struct Initializer {
+    enum class Kind {
+        Single, Compound, Zero
+    };
+    const Kind kind;
+
+    virtual ~Initializer() = default;
+
+    virtual void accept(ASTVisitor& visitor) = 0;
+    virtual void accept(ConstASTVisitor& visitor) const = 0;
+
+    Initializer() = delete;
+protected:
+    explicit Initializer(const Kind kind)
+        : kind(kind) {}
 };
 
 } // Parsing

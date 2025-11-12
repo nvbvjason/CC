@@ -1,13 +1,12 @@
 # CC
 
-Generates x86_64 for Linux from C files and links them with GCC.
-
 ## Quick start guide
+
 
 #### Clone repo:
 `git clone https://github.com/nvbvjason/CC.git`
 
-#### Build: 
+#### Build:
 - `cd CC`
 - `cmake -B build -S .`
 - `cmake --build build  --target CC`
@@ -20,47 +19,47 @@ Generates x86_64 for Linux from C files and links them with GCC.
 
 ## Language Specification
 
-The compiler supports a substantial subset of C with the following grammar:
-
-### The grammar
+###### The compiler supports a substantial subset of C with the following grammar:
 
 ```ebnf
 <program>               ::= { <declaration> }
 <declaration>           ::= <function_declaration> | <variable_declaration>
-<variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
+<variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
 <function_declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
 <declarator>            ::= "*" <declarator> | <direct-declarator>
-<direct-declarator>     ::= <simple-declarator> [ <param-list> ]
-<param-list>            ::= "(" "void ")" | "(" <param> [ "," <param> ] ")"
+<direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
+<declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
+<param-list>            ::= "(" "void" ")" | "(" <param> [ "," <param> ] ")"
 <param>                 ::= { <type-specifier> }+ <declarator>
 <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
 <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double"
 <specifier>             ::= <type-specifier> | "static" | "extern"
 <block>                 ::= "{" { <block-item> } "}"
-<block_item>            ::= <statement> | <declaration>
+<block-item>            ::= <statement> | <declaration>
+<initializer>           ::= <exp> | "{" <initializer> { "," <initializer> } [ "," ] ")"
 <for-init>              ::= <variable-declaration> | <exp> ";"
 <statement>             ::= "return" <exp> ";"
                           | <exp> ";"
                           | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
-                          | "switch" ( <exp> ")" <statement>
+                          | "switch" "(" <exp> ")" <statement>
                           | "goto" <identifier> ";"
                           | <block>
                           | "break" ";"
                           | "continue" ";"
                           | <identifier> ":" <statement>
                           | "case" <exp> ":" <statement>
-                          | default ":" <statement>
+                          | "default" ":" <statement>
                           | "while" "(" <exp> ")" <statement>
                           | "do" <statement> "while" "(" <exp> ")" ";"
-                          | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>
+                          | "for" "(" <for-init> [ <exp> ] ";" [ <exp> ] ")" <statement>
                           | ";"
 <exp>                   ::= <unary_exp>
-                          | <exp> <binop> <exp>
+                          | <exp> <binary-op> <exp>
                           | <exp> "?" <exp> ":" <exp>
 <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                           | <unary-exp>
-<unary-exp>             ::= <postfix-exp> | <unop> <unary-exp>
-<postfix-exp>           ::= <factor> | <postfix_exp> <postfixop>
+<unary-exp>             ::= <postfix-exp> | <unary-op> <cast-exp>
+<postfix-exp>           ::= <factor> | <postfix_exp> <postfix-op>
 <factor>                ::= <const>
                           | <identifier>
                           | <identifier> "(" [ <argument-list> ] ")"
@@ -68,19 +67,19 @@ The compiler supports a substantial subset of C with the following grammar:
 <argument-list>         ::= <exp> { "," <exp> }
 <abstract-declarator>   ::= "*" [ <abstract-declarator> ]
                           | <direct-abstract-declarator>
-<direct-abstarct-declarator> ::= "(" <abstract-declarator> ")"
-<unop>                  ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
-<postfixop>             ::= "--" | "++"
-<binop>                 ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
+<direct-abstract-declarator> ::= "(" <abstract-declarator> ")"
+<unary-op>               ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
+<postfix-op>             ::= "--" | "++"
+<binary-op>              ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
                           | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
                           | "+=" | "-=" | "*=" | "/=" | "%="
                           | "&=" | "|=" | "^=" | "<<=" | ">>="
 <const>                 ::= <int> | <long> | <uint> | <ulong> | <double>
 <identifier>            ::= ? An identifier token ?
 <int>                   ::= ? A int token ?
-<long>                  ::= ? A int or long token ?
+<long>                  ::= ? A long token ?
 <uint>                  ::= ? An unsigned int token ?
-<ulong>                 ::= ? An unsigned int or unsigned long token ?
+<ulong>                 ::= ? An unsigned long token ?
 <double>                ::= ? A floating-point constant token ?
 ```
 
@@ -98,3 +97,20 @@ This compiler is built as a series of modular, interdependent passes to ensure s
 | **4. IR Generation** | Translates the valid AST into a simpler **Intermediate Representation (IR)** for optimization and machine-independent processing. | Abstracted complex C concepts like `for`/`while` loops and switch statements into simple jump/label structures. |
 | **5. Code Generation** | Converts the IR into **Assembly Code** (e.g., x86 or ARM) for the target architecture. | Handled register allocation, memory layout, and correct assembly generation for all control flow and function calls. |
 | **6. Linker** | *Uses the external GCC toolchain to combine assembly with standard libraries into a final executable.* | *Indicates an understanding of the overall build process.* |
+
+## Motivation
+
+I knew that compilers are challenging projects and wanted to know more about them by building one for a real language.
+
+## Usage
+
+- `-h`               - Print help to the console.
+- `--printTokens`    - Print the tokens produced by the lexer.
+- `--printAst`       - Print the abstract syntax tree.
+- `--printAstAfter`  - Print the converted abstract syntax tree afSemantic analysis.
+- `--printTacky`     - Print the intermediate representation.
+- `--printAsm`       - Print the assembly representation before register fixing.
+- `--printAsmAfter`  - Print the assembly representation after register fixing.
+- `--lex`            - Stop after the lexing stage.
+- `--parse`          - Stop after the parsing stage.
+- `--codegen`        - Stop after the writing the assembly file.

@@ -63,6 +63,7 @@ private:
     char advance();
     void addToken(Token::Type type, u64 num, i32 ahead, std::string& text) const;
     void addToken(Token::Type type);
+    void addTokenStoreString(Token::Type type);
 
     void forwardSlash();
     void identifier();

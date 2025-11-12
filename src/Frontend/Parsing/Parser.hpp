@@ -3,40 +3,42 @@
 /*
     <program>               ::= { <declaration> }
     <declaration>           ::= <function_declaration> | <variable_declaration>
-    <variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
+    <variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
     <function_declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
     <declarator>            ::= "*" <declarator> | <direct-declarator>
-    <direct-declarator>     ::= <simple-declarator> [ <param-list> ]
-    <param-list>            ::= "(" "void ")" | "(" <param> [ "," <param> ] ")"
+    <direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
+    <declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
+    <param-list>            ::= "(" "void" ")" | "(" <param> [ "," <param> ] ")"
     <param>                 ::= { <type-specifier> }+ <declarator>
     <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
     <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double"
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
-    <block_item>            ::= <statement> | <declaration>
+    <block-item>            ::= <statement> | <declaration>
+    <initializer>           ::= <exp> | "{" <initializer> { "," <initializer> } [ "," ] ")"
     <for-init>              ::= <variable-declaration> | <exp> ";"
     <statement>             ::= "return" <exp> ";"
                               | <exp> ";"
                               | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
-                              | "switch" ( <exp> ")" <statement>
+                              | "switch" "(" <exp> ")" <statement>
                               | "goto" <identifier> ";"
                               | <block>
                               | "break" ";"
                               | "continue" ";"
                               | <identifier> ":" <statement>
                               | "case" <exp> ":" <statement>
-                              | default ":" <statement>
+                              | "default" ":" <statement>
                               | "while" "(" <exp> ")" <statement>
                               | "do" <statement> "while" "(" <exp> ")" ";"
-                              | "for" "(" <for-inti> [ <exp> ] ";" [ <exp> ] ")" <statement>
+                              | "for" "(" <for-init> [ <exp> ] ";" [ <exp> ] ")" <statement>
                               | ";"
     <exp>                   ::= <unary_exp>
-                              | <exp> <binop> <exp>
+                              | <exp> <binary-op> <exp>
                               | <exp> "?" <exp> ":" <exp>
     <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                               | <unary-exp>
-    <unary-exp>             ::= <postfix-exp> | <unop> <unary-exp>
-    <postfix-exp>           ::= <factor> | <postfix_exp> <postfixop>
+    <unary-exp>             ::= <postfix-exp> | <unary-op> <cast-exp>
+    <postfix-exp>           ::= <factor> | <postfix_exp> <postfix-op>
     <factor>                ::= <const>
                               | <identifier>
                               | <identifier> "(" [ <argument-list> ] ")"
@@ -44,19 +46,19 @@
     <argument-list>         ::= <exp> { "," <exp> }
     <abstract-declarator>   ::= "*" [ <abstract-declarator> ]
                               | <direct-abstract-declarator>
-    <direct-abstarct-declarator> ::= "(" <abstract-declarator> ")"
-    <unop>                  ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
-    <postfixop>             ::= "--" | "++"
-    <binop>                 ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
+    <direct-abstract-declarator> ::= "(" <abstract-declarator> ")"
+    <unary-op>               ::= "+" | "-" | "~" | "!" | "--" | "++" | "*" | "&"
+    <postfix-op>             ::= "--" | "++"
+    <binary-op>              ::= "-" | "+" | "*" | "/" | "%" | "^" | "<<" | ">>" | "&" | "|"
                               | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
                               | "+=" | "-=" | "*=" | "/=" | "%="
                               | "&=" | "|=" | "^=" | "<<=" | ">>="
     <const>                 ::= <int> | <long> | <uint> | <ulong> | <double>
     <identifier>            ::= ? An identifier token ?
     <int>                   ::= ? A int token ?
-    <long>                  ::= ? A int or long token ?
+    <long>                  ::= ? A long token ?
     <uint>                  ::= ? An unsigned int token ?
-    <ulong>                 ::= ? An unsigned int or unsigned long token ?
+    <ulong>                 ::= ? An unsigned long token ?
     <double>                ::= ? A floating-point constant token ?
 */
 
@@ -87,7 +89,7 @@ public:
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
                                                         std::unique_ptr<TypeBase>&& type,
                                                         Storage storage);
-    [[nodiscard]] std::unique_ptr<FunDecl> funDeclParse(
+    [[nodiscard]] std::unique_ptr<FuncDeclaration> funDeclParse(
             const std::string& iden,
             std::unique_ptr<TypeBase>&& type,
             Storage storage,
@@ -97,16 +99,18 @@ public:
     [[nodiscard]] std::unique_ptr<Declarator> declaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> directDeclaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> simpleDeclaratorParse();
-    [[nodiscard]] std::unique_ptr<ParamInfo> paramParse();
+    [[nodiscard]] std::unique_ptr<Declarator> arrayDeclaratorParse(std::unique_ptr<Declarator>&& declarator);
     [[nodiscard]] std::unique_ptr<std::vector<ParamInfo>> paramsListParse();
+    [[nodiscard]] std::unique_ptr<ParamInfo> paramParse();
 
     [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
         declaratorProcess(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
-    static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> processFunctionDeclarator(
-        std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] static std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>>
+        processFunctionDeclarator(std::unique_ptr<Declarator>&& declarator, std::unique_ptr<TypeBase>&& typeBase);
 
     [[nodiscard]] std::unique_ptr<Block> blockParse();
     [[nodiscard]] std::unique_ptr<BlockItem> blockItemParse();
+    [[nodiscard]] std::unique_ptr<Initializer> initializerParse();
     [[nodiscard]] std::tuple<std::unique_ptr<ForInit>, bool> forInitParse();
 
     [[nodiscard]] std::unique_ptr<Stmt> stmtParse();
@@ -132,15 +136,17 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
     [[nodiscard]] std::unique_ptr<Expr> addrOFExprParse();
     [[nodiscard]] std::unique_ptr<Expr> dereferenceExprParse();
-    [[nodiscard]] std::unique_ptr<Expr> castExpr();
-    [[nodiscard]] std::unique_ptr<Expr> exprPostfix();
+    [[nodiscard]] std::unique_ptr<Expr> subscriptExprParse(std::unique_ptr<Expr>&& expr);
+    [[nodiscard]] std::unique_ptr<Expr> castExprParse();
+    [[nodiscard]] std::unique_ptr<Expr> exprPostfixParse();
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
+    [[nodiscard]] std::unique_ptr<Expr> constExprParse();
 
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> abstractDeclaratorParse();
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> directAbstractDeclaratorParse();
 
     [[nodiscard]] static std::unique_ptr<TypeBase> abstractDeclaratorProcess(
-        std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, Type type);
+        std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<TypeBase>&& type);
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
     [[nodiscard]] Type typeParse();

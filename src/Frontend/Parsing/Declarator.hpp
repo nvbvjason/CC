@@ -5,11 +5,54 @@
 
 namespace Parsing {
 
+struct AbstractDeclarator {
+    enum class Kind {
+        Pointer, Base, Array
+    };
+    const Kind kind;
+
+    AbstractDeclarator() = delete;
+
+protected:
+    explicit AbstractDeclarator(const Kind kind)
+        : kind(kind) {}
+};
+
+struct AbstractPointer : AbstractDeclarator {
+    std::unique_ptr<AbstractDeclarator> inner;
+
+    explicit AbstractPointer(std::unique_ptr<AbstractDeclarator>&& i)
+        : AbstractDeclarator(Kind::Pointer), inner(std::move(i)) {}
+
+    static bool classOf(const AbstractDeclarator* abstractDeclarator) { return abstractDeclarator->kind == Kind::Pointer; }
+
+    AbstractPointer() = delete;
+};
+
+struct AbstractArrayDeclarator : AbstractDeclarator {
+    std::unique_ptr<AbstractDeclarator> abstractDeclarator;
+    i64 size;
+
+    explicit AbstractArrayDeclarator(std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, const i64 size)
+        : AbstractDeclarator(Kind::Array), abstractDeclarator(std::move(abstractDeclarator)), size(size) {}
+
+    static bool classOf(const AbstractDeclarator* declarator) { return declarator->kind == Kind::Array; }
+
+    AbstractArrayDeclarator() = delete;
+};
+
+struct AbstractBase : AbstractDeclarator {
+    explicit AbstractBase()
+        : AbstractDeclarator(Kind::Base) {}
+
+    static bool classOf(const AbstractDeclarator* declarator) { return declarator->kind == Kind::Base; }
+};
+
 struct Declarator {
     enum class Kind {
-        Identifier, Pointer, Function
+        Identifier, Pointer, Function, Array
     };
-    Kind kind;
+    const Kind kind;
 
     Declarator() = delete;
 protected:
@@ -38,6 +81,18 @@ struct PointerDeclarator : Declarator {
     PointerDeclarator() = delete;
 };
 
+struct ArrayDeclarator : Declarator {
+    std::unique_ptr<Declarator> declarator;
+    i64 size;
+
+    explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, const i64 size)
+        : Declarator(Kind::Array), declarator(std::move(declarator)), size(size) {}
+
+    static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Array; }
+
+    ArrayDeclarator() = delete;
+};
+
 struct ParamInfo {
     std::unique_ptr<TypeBase> type;
     std::unique_ptr<Declarator> declarator;
@@ -58,32 +113,6 @@ struct FunctionDeclarator : Declarator {
     static bool classOf(const Declarator* declarator) { return declarator->kind == Kind::Function; }
 
     FunctionDeclarator() = delete;
-};
-
-struct AbstractDeclarator {
-    enum class Kind {
-        Pointer, Base
-    };
-    Kind kind;
-
-protected:
-    explicit AbstractDeclarator(const Kind kind)
-        : kind(kind) {}
-};
-
-struct AbstractPointer : AbstractDeclarator {
-    std::unique_ptr<AbstractDeclarator> inner;
-    explicit AbstractPointer(std::unique_ptr<AbstractDeclarator>&& i)
-        : AbstractDeclarator(Kind::Pointer), inner(std::move(i)) {}
-
-    static bool classOf(const AbstractDeclarator* abstractDeclarator) { return abstractDeclarator->kind == Kind::Pointer; }
-};
-
-struct AbstractBase : AbstractDeclarator {
-    explicit AbstractBase()
-        : AbstractDeclarator(Kind::Base) {}
-
-    static bool classOf(const AbstractDeclarator* declarator) { return declarator->kind == Kind::Base; }
 };
 
 } // Parsing

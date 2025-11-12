@@ -11,12 +11,12 @@ Type getCommonType(const Type t1, const Type t2)
         return t1;
     if (t1 == Type::Double || t2 == Type::Double)
         return Type::Double;
-    if (getSize(t1) == getSize(t2)) {
+    if (getTypeSize(t1) == getTypeSize(t2)) {
         if (isSigned(t1))
             return t2;
         return t1;
     }
-    if (getSize(t2) < getSize(t1))
+    if (getTypeSize(t2) < getTypeSize(t1))
         return t1;
     return t2;
 }
@@ -24,7 +24,7 @@ Type getCommonType(const Type t1, const Type t2)
 bool isSigned(const Type t)
 {
     assert(t != Type::Invalid);
-    if (!isInteger(t))
+    if (!isIntegerType(t))
         return false;
     switch (t) {
         case Type::I64:
@@ -38,7 +38,7 @@ bool isSigned(const Type t)
     }
 }
 
-i32 getSize(const Type t)
+i64 getTypeSize(const Type t)
 {
     assert(t != Type::Invalid);
     assert(t != Type::Function);
@@ -57,7 +57,7 @@ i32 getSize(const Type t)
     std::unreachable();
 }
 
-bool isInteger(const Type t)
+bool isIntegerType(const Type t)
 {
     switch (t) {
         case Type::I32:
@@ -72,7 +72,7 @@ bool isInteger(const Type t)
 
 bool isArithmetic(const Type t)
 {
-    if (isInteger(t))
+    if (isIntegerType(t))
         return true;
     if (t == Type::Double)
         return true;

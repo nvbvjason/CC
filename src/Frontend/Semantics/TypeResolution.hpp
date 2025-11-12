@@ -4,6 +4,9 @@
 #include "ASTTraverser.hpp"
 #include "ASTTypes.hpp"
 #include "TypeConversion.hpp"
+#include "ASTDeepCopy.hpp"
+#include "Error.hpp"
+#include "Utils.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -12,33 +15,15 @@
 namespace Semantics {
 
 template<typename TargetType, Type TargetKind>
-void convertConstantExpr(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
+void convertConstantExprRudolf(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
 {
-    TargetType value;
-    switch (constExpr.type->type) {
-        case Type::I32:
-            value = std::get<i32>(constExpr.value);
-            break;
-        case Type::I64:
-            value = std::get<i64>(constExpr.value);
-            break;
-        case Type::U32:
-            value = std::get<u32>(constExpr.value);
-            break;
-        case Type::U64:
-            value = std::get<u64>(constExpr.value);
-            break;
-        case Type::Double:
-            value = std::get<double>(constExpr.value);
-            break;
-        default:
-            std::abort();
-    }
-    varDecl.init = std::make_unique<Parsing::ConstExpr>(
-        value, std::make_unique<Parsing::VarType>(TargetKind));
+    const TargetType value = getValueFromConst<TargetType>(constExpr);
+    varDecl.init = std::make_unique<Parsing::SingleInitializer>(
+            std::make_unique<Parsing::ConstExpr>(
+        value, std::make_unique<Parsing::VarType>(TargetKind)));
 }
 
-class TypeResolution : public Parsing::ASTTraverser {
+class TypeResolution final : public Parsing::ASTTraverser {
     static constexpr auto s_boolType = Type::I32;
 
     struct FuncEntry {
@@ -61,30 +46,59 @@ class TypeResolution : public Parsing::ASTTraverser {
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
-    bool m_valid = true;
+    std::vector<Error> m_errors;
     bool m_isConst = true;
     bool m_global = true;
 public:
-    bool validate(Parsing::Program& program);
+    std::vector<Error> validate(Parsing::Program& program);
 
-    void visit(Parsing::FunDecl& funDecl) override;
+    void visit(Parsing::FuncDeclaration& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
+    bool isIllegalVarDecl(const Parsing::VarDecl& varDecl);
     void visit(Parsing::DeclForInit& declForInit) override;
+    void visit(Parsing::ExprForInit& exprForInit) override;
 
-    void visit(Parsing::FuncCallExpr& funCallExpr) override;
-    bool isIllegalVarDecl(const Parsing::VarDecl& varDecl) const;
-    void visit(Parsing::VarExpr& varExpr) override;
-    void visit(Parsing::UnaryExpr& unaryExpr) override;
-    void visit(Parsing::BinaryExpr& binaryExpr) override;
-    void visit(Parsing::AssignmentExpr& assignmentExpr) override;
-    void visit(Parsing::CastExpr& castExpr) override;
-    void visit(Parsing::TernaryExpr& ternaryExpr) override;
-    void visit(Parsing::AddrOffExpr& addrOffExpr) override;
-    void visit(Parsing::DereferenceExpr& dereferenceExpr) override;
+    void visit(Parsing::SingleInitializer& singleInitializer) override;
+    void visit(Parsing::CompoundInitializer& compoundInitializer) override;
 
+    void visit(Parsing::ReturnStmt& stmt) override;
+    void visit(Parsing::ExprStmt& stmt) override;
+    void visit(Parsing::IfStmt& ifStmt) override;
+    void visit(Parsing::CaseStmt& stmt) override;
+    void visit(Parsing::WhileStmt& stmt) override;
+    void visit(Parsing::DoWhileStmt& stmt) override;
+    void visit(Parsing::ForStmt& stmt) override;
+    void visit(Parsing::SwitchStmt& stmt) override;
+
+    std::unique_ptr<Parsing::Expr> convertArrayType(Parsing::Expr& expr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
+
+    static std::unique_ptr<Parsing::Expr> convert(const Parsing::ConstExpr& expr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<Parsing::Expr> handleAddSubtractPtrToIntegerTypes(Parsing::BinaryExpr& binaryExpr,
+                                                                    Type leftType, Type rightType);
+    std::unique_ptr<Parsing::Expr> handlePtrToPtrBinaryOperations(Parsing::BinaryExpr& binaryExpr);
+    std::unique_ptr<Parsing::Expr> handleBinaryPtr(Parsing::BinaryExpr& binaryExpr,
+                                                   Type leftType, Type rightType, Type commonType);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::BinaryExpr& binaryExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::AssignmentExpr& assignmentExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::TernaryExpr& ternaryExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::FuncCallExpr& funCallExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::DereferenceExpr& dereferenceExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::AddrOffExpr& addrOffExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::SubscriptExpr& subscriptExpr);
+
+    bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
-    static bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FunDecl& funDecl);
+    [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDeclaration& funDecl);
+    void handelCompoundInit(const Parsing::VarDecl& varDecl);
+    void handleSingleInit(Parsing::VarDecl& varDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
+private:
+    void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }
+    [[nodiscard]] bool hasError() const { return !m_errors.empty(); }
 };
 
 inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
@@ -110,9 +124,7 @@ inline bool isBinaryBitwise(const Parsing::BinaryExpr::Operator binOper)
 inline bool isIllegalUnaryPointerOperator(const Parsing::UnaryExpr::Operator oper)
 {
     using Operator = Parsing::UnaryExpr::Operator;
-    return oper == Operator::Complement || oper == Operator::Negate ||
-           oper == Operator::PrefixDecrement || oper == Operator::PrefixIncrement ||
-           oper == Operator::PostFixDecrement || oper == Operator::PostFixIncrement;
+    return oper == Operator::Complement || oper == Operator::Negate;
 }
 
 inline bool isIllegalDoubleCompoundAssignOperation(const Parsing::AssignmentExpr::Operator oper)
@@ -130,7 +142,23 @@ inline bool isIllegalPointerCompoundAssignOperation(const Parsing::AssignmentExp
            oper == Oper::DivideAssign || oper == Oper::ModuloAssign;
 }
 
-bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
-bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr);
+inline bool isUnallowedPtrBinaryOperation(const Parsing::BinaryExpr::Operator oper)
+{
+    using Oper = Parsing::BinaryExpr::Operator;
+    return oper == Oper::Modulo || oper == Oper::Multiply ||
+           oper == Oper::Divide ||
+           oper == Oper::BitwiseOr || oper == Oper::BitwiseXor;
+}
+
+inline bool isUnallowedComparisonBetweenPtrAndInteger(const Parsing::BinaryExpr::Operator oper)
+{
+    using Oper = Parsing::BinaryExpr::Operator;
+    return oper == Oper::GreaterThan || oper == Oper::GreaterOrEqual ||
+           oper == Oper::LessThan || oper == Oper::LessOrEqual;
+}
+
+bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr,
+    Type leftType, Type rightType, Type commonType);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
+
 } // Semantics

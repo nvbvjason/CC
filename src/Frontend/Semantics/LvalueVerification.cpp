@@ -15,22 +15,21 @@ void LvalueVerification::visit(const Parsing::UnaryExpr& unaryExpr)
     if (unaryExpr.op != Operator::PostFixDecrement && unaryExpr.op != Operator::PostFixIncrement &&
         unaryExpr.op != Operator::PrefixDecrement && unaryExpr.op != Operator::PrefixIncrement)
         return;
-    if (isNotAnLvalue(unaryExpr.operand->kind)) {
+    if (isNotAnLvalue(unaryExpr.innerExpr->kind)) {
         m_errors.emplace_back("Unary operation on non lvalue ", unaryExpr.location);
         return;
     }
-    if (unaryExpr.operand->kind != Parsing::Expr::Kind::Unary)
+    if (unaryExpr.innerExpr->kind != Parsing::Expr::Kind::Unary)
         return;
-    const auto innerUnaryExpr = dynCast<Parsing::UnaryExpr>(unaryExpr.operand.get());
+    const auto innerUnaryExpr = dynCast<Parsing::UnaryExpr>(unaryExpr.innerExpr.get());
     if (innerUnaryExpr->op == Operator::PostFixDecrement || innerUnaryExpr->op == Operator::PostFixIncrement)
         m_errors.emplace_back("Postfix as inner unary expression ", unaryExpr.location);
 }
 
 void LvalueVerification::visit(const Parsing::AssignmentExpr& assignmentExpr)
 {
-    if (assignmentExpr.lhs->kind != Parsing::Expr::Kind::Var &&
-        assignmentExpr.lhs->kind != Parsing::Expr::Kind::Dereference)
-        m_errors.emplace_back("Assignment on non allowed expression type ", assignmentExpr.lhs->location);
+    if (!isAllowedLValueExprKind(assignmentExpr.lhs->kind))
+        m_errors.emplace_back("Assignment onto non LValue type ", assignmentExpr.lhs->location);
     ConstASTTraverser::visit(assignmentExpr);
 }
 

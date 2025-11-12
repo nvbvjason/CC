@@ -1,6 +1,7 @@
 #include "Parser.hpp"
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
+#include "TypeConversion.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -44,9 +45,9 @@ std::unique_ptr<VarDecl> Parser::varDeclParse(const std::string& iden,
                                               std::unique_ptr<TypeBase>&& type,
                                               const Storage storage)
 {
-    std::unique_ptr<Expr> init = nullptr;
+    std::unique_ptr<Initializer> init = nullptr;
     if (expect(TokenType::Equal)) {
-        init = exprParse(0);
+        init = initializerParse();
         if (init == nullptr) {
             addError("no initialization expression for variable declaration after =");
             return nullptr;
@@ -62,14 +63,14 @@ std::unique_ptr<VarDecl> Parser::varDeclParse(const std::string& iden,
     return varDecl;
 }
 
-std::unique_ptr<FunDecl> Parser::funDeclParse(
+std::unique_ptr<FuncDeclaration> Parser::funDeclParse(
         const std::string& iden,
         std::unique_ptr<TypeBase>&& type,
         const Storage storage,
         std::vector<std::string>&& params
     )
 {
-    auto result = std::make_unique<FunDecl>(m_current, storage, iden, std::move(params), std::move(type));
+    auto result = std::make_unique<FuncDeclaration>(m_current, storage, iden, std::move(params), std::move(type));
     if (expect(TokenType::Semicolon))
         return result;
     const size_t before = m_current;
@@ -98,12 +99,40 @@ std::unique_ptr<Declarator> Parser::directDeclaratorParse()
     std::unique_ptr<Declarator> result = simpleDeclaratorParse();
     if (result == nullptr)
         return nullptr;
-    if (peekTokenType() != TokenType::OpenParen)
-        return result;
-    std::unique_ptr<std::vector<ParamInfo>> paramList = paramsListParse();
-    if (paramList == nullptr)
+    if (peekTokenType() == TokenType::OpenSqBracket)
+        return arrayDeclaratorParse(std::move(result));
+    if (peekTokenType() == TokenType::OpenParen) {
+        const std::unique_ptr<std::vector<ParamInfo>> paramList = paramsListParse();
+        if (paramList == nullptr)
+            return nullptr;
+        return std::make_unique<FunctionDeclarator>(std::move(result), std::move(*paramList));
+    }
+    return result;
+}
+
+std::unique_ptr<Declarator> Parser::arrayDeclaratorParse(std::unique_ptr<Declarator>&& declarator)
+{
+    if (peekTokenType() != TokenType::OpenSqBracket)
         return nullptr;
-    return std::make_unique<FunctionDeclarator>(std::move(result), std::move(*paramList));
+    while (expect(TokenType::OpenSqBracket)) {
+        auto expr = constExprParse();
+        if (expr == nullptr) {
+            addError("Unexpected token in array declaration", m_current - 1);
+            return nullptr;
+        }
+        if (expr->type->type == Type::Double) {
+            addError("Double cannot be an array size", m_current - 1);
+            return nullptr;
+        }
+        const auto constExpr = dynCast<ConstExpr>(expr.get());
+        const i64 size = constExpr->getValue<i64>();
+        declarator = std::make_unique<ArrayDeclarator>(std::move(declarator), size);
+        if (!expect(TokenType::CloseSqBracket)) {
+            addError("Expected closing bracket", m_current);
+            return nullptr;
+        }
+    }
+    return declarator;
 }
 
 std::unique_ptr<Declarator> Parser::simpleDeclaratorParse()
@@ -156,12 +185,17 @@ std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> Par
                                    std::move(std::vector<std::string>()));
         }
         case Declarator::Kind::Pointer: {
-            auto derivedType = std::make_unique<PointerType>(std::move(typeBase));
+            auto pointerType = std::make_unique<PointerType>(std::move(typeBase));
             const auto pointerDeclarator = dynCast<PointerDeclarator>(declarator.get());
-            return declaratorProcess(std::move(pointerDeclarator->inner), std::move(derivedType));
+            return declaratorProcess(std::move(pointerDeclarator->inner), std::move(pointerType));
         }
         case Declarator::Kind::Function: {
             return processFunctionDeclarator(std::move(declarator), std::move(typeBase));
+        }
+        case Declarator::Kind::Array: {
+            const auto arrayDeclarator = dynCast<ArrayDeclarator>(declarator.get());
+            auto arrayType = std::make_unique<ArrayType>(std::move(typeBase), std::move(arrayDeclarator->size));
+            return declaratorProcess(std::move(arrayDeclarator->declarator), std::move(arrayType));
         }
     }
     return std::make_tuple(std::string(), std::move(typeBase), std::vector<std::string>());
@@ -234,6 +268,32 @@ std::unique_ptr<BlockItem> Parser::blockItemParse()
     if (statement == nullptr)
         return nullptr;
     return std::make_unique<StmtBlockItem>(m_current, std::move(statement));
+}
+
+std::unique_ptr<Initializer> Parser::initializerParse()
+{
+    if (expect(TokenType::OpenBrace)) {
+        std::vector<std::unique_ptr<Initializer>> initializers;
+        std::unique_ptr<Initializer> first = initializerParse();
+        if (first == nullptr)
+            return nullptr;
+        initializers.push_back(std::move(first));
+        while (expect(TokenType::Comma)) {
+            if (peekTokenType() == TokenType::CloseBrace)
+                break;
+            auto inner = initializerParse();
+            if (inner == nullptr)
+                return nullptr;
+            initializers.push_back(std::move(inner));
+        }
+        if (!expect(TokenType::CloseBrace))
+            return nullptr;
+        return std::make_unique<CompoundInitializer>(std::move(initializers));
+    }
+    std::unique_ptr<Expr> expr = exprParse(0);
+    if (expr == nullptr)
+        return nullptr;
+    return std::make_unique<SingleInitializer>(std::move(expr));
 }
 
 std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
@@ -600,7 +660,7 @@ std::unique_ptr<Expr> Parser::binaryExprParse(std::unique_ptr<Expr>& left, const
 
 std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
 {
-    auto left = castExpr();
+    auto left = castExprParse();
     if (left == nullptr)
         return nullptr;
     Lexing::Token nextToken = peek();
@@ -619,7 +679,7 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
     return left;
 }
 
-std::unique_ptr<Expr> Parser::castExpr()
+std::unique_ptr<Expr> Parser::castExprParse()
 {
     if (Operators::isType(peekNextTokenType()) && expect(TokenType::OpenParen)) {
         const Type type = typeParse();
@@ -628,10 +688,12 @@ std::unique_ptr<Expr> Parser::castExpr()
         std::unique_ptr<AbstractDeclarator> abstractDeclarator = abstractDeclaratorParse();
         if (abstractDeclarator == nullptr)
             return nullptr;
-        std::unique_ptr<TypeBase> typeBase = abstractDeclaratorProcess(std::move(abstractDeclarator), type);
+        std::unique_ptr<TypeBase> typeBaseInner = std::make_unique<VarType>(type);
+        std::unique_ptr<TypeBase> typeBase = abstractDeclaratorProcess(std::move(abstractDeclarator),
+                                                                       std::move(typeBaseInner));
         if (!expect(TokenType::CloseParen))
             return nullptr;
-        auto innerExpr = castExpr();
+        auto innerExpr = castExprParse();
         if (innerExpr == nullptr)
             return nullptr;
         return std::make_unique<CastExpr>(m_current, std::move(typeBase), std::move(innerExpr));
@@ -642,14 +704,14 @@ std::unique_ptr<Expr> Parser::castExpr()
 std::unique_ptr<Expr> Parser::unaryExprParse()
 {
     if (!Operators::isUnaryOperator(peekTokenType()))
-        return exprPostfix();
+        return exprPostfixParse();
     if (peekTokenType() == TokenType::Ampersand)
         return addrOFExprParse();
     if (peekTokenType() == TokenType::Asterisk)
         return dereferenceExprParse();
     UnaryExpr::Operator oper = Operators::unaryOperator(peekTokenType());
     advance();
-    std::unique_ptr<Expr> expr = unaryExprParse();
+    std::unique_ptr<Expr> expr = castExprParse();
     if (expr == nullptr)
         return nullptr;
     return std::make_unique<UnaryExpr>(m_current, oper, std::move(expr));
@@ -673,7 +735,7 @@ std::unique_ptr<Expr> Parser::dereferenceExprParse()
     return std::make_unique<DereferenceExpr>(m_current, std::move(expr));
 }
 
-std::unique_ptr<Expr> Parser::exprPostfix()
+std::unique_ptr<Expr> Parser::exprPostfixParse()
 {
     auto expr = factorParse();
     while (true) {
@@ -683,13 +745,55 @@ std::unique_ptr<Expr> Parser::exprPostfix()
         else if (expect(TokenType::Decrement))
             expr = std::make_unique<UnaryExpr>(
                 m_current, UnaryExpr::Operator::PostFixDecrement, std::move(expr));
+        else if (peekTokenType() == TokenType::OpenSqBracket)
+            expr = std::move(subscriptExprParse(std::move(expr)));
         else
             break;
     }
     return expr;
 }
 
+std::unique_ptr<Expr> Parser::subscriptExprParse(std::unique_ptr<Expr>&& expr)
+{
+    while (expect(TokenType::OpenSqBracket)) {
+        auto index = exprParse(0);
+        if (!expect(TokenType::CloseSqBracket))
+            return nullptr;
+        expr = std::make_unique<SubscriptExpr>(m_current, std::move(expr), std::move(index));
+    }
+    return expr;
+}
+
 std::unique_ptr<Expr> Parser::factorParse()
+{
+    if (Operators::isLiteral(peekTokenType()))
+        return constExprParse();
+    switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
+        case TokenType::Identifier: {
+            advance();
+            if (!expect(TokenType::OpenParen))
+                return std::make_unique<VarExpr>(m_current, lexeme.m_lexeme);
+            const std::unique_ptr<std::vector<std::unique_ptr<Expr>>> arguments = argumentListParse();
+            if (arguments == nullptr)
+                return nullptr;
+            if (!expect(TokenType::CloseParen))
+                return nullptr;
+            return std::make_unique<FuncCallExpr>(m_current, lexeme.m_lexeme, std::move(*arguments));
+        }
+        case TokenType::OpenParen: {
+            if (advance().m_type == TokenType::EndOfFile)
+                return nullptr;
+            auto expr = exprParse(0);
+            if (!expect(TokenType::CloseParen))
+                return nullptr;
+            return expr;
+        }
+        default:
+            return nullptr;
+    }
+}
+
+std::unique_ptr<Expr> Parser::constExprParse()
 {
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case TokenType::IntegerLiteral: {
@@ -727,33 +831,15 @@ std::unique_ptr<Expr> Parser::factorParse()
                 return nullptr;
             return constantExpr;
         }
-        case TokenType::Identifier: {
-            advance();
-            if (!expect(TokenType::OpenParen))
-                return std::make_unique<VarExpr>(m_current, lexeme.m_lexeme);
-            const std::unique_ptr<std::vector<std::unique_ptr<Expr>>> arguments = argumentListParse();
-            if (arguments == nullptr)
-                return nullptr;
-            if (!expect(TokenType::CloseParen))
-                return nullptr;
-            return std::make_unique<FuncCallExpr>(m_current, lexeme.m_lexeme, std::move(*arguments));
-        }
-        case TokenType::OpenParen: {
-            if (advance().m_type == TokenType::EndOfFile)
-                return nullptr;
-            auto expr = exprParse(0);
-            if (!expect(TokenType::CloseParen))
-                return nullptr;
-            return expr;
-        }
         default:
             return nullptr;
     }
+    std::unreachable();
 }
 
 std::unique_ptr<AbstractDeclarator> Parser::abstractDeclaratorParse()
 {
-    if (peekTokenType() == TokenType::OpenParen)
+    if (peekTokenType() == TokenType::OpenParen || peekTokenType() == TokenType::OpenSqBracket)
         return directAbstractDeclaratorParse();
     auto base = std::make_unique<AbstractBase>();
     if (!expect(TokenType::Asterisk))
@@ -773,18 +859,35 @@ std::unique_ptr<AbstractDeclarator> Parser::directAbstractDeclaratorParse()
         return nullptr;
     if (!expect(TokenType::CloseParen))
         return nullptr;
+    while (expect(TokenType::OpenSqBracket)) {
+        auto expr = constExprParse();
+        if (!expect(TokenType::CloseSqBracket))
+            return nullptr;
+        const auto constExpr = dynCast<ConstExpr>(expr.get());
+        const i64 size = constExpr->getValue<i64>();
+        abstractDeclarator = std::make_unique<AbstractArrayDeclarator>(std::move(abstractDeclarator), size);
+    }
     return abstractDeclarator;
 }
 
-std::unique_ptr<TypeBase> Parser::abstractDeclaratorProcess(std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, Type type)
+std::unique_ptr<TypeBase> Parser::abstractDeclaratorProcess(
+    std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<TypeBase>&& type)
 {
-    std::unique_ptr<TypeBase> varType = std::make_unique<VarType>(type);
-    while (abstractDeclarator->kind == AbstractDeclarator::Kind::Pointer) {
-        varType = std::make_unique<PointerType>(std::move(varType));
-        const auto inner = dynCast<AbstractPointer>(abstractDeclarator.get());
-        abstractDeclarator = std::move(inner->inner);
+    switch (abstractDeclarator->kind) {
+        case AbstractArrayDeclarator::Kind::Pointer: {
+            type = std::make_unique<PointerType>(std::move(type));
+            const auto inner = dynCast<AbstractPointer>(abstractDeclarator.get());
+            return abstractDeclaratorProcess(std::move(inner->inner), std::move(type));
+        }
+        case AbstractArrayDeclarator::Kind::Array: {
+            const auto arrayDeclarator = dynCast<AbstractArrayDeclarator>(abstractDeclarator.get());
+            type = std::make_unique<ArrayType>(std::move(type), arrayDeclarator->size);
+            return abstractDeclaratorProcess(std::move(arrayDeclarator->abstractDeclarator), std::move(type));
+        }
+        case AbstractArrayDeclarator::Kind::Base:
+            return type;
     }
-    return varType;
+    return type;
 }
 
 std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()

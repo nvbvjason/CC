@@ -124,7 +124,7 @@ void AsmPrinter::add(const MoveSXInst& moveSX)
 
 void AsmPrinter::add(const MoveZeroExtendInst& moveZeroExtend)
 {
-    addLine("moveZeroExtendInst: ",
+    addLine("MoveZeroExtendInst: ",
             to_string(*moveZeroExtend.src) + " " +
             to_string(*moveZeroExtend.dst));
 }
@@ -236,16 +236,13 @@ std::string to_string(const Operand& operand)
 {
     using Kind = Operand::Kind;
     switch (operand.kind) {
-        case Kind::Imm:
-            return to_string(*dynCast<const ImmOperand>(&operand));
-        case Kind::Register:
-            return to_string(*dynCast<const RegisterOperand>(&operand));
-        case Kind::Pseudo:
-            return to_string(*dynCast<const PseudoOperand>(&operand));
-        case Kind::Memory:
-            return to_string(*dynCast<const MemoryOperand>(&operand));
-        case Kind::Data:
-            return to_string(*dynCast<const DataOperand>(&operand));
+        case Kind::Imm:         return to_string(*dynCast<const ImmOperand>(&operand));
+        case Kind::Register:    return to_string(*dynCast<const RegisterOperand>(&operand));
+        case Kind::Pseudo:      return to_string(*dynCast<const PseudoOperand>(&operand));
+        case Kind::PseudoMem:   return to_string(*dynCast<const PseudoMemOperand>(&operand));
+        case Kind::Memory:      return to_string(*dynCast<const MemoryOperand>(&operand));
+        case Kind::Data:        return to_string(*dynCast<const DataOperand>(&operand));
+        case Kind::Indexed:     return to_string(*dynCast<const IndexedOperand>(&operand));
         default:
             std::unreachable();
     }
@@ -266,15 +263,31 @@ std::string to_string(const PseudoOperand& pseudoOperand)
     return "Pseudo(" + pseudoOperand.identifier.value + ", " + to_string(pseudoOperand.type) + ")";
 }
 
+std::string to_string(const PseudoMemOperand& pseudoMemOperand)
+{
+    return "PseudoMem(" + pseudoMemOperand.identifier.value + ", " +
+                          to_string(pseudoMemOperand.type) + ", " +
+                          std::to_string(pseudoMemOperand.offset)  + ")";
+}
+
 std::string to_string(const MemoryOperand& memoryOperand)
 {
-    return "Memory(" + std::to_string(memoryOperand.value) + ", " + to_string(memoryOperand.regKind) + ", "
-            + to_string(memoryOperand.type) + ")";
+    return "Memory(" + std::to_string(memoryOperand.value) + ", " +
+                       to_string(memoryOperand.regKind) + ", " +
+                       to_string(memoryOperand.type) + ")";
 }
 
 std::string to_string(const DataOperand& dataOperand)
 {
     return "Data(" + dataOperand.identifier.value + ", " + to_string(dataOperand.type) + ")";
+}
+
+std::string to_string(const IndexedOperand& indexedOperand)
+{
+    return "Indexed(" + to_string(indexedOperand.regKind) + ", " +
+                        to_string(indexedOperand.indexRegKind) + ", " +
+                        std::to_string(indexedOperand.scale) + ", " +
+                        to_string(indexedOperand.type) + ")";
 }
 
 std::string to_string(const Operand::RegKind regType)
@@ -355,11 +368,12 @@ std::string to_string(const Inst::CondCode& condCode)
 std::string to_string(const AsmType type)
 {
     switch (type) {
-        case AsmType::Byte:     return "Byte";
-        case AsmType::LongWord: return "LongWord";
-        case AsmType::QuadWord: return "QuadWord";
-        case AsmType::Double:   return "Double";
-        default:                return "Unknown AssemblyType";
+        case AsmType::Byte:       return "Byte";
+        case AsmType::Word:       return "Word";
+        case AsmType::LongWord:   return "LongWord";
+        case AsmType::QuadWord:   return "QuadWord";
+        case AsmType::Double:     return "Double";
+        default:                  return "Unknown AssemblyType";
     }
 }
 

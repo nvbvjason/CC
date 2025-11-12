@@ -46,11 +46,14 @@ private:
     void print(const GetAddressInst& inst);
     void print(const LoadInst& inst);
     void print(const StoreInst& inst);
+    void print(const AddPtrInst& inst);
+    void print(const CopyToOffsetInst& inst);
     void print(const JumpInst& inst);
     void print(const JumpIfZeroInst& inst);
     void print(const JumpIfNotZeroInst& inst);
     void print(const LabelInst& inst);
     void print(const FunCallInst& inst);
+    void print(const AllocateInst& inst);
 
     void addLine(const std::string &line);
     std::string getIndent() const;

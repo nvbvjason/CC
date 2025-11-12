@@ -10,7 +10,7 @@
 /*
 
 program = Program(function_definition)
-assembly_type = Byte | Word | Longword | Quadword | Double
+assembly_type = Byte | Word | Longword | Quadword | Double | ByteArray(int size, int alignment)
 top_level = Function(identifier name, bool global, instruction* instructions)
           | StaticVariable(identifier name, bool global, int alignment, int init)
           | StaticConstant(identifier name, int alignment, static init)
@@ -30,22 +30,25 @@ instruction = Mov(assembly_type, operand src, operand dst)
             | JmpCC(cond_code, identifier)
             | SetCC(cond_code, operand)
             | Label(identifier)
+            | PseudoPush(Identifier, size, alignment)
             | Push(operand)
             | Call(identifier)
             | Ret
 unary_operator = Neg | Not | Shr
-binary_operator = Add | Sub | Mult |
-                  BitwiseOr | BitwiseAnd | BitwiseXor |
-                  LeftShiftSigned | RightShiftSigned | LeftShiftUnsigned | RightShiftUnsigned |
-                  DivDouble
+binary_operator = Add | Sub | Mult
+                | BitwiseOr | BitwiseAnd | BitwiseXor
+                | LeftShiftSigned | RightShiftSigned | LeftShiftUnsigned | RightShiftUnsigned
+                | DivDouble
 operand = Imm(int)
         | Reg(reg)
         | Pseudo(identifier)
         | Memory(reg, int)
         | Data(identifier)
+        | PseudoMem(Identifier, int)
+        | Indexed(reg base, reg index, int scale)
 cond_code = E | NE | G | GE | L | LE | A | AE | B | BE
-reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP | BP |
-      XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 | XMM14 | XMM15
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP | BP
+    | XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 | XMM14 | XMM15
 
 */
 
@@ -65,32 +68,32 @@ struct Identifier {
 
 struct Operand {
     enum class Kind : u8 {
-        Imm, Register, Pseudo, Memory, Data
+        Imm, Register, Pseudo, Memory, Data, PseudoMem, Indexed
     };
     enum class RegKind : u8 {
         AX, CX, DX, DI, SI, R8, R9, R10, R11, SP, BP,
         XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM14, XMM15
     };
-    Kind kind;
-    AsmType type;
+    const Kind kind;
+    const AsmType type;
     const bool isSigned = true;
 
     virtual ~Operand() = default;
 
     Operand() = delete;
 protected:
-    Operand(const Kind k, const AsmType t)
-      : kind(k), type(t) {}
+    explicit Operand(const Kind k, const AsmType asmType)
+      : kind(k), type(asmType) {}
 
-    Operand(const Kind k, const AsmType t, const bool isSigned)
-        : kind(k), type(t), isSigned(isSigned) {}
+    Operand(const Kind k, const AsmType asmType, const bool isSigned)
+        : kind(k), type(asmType), isSigned(isSigned) {}
 };
 
 struct ImmOperand final : Operand {
     u64 value;
 
-    explicit ImmOperand(const u64 value, const AsmType type)
-        : Operand(Kind::Imm, type, false), value(value) {}
+    explicit ImmOperand(const u64 value, const AsmType asmType)
+        : Operand(Kind::Imm, asmType, false), value(value) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Imm; }
 
@@ -100,8 +103,8 @@ struct ImmOperand final : Operand {
 struct RegisterOperand final : Operand {
     RegKind regKind;
 
-    explicit RegisterOperand(const RegKind rK, const AsmType t)
-        : Operand(Kind::Register, t), regKind(rK) {}
+    explicit RegisterOperand(const RegKind rK, const AsmType asmType)
+        : Operand(Kind::Register, asmType), regKind(rK) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Register; }
 
@@ -112,9 +115,9 @@ struct PseudoOperand final : Operand {
     Identifier identifier;
     ReferingTo referingTo = ReferingTo::Local;
     bool local;
-    PseudoOperand(Identifier identifier, const ReferingTo referingTo,
-                  const AsmType t, const bool local)
-        : Operand(Kind::Pseudo, t), identifier(std::move(identifier)),
+
+    PseudoOperand(Identifier identifier, const ReferingTo referingTo, const AsmType asmType, const bool local)
+        : Operand(Kind::Pseudo, asmType), identifier(std::move(identifier)),
           referingTo(referingTo), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Pseudo; }
@@ -124,8 +127,9 @@ struct PseudoOperand final : Operand {
 
 struct MemoryOperand final : Operand {
     RegKind regKind;
-    i32 value;
-    MemoryOperand(const RegKind rK, const i32 value, const AsmType type)
+    i64 value;
+
+    MemoryOperand(const RegKind rK, const i64 value, const AsmType type)
         : Operand(Kind::Memory, type), regKind(rK), value(value) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Memory; }
@@ -136,12 +140,88 @@ struct MemoryOperand final : Operand {
 struct DataOperand final : Operand {
     Identifier identifier;
     bool local;
-    DataOperand(Identifier iden, const AsmType t, const bool local)
-        : Operand(Kind::Data, t), identifier(std::move(iden)), local(local) {}
+
+    DataOperand(Identifier iden, const AsmType asmType, const bool local)
+        : Operand(Kind::Data, asmType), identifier(std::move(iden)), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Data; }
 
     DataOperand() = delete;
+};
+
+struct PseudoMemOperand final : Operand {
+    const Identifier identifier;
+    const i64 offset;
+    const i64 size = 0;
+    const i64 alignment;
+    ReferingTo referingTo = ReferingTo::Local;
+    bool local;
+
+    PseudoMemOperand(Identifier identifier,
+                     const i64 offset,
+                     const i64 size,
+                     const i64 alignment,
+                     const bool local,
+                     const AsmType type)
+        : Operand(Kind::PseudoMem, type),
+            identifier(std::move(identifier)),
+            offset(offset),
+            size(size),
+            alignment(alignment),
+            local(local) {}
+
+    static bool classOf(const Operand* operand) { return operand->kind == Kind::PseudoMem; }
+
+    PseudoMemOperand() = delete;
+};
+
+struct IndexedOperand final : Operand {
+    RegKind regKind;
+    RegKind indexRegKind;
+    i64 scale;
+
+    IndexedOperand(const RegKind rK, const RegKind indexRegKind, const i64 scale, const AsmType asmType)
+        : Operand(Kind::Indexed, asmType), regKind(rK), indexRegKind(indexRegKind), scale(scale) {}
+
+    static bool classOf(const Operand* operand) { return operand->kind == Kind::Indexed; }
+
+    IndexedOperand() = delete;
+};
+
+struct Initializer {
+    enum class Kind : u8 {
+        Zero, Value
+    };
+    const Kind kind;
+
+    Initializer() = delete;
+
+    virtual ~Initializer() = default;
+protected:
+    explicit Initializer(const Kind kind)
+        : kind(kind) {}
+};
+
+struct ZeroInitializer final : Initializer {
+    const i64 size;
+
+    explicit ZeroInitializer(const i64 size)
+        : Initializer(Kind::Zero), size(size) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Zero; }
+
+    ZeroInitializer() = delete;
+};
+
+struct ValueInitializer final : Initializer {
+    const u64 init;
+
+    explicit ValueInitializer(const u64 init)
+        : Initializer(Kind::Value), init(init) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Value; }
+
+    ValueInitializer() = delete;
 };
 
 struct Inst {
@@ -149,12 +229,12 @@ struct Inst {
         Move, MoveSX, MoveZeroExtend, Lea,
         Cvttsd2si, Cvtsi2sd,
         Unary, Binary, Cmp, Idiv, Div, Cdq, Jmp, JmpCC, SetCC, Label,
-        Push, Call, Ret
+        PushPseudo, Push, Call, Ret
     };
     enum class CondCode : u8 {
         E, NE, G, GE, L, LE, A, AE, B, BE, PF
     };
-    Kind kind;
+    const Kind kind;
 
     virtual ~Inst() = default;
 
@@ -237,7 +317,7 @@ struct Cvttsd2siInst final : Inst {
     Cvttsd2siInst(
         std::shared_ptr<Operand> src,
         std::shared_ptr<Operand> dst,
-        AsmType dstType)
+        const AsmType dstType)
         : Inst(Kind::Cvttsd2si), src(std::move(src)), dst(std::move(dst)), dstType(dstType) {}
 
     void accept(InstVisitor& visitor) override;
@@ -399,6 +479,22 @@ struct LabelInst final : Inst {
     LabelInst() = delete;
 };
 
+struct PushPseudoInst final : Inst {
+    const i64 size;
+    const i64 alignment;
+    const AsmType type;
+    Identifier identifier;
+
+    PushPseudoInst(const i64 size, const i64 alignment, const AsmType type, Identifier identifier)
+        : Inst(Kind::PushPseudo), size(size), alignment(alignment),
+                                    type(type), identifier(std::move(identifier)) {}
+
+    void accept(InstVisitor& visitor) override;
+    static bool classOf(const Inst* inst) { return inst->kind == Kind::PushPseudo; }
+
+    PushPseudoInst() = delete;
+};
+
 struct PushInst final : Inst {
     std::shared_ptr<Operand> operand;
     explicit PushInst(std::shared_ptr<Operand> operand)
@@ -431,9 +527,9 @@ struct ReturnInst final : Inst {
 
 struct TopLevel {
     enum class Kind {
-        Function, StaticVariable, StaticConstant,
+        Function, StaticVariable, StaticConstant, StaticArray
     };
-    Kind kind;
+    const Kind kind;
 
     TopLevel() = delete;
 
@@ -443,7 +539,7 @@ protected:
         : kind(t) {}
 };
 
-struct Function : TopLevel {
+struct Function final : TopLevel {
     std::string name;
     std::vector<std::unique_ptr<Inst>> instructions;
     i64 stackAlloc = 0;
@@ -456,7 +552,7 @@ struct Function : TopLevel {
     Function() = delete;
 };
 
-struct StaticVariable : TopLevel {
+struct StaticVariable final : TopLevel {
     std::string name;
     u64 init = 0;
     AsmType type;
@@ -469,19 +565,40 @@ struct StaticVariable : TopLevel {
     StaticVariable() = delete;
 };
 
-struct ConstVariable : TopLevel {
+struct ConstVariable final : TopLevel {
     Identifier name;
     i32 alignment;
-    double staticInit;
-    bool local;
+    const double staticInit;
+    const bool local;
 
     ConstVariable(Identifier name, const i32 alignment, const double staticInit, const bool local)
-        : TopLevel(Kind::StaticConstant), name(std::move(name)), alignment(alignment)
-                                          , staticInit(staticInit), local(local) {}
+        : TopLevel(Kind::StaticConstant), name(std::move(name)), alignment(alignment),
+                                            staticInit(staticInit), local(local) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticConstant; }
 
     ConstVariable() = delete;
+};
+
+struct ArrayVariable final : TopLevel {
+    Identifier name;
+    i32 alignment;
+    std::vector<std::unique_ptr<Initializer>> initializers;
+    const bool isGlobal;
+    const AsmType type;
+
+    ArrayVariable(Identifier name,
+                  const i32 alignment,
+                  std::vector<std::unique_ptr<Initializer>>&& initializers,
+                  const bool local,
+                  const AsmType type)
+        : TopLevel(Kind::StaticArray), name(std::move(name)), alignment(alignment),
+                                         initializers(std::move(initializers)),
+                                         isGlobal(local), type(type) {}
+
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticArray; }
+
+    ArrayVariable() = delete;
 };
 
 struct Program {
@@ -507,6 +624,7 @@ struct InstVisitor {
     virtual void visit(JmpCCInst&) = 0;
     virtual void visit(SetCCInst&) = 0;
     virtual void visit(LabelInst&) = 0;
+    virtual void visit(PushPseudoInst&) = 0;
     virtual void visit(PushInst&) = 0;
     virtual void visit(CallInst&) = 0;
     virtual void visit(ReturnInst&) = 0;
@@ -528,6 +646,7 @@ inline void JmpInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void JmpCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void SetCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void LabelInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
+inline void PushPseudoInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void PushInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void CallInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void ReturnInst::accept(InstVisitor& visitor) { visitor.visit(*this); }

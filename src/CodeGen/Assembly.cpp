@@ -1,5 +1,6 @@
 #include "Assembly.hpp"
 #include "DynCast.hpp"
+#include "Operators.hpp"
 
 #include <array>
 #include <string>
@@ -28,11 +29,16 @@ std::string asmProgram(const Program& program)
                 asmFunction(result, *function);
                 continue;
             }
+            case TopLevel::Kind::StaticArray: {
+                const auto array = dynCast<const ArrayVariable>(topLevel.get());
+                asmStaticArray(result, *array);
+                continue;
+            }
             default:
                 std::abort();
         }
     }
-    result += ".section .note.GNU-stack,\"\",@progbits\n";
+    result += asmFormatInstruction(".section .note.GNU-stack,\"\",@progbits\n");
     return result;
 }
 
@@ -101,6 +107,36 @@ void asmStaticConstant(std::string& result, const ConstVariable& variable)
         result += asmFormatLabel(variable.name.value);
     result += asmFormatInstruction(".quad "+ std::to_string( std::bit_cast<u64>(variable.staticInit))
                 + " # " + std::to_string(variable.staticInit));
+    result += '\n';
+}
+
+void asmStaticArray(std::string& result, const ArrayVariable& array)
+{
+    if (array.isGlobal)
+        result += asmFormatInstruction(".globl", array.name.value);
+    if (array.initializers.size() == 1 && array.initializers.front()->kind == Initializer::Kind::Zero)
+        result += asmFormatInstruction(".bss");
+    else
+        result += asmFormatInstruction(".data");
+    result += asmFormatInstruction(".align", std::to_string(array.alignment));
+    result += asmFormatLabel(array.name.value);
+    const std::string typeName = '.' + getTypeName(array.type);
+    for (const auto& init : array.initializers) {
+        switch (init->kind) {
+            case Initializer::Kind::Zero: {
+                const auto zero = dynCast<const ZeroInitializer>(init.get());
+                result += asmFormatInstruction(
+                    ".zero",
+                    std::to_string(zero->size * Operators::getSizeAsmType(array.type)));
+                break;
+            }
+            case Initializer::Kind::Value: {
+                const auto value = dynCast<ValueInitializer>(init.get());
+                result += asmFormatInstruction(typeName, std::to_string(value->init));
+                break;
+            }
+        }
+    }
     result += '\n';
 }
 
@@ -271,12 +307,18 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
                 return createLabel(dataOperand->identifier.value) + "(%rip)";
             return dataOperand->identifier.value + "(%rip)";
         }
+        case Operand::Kind::Indexed: {
+            const auto indexedOperand = dynCast<IndexedOperand>(operand.get());
+            return "(" + asmRegister(indexedOperand->type, indexedOperand->regKind) + ", " +
+                         asmRegister(indexedOperand->type, indexedOperand->indexRegKind) + ", " +
+                            std::to_string(indexedOperand->scale) + ")";
+        }
         default:
             return "not set asmOperand";
     }
 }
 
-std::string asmRegister(const AsmType type, const Operand::RegKind reg)
+std::string asmRegister(const AsmType& type, const Operand::RegKind reg)
 {
     using Type = Operand::RegKind;
     if (reg == Type::BP)
@@ -391,8 +433,8 @@ std::string condCode(const BinaryInst::CondCode condCode)
 }
 
 std::string asmFormatInstruction(const std::string& mnemonic,
-                      const std::string& operands,
-                      const std::string& comment)
+                                 const std::string& operands,
+                                 const std::string& comment)
 {
     constexpr int mnemonicWidth = 12;
     constexpr int operandsWidth = 16;
@@ -419,5 +461,16 @@ std::string addType(const std::string& instruction, const AsmType type)
             return instruction + " not set addType";
     }
 }
+
+std::string getTypeName(const AsmType type)
+{
+    switch (type) {
+        case AsmType::LongWord:   return "long";
+        case AsmType::QuadWord:   return "quad";
+        case AsmType::Double:     return "quad";
+    }
+    std::abort();
+}
+
 
 } // CodeGen

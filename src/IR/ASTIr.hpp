@@ -28,11 +28,14 @@ instruction = Return(val)
             | GetAddress(val src, val dst)
             | Load(val src, val dst)
             | Store(val src, val dst)
+            | AddPtr(val ptr, val index, int scale, val dst)
+            | CopyToOffset(val src, identifier dst, int offset)
             | Jump(identifier target)
             | JumpIfZero(val condition, identifier target)
             | JumpIfNotZero(val condition, identifier target)
             | Label(identifier)
             | FunCall(identifier fun_name, val* args, val dst)
+            | PushStackSlot(identifier name, int size)
 val = Constant(init, type) | Var(identifier, type)
 unary_operator = Complement | Negate | Not
 binary_operator = Add | Subtract | Multiply | Divide | Remainder |
@@ -53,7 +56,7 @@ struct Value {
         Variable, Constant
     };
     Type type;
-    Kind kind;
+    const Kind kind;
     Value() = delete;
     virtual ~Value() = default;
 protected:
@@ -64,8 +67,13 @@ protected:
 struct ValueVar final : Value {
     ReferingTo referingTo = ReferingTo::Local;
     Identifier value;
-    explicit ValueVar(Identifier v, const Type t)
+    i64 size = 0;
+
+    ValueVar(Identifier v, const Type t)
         : Value(t, Kind::Variable), value(std::move(v)) {}
+
+    ValueVar(Identifier v, const Type t, const i64 size)
+        : Value(t, Kind::Variable), value(std::move(v)), size(size) {}
 
     static bool classOf(const Value* value) { return value->kind == Kind::Variable; }
 
@@ -90,16 +98,48 @@ struct ValueConst final : Value {
     ValueConst() = delete;
 };
 
+struct Initializer {
+    enum class Kind {
+        Value, Zero
+    };
+    const Kind kind;
+
+    Initializer() = delete;
+protected:
+
+    explicit Initializer(const Kind kind)
+        : kind(kind) {}
+};
+
+struct ValueInitializer final : Initializer {
+    std::shared_ptr<Value> value;
+
+    explicit ValueInitializer(std::shared_ptr<Value> value)
+        : Initializer(Kind::Value), value(std::move(value)) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Value; }
+};
+
+struct ZeroInitializer final : Initializer {
+    i64 size;
+
+    explicit ZeroInitializer(const i64 size)
+        : Initializer(Kind::Zero), size(size) {}
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Zero; }
+};
+
 struct Instruction {
     enum class Kind {
         Return,
         SignExtend, Truncate, ZeroExtend,
         DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble,
         Unary, Binary, Copy, GetAddress, Load, Store,
+        AddPtr, CopyToOffset,
         Jump, JumpIfZero, JumpIfNotZero, Label,
-        FunCall
+        FunCall, Allocate
     };
-    Kind kind;
+    const Kind kind;
     Type type;
 
     Instruction() = delete;
@@ -218,7 +258,7 @@ struct BinaryInst final : Instruction {
         BitwiseAnd, BitwiseOr, BitwiseXor,
         LeftShift, RightShift,
         And, Or, Equal, NotEqual,
-        LessThan, LessOrEqual, GreaterThan, GreaterOrEqual,
+        LessThan, LessOrEqual, GreaterThan, GreaterOrEqual
     };
     Operation operation;
     std::shared_ptr<Value> lhs;
@@ -280,6 +320,46 @@ struct StoreInst final : Instruction {
     StoreInst() = delete;
 };
 
+struct AddPtrInst final : Instruction {
+    std::shared_ptr<Value> ptr;
+    std::shared_ptr<Value> index;
+    std::shared_ptr<Value> dst;
+    i64 scale;
+
+    AddPtrInst(std::shared_ptr<Value> src, std::shared_ptr<Value> index,
+               std::shared_ptr<Value> dst, const i64 scale)
+        : Instruction(Kind::AddPtr, Type::Pointer),
+          ptr(std::move(src)),
+          index(std::move(index)),
+          dst(std::move(dst)),
+          scale(scale) {}
+
+    static bool classOf(const Instruction* inst) { return inst->kind == Kind::AddPtr; }
+
+    AddPtrInst() = delete;
+};
+
+struct CopyToOffsetInst final : Instruction {
+    std::shared_ptr<Value> src;
+    const Identifier iden;
+    const i64 offset;
+    const i64 size;
+    const i64 alignment;
+
+    CopyToOffsetInst(std::shared_ptr<Value> src,
+                     Identifier iden,
+                     const i64 offset,
+                     const i64 sizeArray,
+                     const i64 alignment,
+                     const Type t)
+        : Instruction(Kind::CopyToOffset, t), src(std::move(src)),
+          iden(std::move(iden)), offset(offset), size(sizeArray), alignment(alignment) {}
+
+    static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyToOffset; }
+
+    CopyToOffsetInst() = delete;
+};
+
 struct JumpInst final : Instruction {
     Identifier target;
     explicit JumpInst(Identifier target)
@@ -337,11 +417,23 @@ struct FunCallInst final : Instruction {
     FunCallInst() = delete;
 };
 
+struct AllocateInst final : Instruction {
+    const i64 size;
+    const Identifier iden;
+
+    AllocateInst(const i64 size, Identifier iden, const Type type)
+        : Instruction(Kind::Allocate, type), size(size), iden(std::move(iden)) {}
+
+    static bool classOf(const Instruction* inst) { return inst->kind == Kind::Allocate; }
+
+    AllocateInst() = delete;
+};
+
 struct TopLevel {
     enum class Kind {
-        Function, StaticVariable
+        Function, StaticVariable, StaticArray
     };
-    Kind kind;
+    const Kind kind;
 
     TopLevel() = delete;
 
@@ -351,7 +443,7 @@ protected:
         : kind(t) {}
 };
 
-struct Function : TopLevel {
+struct Function final : TopLevel {
     std::string name;
     std::vector<Identifier> args;
     std::vector<Type> argTypes;
@@ -365,25 +457,44 @@ struct Function : TopLevel {
     Function() = delete;
 };
 
-struct StaticVariable : TopLevel {
+struct StaticVariable final : TopLevel {
     std::string name;
     std::shared_ptr<Value> value;
     const Type type;
     const bool global;
-    explicit StaticVariable(std::string identifier,
-                            const std::shared_ptr<Value>& value,
-                            const Type ty,
-                            const bool isGlobal)
-        : TopLevel(Kind::StaticVariable), name
-                (std::move(identifier)), value(value), type(ty), global(isGlobal) {}
+    StaticVariable(std::string identifier,
+                   const std::shared_ptr<Value>& value,
+                   const Type ty,
+                   const bool isGlobal)
+        : TopLevel(Kind::StaticVariable), name(std::move(identifier)),
+                value(value), type(ty), global(isGlobal) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticVariable; }
 
     StaticVariable() = delete;
 };
 
+struct StaticArray final : TopLevel {
+    std::string name;
+    std::vector<std::unique_ptr<Initializer>> initializers;
+    const Type type;
+    const bool global;
+    explicit StaticArray(std::string identifier,
+                         std::vector<std::unique_ptr<Initializer>>&& initializers,
+                         const Type ty,
+                         const bool isGlobal)
+        : TopLevel(Kind::StaticArray), name
+                (std::move(identifier)), initializers(std::move(initializers)),
+          type(ty), global(isGlobal) {}
+
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticArray; }
+
+    StaticArray() = delete;
+};
+
 struct Program {
     std::vector<std::unique_ptr<TopLevel>> topLevels;
+    std::vector<std::unique_ptr<Value>> values;
     Program() = default;
 
     Program(Program&&) = default;

@@ -1,6 +1,9 @@
 #include "ValidateReturn.hpp"
+#include "ASTDeepCopy.hpp"
 #include "DynCast.hpp"
 #include "Utils.hpp"
+
+#include <cassert>
 
 namespace Semantics {
 std::vector<Error> ValidateReturn::programValidate(Parsing::Program& program)
@@ -9,7 +12,7 @@ std::vector<Error> ValidateReturn::programValidate(Parsing::Program& program)
     return std::move(m_errors);
 }
 
-void ValidateReturn::visit(Parsing::FunDecl& funDecl)
+void ValidateReturn::visit(Parsing::FuncDeclaration& funDecl)
 {
     if (funDecl.body == nullptr)
         return;
@@ -42,8 +45,11 @@ void ValidateReturn::visit(Parsing::FunDecl& funDecl)
         returnStmt->expr = std::make_unique<Parsing::CastExpr>(
             Parsing::deepCopy(*funcType->returnType), std::move(returnStmt->expr));
     }
+    assert(funcType->returnType->type);
+    assert(returnStmt->expr->type);
+    assert(returnStmt->expr->type->type);
     if (funcType->returnType->type == Type::Pointer || returnStmt->expr->type->type == Type::Pointer) {
-        if (!Parsing::areEquivalent(*funcType->returnType, *returnStmt->expr->type)) {
+        if (!Parsing::areEquivalentTypes(*funcType->returnType, *returnStmt->expr->type)) {
             m_errors.emplace_back("Return type does not conform to function return type ",
                                 returnStmt->expr->location);
             return;

@@ -12,7 +12,6 @@ get_filename_component(PROJECT_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
 add_compile_definitions(PROJECT_ROOT_DIR="${PROJECT_ROOT_DIR}")
 
 add_subdirectory(src)
-
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)

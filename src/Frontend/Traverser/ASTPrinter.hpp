@@ -7,10 +7,10 @@
 #include <string>
 
 namespace Parsing {
-class ASTPrinter : public ConstASTTraverser {
+class ASTPrinter final : public ConstASTTraverser {
     class IndentGuard {
     public:
-        IndentGuard(int& level) : m_level(level) { ++m_level; }
+        explicit IndentGuard(int& level) : m_level(level) { ++m_level; }
         ~IndentGuard() { --m_level; }
     private:
         int& m_level;
@@ -25,19 +25,21 @@ public:
 
     // Declartion
     void visit(const VarDecl& varDecl) override;
-    void visit(const FunDecl& funDecl) override;
+    void visit(const FuncDeclaration& funDecl) override;
 
     void visit(const Block& block) override;
+
+    void visit(const ZeroInitializer& zeroInitializer) override;
 
     // Type
     void visit(const VarType& varType) override;
     void visit(const FuncType& functionType) override;
     void visit(const PointerType& pointerType) override;
+    void visit(const ArrayType& arrayType) override;
 
     // BlockItem
     void visit(const StmtBlockItem& stmtBlockItem) override;
     void visit(const DeclBlockItem& declBlockItem) override;
-
 
     // ForInit
     void visit(const DeclForInit& declForInit) override;
@@ -70,8 +72,8 @@ public:
     void visit(const TernaryExpr& conditionalExpr) override;
     void visit(const AddrOffExpr& addrOffExpr) override;
     void visit(const DereferenceExpr& dereferenceExpr) override;
-
     void visit(const FuncCallExpr& functionCallExpr) override;
+    void visit(const SubscriptExpr& subscriptExpr) override;
 
 private:
     void addLine(const std::string &line);
