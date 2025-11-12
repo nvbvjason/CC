@@ -667,17 +667,13 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPostfixInst(const Parsing::Unary
     const auto tempNew = std::make_shared<ValueVar>(makeTemporaryName(), unaryExpr.type->type);
     const auto oper = getPostPrefixOperation(unaryExpr.op);
     const Type type = unaryExpr.type->type;
-    std::shared_ptr<ValueConst> one;
-    if (type == Type::Double)
-        one = std::make_shared<ValueConst>(1.0);
-    else
-        one = std::make_shared<ValueConst>(1);
+    const std::shared_ptr<ValueConst> scale = getInrDecScale(unaryExpr, type);
     const std::shared_ptr original = genInst(*unaryExpr.innerExpr);
     switch (original->kind) {
         case ExprResult::Kind::PlainOperand: {
             const auto plainOriginal = dynCast<const PlainOperand>(original.get());
             emplaceCopy(plainOriginal->value, originalForReturn, type);
-            emplaceBinary(oper, originalForReturn, one, tempNew, type);
+            emplaceBinary(oper, originalForReturn, scale, tempNew, type);
             emplaceCopy(tempNew, plainOriginal->value, type);
             return std::make_unique<PlainOperand>(originalForReturn);
         }
@@ -686,7 +682,7 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPostfixInst(const Parsing::Unary
             const auto derefValue = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), type);
             emplaceLoad(derefOriginal->ptr, derefValue, type);
             emplaceCopy(derefValue, originalForReturn, type);
-            emplaceBinary(oper, originalForReturn, one, tempNew, type);
+            emplaceBinary(oper, originalForReturn, scale, tempNew, type);
             emplaceStore(tempNew, derefOriginal->ptr, type);
             return std::make_unique<PlainOperand>(originalForReturn);
         }
@@ -697,18 +693,14 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPostfixInst(const Parsing::Unary
 std::unique_ptr<ExprResult> GenerateIr::genUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr)
 {
     const Type type = unaryExpr.type->type;
-    std::shared_ptr<ValueConst> one;
-    if (type == Type::Double)
-        one = std::make_shared<ValueConst>(1.0);
-    else
-        one = std::make_shared<ValueConst>(1);
+    const std::shared_ptr<ValueConst> scale = getInrDecScale(unaryExpr, type);
     const auto temp = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), type);
     const auto operation = getPostPrefixOperation(unaryExpr.op);
     const std::unique_ptr<ExprResult> original = genInst(*unaryExpr.innerExpr);
     switch (original->kind) {
         case ExprResult::Kind::PlainOperand: {
             const auto originalPlain = dynCast<const PlainOperand>(original.get());
-            emplaceBinary(operation, originalPlain->value, one, temp, type);
+            emplaceBinary(operation, originalPlain->value, scale, temp, type);
             emplaceCopy(temp, originalPlain->value, type);
             return std::make_unique<PlainOperand>(temp);
         }
@@ -716,7 +708,7 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPrefixInst(const Parsing::UnaryE
             const auto derefPtr = dynCast<const DereferencedPointer>(original.get());
             const auto derefValue = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), type);
             emplaceLoad(derefPtr->ptr, derefValue, type);
-            emplaceBinary(operation, derefValue, one, temp, type);
+            emplaceBinary(operation, derefValue, scale, temp, type);
             emplaceStore(temp, derefPtr->ptr, type);
             return std::make_unique<PlainOperand>(temp);
         }
@@ -1095,5 +1087,14 @@ static std::string generateCaseLabelName(std::string before)
 {
     std::ranges::replace(before, '-', '_');
     return before;
+}
+
+std::shared_ptr<ValueConst> getInrDecScale(const Parsing::UnaryExpr& unaryExpr, Type type)
+{
+    if (type == Type::Pointer)
+        return std::make_shared<ValueConst>(getReferencedTypeSize(unaryExpr.innerExpr->type.get()));
+    if (type == Type::Double)
+        return std::make_shared<ValueConst>(1.0);
+    return std::make_shared<ValueConst>(1);
 }
 } // IR
