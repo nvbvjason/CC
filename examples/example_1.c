@@ -9,8 +9,8 @@
 int main(void)
 {
     unsigned long x[300][5];
-    for (int i = 0; i < 300; i = i + 1) {
-        for (int j = 0; j < 5; j = j + 1) {
+    for (int i = 0; i < 300; i = ++i) {
+        for (int j = 0; j < 5; j = ++j) {
             x[i][j] = i * 5 + j;
         }
     }
@@ -23,8 +23,8 @@ int main(void)
         return 2;
     }
 
-    for (int i = 0; i < 300; i = i + 1) {
-        for (int j = 0; j < 5; j = j + 1) {
+    for (int i = 0; i < 300; i = i++) {
+        for (int j = 0; j < 5; j = j++) {
             if (*(*(x + i) + j) != x[i][j]) {
                 return 3;
             }

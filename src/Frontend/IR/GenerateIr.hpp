@@ -68,7 +68,16 @@ public:
     std::unique_ptr<ExprResult> genBinaryAndInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryOrInst(const Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<ExprResult> genBinaryPtrInst(const Parsing::BinaryExpr& binaryExpr);
+    void binaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr,
+                          const std::shared_ptr<Value>& ptr,
+                          const std::shared_ptr<Value>& index,
+                          i64 scale,
+                          std::shared_ptr<Value>& result);
     std::unique_ptr<ExprResult> genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr);
+    void binaryPtrSubInst(const std::shared_ptr<Value>& lhs,
+                          const std::shared_ptr<Value>& rhs,
+                          const std::shared_ptr<Value>& dst,
+                          i64 scale);
     std::unique_ptr<ExprResult> genBinaryPtrSubInst(const Parsing::BinaryExpr& binaryExpr);
 
     std::unique_ptr<ExprResult> genAssignInst(const Parsing::AssignmentExpr& assignmentExpr);

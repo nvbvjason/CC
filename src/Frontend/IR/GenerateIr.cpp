@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <strings.h>
 
 namespace Ir {
 static Identifier makeTemporaryName();
@@ -813,6 +814,27 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrInst(const Parsing::BinaryEx
     return genBinarySimpleInst(binaryExpr);
 }
 
+void GenerateIr::binaryPtrSubInst(const std::shared_ptr<Value>& lhs,
+                                  const std::shared_ptr<Value>& rhs,
+                                  const std::shared_ptr<Value>& dst,
+                                  const i64 scale)
+{
+    const auto diff = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
+    emplaceBinary(BinaryInst::Operation::Subtract, lhs, rhs, diff, Type::I64);
+    const auto size = std::make_shared<ValueConst>(scale);
+    emplaceBinary(BinaryInst::Operation::Divide, diff, size, dst, Type::I64);
+}
+
+std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrSubInst(const Parsing::BinaryExpr& binaryExpr)
+{
+    const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
+    const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
+    auto dst = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
+    const i64 scale = getReferencedTypeSize(binaryExpr.lhs->type.get());
+    binaryPtrSubInst(lhs, rhs, dst, scale);
+    return std::make_unique<PlainOperand>(dst);
+}
+
 std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::BinaryExpr& binaryExpr)
 {
     const std::shared_ptr<Value> ptr = genInstAndConvert(*binaryExpr.lhs);
@@ -828,20 +850,6 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::Binar
     return std::make_unique<PlainOperand>(result);
 }
 
-    std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrSubInst(const Parsing::BinaryExpr& binaryExpr)
-{
-    const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
-    const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
-    const auto diff = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
-
-    emplaceBinary(BinaryInst::Operation::Subtract, lhs, rhs, diff, Type::I64);
-    auto dst = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
-    const i64 scale = getReferencedTypeSize(binaryExpr.lhs->type.get());
-    const auto size = std::make_shared<ValueConst>(scale);
-    emplaceBinary(BinaryInst::Operation::Divide, diff, size, dst, Type::I64);
-    return std::make_unique<PlainOperand>(dst);
-}
-
 void GenerateIr::genCompoundAssignWithoutDeref(
     const Parsing::AssignmentExpr& assignmentExpr, std::shared_ptr<Value>& rhs, const std::shared_ptr<Value>& lhs)
 {
@@ -851,13 +859,27 @@ void GenerateIr::genCompoundAssignWithoutDeref(
     const Type leftType = lhs->type;
     const Type rightType = rhs->type;
     const Type commonType = getCommonType(leftType, rightType);
+    if (commonType == Type::Pointer) {
+        if (rightType == Type::Pointer && operation == BinaryInst::Operation::Subtract) {
+            const i64 scale = getReferencedTypeSize(assignmentExpr.lhs->type.get());
+            binaryPtrSubInst(temp, rhs, lhs, scale);
+            return;
+        }
+        if (operation == BinaryInst::Operation::Subtract) {
+            const auto dst = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), Type::Pointer);
+            emplaceUnary(UnaryInst::Operation::Negate, rhs, dst, Type::Pointer);
+            rhs = dst;
+        }
+        const i64 scale = getReferencedTypeSize(assignmentExpr.lhs->type.get());
+        emplaceAddPtr(temp, rhs, lhs, scale);
+        return;
+    }
     if (commonType != leftType && !isBitShift(assignmentExpr.op))
         temp = castValue(temp, commonType, leftType);
     if (commonType != rightType && !isBitShift(assignmentExpr.op))
         rhs = castValue(rhs, commonType, rightType);
     if (commonType != lhs->type && !isBitShift(assignmentExpr.op)) {
-        emplaceBinary(
-            operation, temp, rhs, temp, commonType);
+        emplaceBinary(operation, temp, rhs, temp, commonType);
         temp = castValue(temp, lhs->type, commonType);
         emplaceCopy(temp, lhs, lhs->type);
     }

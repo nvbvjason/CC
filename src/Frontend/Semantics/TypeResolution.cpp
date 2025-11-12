@@ -583,6 +583,8 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::AssignmentExpr& 
         leftType != Type::Pointer) {
         assignmentExpr.rhs = convertOrCastToType(*assignmentExpr.rhs, leftType);
     }
+    if (leftType == Type::Pointer && isIntegerType(rightType))
+        assignmentExpr.rhs = convertOrCastToType(*assignmentExpr.rhs, Type::I64);
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
     return Parsing::deepCopy(assignmentExpr);
 }
