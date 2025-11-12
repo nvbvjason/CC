@@ -30,8 +30,8 @@ public:
 
     void genBlock(const Parsing::Block& block);
     void genBlockItem(const Parsing::BlockItem& blockItem);
-    void genSingleDeclaration(const Parsing::VarDecl* varDecl);
-    void genCompoundLocalInit(const Parsing::VarDecl* varDecl);
+    void genSingleDeclaration(const Parsing::VarDecl& varDecl);
+    void genCompoundLocalInit(const Parsing::VarDecl& varDecl);
     void genDeclaration(const Parsing::Declaration& decl);
     void genStaticLocal(const Parsing::VarDecl& varDecl);
 

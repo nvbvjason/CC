@@ -124,7 +124,7 @@ void AsmPrinter::add(const MoveSXInst& moveSX)
 
 void AsmPrinter::add(const MoveZeroExtendInst& moveZeroExtend)
 {
-    addLine("moveZeroExtendInst: ",
+    addLine("MoveZeroExtendInst: ",
             to_string(*moveZeroExtend.src) + " " +
             to_string(*moveZeroExtend.dst));
 }
@@ -272,8 +272,9 @@ std::string to_string(const PseudoMemOperand& pseudoMemOperand)
 
 std::string to_string(const MemoryOperand& memoryOperand)
 {
-    return "Memory(" + std::to_string(memoryOperand.value) + ", " + to_string(memoryOperand.regKind) + ", "
-            + to_string(memoryOperand.type) + ")";
+    return "Memory(" + std::to_string(memoryOperand.value) + ", " +
+                       to_string(memoryOperand.regKind) + ", " +
+                       to_string(memoryOperand.type) + ")";
 }
 
 std::string to_string(const DataOperand& dataOperand)

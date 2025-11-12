@@ -114,7 +114,10 @@ void asmStaticArray(std::string& result, const ArrayVariable& array)
 {
     if (array.isGlobal)
         result += asmFormatInstruction(".globl", array.name.value);
-    result += asmFormatInstruction(".data");
+    if (array.initializers.size() == 1 && array.initializers.front()->kind == Initializer::Kind::Zero)
+        result += asmFormatInstruction(".bss");
+    else
+        result += asmFormatInstruction(".data");
     result += asmFormatInstruction(".align", std::to_string(array.alignment));
     result += asmFormatLabel(array.name.value);
     const std::string typeName = '.' + getTypeName(array.type);

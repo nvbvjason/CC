@@ -171,8 +171,15 @@ static void emplaceNewSingleInit(const Type innerArrayType,
         newExpr = convertOrCastToType(*singleInit->expr, innerArrayType);
     else {
         const auto castExpr = dynCast<Parsing::CastExpr>(singleInit->expr.get());
-        if (castExpr->innerExpr->kind == Parsing::Expr::Kind::Constant)
-            newExpr = convertToArithmeticType(*castExpr->innerExpr, innerArrayType);
+        if (castExpr->innerExpr->kind == Parsing::Expr::Kind::Constant) {
+            if (isArithmetic(castExpr->type->type))
+                newExpr = convertToArithmeticType(*castExpr->innerExpr, innerArrayType);
+            if (castExpr->type->type == Type::Pointer && canConvertToNullPtr(*castExpr->innerExpr)) {
+                constexpr i64 one = 1;
+                staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(one));
+                return;
+            }
+        }
     }
     if (newExpr) {
         staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(

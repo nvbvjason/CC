@@ -147,9 +147,10 @@ void IrPrinter::print(const StoreInst& inst)
 void IrPrinter::print(const AddPtrInst& inst)
 {
     addLine("AddPtrInst: " +
-            print(*inst.ptr) + " -> " +
-            print(*inst.index) +
-            print(*inst.dst) + ", " +
+            print(*inst.ptr) + " + " +
+            print(*inst.index) + " * " +
+            std::to_string(inst.scale) + " -> " +
+            print(*inst.dst) + " " +
             to_string(inst.type));
 }
 

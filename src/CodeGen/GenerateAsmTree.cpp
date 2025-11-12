@@ -893,7 +893,7 @@ void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
         const auto sp = std::make_shared<RegisterOperand>(RegType::SP, AsmType::QuadWord);
         emplaceBinary(bytesToRemoveOperand, sp, BinaryInst::Operator::Add, AsmType::QuadWord);
     }
-    std::shared_ptr<Operand> dst = genOperand(funcCall.destination);
+    const std::shared_ptr<Operand> dst = genOperand(funcCall.destination);
     std::shared_ptr<Operand> src;
     if (Operators::getAsmType(funcCall.type) != AsmType::Double)
         src = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(funcCall.type));
