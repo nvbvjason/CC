@@ -730,7 +730,7 @@ std::unique_ptr<ExprResult> GenerateIr::genVarInst(const Parsing::VarExpr& varEx
     var->referingTo = varExpr.referingTo;
     if (var->type == Type::Array) {
         var->size = getArraySize(varExpr.type.get());
-        var->type = getArrayType(varExpr.type.get());
+        var->type = Type::Pointer;
     }
     return std::make_unique<PlainOperand>(var);
 }
@@ -944,8 +944,10 @@ std::unique_ptr<ExprResult> GenerateIr::genFuncCallInst(const Parsing::FuncCallE
 {
     std::vector<std::shared_ptr<Value>> arguments;
     arguments.reserve(funcCallExpr.args.size());
-    for (const auto& expr : funcCallExpr.args)
-        arguments.emplace_back(genInstAndConvert(*expr));
+    for (const auto& expr : funcCallExpr.args) {
+        const std::shared_ptr<Value> arg = genInstAndConvert(*expr);
+        arguments.emplace_back(arg);
+    }
     if (funcCallExpr.type->type != Type::Pointer) {
         const auto returnType = dynCast<const Parsing::VarType>(funcCallExpr.type.get());
         auto dst = std::make_shared<ValueVar>(makeTemporaryName(), funcCallExpr.type->type);

@@ -24,16 +24,8 @@ void TypeResolution::visit(Parsing::FuncDeclaration& funDecl)
         addError("Function declaration does not exist", funDecl.location);
         return;
     }
-    auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
+    const auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
     std::vector<std::unique_ptr<Parsing::TypeBase>> paramsTypes;
-    for (auto & param : funcType->params) {
-        if (param->type == Type::Array) {
-            const auto arrayType = dynCast<Parsing::ArrayType>(param.get());
-            auto pointerType = std::make_unique<Parsing::PointerType>(
-                Parsing::deepCopy(*arrayType->elementType));
-            param = std::move(pointerType);
-        }
-    }
     if (funcType->returnType->type == Type::Array) {
         addError("Function cannot return array", funDecl.location);
         return;
