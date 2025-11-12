@@ -75,11 +75,25 @@ inline std::string LoopLabeling::makeTemporary(const std::string& name)
     return name + '.' + std::to_string(m_counter++);
 }
 
-static void initArray(Parsing::VarDecl& array);
-static std::vector<i64> getDimensions(const Parsing::VarDecl& array);
-static std::vector<i64> getScales(const std::vector<i64>& dimensions, i64 size);
-static bool isZeroSingleInit(const Parsing::Initializer& init);
-static std::vector<std::unique_ptr<Parsing::Initializer>> combineZeroInits(
-    const std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer);
+void initArray(Parsing::VarDecl& array);
+std::vector<i64> getDimensions(const Parsing::VarDecl& array);
+std::vector<i64> getScales(const std::vector<i64>& dimensions, i64 size);
+bool isZeroSingleInit(const Parsing::Initializer& init);
+std::vector<std::unique_ptr<Parsing::Initializer>> getZeroInits(
+    const std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,
+    const std::vector<i64>& dimensions,
+    const std::vector<std::vector<i64>>& emplacedPositions);
+std::unique_ptr<Parsing::Initializer> emplaceNewSingleInit(
+    Type innerArrayType, Parsing::SingleInitializer& singleInit);
+std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
+    getSingleInitAndPositions(Type innerArrayType, Parsing::Initializer* arrayInit);
+i64 getDistance(const std::vector<i64>& positionBefore,
+                const std::vector<i64>& position,
+                const std::vector<i64>& dimensions);
+i64 getPosition(const std::vector<i64>& position, const std::vector<i64>& dimensions);
+void emplaceZeroInitIfNecessary(const std::vector<i64>& dimensions,
+                                std::vector<i64>& positionBefore,
+                                const std::vector<i64>& position,
+                                std::vector<std::unique_ptr<Parsing::Initializer>>& newInitializers);
 
 } // Semantics

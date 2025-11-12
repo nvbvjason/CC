@@ -155,119 +155,131 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
 
 struct Node {
     Parsing::Initializer* init;
-    const i64 at;
-    const i32 depth;
+    const std::vector<i64> position;
     Node() = delete;
-    Node(Parsing::Initializer* init, const i64 at, const i32 depth)
-        : init(init), at(at), depth (depth) {}
+    Node(Parsing::Initializer* init, const std::vector<i64>& position)
+        : init(init), position(position) {}
 };
-
-static void emplaceNewSingleInit(const Type innerArrayType,
-                                 std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,
-                                 Parsing::SingleInitializer* const singleInit)
-{
-    std::unique_ptr<Parsing::Expr> newExpr = nullptr;
-    if (singleInit->expr->kind != Parsing::Expr::Kind::Cast)
-        newExpr = convertOrCastToType(*singleInit->expr, innerArrayType);
-    else {
-        const auto castExpr = dynCast<Parsing::CastExpr>(singleInit->expr.get());
-        if (castExpr->innerExpr->kind == Parsing::Expr::Kind::Constant) {
-            if (isArithmetic(castExpr->type->type))
-                newExpr = convertToArithmeticType(*castExpr->innerExpr, innerArrayType);
-            if (castExpr->type->type == Type::Pointer && canConvertToNullPtr(*castExpr->innerExpr)) {
-                constexpr i64 one = 1;
-                staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(one));
-                return;
-            }
-        }
-    }
-    if (newExpr) {
-        staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-            std::move(newExpr)));
-    }
-    else {
-        staticInitializer.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-            std::move(singleInit->expr)));
-    }
-}
 
 void initArray(Parsing::VarDecl& array)
 {
-    std::vector<i64> dimensions = getDimensions(array);
     const Type innerArrayType = Ir::getArrayType(array.type.get());
-    const i64 size = std::accumulate(dimensions.begin(), dimensions.end(), i64{1}, std::multiplies<>{});
-    auto arrayInit = array.init.get();
+    const auto arrayInit = array.init.get();
+    auto[staticInitializer, emplacedPositions] = getSingleInitAndPositions(innerArrayType, arrayInit);
+    const std::vector<i64> dimensions = getDimensions(array);
+    staticInitializer = getZeroInits(staticInitializer, dimensions, emplacedPositions);
+    auto newArrayInit = std::make_unique<Parsing::CompoundInitializer>(std::move(staticInitializer));
+    array.init = std::move(newArrayInit);
+}
+
+std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
+    getSingleInitAndPositions(const Type innerArrayType, Parsing::Initializer* arrayInit)
+{
     std::vector<std::unique_ptr<Parsing::Initializer>> staticInitializer;
-    i64 atInFlattened = 0;
+    std::vector<std::vector<i64>> emplacedPositions;
     std::stack<Node, std::vector<Node>> stack;
-    stack.emplace(arrayInit, 0, 0);
-    do {
-        const auto[init, atInCompound, depth] = stack.top();
+    std::vector<i64> firstPosition;
+    stack.emplace(arrayInit, firstPosition);
+    while (!stack.empty()) {
+        const auto[init, position] = stack.top();
         stack.pop();
         switch (init->kind) {
             case Parsing::Initializer::Kind::Compound: {
                 const auto compoundInit = dynCast<Parsing::CompoundInitializer>(init);
-                if (compoundInit->initializers.size() <= atInCompound) {
-                    const i64 dimension = dimensions[depth];
-                    if (atInCompound + 1 < dimension) {
-                        staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(
-                            dimension - atInCompound));
-                        atInFlattened += dimension - atInCompound;
-                    }
-                }
-                else {
-                    stack.emplace(init, atInCompound + 1, depth);
-                    stack.emplace(compoundInit->initializers[atInCompound].get(), 0, depth + 1);
+                for (i64 i = compoundInit->initializers.size() - 1; 0 <= i; --i) {
+                    std::vector<i64> positionInCompound = position;
+                    positionInCompound.emplace_back(i);
+                    stack.emplace(compoundInit->initializers[i].get(), positionInCompound);
                 }
                 break;
             }
             case Parsing::Initializer::Kind::Single: {
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
-                emplaceNewSingleInit(innerArrayType, staticInitializer, singleInit);
-                ++atInFlattened;
+                auto newInit = emplaceNewSingleInit(innerArrayType, *singleInit);
+                staticInitializer.emplace_back(std::move(newInit));
+                emplacedPositions.emplace_back(position);
                 break;
             }
             default:
                 std::abort();
         }
-    } while (!stack.empty());
-    if (atInFlattened < size)
-        staticInitializer.emplace_back(std::make_unique<Parsing::ZeroInitializer>(size - atInFlattened));
-    staticInitializer = combineZeroInits(staticInitializer);
-    auto newArrayInit = std::make_unique<Parsing::CompoundInitializer>(std::move(staticInitializer));
-    array.init = std::move(newArrayInit);
+    }
+    return {std::move(staticInitializer), emplacedPositions};
 }
 
-std::vector<std::unique_ptr<Parsing::Initializer>> combineZeroInits(
-    const std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer)
+std::unique_ptr<Parsing::Initializer> emplaceNewSingleInit(
+    const Type innerArrayType, Parsing::SingleInitializer& singleInit)
+{
+    std::unique_ptr<Parsing::Expr> newExpr = nullptr;
+    if (singleInit.expr->kind != Parsing::Expr::Kind::Cast)
+        newExpr = convertOrCastToType(*singleInit.expr, innerArrayType);
+    else {
+        const auto castExpr = dynCast<Parsing::CastExpr>(singleInit.expr.get());
+        if (castExpr->innerExpr->kind == Parsing::Expr::Kind::Constant) {
+            if (isArithmetic(castExpr->type->type))
+                newExpr = convertToArithmeticType(*castExpr->innerExpr, innerArrayType);
+            if (castExpr->type->type == Type::Pointer && canConvertToNullPtr(*castExpr->innerExpr)) {
+                constexpr i64 one = 1;
+                return std::make_unique<Parsing::ZeroInitializer>(one);
+            }
+        }
+    }
+    if (newExpr)
+        return std::make_unique<Parsing::SingleInitializer>(std::move(newExpr));
+    return std::make_unique<Parsing::SingleInitializer>(std::move(singleInit.expr));
+}
+
+std::vector<std::unique_ptr<Parsing::Initializer>> getZeroInits(
+    const std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,
+    const std::vector<i64>& dimensions,
+    const std::vector<std::vector<i64>>& emplacedPositions)
 {
     using InitKind = Parsing::Initializer::Kind;
 
+    std::vector<i64> positionBefore;
     std::vector<std::unique_ptr<Parsing::Initializer>> newInitializers;
     for (size_t i = 0; i < staticInitializer.size(); ++i) {
-        if (staticInitializer[i]->kind == InitKind::Single && !isZeroSingleInit(*staticInitializer[i])) {
-            const auto sinleInit = dynCast<Parsing::SingleInitializer>(staticInitializer[i].get());
-            newInitializers.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-                Parsing::deepCopy(*sinleInit->expr)));
+        auto init = staticInitializer[i].get();
+        const std::vector<i64>& position = emplacedPositions[i];
+        if (init->kind != InitKind::Single)
             continue;
-        }
-        i64 length = 0;
-        while (i < staticInitializer.size()) {
-            if (staticInitializer[i]->kind == InitKind::Single) {
-                if (!isZeroSingleInit(*staticInitializer[i]))
-                    break;
-                ++length;
-            }
-            if (staticInitializer[i]->kind == InitKind::Zero) {
-                const auto zeroInit = dynCast<Parsing::ZeroInitializer>(staticInitializer[i].get());
-                length += zeroInit->size;
-            }
-            ++i;
-        }
-        --i;
-        newInitializers.emplace_back(std::make_unique<Parsing::ZeroInitializer>(length));
+        const i64 distance = getDistance(positionBefore, position, dimensions);
+        positionBefore = position;
+        if (distance != 0)
+            newInitializers.emplace_back(std::make_unique<Parsing::ZeroInitializer>(distance));
+        const auto sinleInit = dynCast<Parsing::SingleInitializer>(init);
+        newInitializers.emplace_back(std::make_unique<Parsing::SingleInitializer>(
+            Parsing::deepCopy(*sinleInit->expr)));
     }
+    const i64 arrayLastPosition = std::accumulate(dimensions.begin(), dimensions.end(), i64{1}, std::multiplies<>{});
+    const i64 positionLast = getPosition(positionBefore, dimensions);
+    const i64 distanceToLast = arrayLastPosition - positionLast - 1;
+    if (distanceToLast != 0)
+        newInitializers.emplace_back(std::make_unique<Parsing::ZeroInitializer>(distanceToLast));
     return newInitializers;
+}
+
+i64 getDistance(const std::vector<i64>& positionBefore,
+                const std::vector<i64>& position,
+                const std::vector<i64>& dimensions)
+{
+    const i64 before = getPosition(positionBefore, dimensions);
+    const i64 now = getPosition(position, dimensions);
+    return now - before - 1;
+}
+
+i64 getPosition(const std::vector<i64>& position, const std::vector<i64>& dimensions)
+{
+    if (position.empty())
+        return -1;
+    i64 result = 0;
+    i64 dimension = 1;
+    for (i64 i = position.size() - 1; 0 <= i; --i) {
+        const i64 localPosition = position[i];
+        result += dimension * localPosition;
+        dimension *= dimensions[i];
+    }
+    return result;
 }
 
 bool isZeroSingleInit(const Parsing::Initializer& init)
@@ -297,7 +309,6 @@ std::vector<i64> getDimensions(const Parsing::VarDecl& array)
         dimensions.emplace_back(arrayType->size);
         type = arrayType->elementType.get();
     } while (type->kind == Parsing::TypeBase::Kind::Array);
-    dimensions.emplace_back(1);
     return dimensions;
 }
 } // Semantics
