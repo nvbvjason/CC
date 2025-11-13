@@ -1,7 +1,7 @@
 # CC
 
 ## Quick start guide
-
+Linux x86_64 required
 
 #### Clone repo:
 `git clone https://github.com/nvbvjason/CC.git`
