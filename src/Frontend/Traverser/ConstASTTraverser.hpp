@@ -52,6 +52,7 @@ public:
 
     // Expression
     void visit(const ConstExpr& constExpr) override {}
+    void visit(const StringExpr&) override {}
     void visit(const VarExpr& varExpr) override {}
     void visit(const CastExpr& castExpr) override;
     void visit(const UnaryExpr& unaryExpr) override;

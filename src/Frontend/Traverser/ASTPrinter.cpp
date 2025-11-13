@@ -297,6 +297,13 @@ void ASTPrinter::visit(const UnaryExpr& unaryExpr)
     ConstASTTraverser::visit(unaryExpr);
 }
 
+void ASTPrinter::visit(const StringExpr& stringExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("StringExpr: " + stringExpr.value);
+    ConstASTTraverser::visit(stringExpr);
+}
+
 void ASTPrinter::visit(const CastExpr& castExpr)
 {
     IndentGuard guard(m_indentLevel);

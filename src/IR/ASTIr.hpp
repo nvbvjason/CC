@@ -81,7 +81,7 @@ struct ValueVar final : Value {
 };
 
 struct ValueConst final : Value {
-    std::variant<i32, i64, u32, u64, double> value;
+    std::variant<i8, u8, i32, i64, u32, u64, double> value;
     explicit ValueConst(const i32 v)
         : Value(Type::I32 ,Kind::Constant), value(v) {}
     explicit ValueConst(const i64 v)

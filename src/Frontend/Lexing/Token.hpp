@@ -104,7 +104,7 @@ struct Token {
         NotAToken,                       // maybe bad design
         Invalid                          // Invalid token
     };
-    std::variant<i32, i64, u32, u64, double> m_data;
+    std::variant<i8, u8, i32, i64, u32, u64, double> m_data;
     i32 m_line;
     u16 m_column;
     Type m_type;
@@ -112,7 +112,7 @@ struct Token {
     Token(const i32 line, const u16 column, const Type type, std::string lexeme)
         : m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
     Token(
-        const std::variant<i32, i64, u32, u64, double> data,
+        const std::variant<i8, u8, i32, i64, u32, u64, double> data,
         const i32 line, const u16 column,
         const Type type, std::string lexeme)
         : m_data(data), m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}

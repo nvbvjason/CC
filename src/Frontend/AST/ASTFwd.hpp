@@ -11,7 +11,7 @@ namespace Parsing {
     variable_declaration = (identifier name, exp? init, type var_type, storage_class?)
     function_definition = (identifier name, identifier* params, block? body, type var_type, storage_class?)
 
-    type = Int | Long | UInt | ULong | Double |
+    type = Int | Long | UInt | ULong | Double | Char | SChar | UChar
          | FunType(type* params, type ret)
          | Pointer(type referenced)
          | Array(type element, int size)
@@ -36,6 +36,7 @@ namespace Parsing {
               | FunctionCall(identifier, exp* args)
               | Null
     exp = Constant(const)
+        | String(string)
         | Var(identifier)
         | Cast(type target, exp)
         | Unary(unary_operator, exp)
@@ -117,6 +118,7 @@ struct NullStmt;
 // Expressions
 struct Expr;
 struct ConstExpr;
+struct StringExpr;
 struct VarExpr;
 struct CastExpr;
 struct UnaryExpr;

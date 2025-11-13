@@ -382,7 +382,7 @@ void Lexer::character()
 void Lexer::string()
 {
     char nextCh = peek();
-    std::string toAdd = "";
+    std::string toAdd;
     while (!isAtEnd() && nextCh != '\"') {
         if (nextCh == '\\') {
             advance();
@@ -391,7 +391,7 @@ void Lexer::string()
                 addToken(Type::Invalid);
                 break;
             }
-            toAdd += escapedChar;
+            toAdd += static_cast<char>(escapedChar);
             nextCh = peek();
             continue;
         }
@@ -423,7 +423,7 @@ void Lexer::identifier()
 
 void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std::string& text) const
 {
-    std::variant<i32, i64, u32, u64, double> value;
+    std::variant<i8, u8, i32, i64, u32, u64, double> value;
     if (type == Type::IntegerLiteral)
         value = static_cast<i32>(num);
     else if (type == Type::LongLiteral)
@@ -445,7 +445,7 @@ void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std
 void Lexer::addCharLiteral(const i32 ch) const
 {
     const i32 ahead = m_current - m_start;
-    const std::variant<i32, i64, u32, u64, double> valueToStore = static_cast<i32>(ch);
+    const std::variant<i8, u8, i32, i64, u32, u64, double> valueToStore = static_cast<i32>(ch);
     tokenStore.emplaceBack(
         valueToStore,
         m_line,
@@ -458,7 +458,7 @@ void Lexer::addStringLiteral(const std::string& str) const
 {
     const i32 ahead = m_current - m_start;
     tokenStore.emplaceBack(
-        std::variant<i32, i64, u32, u64, double>(),
+        std::variant<i8, u8, i32, i64, u32, u64, double>(),
         m_line,
         m_column - ahead,
         Type::CharLiteral,
@@ -468,7 +468,7 @@ void Lexer::addStringLiteral(const std::string& str) const
 void Lexer::addToken(const Token::Type type)
 {
     const i32 ahead = m_current - m_start;
-    std::variant<i32, i64, u32, u64, double> valueToStore;
+    std::variant<i8, u8, i32, i64, u32, u64, double> valueToStore;
     tokenStore.emplaceBack(
         valueToStore,
         m_line,
@@ -479,11 +479,11 @@ void Lexer::addToken(const Token::Type type)
         errors.emplace_back("Unknown token type", tokenStore.size() - 1);
 }
 
-void Lexer::addTokenStoreString(const Token::Type type)
+void Lexer::addTokenStoreString(const Token::Type type) const
 {
     const i32 ahead = m_current - m_start;
     std::string text = c_source.substr(m_start, ahead);
-    std::variant<i32, i64, u32, u64, double> valueToStore = 0;
+    std::variant<i8, u8, i32, i64, u32, u64, double> valueToStore = 0;
     if (type == Type::DoubleLiteral) {
         const double value = std::strtod(text.c_str(), nullptr);
         if (errno == ERANGE && value == HUGE_VAL)

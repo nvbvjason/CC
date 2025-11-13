@@ -69,7 +69,7 @@ protected:
 
 struct Expr : ASTNode {
     enum class Kind {
-        Constant, Var, Cast, Unary, Binary, Assignment, Ternary, FunctionCall,
+        Constant, String, Var, Cast, Unary, Binary, Assignment, Ternary, FunctionCall,
         Dereference, AddrOf, Subscript
     };
     const Kind kind;

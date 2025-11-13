@@ -68,7 +68,7 @@ private:
     void addStringLiteral(const std::string& str) const;
     void addToken(Token::Type type, u64 num, i32 ahead, std::string& text) const;
     void addToken(Token::Type type);
-    void addTokenStoreString(Token::Type type);
+    void addTokenStoreString(Token::Type type) const;
 
     void forwardSlash();
     void identifier();

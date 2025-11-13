@@ -53,6 +53,7 @@ public:
 
     // Expressions
     virtual void visit(ConstExpr&) = 0;
+    virtual void visit(StringExpr&) = 0;
     virtual void visit(VarExpr&) = 0;
     virtual void visit(CastExpr&) = 0;
     virtual void visit(UnaryExpr&) = 0;
@@ -114,6 +115,7 @@ public:
 
     // Expressions
     virtual void visit(const ConstExpr&) = 0;
+    virtual void visit(const StringExpr&) = 0;
     virtual void visit(const VarExpr&) = 0;
     virtual void visit(const CastExpr&) = 0;
     virtual void visit(const UnaryExpr&) = 0;

@@ -13,7 +13,7 @@
 namespace Parsing {
 
 struct ConstExpr final : Expr {
-    std::variant<i32, i64, u32, u64, double> value;
+    std::variant<i8, u8, i32, i64, u32, u64, double> value;
 
     template<typename T>
     ConstExpr(T&& value, std::unique_ptr<TypeBase> varType) noexcept
@@ -48,6 +48,20 @@ struct ConstExpr final : Expr {
     static bool classOf(const Expr* expr) { return expr->kind == Kind::Constant; }
 
     ConstExpr() = delete;
+};
+
+struct StringExpr final : Expr {
+    const std::string value;
+
+    StringExpr(const i64 location, std::string&& value)
+        : Expr(location, Kind::String), value(std::move(value)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::String; }
+
+    StringExpr() = delete;
 };
 
 struct VarExpr final : Expr {

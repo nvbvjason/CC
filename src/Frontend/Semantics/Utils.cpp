@@ -68,7 +68,7 @@ bool isBinaryComparison(const Parsing::BinaryExpr::Operator oper)
 std::unique_ptr<Parsing::Expr> convertToArithmeticType(const Parsing::Expr& expr, const Type targetType)
 {
     const auto constExpr = dynCast<const Parsing::ConstExpr>(&expr);
-    std::variant<i32, i64, u32, u64, double> convertedValue;
+    std::variant<i8, u8, i32, i64, u32, u64, double> convertedValue;
 
     switch (targetType) {
         case Type::I32:
