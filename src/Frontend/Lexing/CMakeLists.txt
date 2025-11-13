@@ -1,7 +1,6 @@
 add_library(Lexing STATIC
         Lexer.cpp
         Token.cpp
-        TokenStore.cpp
         TokenStore.hpp
 )
 

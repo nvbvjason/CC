@@ -43,6 +43,7 @@ class Lexer {
         {"signed", Type::Signed},
         {"unsigned", Type::Unsigned},
         {"double", Type::DoubleKeyword},
+        {"char", Type::CharKeyword},
     };
 public:
     explicit Lexer(const std::string& input, TokenStore& tokenStore)
@@ -52,6 +53,8 @@ public:
         tokenStore.reserve(estimatedTokens);
     }
     std::vector<Error> getLexemes();
+    void string();
+    i32 handleEscapedChars();
 private:
     [[nodiscard]] bool isAtEnd() const { return c_source.size() <= m_current; }
     [[nodiscard]] char peek() const;
@@ -61,6 +64,8 @@ private:
     bool match(const std::string& expected);
     void scanToken();
     char advance();
+    void addCharLiteral(i32 ch) const;
+    void addStringLiteral(const std::string& str) const;
     void addToken(Token::Type type, u64 num, i32 ahead, std::string& text) const;
     void addToken(Token::Type type);
     void addTokenStoreString(Token::Type type);
@@ -69,6 +74,7 @@ private:
     void identifier();
     void number();
     void floating();
+    void character();
 };
 
 inline bool matchesUL(const std::string& text, const i32 endNumbers, const i32 current)

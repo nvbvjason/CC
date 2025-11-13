@@ -37,7 +37,8 @@ bool lexerValid(const std::filesystem::directory_entry& filePath)
     const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
     TokenStore tokenStore;
     Lexing::Lexer lexer(sourceCode, tokenStore);
-    return lexer.getLexemes().empty();
+    const std::vector<Error> errors = lexer.getLexemes();
+    return errors.empty();
 }
 
 bool ParseFileAndGiveResult(const std::filesystem::directory_entry& filePath)
@@ -898,6 +899,26 @@ TEST(Chapter15_Arrays_Pointer_Arithmetic, invalidTypes)
         if (!isCFile(path))
             continue;
         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter16_Characters_and_Strings, lexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_16/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter16_Characters_and_Strings, lexingInvalid)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_16/invalid_lex";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_FALSE(lexerValid(path)) << path.path().string();
     }
 }
 

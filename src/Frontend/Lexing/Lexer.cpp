@@ -168,6 +168,12 @@ void Lexer::scanToken()
         case '/':
             forwardSlash();
             break;
+        case '\'':
+            character();
+            break;
+        case '\"':
+            string();
+            break;
         case ' ':
         case '\t':
         case '\r':
@@ -319,6 +325,88 @@ void Lexer::floating()
     addTokenStoreString(Type::DoubleLiteral);
 }
 
+i32 Lexer::handleEscapedChars()
+{
+    const char nextChar = advance();
+    switch (nextChar) {
+        case '?':   return '\?';
+        case '\"':  return '\"';
+        case '\'':  return '\'';
+        case '\\':  return '\\';
+        case 'a':   return '\a';
+        case 'b':   return '\b';
+        case 'f':   return '\f';
+        case 'n':   return '\n';
+        case 'r':   return '\r';
+        case 't':   return '\t';
+        case 'v':   return '\v';
+        default:
+            return INT_MAX;
+    }
+    std::abort();
+}
+
+void Lexer::character()
+{
+    const char nextCh = advance();
+    if (nextCh == '\'') {
+        addToken(Type::Invalid);
+        return;
+    }
+    if (nextCh == '\\') {
+        const i32 next = handleEscapedChars();
+        if (next == INT_MAX) {
+            addToken(Type::Invalid);
+            return;
+        }
+        if (peek() == '\'') {
+            advance();
+            addCharLiteral(next);
+            return;
+        }
+        addToken(Type::Invalid);
+        return;
+    }
+    if (isprint(nextCh) || nextCh == ' ' || nextCh == '\t' || nextCh == '\v' || nextCh == '\f') {
+        if (peek() == '\'') {
+            advance();
+            addCharLiteral(nextCh);
+            return;
+        }
+        addToken(Type::Invalid);
+        return;
+    }
+    addToken(Type::Invalid);
+}
+
+void Lexer::string()
+{
+    char nextCh = peek();
+    std::string toAdd = "";
+    while (!isAtEnd() && nextCh != '\"') {
+        if (nextCh == '\\') {
+            advance();
+            const i32 escapedChar = handleEscapedChars();
+            if (escapedChar == INT_MAX) {
+                addToken(Type::Invalid);
+                break;
+            }
+            toAdd += escapedChar;
+            nextCh = peek();
+            continue;
+        }
+        if (nextCh == '\n') {
+            addToken(Type::Invalid);
+            break;
+        }
+        advance();
+        nextCh = peek();
+        toAdd += nextCh;
+    }
+    advance();
+    addStringLiteral(toAdd);
+}
+
 void Lexer::identifier()
 {
     while (isalnum(peek()) || peek() == '_')
@@ -352,6 +440,29 @@ void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std
         m_column - ahead,
         type,
         std::move(text));
+}
+
+void Lexer::addCharLiteral(const i32 ch) const
+{
+    const i32 ahead = m_current - m_start;
+    const std::variant<i32, i64, u32, u64, double> valueToStore = static_cast<i32>(ch);
+    tokenStore.emplaceBack(
+        valueToStore,
+        m_line,
+        m_column - ahead,
+        Type::CharLiteral,
+        "");
+}
+
+void Lexer::addStringLiteral(const std::string& str) const
+{
+    const i32 ahead = m_current - m_start;
+    tokenStore.emplaceBack(
+        std::variant<i32, i64, u32, u64, double>(),
+        m_line,
+        m_column - ahead,
+        Type::CharLiteral,
+        str);
 }
 
 void Lexer::addToken(const Token::Type type)

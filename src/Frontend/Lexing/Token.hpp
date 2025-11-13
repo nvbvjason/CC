@@ -51,11 +51,13 @@ struct Token {
 
         // Identifiers & Literals
         Identifier,                      // User-defined names
+        CharLiteral,                     // Char literals
         IntegerLiteral,                  // Integer literals
         UnsignedIntegerLiteral,          // Unsigned Integer literals
         LongLiteral,                     // Long literal
         UnsignedLongLiteral,             // Unsigned long literals
         DoubleLiteral,                   // Double literal
+        StringLiteral,                   // String literal
 
         // Assignment
         Equal,                           // =
@@ -77,6 +79,7 @@ struct Token {
         // Keywords
         Return,                          // return
         Void,                            // void
+        CharKeyword,                     // char
         IntKeyword,                      // int
         LongKeyword,                     // long
         DoubleKeyword,                   // double
