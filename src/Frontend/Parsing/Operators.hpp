@@ -251,6 +251,7 @@ constexpr bool isSpecifier(const TokenType type)
     switch (type) {
         case TokenType::Static:
         case TokenType::Extern:
+        case TokenType::CharKeyword:
         case TokenType::IntKeyword:
         case TokenType::LongKeyword:
         case TokenType::DoubleKeyword:
@@ -276,6 +277,7 @@ constexpr bool isStorageSpecifier(const TokenType type)
 constexpr bool isType(const TokenType type)
 {
     switch (type) {
+        case TokenType::CharKeyword:
         case TokenType::IntKeyword:
         case TokenType::LongKeyword:
         case TokenType::Signed:
@@ -325,9 +327,10 @@ inline Declaration::StorageClass getStorageClass(const Lexing::Token::Type token
 inline bool isLiteral(const TokenType type)
 {
     switch (type) {
+        case TokenType::CharLiteral:
         case TokenType::IntegerLiteral:
-        case TokenType::LongLiteral:
         case TokenType::UnsignedIntegerLiteral:
+        case TokenType::LongLiteral:
         case TokenType::UnsignedLongLiteral:
         case TokenType::DoubleLiteral:
             return true;

@@ -399,9 +399,9 @@ void Lexer::string()
             addToken(Type::Invalid);
             break;
         }
+        toAdd += nextCh;
         advance();
         nextCh = peek();
-        toAdd += nextCh;
     }
     advance();
     addStringLiteral(toAdd);
@@ -445,7 +445,7 @@ void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std
 void Lexer::addCharLiteral(const i32 ch) const
 {
     const i32 ahead = m_current - m_start;
-    const std::variant<i8, u8, i32, i64, u32, u64, double> valueToStore = static_cast<i32>(ch);
+    const std::variant<i8, u8, i32, i64, u32, u64, double> valueToStore = ch;
     tokenStore.emplaceBack(
         valueToStore,
         m_line,
@@ -461,7 +461,7 @@ void Lexer::addStringLiteral(const std::string& str) const
         std::variant<i8, u8, i32, i64, u32, u64, double>(),
         m_line,
         m_column - ahead,
-        Type::CharLiteral,
+        Type::StringLiteral,
         str);
 }
 

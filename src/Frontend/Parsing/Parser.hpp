@@ -11,7 +11,7 @@
     <param-list>            ::= "(" "void" ")" | "(" <param> [ "," <param> ] ")"
     <param>                 ::= { <type-specifier> }+ <declarator>
     <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
-    <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double"
+    <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double" | "char"
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
     <block-item>            ::= <statement> | <declaration>
@@ -40,6 +40,7 @@
     <unary-exp>             ::= <postfix-exp> | <unary-op> <cast-exp>
     <postfix-exp>           ::= <factor> | <postfix_exp> <postfix-op>
     <factor>                ::= <const>
+                              | { <string> }+
                               | <identifier>
                               | <identifier> "(" [ <argument-list> ] ")"
                               | "(" <exp> ")"
@@ -53,8 +54,10 @@
                               | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
                               | "+=" | "-=" | "*=" | "/=" | "%="
                               | "&=" | "|=" | "^=" | "<<=" | ">>="
-    <const>                 ::= <int> | <long> | <uint> | <ulong> | <double>
+    <const>                 ::= <int> | <long> | <uint> | <ulong> | <double> | <char>
     <identifier>            ::= ? An identifier token ?
+    <string>                ::= ? A string token ?
+    <char>                  ::= ? A char token ?
     <int>                   ::= ? A int token ?
     <long>                  ::= ? A long token ?
     <uint>                  ::= ? An unsigned int token ?
@@ -153,7 +156,6 @@ public:
     [[nodiscard]] std::tuple<Type, TokenType> specifierParse();
     [[nodiscard]] static Type typeResolve(std::vector<TokenType>& tokens);
 private:
-    bool match(const TokenType& type);
     Lexing::Token advance() { return c_tokenStore.getToken(m_current++); }
     [[nodiscard]] bool isAtEnd() const { return peekTokenType() == TokenType::EndOfFile; }
     [[nodiscard]] static bool continuePrecedenceClimbing(i32 minPrecedence, TokenType nextToken);

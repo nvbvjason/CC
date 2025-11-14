@@ -922,6 +922,27 @@ TEST(Chapter16_Characters_and_Strings, lexingInvalid)
     }
 }
 
+
+TEST(Chapter16_Characters_and_Strings, validParsing)
+{
+    const fs::path validPath = testsFolderPath / "chapter_16/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter16_Characters_and_Strings, invalidParsing)
+{
+    const fs::path validPath = testsFolderPath / "chapter_16/invalid_parse";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

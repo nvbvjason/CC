@@ -769,6 +769,17 @@ std::unique_ptr<Expr> Parser::factorParse()
     if (Operators::isLiteral(peekTokenType()))
         return constExprParse();
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
+        case TokenType::StringLiteral: {
+            std::string tokenString = lexeme.m_lexeme;
+            const i64 location = m_current;
+            while (peekNextTokenType() == TokenType::StringLiteral)
+                tokenString += advance().m_lexeme;
+            auto constantExpr = std::make_unique<StringExpr>(
+                location, std::move(tokenString));
+            if (advance().m_type == TokenType::EndOfFile)
+                return nullptr;
+            return constantExpr;
+        }
         case TokenType::Identifier: {
             advance();
             if (!expect(TokenType::OpenParen))
@@ -795,46 +806,45 @@ std::unique_ptr<Expr> Parser::factorParse()
 
 std::unique_ptr<Expr> Parser::constExprParse()
 {
+    std::variant<i8, u8, i32, i64, u32, u64, double> value;
+    std::unique_ptr<TypeBase> type;
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
+        case TokenType::CharLiteral: {
+            value = lexeme.getI32Value();
+            type = std::make_unique<VarType>(Type::Char);
+            break;
+        }
         case TokenType::IntegerLiteral: {
-            auto constantExpr = std::make_unique<ConstExpr>(
-                m_current, lexeme.getI32Value(), std::make_unique<VarType>(Type::I32));
-            if (advance().m_type == TokenType::EndOfFile)
-                return nullptr;
-            return constantExpr;
-        }
-        case TokenType::LongLiteral: {
-            auto constantExpr = std::make_unique<ConstExpr>(
-                m_current, lexeme.getI64Value(), std::make_unique<VarType>(Type::I64));
-            if (advance().m_type == TokenType::EndOfFile)
-                return nullptr;
-            return constantExpr;
-        }
-        case TokenType::UnsignedLongLiteral: {
-            auto constantExpr = std::make_unique<ConstExpr>(
-                m_current, lexeme.getU64Value(), std::make_unique<VarType>(Type::U64));
-            if (advance().m_type == TokenType::EndOfFile)
-                return nullptr;
-            return constantExpr;
+            value = lexeme.getI32Value();
+            type = std::make_unique<VarType>(Type::I32);
+            break;
         }
         case TokenType::UnsignedIntegerLiteral: {
-            auto constantExpr = std::make_unique<ConstExpr>(
-                m_current, lexeme.getU32Value(), std::make_unique<VarType>(Type::U32));
-            if (advance().m_type == TokenType::EndOfFile)
-                return nullptr;
-            return constantExpr;
+            value = lexeme.getU32Value();
+            type = std::make_unique<VarType>(Type::U32);
+            break;
+        }
+        case TokenType::LongLiteral: {
+            value = lexeme.getI64Value();
+            type = std::make_unique<VarType>(Type::I64);
+            break;
+        }
+        case TokenType::UnsignedLongLiteral: {
+            value = lexeme.getU64Value();
+            type = std::make_unique<VarType>(Type::U64);
+            break;
         }
         case TokenType::DoubleLiteral: {
-            auto constantExpr = std::make_unique<ConstExpr>(
-                m_current, lexeme.getDoubleValue(), std::make_unique<VarType>(Type::Double));
-            if (advance().m_type == TokenType::EndOfFile)
-                return nullptr;
-            return constantExpr;
+            value = lexeme.getDoubleValue();
+            type = std::make_unique<VarType>(Type::Double);
+            break;
         }
         default:
             return nullptr;
     }
-    std::unreachable();
+    if (advance().m_type == TokenType::EndOfFile)
+        return nullptr;
+    return std::make_unique<ConstExpr>(m_current, value, std::move(type));
 }
 
 std::unique_ptr<AbstractDeclarator> Parser::abstractDeclaratorParse()
@@ -954,6 +964,17 @@ Type Parser::typeParse()
 
 Type Parser::typeResolve(std::vector<TokenType>& tokens)
 {
+    if (std::ranges::find(tokens, TokenType::CharKeyword) != tokens.end()) {
+        if (2 < tokens.size())
+            return Type::Invalid;
+        if (tokens.size() == 1)
+            return Type::Char;
+        if (std::ranges::find(tokens, TokenType::Unsigned) != tokens.end())
+            return Type::U8;
+        if (std::ranges::find(tokens, TokenType::Signed) != tokens.end())
+            return Type::I8;
+        return Type::Invalid;
+    }
     if (tokens.size() == 1 && tokens.front() == TokenType::DoubleKeyword)
         return Type::Double;
     if (std::ranges::find(tokens, TokenType::DoubleKeyword) != tokens.end())
@@ -981,16 +1002,6 @@ bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens)
     for (i64 i = 1; i < tokens.size(); ++i)
         if (tokens[i] == tokens[i - 1])
             return true;
-    return false;
-}
-
-bool Parser::match(const TokenType &type)
-{
-    if (type == peekTokenType()) {
-        if (advance().m_type == TokenType::EndOfFile)
-            return false;
-        return true;
-    }
     return false;
 }
 

@@ -37,6 +37,8 @@ struct ConstExpr final : Expr {
                 return std::get<u64>(value);
             case Type::Double:
                 return std::get<double>(value);
+            case Type::Char:
+                return std::get<i32>(value);
             default:
                 std::abort();
         }
