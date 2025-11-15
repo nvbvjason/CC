@@ -75,6 +75,10 @@ inline std::string LoopLabeling::makeTemporary(const std::string& name)
     return name + '.' + std::to_string(m_counter++);
 }
 
+void initCharacterArray(Parsing::VarDecl& varDecl,
+                        Parsing::SingleInitializer& singleInit,
+                        const Parsing::ArrayType& arrayType);
+
 void initArray(Parsing::VarDecl& array);
 std::vector<i64> getDimensions(const Parsing::VarDecl& array);
 std::vector<i64> getScales(const std::vector<i64>& dimensions, i64 size);

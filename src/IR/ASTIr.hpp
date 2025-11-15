@@ -14,6 +14,7 @@
 program = Program(top_level*)
 top_level = Function(identifier, bool global, identifier params, instruction* body)
           | StaticVariable(identifier, bool global, type t, init)
+          | StaticConstant(identifier, type t, static_init)
 instruction = Return(val)
             | SignExtend(val src, val dst)
             | Truncate(val src, val dst)
@@ -82,6 +83,12 @@ struct ValueVar final : Value {
 
 struct ValueConst final : Value {
     std::variant<i8, u8, i32, i64, u32, u64, double> value;
+    explicit ValueConst(const u8 v)
+        : Value(Type::U8, Kind::Constant), value(v) {}
+    explicit ValueConst(const i8 v)
+        : Value(Type::I8, Kind::Constant), value(v) {}
+    explicit ValueConst(const char ch)
+        : Value(Type::I8, Kind::Constant), value(ch) {}
     explicit ValueConst(const i32 v)
         : Value(Type::I32 ,Kind::Constant), value(v) {}
     explicit ValueConst(const i64 v)
@@ -431,7 +438,7 @@ struct AllocateInst final : Instruction {
 
 struct TopLevel {
     enum class Kind {
-        Function, StaticVariable, StaticArray
+        Function, StaticVariable, StaticArray, StaticConstant
     };
     const Kind kind;
 
@@ -458,8 +465,8 @@ struct Function final : TopLevel {
 };
 
 struct StaticVariable final : TopLevel {
-    std::string name;
-    std::shared_ptr<Value> value;
+    const std::string name;
+    const std::shared_ptr<Value> value;
     const Type type;
     const bool global;
     StaticVariable(std::string identifier,
@@ -475,21 +482,40 @@ struct StaticVariable final : TopLevel {
 };
 
 struct StaticArray final : TopLevel {
-    std::string name;
-    std::vector<std::unique_ptr<Initializer>> initializers;
+    const std::string name;
+    const std::vector<std::unique_ptr<Initializer>> initializers;
     const Type type;
     const bool global;
-    explicit StaticArray(std::string identifier,
-                         std::vector<std::unique_ptr<Initializer>>&& initializers,
-                         const Type ty,
-                         const bool isGlobal)
-        : TopLevel(Kind::StaticArray), name
-                (std::move(identifier)), initializers(std::move(initializers)),
-          type(ty), global(isGlobal) {}
+    StaticArray(std::string identifier,
+                std::vector<std::unique_ptr<Initializer>>&& initializers,
+                const Type ty,
+                const bool isGlobal)
+        : TopLevel(Kind::StaticArray),
+          name(std::move(identifier)),
+          initializers(std::move(initializers)),
+          type(ty),
+          global(isGlobal) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticArray; }
 
     StaticArray() = delete;
+};
+
+struct StaticConstant final : TopLevel {
+    const Identifier identifier;
+    const std::string value;
+    const bool global;
+    const bool nullTerminated;
+
+    StaticConstant(Identifier identifier, std::string  value, const bool global, const bool nullTerminated)
+        : TopLevel(Kind::StaticConstant), identifier(std::move(identifier)),
+                                            value(std::move(value)),
+                                            global(global),
+                                            nullTerminated(nullTerminated){}
+
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticConstant; }
+
+    StaticConstant() = delete;
 };
 
 struct Program {

@@ -249,7 +249,7 @@ protected:
 struct MoveInst final : Inst {
     std::shared_ptr<Operand> src;
     std::shared_ptr<Operand> dst;
-    AsmType type;
+    const AsmType type;
 
     MoveInst(
         std::shared_ptr<Operand> src,
@@ -266,11 +266,15 @@ struct MoveInst final : Inst {
 struct MoveSXInst final : Inst {
     std::shared_ptr<Operand> src;
     std::shared_ptr<Operand> dst;
+    const AsmType srcType;
+    const AsmType dstType;
 
     MoveSXInst(
         std::shared_ptr<Operand> src,
-        std::shared_ptr<Operand> dst)
-        : Inst(Kind::MoveSX), src(std::move(src)), dst(std::move(dst)) {}
+        std::shared_ptr<Operand> dst,
+        const AsmType srcType,
+        const AsmType dstType)
+        : Inst(Kind::MoveSX), src(std::move(src)), dst(std::move(dst)), srcType(srcType), dstType(dstType) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::MoveSX; }
@@ -281,13 +285,18 @@ struct MoveSXInst final : Inst {
 struct MoveZeroExtendInst final : Inst {
     std::shared_ptr<Operand> src;
     std::shared_ptr<Operand> dst;
-    AsmType type;
+    const AsmType srcType;
+    const AsmType dstType;
 
     MoveZeroExtendInst(
         std::shared_ptr<Operand> src,
         std::shared_ptr<Operand> dst,
-        const AsmType t)
-        : Inst(Kind::MoveZeroExtend), src(std::move(src)), dst(std::move(dst)), type(t) {}
+        const AsmType srcType,
+        const AsmType dstType)
+        : Inst(Kind::MoveZeroExtend), src(std::move(src)),
+                                        dst(std::move(dst)),
+                                        srcType(srcType),
+                                        dstType(dstType) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::MoveZeroExtend; }
@@ -298,7 +307,7 @@ struct MoveZeroExtendInst final : Inst {
 struct LeaInst final : Inst {
     std::shared_ptr<Operand> src;
     std::shared_ptr<Operand> dst;
-    AsmType type;
+    const AsmType type;
 
     LeaInst(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst, const AsmType t)
         : Inst(Kind::Lea), src(std::move(src)), dst(std::move(dst)), type(t) {}
@@ -312,7 +321,7 @@ struct LeaInst final : Inst {
 struct Cvttsd2siInst final : Inst {
     std::shared_ptr<Operand> src;
     std::shared_ptr<Operand> dst;
-    AsmType dstType;
+    const AsmType dstType;
 
     Cvttsd2siInst(
         std::shared_ptr<Operand> src,
@@ -329,7 +338,7 @@ struct Cvttsd2siInst final : Inst {
 struct Cvtsi2sdInst final : Inst {
     std::shared_ptr<Operand> src;
     std::shared_ptr<Operand> dst;
-    AsmType srcType;
+    const AsmType srcType;
 
     Cvtsi2sdInst(
         std::shared_ptr<Operand> src,
@@ -348,8 +357,8 @@ struct UnaryInst final : Inst {
         Neg, Not, Shr
     };
     std::shared_ptr<Operand> destination;
-    Operator oper;
-    AsmType type;
+    const Operator oper;
+    const AsmType type;
 
     UnaryInst(std::shared_ptr<Operand> dst, const Operator op, const AsmType type)
         : Inst(Kind::Unary), destination(std::move(dst)), oper(op), type(type) {}
@@ -370,8 +379,8 @@ struct BinaryInst final : Inst {
     };
     std::shared_ptr<Operand> lhs;
     std::shared_ptr<Operand> rhs;
-    Operator oper;
-    AsmType type;
+    const Operator oper;
+    const AsmType type;
     BinaryInst(std::shared_ptr<Operand> lhs,
                std::shared_ptr<Operand> rhs,
                const Operator op,
@@ -387,7 +396,7 @@ struct BinaryInst final : Inst {
 struct CmpInst final : Inst {
     std::shared_ptr<Operand> lhs;
     std::shared_ptr<Operand> rhs;
-    AsmType type;
+    const AsmType type;
     CmpInst(std::shared_ptr<Operand> lhs, std::shared_ptr<Operand> rhs, const AsmType ty)
         : Inst(Kind::Cmp), lhs(std::move(lhs)), rhs(std::move(rhs)), type(ty) {}
 
@@ -399,7 +408,7 @@ struct CmpInst final : Inst {
 
 struct IdivInst final : Inst {
     std::shared_ptr<Operand> operand;
-    AsmType type;
+    const AsmType type;
 
     IdivInst(std::shared_ptr<Operand> operand, const AsmType ty)
         : Inst(Kind::Idiv), operand(std::move(operand)), type(ty) {}
@@ -412,7 +421,7 @@ struct IdivInst final : Inst {
 
 struct DivInst final : Inst {
     std::shared_ptr<Operand> operand;
-    AsmType type;
+    const AsmType type;
 
     DivInst(std::shared_ptr<Operand> operand, const AsmType ty)
         : Inst(Kind::Div), operand(std::move(operand)), type(ty) {}
@@ -424,7 +433,7 @@ struct DivInst final : Inst {
 };
 
 struct CdqInst final : Inst {
-    AsmType type;
+    const AsmType type;
 
     explicit CdqInst(const AsmType ty)
         : Inst(Kind::Cdq), type(ty) {}
@@ -434,7 +443,7 @@ struct CdqInst final : Inst {
 };
 
 struct JmpInst final : Inst {
-    Identifier target;
+    const Identifier target;
     explicit JmpInst(Identifier target)
         : Inst(Kind::Jmp), target(std::move(target)) {}
 
@@ -445,8 +454,8 @@ struct JmpInst final : Inst {
 };
 
 struct JmpCCInst final : Inst {
-    CondCode condition;
-    Identifier target;
+    const CondCode condition;
+    const Identifier target;
     explicit JmpCCInst(const CondCode condition, Identifier target)
         : Inst(Kind::JmpCC), condition(condition), target(std::move(target)) {}
 
@@ -457,8 +466,8 @@ struct JmpCCInst final : Inst {
 };
 
 struct SetCCInst final : Inst {
-    CondCode condition;
     std::shared_ptr<Operand> operand;
+    const CondCode condition;
     explicit SetCCInst(const CondCode condition, std::shared_ptr<Operand> operand)
         : Inst(Kind::SetCC), condition(condition), operand(std::move(operand)) {}
 
@@ -469,7 +478,7 @@ struct SetCCInst final : Inst {
 };
 
 struct LabelInst final : Inst {
-    Identifier target;
+    const Identifier target;
     explicit LabelInst(Identifier target)
         : Inst(Kind::Label), target(std::move(target)) {}
 
@@ -483,7 +492,7 @@ struct PushPseudoInst final : Inst {
     const i64 size;
     const i64 alignment;
     const AsmType type;
-    Identifier identifier;
+    const Identifier identifier;
 
     PushPseudoInst(const i64 size, const i64 alignment, const AsmType type, Identifier identifier)
         : Inst(Kind::PushPseudo), size(size), alignment(alignment),
@@ -507,7 +516,7 @@ struct PushInst final : Inst {
 };
 
 struct CallInst final : Inst {
-    Identifier funName;
+    const Identifier funName;
     explicit CallInst(Identifier iden)
         : Inst(Kind::Call), funName(std::move(iden)) {}
 
@@ -527,7 +536,7 @@ struct ReturnInst final : Inst {
 
 struct TopLevel {
     enum class Kind {
-        Function, StaticVariable, StaticConstant, StaticArray
+        Function, StaticVariable, StaticConstant, StaticArray, StaticString
     };
     const Kind kind;
 
@@ -599,6 +608,21 @@ struct ArrayVariable final : TopLevel {
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticArray; }
 
     ArrayVariable() = delete;
+};
+
+struct StringVariable final : TopLevel {
+    const std::string name;
+    const std::string value;
+    const bool global;
+    const bool nullTerminated;
+
+    StringVariable(std::string name, const std::string& value, const bool global, const bool nullTerminated)
+        : TopLevel(Kind::StaticString), name(std::move(name)), value(value),
+                                         global(global), nullTerminated(nullTerminated) {}
+
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticString; }
+
+    StringVariable() = delete;
 };
 
 struct Program {

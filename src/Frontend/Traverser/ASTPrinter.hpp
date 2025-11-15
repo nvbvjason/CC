@@ -30,6 +30,7 @@ public:
     void visit(const Block& block) override;
 
     void visit(const ZeroInitializer& zeroInitializer) override;
+    void visit(const StringInitializer&) override;
 
     // Type
     void visit(const VarType& varType) override;

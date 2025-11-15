@@ -10,10 +10,13 @@ namespace {
 std::string varTypeToString(const Type kind)
 {
     switch (kind) {
+        case Type::Char:    return "char";
+        case Type::I8:      return "int8";
+        case Type::U8:      return "uint8";
         case Type::I32:     return "int";
+        case Type::U32:     return "uint";
         case Type::I64:     return "long";
-        case Type::U32:     return "u int";
-        case Type::U64:     return "u long";
+        case Type::U64:     return "ulong";
         case Type::Double:  return "double";
         case Type::Pointer: return "pointer";
         case Type::Array:   return "array";
@@ -141,6 +144,15 @@ void ASTPrinter::visit(const ZeroInitializer& zeroInitializer)
 {
     IndentGuard guard(m_indentLevel);
     addLine(std::to_string(zeroInitializer.size) + " zero init");
+}
+
+void ASTPrinter::visit(const StringInitializer& stringInitializer)
+{
+    IndentGuard guard(m_indentLevel);
+    if (stringInitializer.nullTerminated)
+        addLine(stringInitializer.value + " is null terminated " + " string init");
+    else
+        addLine(stringInitializer.value + " is not null terminated " + " string init");
 }
 
 void ASTPrinter::visit(const VarType& varType)

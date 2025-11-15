@@ -104,6 +104,8 @@ inline AsmType getAsmType(const Parsing::TypeBase& typeBase)
 
 inline AsmType getAsmType(const Type type)
 {
+    if (type == Type::I8 || type == Type::U8 || type == Type::Char)
+        return AsmType::Byte;
     if (type == Type::I32 || type == Type::U32)
         return AsmType::LongWord;
     if (type == Type::I64 || type == Type::U64 || type == Type::Pointer)

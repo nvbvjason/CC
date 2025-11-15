@@ -95,7 +95,8 @@ public:
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
     [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDeclaration& funDecl);
     void handelCompoundInit(const Parsing::VarDecl& varDecl);
-    void verifyArrayInSingleInit(const Parsing::VarDecl& varDecl);
+    void verifyArrayInSingleInit(
+        const Parsing::VarDecl& varDecl,  const Parsing::SingleInitializer& singleInitializer);
     void handleSingleInit(Parsing::VarDecl& varDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 private:

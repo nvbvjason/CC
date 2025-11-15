@@ -24,6 +24,8 @@ public:
 
     std::string print(const Program& program);
     void print(const StaticVariable& variable);
+    void print(const StaticArray& staticArray);
+    void print(const StaticConstant& staticConstant);
     void print(const Function& function);
     void print(const Instruction& instruction);
     static std::string print(const Value& value);

@@ -19,8 +19,27 @@ std::vector<Error> LoopLabeling::programValidate(Parsing::Program& program)
 
 void LoopLabeling::visit(Parsing::VarDecl& varDecl)
 {
-    if (varDecl.init && varDecl.init->kind == Parsing::Initializer::Kind::Compound)
-        initArray(varDecl);
+    if (!varDecl.init)
+        return;
+    if (varDecl.type->type == Type::Array) {
+        if (varDecl.init->kind == Parsing::Initializer::Kind::Compound) {
+            initArray(varDecl);
+            return;
+        }
+        const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
+        auto singleInitializer = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+        if (isCharacterType(arrayType->elementType->type))
+            initCharacterArray(varDecl, *singleInitializer, *arrayType);
+    }
+    // if (varDecl.type->type == Type::Pointer) {
+    //     const auto ptrType = dynCast<Parsing::PointerType>(varDecl.type.get());
+    //     if (!isCharacterType(ptrType->referenced->type))
+    //         return;
+    //     if (varDecl.init->kind == Parsing::Initializer::Kind::String) {
+    //         const auto stringInit = dynCast<Parsing::StringInitializer>(varDecl.init.get());
+    //
+    //     }
+    // }
 }
 
 void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
@@ -163,6 +182,31 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     breakLabel = breakTemp;
     switchLabel = switchTemp;
     conditionType = conditionTypeTemp;
+}
+
+void initCharacterArray(Parsing::VarDecl& varDecl,
+                        Parsing::SingleInitializer& singleInit,
+                        const Parsing::ArrayType& arrayType)
+{
+    if (singleInit.expr->kind == Parsing::Expr::Kind::AddrOf) {
+        const auto addrOf = dynCast<Parsing::AddrOffExpr>(singleInit.expr.get());
+        if (addrOf->reference->kind != Parsing::Expr::Kind::String)
+            return;
+        auto stringExpr = dynCast<Parsing::StringExpr>(addrOf->reference.get());
+        const i64 diff = arrayType.size - static_cast<i64>(stringExpr->value.size());
+        auto initString = std::make_unique<Parsing::StringInitializer>(
+            std::move(stringExpr->value), diff > 0);
+        if (1 < diff) {
+            std::vector<std::unique_ptr<Parsing::Initializer>> initializers;
+            initializers.push_back(std::move(initString));
+            auto zeroInit = std::make_unique<Parsing::ZeroInitializer>(diff - 1);
+            initializers.push_back(std::move(zeroInit));
+            auto compound = std::make_unique<Parsing::CompoundInitializer>(std::move(initializers));
+            varDecl.init = std::move(compound);
+        }
+        else
+            varDecl.init = std::move(initString);
+    }
 }
 
 struct Node {

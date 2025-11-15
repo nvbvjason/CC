@@ -26,6 +26,7 @@ public:
     virtual void visit(SingleInitializer&) = 0;
     virtual void visit(CompoundInitializer&) = 0;
     virtual void visit(ZeroInitializer&) = 0;
+    virtual void visit(StringInitializer&) = 0;
 
     virtual void visit(StmtBlockItem&) = 0;
     virtual void visit(DeclBlockItem&) = 0;
@@ -88,6 +89,7 @@ public:
     virtual void visit(const SingleInitializer&) = 0;
     virtual void visit(const CompoundInitializer&) = 0;
     virtual void visit(const ZeroInitializer&) = 0;
+    virtual void visit(const StringInitializer&) = 0;
 
     virtual void visit(const StmtBlockItem&) = 0;
     virtual void visit(const DeclBlockItem&) = 0;

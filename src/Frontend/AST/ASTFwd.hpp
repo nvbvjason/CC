@@ -91,6 +91,7 @@ struct Initializer;
 struct SingleInitializer;
 struct CompoundInitializer;
 struct ZeroInitializer;
+struct StringInitializer;
 
 // For loop initialization
 struct ForInit;

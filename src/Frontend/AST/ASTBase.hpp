@@ -140,7 +140,7 @@ protected:
 
 struct Initializer {
     enum class Kind {
-        Single, Compound, Zero
+        Single, Compound, Zero, String
     };
     const Kind kind;
 

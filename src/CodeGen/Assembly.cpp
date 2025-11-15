@@ -17,22 +17,27 @@ std::string asmProgram(const Program& program)
             case TopLevel::Kind::StaticVariable: {
                 const auto var = dynCast<const StaticVariable>(topLevel.get());
                 asmStaticVariable(result, *var);
-                continue;
+                break;
             }
             case TopLevel::Kind::StaticConstant: {
                 const auto var = dynCast<const ConstVariable>(topLevel.get());
                 asmStaticConstant(result, *var);
-                continue;
+                break;
             }
             case TopLevel::Kind::Function: {
                 const auto function = dynCast<const Function>(topLevel.get());
                 asmFunction(result, *function);
-                continue;
+                break;
             }
             case TopLevel::Kind::StaticArray: {
                 const auto array = dynCast<const ArrayVariable>(topLevel.get());
                 asmStaticArray(result, *array);
-                continue;
+                break;
+            }
+            case TopLevel::Kind::StaticString: {
+                const auto str = dynCast<const StringVariable>(topLevel.get());
+                asmStaticString(result, *str);
+                break;
             }
             default:
                 std::abort();
@@ -40,6 +45,17 @@ std::string asmProgram(const Program& program)
     }
     result += asmFormatInstruction(".section .note.GNU-stack,\"\",@progbits\n");
     return result;
+}
+
+void asmStaticString(std::string& result, const StringVariable& variable)
+{
+    result += asmFormatInstruction(".section .rodata");
+    result += asmFormatLabel(variable.name);
+    if (variable.nullTerminated)
+        result += asmFormatInstruction(".asciz ", + "\"" + variable.value + '\"');
+    else
+        result += asmFormatInstruction(".ascii \"", variable.value + '\"');
+    result += '\n';
 }
 
 void asmStaticVariable(std::string& result, const StaticVariable& variable)
@@ -165,13 +181,20 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::MoveSX: {
             const auto moveSXInst = dynCast<MoveSXInst>(instruction.get());
             const std::string operands = asmOperand(moveSXInst->src) + ", " + asmOperand(moveSXInst->dst);
-            result += asmFormatInstruction("movslq", operands);
+            result += asmFormatInstruction(addType(
+                    addType("movs", moveSXInst->srcType),
+                    moveSXInst->dstType),
+                operands);
             return;
         }
         case Inst::Kind::MoveZeroExtend: {
             const auto moveZeroExtend = dynCast<MoveZeroExtendInst>(instruction.get());
             const std::string operands = asmOperand(moveZeroExtend->src) + ", " + asmOperand(moveZeroExtend->dst);
-            result += asmFormatInstruction(addType("mov", moveZeroExtend->type), operands);
+            result += asmFormatInstruction(
+                addType(
+                    addType("mov", moveZeroExtend->srcType),
+                    moveZeroExtend->dstType),
+                operands);
             return;
         }
         case Inst::Kind::Lea: {
@@ -451,12 +474,10 @@ std::string asmFormatInstruction(const std::string& mnemonic,
 std::string addType(const std::string& instruction, const AsmType type)
 {
     switch (type) {
-        case AsmType::LongWord:
-            return instruction + "l";
-        case AsmType::QuadWord:
-            return instruction + "q";
-        case AsmType::Double:
-            return instruction + "sd";
+        case AsmType::Byte:         return instruction + "b";
+        case AsmType::LongWord:     return instruction + "l";
+        case AsmType::QuadWord:     return instruction + "q";
+        case AsmType::Double:       return instruction + "sd";
         default:
             return instruction + " not set addType";
     }
@@ -465,6 +486,7 @@ std::string addType(const std::string& instruction, const AsmType type)
 std::string getTypeName(const AsmType type)
 {
     switch (type) {
+        case AsmType::Byte:       return "byte";
         case AsmType::LongWord:   return "long";
         case AsmType::QuadWord:   return "quad";
         case AsmType::Double:     return "quad";

@@ -28,6 +28,7 @@ public:
     void visit(const SingleInitializer& singleInitializer) override;
     void visit(const CompoundInitializer& compoundInitializer) override;
     void visit(const ZeroInitializer& zeroInitializer) override {}
+    void visit(const StringInitializer& stringInitializer) override {}
 
     // ForInit
     void visit(const DeclForInit& declForInit) override;

@@ -13,6 +13,7 @@ void asmStaticVariableQuad(std::string& result, const StaticVariable& variable);
 void asmStaticVariableDouble(std::string& result, const StaticVariable& variable);
 void asmStaticConstant(std::string& result, const ConstVariable& variable);
 void asmStaticArray(std::string& result, const ArrayVariable& array);
+void asmStaticString(std::string& result, const StringVariable& variable);
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction);
 std::string asmOperand(const std::shared_ptr<Operand>& operand);
 std::string asmRegister(const AsmType& type, Operand::RegKind reg);

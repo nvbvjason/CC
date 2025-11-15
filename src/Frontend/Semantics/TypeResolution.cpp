@@ -104,22 +104,32 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     assignTypeToArithmeticUnaryExpr(varDecl);
 }
 
-void TypeResolution::verifyArrayInSingleInit(const Parsing::VarDecl& varDecl)
+void TypeResolution::verifyArrayInSingleInit(
+    const Parsing::VarDecl& varDecl, const Parsing::SingleInitializer& singleInitializer)
 {
     const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
     if (!isCharacterType(arrayType->elementType->type)) {
         addError("Cannot initialize array with single init", varDecl.location);
         return;
     }
-
+    if (singleInitializer.expr->kind == Parsing::Expr::Kind::AddrOf) {
+        const auto addrOf = dynCast<Parsing::AddrOffExpr>(singleInitializer.expr.get());
+        if (addrOf->reference->kind != Parsing::Expr::Kind::String) {
+            addError("Character array initializer must be a String", varDecl.location);
+            return;
+        }
+        const auto stringExpr = dynCast<Parsing::StringExpr>(addrOf->reference.get());
+        if (arrayType->size < stringExpr->value.size())
+            addError("Character array shorter than string init", varDecl.location);
+    }
 }
 
     void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
 {
-    auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+    const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
 
     if (varDecl.type->type == Type::Array) {
-        verifyArrayInSingleInit(varDecl);
+        verifyArrayInSingleInit(varDecl, *singleInit);
         return;
     }
 
@@ -756,8 +766,6 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::DereferenceExpr&
     dereferenceExpr.type = Parsing::deepCopy(*referencedPtrType->referenced);
     return Parsing::deepCopy(dereferenceExpr);
 }
-
-
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& subscriptExpr)
 {

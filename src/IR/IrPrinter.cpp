@@ -9,16 +9,68 @@ std::string IrPrinter::print(const Program& program)
 {
     addLine("Program:");
     for (const auto& topLevel : program.topLevels) {
-        if (topLevel->kind == TopLevel::Kind::Function) {
-            const auto function = dynamic_cast<Function*>(topLevel.get());
-            print(*function);
+        switch (topLevel->kind) {
+            case TopLevel::Kind::Function: {
+                const auto function = dynamic_cast<Function*>(topLevel.get());
+                print(*function);
+                break;
+            }
+            case TopLevel::Kind::StaticVariable: {
+                const auto variable = dynamic_cast<StaticVariable*>(topLevel.get());
+                print(*variable);
+                break;
+            }
+            case TopLevel::Kind::StaticArray: {
+                const auto array = dynamic_cast<StaticArray*>(topLevel.get());
+                print(*array);
+                break;
+            }
+            case TopLevel::Kind::StaticConstant: {
+                const auto constant = dynamic_cast<StaticConstant*>(topLevel.get());
+                print(*constant);
+                break;
+            }
+            default:
+                std::abort();
         }
-        if (topLevel->kind == TopLevel::Kind::StaticVariable) {
-            const auto variable = dynamic_cast<StaticVariable*>(topLevel.get());
-            print(*variable);
-        }
+        addLine("");
     }
     return m_oss.str();
+}
+
+void IrPrinter::print(const StaticConstant& staticConstant)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("StaticConstant: " + staticConstant.identifier.value);
+    addLine("Value: " + staticConstant.value);
+    if (staticConstant.global)
+        addLine("Is Global");
+    if (staticConstant.nullTerminated)
+        addLine("Is NullTerminated");
+}
+
+void IrPrinter::print(const StaticArray& staticArray)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("StaticArray: " + staticArray.name);
+    addLine("Type: " + to_string(staticArray.type));
+    IndentGuard guardInits(m_indentLevel);
+    if (staticArray.global)
+        addLine("is Global");
+    for (const auto& init : staticArray.initializers) {
+        switch (init->kind) {
+            case Initializer::Kind::Value: {
+                const auto value = dynCast<ValueInitializer>(init.get());
+                addLine(print(*value->value));
+                break;
+            }
+            case Initializer::Kind::Zero: {
+                const auto zero = dynCast<ZeroInitializer>(init.get());
+                addLine("Zero. " + std::to_string(zero->size));
+                break;
+            }
+        }
+    }
 }
 
 void IrPrinter::print(const StaticVariable& variable)
@@ -45,7 +97,6 @@ void IrPrinter::print(const Function& function)
     for (const auto& arg : function.args)
         args += print(arg) + ", ";
     addLine("args: " + args);
-    IndentGuard guard2(m_indentLevel);
     for (const auto& inst : function.insts)
         print(*inst);
 }
@@ -57,8 +108,9 @@ std::string IrPrinter::print(const Value& value)
             return print(*dynCast<const ValueVar>(&value));
         case Value::Kind::Constant:
             return print(*dynCast<const ValueConst>(&value));
+        default:
+            std::abort();
     }
-    std::unreachable();
 }
 
 std::string IrPrinter::print(const Identifier& identifier)
@@ -207,17 +259,15 @@ std::string IrPrinter::print(const ValueVar& val)
 
 std::string IrPrinter::print(const ValueConst& val)
 {
-    if (val.type == Type::I32)
-        return "Const(" + std::to_string(std::get<i32>(val.value)) + ") i32";
-    if (val.type == Type::I64)
-        return "Const(" + std::to_string(std::get<i64>(val.value)) + ") i64";
-    if (val.type == Type::U32)
-        return "Const(" + std::to_string(std::get<u32>(val.value)) + ") u32";
-    if (val.type == Type::U64)
-        return "Const(" + std::to_string(std::get<u64>(val.value)) + ") u64";
-    if (val.type == Type::Double)
-        return "Const(" + std::to_string(std::get<double>(val.value)) + ") double";
-    std::unreachable();
+    switch (val.type) {
+        case Type::I32:             return "Const(" + std::to_string(std::get<i32>(val.value)) + ") i32";
+        case Type::I64:             return "Const(" + std::to_string(std::get<i64>(val.value)) + ") i64";
+        case Type::U32:             return "Const(" + std::to_string(std::get<u32>(val.value)) + ") u32";
+        case Type::U64:             return "Const(" + std::to_string(std::get<u64>(val.value)) + ") u64";
+        case Type::Double:          return "Const(" + std::to_string(std::get<double>(val.value)) + ") double";
+        default:
+            std::abort();
+    }
 }
 
 std::string to_string(const UnaryInst::Operation op)
@@ -260,6 +310,9 @@ std::string to_string(const BinaryInst::Operation op)
 std::string to_string(const Type type)
 {
     switch (type) {
+        case Type::Char:     return "char";
+        case Type::U8:       return "u8";
+        case Type::I8:       return "i8";
         case Type::I32:      return "i32";
         case Type::I64:      return "i64";
         case Type::U32:      return "u32";
@@ -267,6 +320,7 @@ std::string to_string(const Type type)
         case Type::Double:   return "double";
         case Type::Pointer:  return "pointer";
         case Type::Array:    return "array";
+        case Type::String:   return "string";
         default:
             std::unreachable();
     }

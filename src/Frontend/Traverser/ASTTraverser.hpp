@@ -27,6 +27,7 @@ public:
     void visit(SingleInitializer& singleInitializer) override;
     void visit(CompoundInitializer& compoundInitializer) override;
     void visit(ZeroInitializer& zeroInitializer) override {}
+    void visit(StringInitializer& stringInitializer) override {}
 
     // ForInit
     void visit(DeclForInit& declForInit) override;

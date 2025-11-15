@@ -458,4 +458,17 @@ struct ZeroInitializer final : Initializer {
     static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Zero; }
 };
 
+struct StringInitializer final : Initializer {
+    const std::string value;
+    const bool nullTerminated;
+
+    explicit StringInitializer(const std::string& value, const  bool nullTerminated)
+        : Initializer(Kind::String), value(value), nullTerminated(nullTerminated) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::String; }
+};
+
 } // namespace Parsing

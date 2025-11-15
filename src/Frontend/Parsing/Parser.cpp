@@ -772,12 +772,11 @@ std::unique_ptr<Expr> Parser::factorParse()
         case TokenType::StringLiteral: {
             std::string tokenString = lexeme.m_lexeme;
             const i64 location = m_current;
-            while (peekNextTokenType() == TokenType::StringLiteral)
+            advance();
+            while (peekTokenType() == TokenType::StringLiteral)
                 tokenString += advance().m_lexeme;
             auto constantExpr = std::make_unique<StringExpr>(
                 location, std::move(tokenString), std::make_unique<VarType>(Type::String));
-            if (advance().m_type == TokenType::EndOfFile)
-                return nullptr;
             return constantExpr;
         }
         case TokenType::Identifier: {

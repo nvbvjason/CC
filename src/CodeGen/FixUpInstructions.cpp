@@ -84,11 +84,11 @@ void FixUpInstructions::fixMoveSX(MoveSXInst& moveSX)
     }
     if (isOnTheStack(moveSX.dst->kind)) {
         std::shared_ptr<Operand> dst = genDstOperand(AsmType::QuadWord);
-        insert(std::make_unique<MoveSXInst>(src, dst));
+        insert(std::make_unique<MoveSXInst>(src, dst, src->type, dst->type));
         insert(std::make_unique<MoveInst>(dst, moveSX.dst, AsmType::QuadWord));
         return;
     }
-    insert(std::make_unique<MoveSXInst>(src, moveSX.dst));
+    insert(std::make_unique<MoveSXInst>(src, moveSX.dst, src->type, moveSX.dst->type));
 }
 
 void FixUpInstructions::fixMoveZero(MoveZeroExtendInst& moveZero)

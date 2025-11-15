@@ -53,6 +53,7 @@ public:
     void genDoubleToUIntQuad(const Ir::DoubleToUIntInst& doubleToUInt);
     void genIntToDouble(const Ir::IntToDoubleInst& intToDouble);
     void genUIntToDouble(const Ir::UIntToDoubleInst& uintToDouble);
+    void genUIntToDoubleByte(const Ir::UIntToDoubleInst& uintToDouble);
     void genUIntToDoubleLong(const Ir::UIntToDoubleInst& uintToDouble);
     void genUIntToDoubleQuad(const Ir::UIntToDoubleInst& uintToDouble);
 
@@ -146,13 +147,17 @@ private:
     }
     void emplaceMoveZeroExtend(const std::shared_ptr<Operand>& src,
                                const std::shared_ptr<Operand>& dst,
-                               const AsmType type)
+                               const AsmType srcType,
+                               const AsmType dstType)
     {
-        insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, dst, srcType, dstType));
     }
-    void emplaceMoveSX(const std::shared_ptr<Operand>& src, const std::shared_ptr<Operand>& dst)
+    void emplaceMoveSX(const std::shared_ptr<Operand>& src,
+                       const std::shared_ptr<Operand>& dst,
+                       const AsmType srcType,
+                       const AsmType dstType)
     {
-        insts.emplace_back(std::make_unique<MoveSXInst>(src, dst));
+        insts.emplace_back(std::make_unique<MoveSXInst>(src, dst, srcType, dstType));
     }
     void emplacePushPseudo(const i64 size, const AsmType type, const std::string& iden)
     {
@@ -202,6 +207,7 @@ private:
 
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
 std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray);
+std::unique_ptr<TopLevel> genStaticString(const Ir::StaticConstant& staticConstant);
 u64 getSingleInitValue(Type type, const Ir::ValueConst* value);
 i32 getStackPadding(size_t numArgs);
 
