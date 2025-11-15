@@ -71,20 +71,29 @@ std::unique_ptr<Parsing::Expr> convertToArithmeticType(const Parsing::Expr& expr
     std::variant<i8, u8, i32, i64, u32, u64, double> convertedValue;
 
     switch (targetType) {
+        case Type::I8:
+            convertedValue = getValueFromConst<i8>(*constExpr);
+            break;
+        case Type::U8:
+            convertedValue = getValueFromConst<u8>(*constExpr);
+            break;
         case Type::I32:
             convertedValue = getValueFromConst<i32>(*constExpr);
             break;
-        case Type::I64:
-            convertedValue = getValueFromConst<i64>(*constExpr);
-            break;
         case Type::U32:
             convertedValue = getValueFromConst<u32>(*constExpr);
+            break;
+        case Type::I64:
+            convertedValue = getValueFromConst<i64>(*constExpr);
             break;
         case Type::U64:
             convertedValue = getValueFromConst<u64>(*constExpr);
             break;
         case Type::Double:
             convertedValue = getValueFromConst<double>(*constExpr);
+            break;
+        case Type::Char:
+            convertedValue = getValueFromConst<i32>(*constExpr);
             break;
         default:
             std::abort();

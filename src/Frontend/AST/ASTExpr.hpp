@@ -27,18 +27,14 @@ struct ConstExpr final : Expr {
     TargetType getValue() const
     {
         switch (type->type) {
-            case Type::I32:
-                return std::get<i32>(value);
-            case Type::I64:
-                return std::get<i64>(value);
-            case Type::U32:
-                return std::get<u32>(value);
-            case Type::U64:
-                return std::get<u64>(value);
-            case Type::Double:
-                return std::get<double>(value);
-            case Type::Char:
-                return std::get<i32>(value);
+            case Type::I8:      return std::get<i8>(value);
+            case Type::U8:      return std::get<u8>(value);
+            case Type::I32:     return std::get<i32>(value);
+            case Type::U32:     return std::get<u32>(value);
+            case Type::I64:     return std::get<i64>(value);
+            case Type::U64:     return std::get<u64>(value);
+            case Type::Double:  return std::get<double>(value);
+            case Type::Char:    return std::get<i32>(value);
             default:
                 std::abort();
         }
@@ -55,8 +51,10 @@ struct ConstExpr final : Expr {
 struct StringExpr final : Expr {
     const std::string value;
 
-    StringExpr(const i64 location, std::string&& value)
+    StringExpr(const i64 location, std::string&& value) noexcept
         : Expr(location, Kind::String), value(std::move(value)) {}
+    StringExpr(const i64 location, std::string&& value, std::unique_ptr<TypeBase> varType) noexcept
+        : Expr(location, Kind::String, std::move(varType)), value(std::move(value)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

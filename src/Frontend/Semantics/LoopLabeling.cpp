@@ -43,20 +43,32 @@ void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
         return;
     }
     switch (conditionType) {
-        case Type::I32: {
+        case Type::I8: {
             processSwitchCase<i32>(constantExpr, switchCases, switchLabel, caseStmt, errors);
             break;
         }
-        case Type::I64: {
-            processSwitchCase<i64>(constantExpr, switchCases, switchLabel, caseStmt, errors);
+        case Type::U8: {
+            processSwitchCase<u32>(constantExpr, switchCases, switchLabel, caseStmt, errors);
+            break;
+        }
+        case Type::I32: {
+            processSwitchCase<i32>(constantExpr, switchCases, switchLabel, caseStmt, errors);
             break;
         }
         case Type::U32: {
             processSwitchCase<u32>(constantExpr, switchCases, switchLabel, caseStmt, errors);
             break;
         }
+        case Type::I64: {
+            processSwitchCase<i64>(constantExpr, switchCases, switchLabel, caseStmt, errors);
+            break;
+        }
         case Type::U64: {
             processSwitchCase<u64>(constantExpr, switchCases, switchLabel, caseStmt, errors);
+            break;
+        }
+        case Type::Char: {
+            processSwitchCase<i32>(constantExpr, switchCases, switchLabel, caseStmt, errors);
             break;
         }
         default:
@@ -143,7 +155,7 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
             errors.emplace_back("Pointer as switch condition ", switchStmt.location);
         return;
     }
-    switchCases[switchStmt.identifier] = std::vector<std::variant<i32, i64, u32, u64>>();
+    switchCases[switchStmt.identifier] = std::vector<std::variant<i8, u8, i32, i64, u32, u64>>();
     ASTTraverser::visit(switchStmt);
     switchStmt.cases = switchCases[switchStmt.identifier];
     if (m_default.contains(switchStmt.identifier))

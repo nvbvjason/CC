@@ -15,14 +15,14 @@ namespace Semantics {
 template<typename TargetType>
 void processSwitchCase(const Parsing::ConstExpr* constantExpr,
                        std::unordered_map<std::string,
-                       std::vector<std::variant<i32, i64, u32, u64>>>& switchCases,
+                       std::vector<std::variant<i8, u8, i32, i64, u32, u64>>>& switchCases,
                        const std::string& switchLabel,
                        Parsing::CaseStmt& caseStmt,
                        std::vector<Error>& errors)
 {
     TargetType value = constantExpr->getValue<TargetType>();
     const auto it = switchCases.find(switchLabel);
-    for (const std::variant<i32, i64, u32, u64>& v : it->second) {
+    for (const std::variant<i8, u8, i32, i64, u32, u64>& v : it->second) {
         if (value == std::get<TargetType>(v)) {
             errors.emplace_back("Duplicate case value in switch statement ", constantExpr->location);
             return;
@@ -35,7 +35,7 @@ void processSwitchCase(const Parsing::ConstExpr* constantExpr,
 class LoopLabeling : public Parsing::ASTTraverser {
     std::vector<Error> errors;
     std::unordered_set<std::string> m_default;
-    std::unordered_map<std::string, std::vector<std::variant<i32, i64, u32, u64>>> switchCases;
+    std::unordered_map<std::string, std::vector<std::variant<i8, u8, i32, i64, u32, u64>>> switchCases;
     Type conditionType = Type::I32;
     std::string breakLabel;
     std::string continueLabel;

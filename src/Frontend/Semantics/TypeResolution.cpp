@@ -95,14 +95,49 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     }
     if (varDecl.init == nullptr)
         return;
-    if (varDecl.init->kind == Parsing::Initializer::Kind::Single) {
+    if (varDecl.init->kind == Parsing::Initializer::Kind::Single)
         handleSingleInit(varDecl);
-    }
     else {
         handelCompoundInit(varDecl);
         return;
     }
     assignTypeToArithmeticUnaryExpr(varDecl);
+}
+
+void TypeResolution::verifyArrayInSingleInit(const Parsing::VarDecl& varDecl)
+{
+    const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
+    if (!isCharacterType(arrayType->elementType->type)) {
+        addError("Cannot initialize array with single init", varDecl.location);
+        return;
+    }
+
+}
+
+    void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
+{
+    auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+
+    if (varDecl.type->type == Type::Array) {
+        verifyArrayInSingleInit(varDecl);
+        return;
+    }
+
+    if (hasError())
+        return;
+
+    if (!Parsing::areEquivalentTypes(*varDecl.type, *singleInit->expr->type)) {
+        if (varDecl.type->type == Type::Pointer) {
+            if (!canConvertToNullPtr(*singleInit->expr)) {
+                addError("Cannot convert pointer init to pointer", varDecl.location);
+                return;
+            }
+            auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
+            varDecl.init = std::make_unique<Parsing::SingleInitializer>(
+                std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr))
+            );
+        }
+    }
 }
 
 void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
@@ -131,32 +166,6 @@ void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
                     Parsing::deepCopy(*arrayType->elementType),
                     std::move(singleInit->expr));
             }
-        }
-    }
-}
-
-void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
-{
-    auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
-
-    if (varDecl.type->type == Type::Array) {
-        addError("Cannot initialize array with single init", varDecl.location);
-        return;
-    }
-
-    if (hasError())
-        return;
-
-    if (!Parsing::areEquivalentTypes(*varDecl.type, *singleInit->expr->type)) {
-        if (varDecl.type->type == Type::Pointer) {
-            if (!canConvertToNullPtr(*singleInit->expr)) {
-                addError("Cannot convert pointer init to pointer", varDecl.location);
-                return;
-            }
-            auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
-            varDecl.init = std::make_unique<Parsing::SingleInitializer>(
-                std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr))
-            );
         }
     }
 }
@@ -273,6 +282,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::Expr& expr)
             const auto constExpr = dynCast<Parsing::ConstExpr>(&expr);
             return convert(*constExpr);
         }
+        case ExprKind::String: {
+            const auto constExpr = dynCast<Parsing::StringExpr>(&expr);
+            return convert(*constExpr);
+        }
         case ExprKind::Var: {
             const auto varExpr = dynCast<Parsing::VarExpr>(&expr);
             return convert(*varExpr);
@@ -320,6 +333,13 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::Expr& expr)
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convert(const Parsing::ConstExpr& expr)
 {
+    return deepCopy(expr);
+}
+
+std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::StringExpr& expr)
+{
+    expr.type = std::make_unique<Parsing::ArrayType>(
+        std::make_unique<Parsing::VarType>(Type::Char), expr.value.size() + 1);
     return deepCopy(expr);
 }
 
@@ -405,6 +425,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::UnaryExpr& unary
         unaryExpr.type = std::make_unique<Parsing::VarType>(s_boolType);
     else
         unaryExpr.type = Parsing::deepCopy(*unaryExpr.innerExpr->type);
+
+    if (unaryExpr.innerExpr->type->type == Type::Char &&
+        (unaryExpr.op == Operator::Negate || unaryExpr.op == Operator::Complement))
+        unaryExpr.innerExpr = convertOrCastToType(*unaryExpr.innerExpr, Type::I32);
 
     // if (unaryExpr.innerExpr->kind == Parsing::Expr::Kind::Constant) {
     //     if (unaryExpr.op == Operator::Negate) {

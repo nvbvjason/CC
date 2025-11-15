@@ -29,9 +29,12 @@ bool isSigned(const Type t)
     switch (t) {
         case Type::I64:
         case Type::I32:
+        case Type::I8:
+        case Type::Char:
             return true;
         case Type::U64:
         case Type::U32:
+        case Type::U8:
             return false;
         default: ;
         std::unreachable();
@@ -51,6 +54,10 @@ i64 getTypeSize(const Type t)
         case Type::I32:
         case Type::U32:
             return 4;
+        case Type::I8:
+        case Type::U8:
+        case Type::Char:
+            return 1;
         default:
             assert("getSize");
     }
@@ -60,9 +67,12 @@ i64 getTypeSize(const Type t)
 bool isIntegerType(const Type t)
 {
     switch (t) {
+        case Type::Char:
+        case Type::I8:
+        case Type::U8:
         case Type::I32:
-        case Type::I64:
         case Type::U32:
+        case Type::I64:
         case Type::U64:
             return true;
         default:
@@ -77,4 +87,9 @@ bool isArithmetic(const Type t)
     if (t == Type::Double)
         return true;
     return false;
+}
+
+bool isCharacterType(const Type t)
+{
+    return t == Type::Char || t == Type::I8 || t == Type::U8;
 }

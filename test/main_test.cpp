@@ -2,7 +2,6 @@
 #include "../src/Frontend/Lexing/Lexer.hpp"
 #include "../src/Frontend/Parsing/Parser.hpp"
 #include "../src/Frontend/Semantics/VariableResolution.hpp"
-#include "GotoLabelsUnique.hpp"
 #include "FrontendDriver.hpp"
 
 #include <filesystem>
@@ -940,6 +939,37 @@ TEST(Chapter16_Characters_and_Strings, invalidParsing)
         if (!isCFile(path))
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter16_Characters_and_Strings, invalidLabels)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_16/invalid_labels";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+
+TEST(Chapter16_Characters_and_Strings, invalidTypes)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_15/invalid_types";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter16_Characters_and_Strings, validSemantics)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_16/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
     }
 }
 

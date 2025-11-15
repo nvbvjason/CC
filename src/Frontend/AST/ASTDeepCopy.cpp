@@ -142,6 +142,10 @@ std::unique_ptr<Expr> deepCopy(const Expr& expr)
             const auto constExpr = dynCast<const ConstExpr>(&expr);
             return deepCopy(*constExpr);
         }
+        case Expr::Kind::String: {
+            const auto stringExpr = dynCast<const StringExpr>(&expr);
+            return deepCopy(*stringExpr);
+        }
         case Expr::Kind::Var: {
             const auto varExpr = dynCast<const VarExpr>(&expr);
             return deepCopy(*varExpr);
@@ -190,19 +194,34 @@ std::unique_ptr<Expr> deepCopy(const Expr& expr)
 std::unique_ptr<Expr> deepCopy(const ConstExpr& expr)
 {
     switch (expr.type->type) {
+        case Type::I8:
+            return std::make_unique<ConstExpr>(expr.location, expr.getValue<i8>(), std::make_unique<VarType>(Type::I8));
+        case Type::U8:
+            return std::make_unique<ConstExpr>(expr.location, expr.getValue<u8>(), std::make_unique<VarType>(Type::U8));
         case Type::I32:
             return std::make_unique<ConstExpr>(expr.location, expr.getValue<i32>(), std::make_unique<VarType>(Type::I32));
-        case Type::I64:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<i64>(), std::make_unique<VarType>(Type::I64));
         case Type::U32:
             return std::make_unique<ConstExpr>(expr.location, expr.getValue<u32>(), std::make_unique<VarType>(Type::U32));
+        case Type::I64:
+            return std::make_unique<ConstExpr>(expr.location, expr.getValue<i64>(), std::make_unique<VarType>(Type::I64));
         case Type::U64:
             return std::make_unique<ConstExpr>(expr.location, expr.getValue<u64>(), std::make_unique<VarType>(Type::U64));
         case Type::Double:
             return std::make_unique<ConstExpr>(expr.location, expr.getValue<double>(), std::make_unique<VarType>(Type::Double));
+        case Type::Char:
+            return std::make_unique<ConstExpr>(expr.location, expr.getValue<i32>(), std::make_unique<VarType>(Type::Char));
         default:
             std::abort();
     }
+}
+
+std::unique_ptr<Expr> deepCopy(const StringExpr& expr)
+{
+    std::string value = expr.value;
+    auto result = std::make_unique<StringExpr>(expr.location, std::move(value));
+    if (expr.type)
+        result->type = deepCopy(*expr.type);
+    return result;
 }
 
 std::unique_ptr<Expr> deepCopy(const VarExpr& expr)

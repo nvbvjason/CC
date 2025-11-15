@@ -7,3 +7,4 @@ bool isSigned(Type t);
 i64 getTypeSize(Type t);
 bool isIntegerType(Type t);
 bool isArithmetic(Type t);
+bool isCharacterType(Type t);

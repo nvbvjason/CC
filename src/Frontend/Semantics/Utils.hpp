@@ -8,11 +8,14 @@ template<typename TargetType>
 TargetType getValueFromConst(const Parsing::ConstExpr& constExpr)
 {
     switch (constExpr.type->type) {
+        case Type::I8:      return std::get<i8>(constExpr.value);
+        case Type::U8:      return std::get<u8>(constExpr.value);
         case Type::I32:     return std::get<i32>(constExpr.value);
-        case Type::I64:     return std::get<i64>(constExpr.value);
         case Type::U32:     return std::get<u32>(constExpr.value);
+        case Type::I64:     return std::get<i64>(constExpr.value);
         case Type::U64:     return std::get<u64>(constExpr.value);
         case Type::Double:  return std::get<double>(constExpr.value);
+        case Type::Char:    return std::get<i32>(constExpr.value);
         default:
             std::abort();
     }

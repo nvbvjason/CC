@@ -500,7 +500,7 @@ void GenerateIr::genSwitchStmt(const Parsing::SwitchStmt& stmt)
 {
     const std::shared_ptr<Value> realValue = genInstAndConvert(*stmt.condition);
     const Type conditionType = stmt.condition->type->type;
-    for (const std::variant<i32, i64, u32, u64>& caseValue : stmt.cases) {
+    for (const std::variant<i8, u8, i32, i64, u32, u64>& caseValue : stmt.cases) {
         const auto dst = std::make_shared<ValueVar>(makeTemporaryName(), conditionType);
         std::string caseLabelName;
         std::shared_ptr<ValueConst> src2;

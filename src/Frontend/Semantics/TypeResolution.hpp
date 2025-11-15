@@ -74,6 +74,7 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
 
     static std::unique_ptr<Parsing::Expr> convert(const Parsing::ConstExpr& expr);
+    static std::unique_ptr<Parsing::Expr> convert(Parsing::StringExpr& expr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
@@ -94,6 +95,7 @@ public:
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
     [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDeclaration& funDecl);
     void handelCompoundInit(const Parsing::VarDecl& varDecl);
+    void verifyArrayInSingleInit(const Parsing::VarDecl& varDecl);
     void handleSingleInit(Parsing::VarDecl& varDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 private:
