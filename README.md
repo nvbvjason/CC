@@ -1,7 +1,7 @@
 # CC
 
 ## Quick start guide
-
+Linux x86_64 required
 
 #### Clone repo:
 `git clone https://github.com/nvbvjason/CC.git`
@@ -23,16 +23,16 @@
 
 ```ebnf
 <program>               ::= { <declaration> }
-<declaration>           ::= <function_declaration> | <variable_declaration>
-<variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
-<function_declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
+<declaration>           ::= <function-declaration> | <variable-declaration>
+<variable-declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
+<function-declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
 <declarator>            ::= "*" <declarator> | <direct-declarator>
 <direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
 <declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
 <param-list>            ::= "(" "void" ")" | "(" <param> [ "," <param> ] ")"
 <param>                 ::= { <type-specifier> }+ <declarator>
 <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
-<type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double"
+<type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double" | "char"
 <specifier>             ::= <type-specifier> | "static" | "extern"
 <block>                 ::= "{" { <block-item> } "}"
 <block-item>            ::= <statement> | <declaration>
@@ -53,14 +53,15 @@
                           | "do" <statement> "while" "(" <exp> ")" ";"
                           | "for" "(" <for-init> [ <exp> ] ";" [ <exp> ] ")" <statement>
                           | ";"
-<exp>                   ::= <unary_exp>
+<exp>                   ::= <unary-exp>
                           | <exp> <binary-op> <exp>
                           | <exp> "?" <exp> ":" <exp>
 <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                           | <unary-exp>
 <unary-exp>             ::= <postfix-exp> | <unary-op> <cast-exp>
-<postfix-exp>           ::= <factor> | <postfix_exp> <postfix-op>
+<postfix-exp>           ::= <factor> | <postfix-exp> <postfix-op>
 <factor>                ::= <const>
+                          | { <string> }+
                           | <identifier>
                           | <identifier> "(" [ <argument-list> ] ")"
                           | "(" <exp> ")"
@@ -74,8 +75,10 @@
                           | "&&" | "||" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
                           | "+=" | "-=" | "*=" | "/=" | "%="
                           | "&=" | "|=" | "^=" | "<<=" | ">>="
-<const>                 ::= <int> | <long> | <uint> | <ulong> | <double>
+<const>                 ::= <int> | <long> | <uint> | <ulong> | <double> | <char>
 <identifier>            ::= ? An identifier token ?
+<string>                ::= ? A string token ?
+<char>                  ::= ? A char token ?
 <int>                   ::= ? A int token ?
 <long>                  ::= ? A long token ?
 <uint>                  ::= ? An unsigned int token ?

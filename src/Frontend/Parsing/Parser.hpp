@@ -2,9 +2,9 @@
 
 /*
     <program>               ::= { <declaration> }
-    <declaration>           ::= <function_declaration> | <variable_declaration>
-    <variable_declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
-    <function_declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
+    <declaration>           ::= <function-declaration> | <variable-declaration>
+    <variable-declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
+    <function-declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
     <declarator>            ::= "*" <declarator> | <direct-declarator>
     <direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
     <declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
@@ -32,13 +32,13 @@
                               | "do" <statement> "while" "(" <exp> ")" ";"
                               | "for" "(" <for-init> [ <exp> ] ";" [ <exp> ] ")" <statement>
                               | ";"
-    <exp>                   ::= <unary_exp>
+    <exp>                   ::= <unary-exp>
                               | <exp> <binary-op> <exp>
                               | <exp> "?" <exp> ":" <exp>
     <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                               | <unary-exp>
     <unary-exp>             ::= <postfix-exp> | <unary-op> <cast-exp>
-    <postfix-exp>           ::= <factor> | <postfix_exp> <postfix-op>
+    <postfix-exp>           ::= <factor> | <postfix-exp> <postfix-op>
     <factor>                ::= <const>
                               | { <string> }+
                               | <identifier>
