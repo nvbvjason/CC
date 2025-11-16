@@ -128,7 +128,12 @@ void GenerateIr::genSingleLocalInit(const std::string& name,
                                     const Parsing::SingleInitializer& singleInit)
 {
     const i64 typeSize = getTypeSize(type);
-    const std::shared_ptr<Value> value = genInstAndConvert(*singleInit.expr);
+    std::shared_ptr<Value> value = genInstAndConvert(*singleInit.expr);
+    if (singleInit.expr->kind == Parsing::Expr::Kind::String) {
+        const std::shared_ptr<ValueVar> var = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
+        emplaceGetAddress(value, var, Type::Pointer);
+        value = var;
+    }
     emplaceCopyToOffset(value, Identifier(name), offset, arraySize, alignment, type);
     offset += typeSize;
 }
