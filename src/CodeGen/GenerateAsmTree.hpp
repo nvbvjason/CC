@@ -49,6 +49,7 @@ public:
 
     void genDoubleToInt(const Ir::DoubleToIntInst& doubleToInt);
     void genDoubleToUInt(const Ir::DoubleToUIntInst& doubleToUInt);
+    void genDoubleToUIntByte(const Ir::DoubleToUIntInst& doubleToUInt);
     void genDoubleToUIntLong(const Ir::DoubleToUIntInst& doubleToUInt);
     void genDoubleToUIntQuad(const Ir::DoubleToUIntInst& doubleToUInt);
     void genIntToDouble(const Ir::IntToDoubleInst& intToDouble);

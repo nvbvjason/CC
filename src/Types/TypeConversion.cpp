@@ -7,12 +7,12 @@ Type getCommonType(const Type t1, const Type t2)
 {
     assert(t1 != Type::Function);
     assert(t2 != Type::Function);
+    if (isCharacterType(t1) && isCharacterType(t2))
+        return Type::I32;
     if (t1 == t2)
         return t1;
     if (t1 == Type::Double || t2 == Type::Double)
         return Type::Double;
-    if (isCharacterType(t1) || isCharacterType(t2))
-        return Type::I32;
     if (getTypeSize(t1) == getTypeSize(t2)) {
         if (isSigned(t1))
             return t2;

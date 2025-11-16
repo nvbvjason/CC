@@ -93,12 +93,20 @@ void FixUpInstructions::fixMoveSX(MoveSXInst& moveSX)
 
 void FixUpInstructions::fixMoveZero(MoveZeroExtendInst& moveZero)
 {
-    if (moveZero.dst->kind == Operand::Kind::Register) {
-        insert(std::make_unique<MoveInst>(moveZero.src, moveZero.dst, AsmType::QuadWord));
+    if (moveZero.src->type == AsmType::Byte) {
+        insert(std::make_unique<MoveInst>(moveZero.src, genSrcOperand(moveZero.srcType), moveZero.srcType));
+        insert(std::make_unique<MoveZeroExtendInst>(
+            genSrcOperand(moveZero.srcType), genDstOperand(moveZero.dstType),
+            moveZero.srcType, moveZero.dstType));
+        insert(std::make_unique<MoveInst>(genDstOperand(moveZero.dstType), moveZero.dst, moveZero.dstType));
         return;
     }
-    insert(std::make_unique<MoveInst>(moveZero.src, genDstOperand(AsmType::LongWord), AsmType::LongWord));
-    insert(std::make_unique<MoveInst>(genDstOperand(AsmType::QuadWord), moveZero.dst, AsmType::QuadWord));
+    if (moveZero.dst->kind == Operand::Kind::Register) {
+        insert(std::make_unique<MoveInst>(moveZero.src, moveZero.dst, moveZero.dstType));
+        return;
+    }
+    insert(std::make_unique<MoveInst>(moveZero.src, genDstOperand(moveZero.srcType), moveZero.srcType));
+    insert(std::make_unique<MoveInst>(genDstOperand(moveZero.dstType), moveZero.dst, moveZero.dstType));
 }
 
 void FixUpInstructions::fixLea(LeaInst& lea)

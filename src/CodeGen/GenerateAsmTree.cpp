@@ -500,10 +500,23 @@ void GenerateAsmTree::genDoubleToInt(const Ir::DoubleToIntInst& doubleToInt)
 
 void GenerateAsmTree::genDoubleToUInt(const Ir::DoubleToUIntInst& doubleToUInt)
 {
-    if (doubleToUInt.type == Type::U8 || doubleToUInt.type == Type::U32)
+    if (doubleToUInt.type == Type::U8)
+        genDoubleToUIntByte(doubleToUInt);
+    if (doubleToUInt.type == Type::U32)
         genDoubleToUIntLong(doubleToUInt);
     if (doubleToUInt.type == Type::U64)
         genDoubleToUIntQuad(doubleToUInt);
+}
+
+void GenerateAsmTree::genDoubleToUIntByte(const Ir::DoubleToUIntInst& doubleToUInt)
+{
+    const std::shared_ptr<Operand> src = genOperand(doubleToUInt.src);
+    const std::shared_ptr<Operand> dst = genOperand(doubleToUInt.dst);
+    const auto rax = std::make_shared<RegisterOperand>(RegType::AX, AsmType::LongWord);
+    const auto eax = std::make_shared<RegisterOperand>(RegType::AX, AsmType::Byte);
+
+    emplaceCvttsd2si(src, rax, AsmType::LongWord);
+    emplaceMove(eax, dst, dst->type);
 }
 
 void GenerateAsmTree::genDoubleToUIntLong(const Ir::DoubleToUIntInst& doubleToUInt)
@@ -580,7 +593,7 @@ void GenerateAsmTree::genUIntToDoubleLong(const Ir::UIntToDoubleInst& uintToDoub
     const std::shared_ptr<Operand> rax = std::make_unique<RegisterOperand>(RegType::AX, AsmType::QuadWord);
     const std::shared_ptr<Operand> dst = genOperand(uintToDouble.dst);
 
-    emplaceMoveZeroExtend(src, rax, src->type, dst->type);
+    emplaceMoveZeroExtend(src, rax, AsmType::LongWord, AsmType::QuadWord);
     emplaceCvtsi2sd(rax, dst, AsmType::QuadWord);
 }
 
@@ -678,8 +691,7 @@ void GenerateAsmTree::genBinaryCondInteger(const Ir::BinaryInst& irBinary)
     const std::shared_ptr<Operand> rhs = genOperand(irBinary.rhs);
     const std::shared_ptr<Operand> dst = genOperand(irBinary.dst);
     const std::shared_ptr<Operand> zero = getZeroOperand(AsmType::LongWord);
-    const bool isSigned = irBinary.lhs->type == Type::I32 || irBinary.lhs->type == Type::I64;
-    const BinaryInst::CondCode cc = Operators::condCode(irBinary.operation, isSigned);
+    const BinaryInst::CondCode cc = Operators::condCode(irBinary.operation, isSigned(irBinary.lhs->type));
 
     emplaceCmp(rhs, lhs, lhs->type);
     emplaceMove(zero, dst, dst->type);
@@ -715,7 +727,7 @@ void GenerateAsmTree::genBinaryDivide(const Ir::BinaryInst& irBinary)
         genBinaryDivideDouble(irBinary);
         return;
     }
-    if (irBinary.type == Type::I64 || irBinary.type == Type::I32) {
+    if (isSigned(irBinary.type)) {
         genBinaryDivideSigned(irBinary);
         return;
     }

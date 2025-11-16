@@ -214,7 +214,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             const std::string operands = asmOperand(moveZeroExtend->src) + ", " + asmOperand(moveZeroExtend->dst);
             result += asmFormatInstruction(
                 addType(
-                    addType("mov", moveZeroExtend->srcType),
+                    addType("movz", moveZeroExtend->srcType),
                     moveZeroExtend->dstType),
                 operands);
             return;
