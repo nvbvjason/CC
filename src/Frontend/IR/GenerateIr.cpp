@@ -1115,10 +1115,6 @@ std::unique_ptr<ExprResult> GenerateIr::genSubscript(const Parsing::SubscriptExp
     const i64 scale = getReferencedTypeSize(referencedType);
     auto result = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
     emplaceAddPtr(ptr, index, result, scale);
-    // if (subscriptExpr.referencing->kind == Parsing::Expr::Kind::AddrOf &&
-    //     subscriptExpr.type->type == Type::Pointer) {
-    //     return std::make_unique<PlainOperand>(result);
-    // }
     return std::make_unique<DereferencedPointer>(
         result, getSubscriptDereferenceType(subscriptExpr.referencing->type.get()));
 }

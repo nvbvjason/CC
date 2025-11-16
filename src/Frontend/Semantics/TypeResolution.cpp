@@ -445,31 +445,6 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::UnaryExpr& unary
         unaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
     }
 
-    // if (unaryExpr.innerExpr->kind == Parsing::Expr::Kind::Constant) {
-    //     if (unaryExpr.op == Operator::Negate) {
-    //         const auto constExpr = dynCast<Parsing::ConstExpr>(unaryExpr.innerExpr.get());
-    //         if (constExpr->type->type == Type::I32) {
-    //             return std::make_unique<Parsing::ConstExpr>(constExpr->location,
-    //                 -constExpr->getValue<i32>(), Parsing::deepCopy(*constExpr->type));
-    //         }
-    //         if (constExpr->type->type == Type::I64) {
-    //             return std::make_unique<Parsing::ConstExpr>(constExpr->location,
-    //                 -constExpr->getValue<i64>(), Parsing::deepCopy(*constExpr->type));
-    //         }
-    //     }
-    //     if (unaryExpr.op == Operator::Complement) {
-    //         const auto constExpr = dynCast<Parsing::ConstExpr>(unaryExpr.innerExpr.get());
-    //         if (constExpr->type->type == Type::I32) {
-    //             return std::make_unique<Parsing::ConstExpr>(constExpr->location,
-    //                 ~constExpr->getValue<i32>(), Parsing::deepCopy(*constExpr->type));
-    //         }
-    //         if (constExpr->type->type == Type::I64) {
-    //             return std::make_unique<Parsing::ConstExpr>(constExpr->location,
-    //                 ~constExpr->getValue<i64>(), Parsing::deepCopy(*constExpr->type));
-    //         }
-    //     }
-    // }
-
     return Parsing::deepCopy(unaryExpr);
 }
 

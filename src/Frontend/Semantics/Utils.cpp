@@ -18,6 +18,12 @@ void assignTypeToArithmeticBinaryExpr(Parsing::BinaryExpr& binaryExpr)
     if (commonType != rightType)
         binaryExpr.rhs = convertOrCastToType(*binaryExpr.rhs, commonType);
     if (binaryExpr.op == BinaryOp::LeftShift || binaryExpr.op == BinaryOp::RightShift) {
+        if (isCharacterType(leftType)) {
+            binaryExpr.lhs = std::make_unique<Parsing::CastExpr>(
+                std::make_unique<Parsing::VarType>(Type::I32), std::move(binaryExpr.lhs));
+            binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
+            return;
+        }
         binaryExpr.type = std::make_unique<Parsing::VarType>(leftType);
         return;
     }
