@@ -34,14 +34,14 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
                     arraySize += pseudoMem->alignment;
                 }
                 m_stackPtr -= arraySize;
-                fitToAlignment();
+                fitTo8Alignment();
                 m_pseudoMap[identifier] = m_stackPtr;
                 operand = std::make_shared<MemoryOperand>(
                     Operand::RegKind::BP, m_stackPtr, operand->type);
                 return;
             }
             m_stackPtr -= 1 * Operators::getSizeAsmType(asmType);
-            fitToAlignment();
+            fitTo8Alignment();
             m_pseudoMap[identifier] = m_stackPtr;
         }
         operand = std::make_shared<MemoryOperand>(
@@ -107,8 +107,12 @@ void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 
 void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
 {
-    m_stackPtr -= pushPseudoInst.size * Operators::getSizeAsmType(pushPseudoInst.type);
-    fitToAlignment();
+    const i64 pseudoSize = pushPseudoInst.size * Operators::getSizeAsmType(pushPseudoInst.type);
+    m_stackPtr -= pseudoSize;
+    if (pseudoSize < 16)
+        fitTo8Alignment();
+    else
+        fitTo16Alignment();
     m_pseudoMap[pushPseudoInst.identifier.value] = m_stackPtr;
 }
 
@@ -129,9 +133,16 @@ void PseudoRegisterReplacer::visit(Cvtsi2sdInst& cvtsi2sdInst)
     replaceIfPseudo(cvtsi2sdInst.dst);
 }
 
-void PseudoRegisterReplacer::fitToAlignment()
+void PseudoRegisterReplacer::fitTo8Alignment()
 {
     constexpr i64 requiredAlignment = 8;
+    if (m_stackPtr % requiredAlignment != 0)
+        m_stackPtr += -requiredAlignment - m_stackPtr % requiredAlignment;
+}
+
+void PseudoRegisterReplacer::fitTo16Alignment()
+{
+    constexpr i64 requiredAlignment = 16;
     if (m_stackPtr % requiredAlignment != 0)
         m_stackPtr += -requiredAlignment - m_stackPtr % requiredAlignment;
 }

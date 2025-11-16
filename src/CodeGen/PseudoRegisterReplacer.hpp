@@ -34,7 +34,8 @@ public:
     void visit(JmpCCInst&) override {}
     void visit(LabelInst&) override {}
 private:
-    void fitToAlignment();
+    void fitTo8Alignment();
+    void fitTo16Alignment();
     void replaceIfPseudo(std::shared_ptr<Operand>& operand);
 };
 

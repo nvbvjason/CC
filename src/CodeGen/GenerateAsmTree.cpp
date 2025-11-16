@@ -560,8 +560,8 @@ void GenerateAsmTree::genIntToDouble(const Ir::IntToDoubleInst& intToDouble)
 
     if (Operators::getSizeAsmType(src->type) < 4) {
         const auto rax = std::make_shared<RegisterOperand>(RegType::AX, AsmType::LongWord);
-        emplaceMoveSX(src, dst, AsmType::Byte, AsmType::LongWord);
-        emplaceCvtsi2sd(src, dst, AsmType::LongWord);
+        emplaceMoveSX(src, rax, AsmType::Byte, AsmType::LongWord);
+        emplaceCvtsi2sd(rax, dst, AsmType::LongWord);
     }
     else
         emplaceCvtsi2sd(src, dst, src->type);

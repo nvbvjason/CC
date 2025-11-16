@@ -1,4 +1,4 @@
- #pragma once
+#pragma once
 
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
@@ -79,12 +79,12 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> handleAddSubtractPtrToIntegerTypes(Parsing::BinaryExpr& binaryExpr,
                                                                     Type leftType, Type rightType);
     std::unique_ptr<Parsing::Expr> handlePtrToPtrBinaryOperations(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> handleBinaryPtr(Parsing::BinaryExpr& binaryExpr,
                                                    Type leftType, Type rightType, Type commonType);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::AssignmentExpr& assignmentExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::TernaryExpr& ternaryExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::FuncCallExpr& funCallExpr);

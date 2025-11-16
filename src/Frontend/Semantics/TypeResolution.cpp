@@ -440,8 +440,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::UnaryExpr& unary
         unaryExpr.type = Parsing::deepCopy(*unaryExpr.innerExpr->type);
 
     if (isCharacterType(unaryExpr.innerExpr->type->type) &&
-        (unaryExpr.op == Operator::Negate || unaryExpr.op == Operator::Complement))
+        (unaryExpr.op == Operator::Negate || unaryExpr.op == Operator::Complement)) {
         unaryExpr.innerExpr = convertOrCastToType(*unaryExpr.innerExpr, Type::I32);
+        unaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
+    }
 
     // if (unaryExpr.innerExpr->kind == Parsing::Expr::Kind::Constant) {
     //     if (unaryExpr.op == Operator::Negate) {
@@ -618,7 +620,13 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::AssignmentExpr& 
         return Parsing::deepCopy(assignmentExpr);
     if (leftType != rightType && assignmentExpr.op == Parsing::AssignmentExpr::Operator::Assign &&
         leftType != Type::Pointer) {
-        assignmentExpr.rhs = convertOrCastToType(*assignmentExpr.rhs, leftType);
+        if (!isCharacterType(leftType)) {
+            assignmentExpr.rhs = convertOrCastToType(*assignmentExpr.rhs, leftType);
+        }
+        else {
+            assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
+                std::make_unique<Parsing::VarType>(leftType), std::move(assignmentExpr.rhs));
+        }
     }
     if (leftType == Type::Pointer && isIntegerType(rightType))
         assignmentExpr.rhs = convertOrCastToType(*assignmentExpr.rhs, Type::I64);

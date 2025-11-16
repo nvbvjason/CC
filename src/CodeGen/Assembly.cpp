@@ -52,7 +52,7 @@ void asmStaticString(std::string& result, const StringVariable& variable)
     result += asmFormatInstruction(".section .rodata");
     result += asmFormatLabel(variable.name);
 
-    std::string escaped_value = genAsmCompatibleString(variable);
+    const std::string escaped_value = genAsmCompatibleString(variable);
 
     if (variable.nullTerminated)
         result += asmFormatInstruction(".asciz ", + "\"" + escaped_value + '\"');

@@ -345,7 +345,13 @@ void ASTPrinter::visit(const AssignmentExpr& assignmentExpr)
 void ASTPrinter::visit(const ConstExpr& constExpr)
 {
     IndentGuard guard(m_indentLevel);
-    if (constExpr.type->type == Type::I32)
+    if (constExpr.type->type == Type::I8)
+        addLine(std::to_string(std::get<i8>(constExpr.value)) + ' ' + varTypeToString(Type::I8));
+    else if (constExpr.type->type == Type::U8)
+        addLine(std::to_string(std::get<u8>(constExpr.value)) + ' ' + varTypeToString(Type::U8));
+    else if (constExpr.type->type == Type::Char)
+        addLine(std::to_string(std::get<char>(constExpr.value)) + ' ' + varTypeToString(Type::Char));
+    else if (constExpr.type->type == Type::I32)
         addLine(std::to_string(std::get<i32>(constExpr.value)) + ' ' + varTypeToString(Type::I32));
     else if (constExpr.type->type == Type::I64)
         addLine(std::to_string(std::get<i64>(constExpr.value)) + ' ' + varTypeToString(Type::I64));

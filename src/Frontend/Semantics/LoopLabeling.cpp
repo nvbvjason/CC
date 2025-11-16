@@ -146,8 +146,11 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     breakLabel = switchStmt.identifier;
     switchLabel = switchStmt.identifier;
     conditionType = switchStmt.condition->type->type;
-    if (isCharacterType(conditionType))
+    if (isCharacterType(conditionType)) {
         conditionType = Type::I32;
+        switchStmt.condition = std::make_unique<Parsing::CastExpr>(
+            std::make_unique<Parsing::VarType>(Type::I32), std::move(switchStmt.condition));
+    }
     if (conditionType == Type::Double || conditionType == Type::Pointer) {
         if (conditionType == Type::Double)
             emplaceError("Double as switch condition ", switchStmt.location);
