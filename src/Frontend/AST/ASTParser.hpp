@@ -385,7 +385,7 @@ struct SwitchStmt final : Stmt {
     std::string identifier;
     std::unique_ptr<Expr> condition;
     std::unique_ptr<Stmt> body;
-    std::vector<std::variant<i8, u8, i32, i64, u32, u64>> cases;
+    std::vector<std::variant<i32, i64, u32, u64>> cases;
 
     bool hasDefault = false;
 
@@ -425,6 +425,7 @@ struct Program {
 
 struct SingleInitializer final : Initializer {
     std::unique_ptr<Expr> expr;
+
     explicit SingleInitializer(std::unique_ptr<Expr>&& exp)
         : Initializer(Kind::Single), expr(std::move(exp)) {}
 
@@ -461,9 +462,10 @@ struct ZeroInitializer final : Initializer {
 struct StringInitializer final : Initializer {
     const std::string value;
     const bool nullTerminated;
+    const i64 location;
 
-    explicit StringInitializer(const std::string& value, const  bool nullTerminated)
-        : Initializer(Kind::String), value(value), nullTerminated(nullTerminated) {}
+    explicit StringInitializer(const std::string& value, const  bool nullTerminated, const i64 location)
+        : Initializer(Kind::String), value(value), nullTerminated(nullTerminated), location(location) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

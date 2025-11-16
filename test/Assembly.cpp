@@ -31,10 +31,11 @@ TEST(AssemblyTests, addType)
             : expected(std::move(expected)), type(type) {}
     };
     const std::vector<TestDataAddType> tests = {
+        {"addb", AsmType::Byte},
         {"addl", AsmType::LongWord},
         {"addq", AsmType::QuadWord},
         {"addsd",AsmType::Double},
-        {"add not set addType", AsmType::Byte},
+        {"add not set addType", AsmType::Word},
     };
     const std::string start = "add";
     for (const TestDataAddType& test : tests) {

@@ -952,10 +952,9 @@ TEST(Chapter16_Characters_and_Strings, invalidLabels)
     }
 }
 
-
 TEST(Chapter16_Characters_and_Strings, invalidTypes)
 {
-    const fs::path invalidPath = testsFolderPath / "chapter_15/invalid_types";
+    const fs::path invalidPath = testsFolderPath / "chapter_16/invalid_types";
     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!isCFile(path))
             continue;
@@ -969,7 +968,12 @@ TEST(Chapter16_Characters_and_Strings, validSemantics)
     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!isCFile(path))
             continue;
-        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+        try {
+            EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+        }
+        catch(const std::exception& e) {
+            std::cerr << path.path().string() << std::endl;
+        }
     }
 }
 

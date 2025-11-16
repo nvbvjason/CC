@@ -805,11 +805,11 @@ std::unique_ptr<Expr> Parser::factorParse()
 
 std::unique_ptr<Expr> Parser::constExprParse()
 {
-    std::variant<i8, u8, i32, i64, u32, u64, double> value;
+    std::variant<char, i8, u8, i32, i64, u32, u64, double> value;
     std::unique_ptr<TypeBase> type;
     switch (const Lexing::Token lexeme = peek(); lexeme.m_type) {
         case TokenType::CharLiteral: {
-            value = lexeme.getI32Value();
+            value = lexeme.getCharValue();
             type = std::make_unique<VarType>(Type::Char);
             break;
         }

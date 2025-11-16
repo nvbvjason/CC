@@ -15,7 +15,7 @@ TargetType getValueFromConst(const Parsing::ConstExpr& constExpr)
         case Type::I64:     return std::get<i64>(constExpr.value);
         case Type::U64:     return std::get<u64>(constExpr.value);
         case Type::Double:  return std::get<double>(constExpr.value);
-        case Type::Char:    return std::get<i32>(constExpr.value);
+        case Type::Char:    return std::get<char>(constExpr.value);
         default:
             std::abort();
     }

@@ -83,22 +83,8 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
         case InitKind::Compound:
             genCompoundLocalInit(*varDecl);
             break;
-        case InitKind::String:
-            genStringLocalInit(*varDecl);
-            break;
         default:
             std::abort();
-    }
-}
-
-void GenerateIr::genStringLocalInit(const Parsing::VarDecl& varDecl)
-{
-    const auto stringInit = dynCast<Parsing::StringInitializer>(varDecl.init.get());
-    const i64 arraySize = stringInit->value.size();
-    for (i64 i = 0; i < stringInit->value.size(); ++i) {
-        const auto valueConst = std::make_shared<ValueConst>(static_cast<i8>(stringInit->value[i]));
-        emplaceCopyToOffset(
-            valueConst, Identifier(varDecl.name), i, arraySize, 1, Type::Char);
     }
 }
 
@@ -278,17 +264,15 @@ std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl&
 std::shared_ptr<Value> genZeroValueForType(const Type type)
 {
     switch (type) {
-        case Type::I32:
-            return std::make_shared<ValueConst>(0);
-        case Type::I64:
-            return std::make_shared<ValueConst>(static_cast<i64>(0l));
-        case Type::U32:
-            return std::make_shared<ValueConst>(0u);
-        case Type::U64:
-        case Type::Pointer:
-            return std::make_shared<ValueConst>(static_cast<u64>(0ul));
-        case Type::Double:
-            return std::make_shared<ValueConst>(0.0);
+        case Type::Char:    return std::make_shared<ValueConst>(static_cast<char>(0));
+        case Type::I8:      return std::make_shared<ValueConst>(static_cast<i8>(0));
+        case Type::U8:      return std::make_shared<ValueConst>(static_cast<u8>(0));
+        case Type::I32:     return std::make_shared<ValueConst>(0);
+        case Type::U32:     return std::make_shared<ValueConst>(0u);
+        case Type::I64:     return std::make_shared<ValueConst>(static_cast<i64>(0l));
+        case Type::U64:     return std::make_shared<ValueConst>(static_cast<u64>(0ul));
+        case Type::Pointer: return std::make_shared<ValueConst>(static_cast<u64>(0ul));
+        case Type::Double:  return std::make_shared<ValueConst>(0.0);
         default:
             abort();
     }
@@ -340,18 +324,21 @@ void GenerateIr::genBlockItem(const Parsing::BlockItem& blockItem)
 
 void GenerateIr::genForInit(const Parsing::ForInit& forInit)
 {
-    if (forInit.kind == Parsing::ForInit::Kind::Declaration) {
-        const auto decl = dynCast<const Parsing::DeclForInit>(&forInit);
-        genDeclaration(*decl->decl);
-        return;
+    switch (forInit.kind) {
+        case Parsing::ForInit::Kind::Declaration: {
+            const auto decl = dynCast<const Parsing::DeclForInit>(&forInit);
+            genDeclaration(*decl->decl);
+            return;
+        }
+        case Parsing::ForInit::Kind::Expression: {
+            const auto expr = dynCast<const Parsing::ExprForInit>(&forInit);
+            if (expr->expression)
+                genInst(*expr->expression);
+            return;
+        }
+        default:
+            std::abort();
     }
-    if (forInit.kind == Parsing::ForInit::Kind::Expression) {
-        const auto expr = dynCast<const Parsing::ExprForInit>(&forInit);
-        if (expr->expression)
-            genInst(*expr->expression);
-        return;
-    }
-    std::unreachable();
 }
 
 void GenerateIr::genStmt(const Parsing::Stmt& stmt)
@@ -431,7 +418,7 @@ void GenerateIr::genStmt(const Parsing::Stmt& stmt)
         case Kind::Null:
             break;
         default:
-            throw std::invalid_argument("Unexpected statement type Ir generate");
+            std::abort();
     }
 }
 
@@ -558,7 +545,7 @@ void GenerateIr::genSwitchStmt(const Parsing::SwitchStmt& stmt)
 {
     const std::shared_ptr<Value> realValue = genInstAndConvert(*stmt.condition);
     const Type conditionType = stmt.condition->type->type;
-    for (const std::variant<i8, u8, i32, i64, u32, u64>& caseValue : stmt.cases) {
+    for (const std::variant<i32, i64, u32, u64>& caseValue : stmt.cases) {
         const auto dst = std::make_shared<ValueVar>(makeTemporaryName(), conditionType);
         std::string caseLabelName;
         std::shared_ptr<ValueConst> src2;
@@ -992,6 +979,7 @@ std::shared_ptr<Value> genConstValue(const Parsing::ConstExpr& constExpr)
     switch (constExpr.type->type) {
         case Type::I8:          return std::make_shared<ValueConst>(std::get<i8>(constExpr.value));
         case Type::U8:          return std::make_shared<ValueConst>(std::get<u8>(constExpr.value));
+        case Type::Char:        return std::make_shared<ValueConst>(std::get<char>(constExpr.value));
         case Type::I32:         return std::make_shared<ValueConst>(std::get<i32>(constExpr.value));
         case Type::U32:         return std::make_shared<ValueConst>(std::get<u32>(constExpr.value));
         case Type::I64:         return std::make_shared<ValueConst>(std::get<i64>(constExpr.value));

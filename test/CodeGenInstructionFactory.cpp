@@ -11,9 +11,9 @@ std::unique_ptr<Inst> CodeGenInstructionFactory::create(
         case Kind::Move:
             return std::make_unique<MoveInst>(std::move(src), std::move(dst), asmType);
         case Kind::MoveZeroExtend:
-            return std::make_unique<MoveZeroExtendInst>(std::move(src), std::move(dst), asmType);
+            return std::make_unique<MoveZeroExtendInst>(std::move(src), std::move(dst), src->type, dst->type);
         case Kind::MoveSX:
-            return std::make_unique<MoveSXInst>(std::move(src), std::move(dst));
+            return std::make_unique<MoveSXInst>(std::move(src), std::move(dst), src->type, dst->type);
         case Kind::Lea:
             return std::make_unique<LeaInst>(std::move(src), std::move(dst), asmType);
         case Kind::Idiv:

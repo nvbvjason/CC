@@ -51,10 +51,13 @@ void asmStaticString(std::string& result, const StringVariable& variable)
 {
     result += asmFormatInstruction(".section .rodata");
     result += asmFormatLabel(variable.name);
+
+    std::string escaped_value = genAsmCompatibleString(variable);
+
     if (variable.nullTerminated)
-        result += asmFormatInstruction(".asciz ", + "\"" + variable.value + '\"');
+        result += asmFormatInstruction(".asciz ", + "\"" + escaped_value + '\"');
     else
-        result += asmFormatInstruction(".ascii \"", variable.value + '\"');
+        result += asmFormatInstruction(".ascii \"", escaped_value + '\"');
     result += '\n';
 }
 
@@ -66,6 +69,25 @@ void asmStaticVariable(std::string& result, const StaticVariable& variable)
         return asmStaticVariableQuad(result, variable);
     if (variable.type == AsmType::Double)
         return asmStaticVariableDouble(result, variable);
+    if (variable.type == AsmType::Byte)
+        return asmStaticVariableByte(result, variable);
+}
+
+void asmStaticVariableByte(std::string& result, const StaticVariable& variable)
+{
+    if (variable.global)
+        result += asmFormatInstruction(".globl", variable.name);
+    if (variable.init == 0)
+        result += asmFormatInstruction(".bss");
+    else
+        result += asmFormatInstruction(".data");
+    result += asmFormatInstruction(".align","1");
+    result += asmFormatLabel(variable.name);
+    if (variable.init == 0)
+        result += asmFormatInstruction(".zero 1");
+    if (variable.init != 0)
+        result += asmFormatInstruction(".byte " + std::to_string(variable.init));
+    result += '\n';
 }
 
 void asmStaticVariableLong(std::string& result, const StaticVariable& variable)
@@ -490,9 +512,25 @@ std::string getTypeName(const AsmType type)
         case AsmType::LongWord:   return "long";
         case AsmType::QuadWord:   return "quad";
         case AsmType::Double:     return "quad";
+        default:
+            std::abort();
     }
-    std::abort();
 }
 
+std::string genAsmCompatibleString(const StringVariable& variable)
+{
+    std::string escaped_value;
+    for (const char c : variable.value) {
+        switch (c) {
+            case '\n': escaped_value += "\\n"; break;
+            case '\t': escaped_value += "\\t"; break;
+            case '\r': escaped_value += "\\r"; break;
+            case '\"': escaped_value += "\\\""; break;
+            case '\\': escaped_value += "\\\\"; break;
+            default: escaped_value += c; break;
+        }
+    }
+    return escaped_value;
+}
 
 } // CodeGen

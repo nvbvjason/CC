@@ -49,6 +49,7 @@ class TypeResolution final : public Parsing::ASTTraverser {
     std::vector<Error> m_errors;
     bool m_isConst = true;
     bool m_global = true;
+    bool m_inArrayInit = false;
 public:
     std::vector<Error> validate(Parsing::Program& program);
 
@@ -74,7 +75,7 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
 
     static std::unique_ptr<Parsing::Expr> convert(const Parsing::ConstExpr& expr);
-    static std::unique_ptr<Parsing::Expr> convert(Parsing::StringExpr& expr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::StringExpr& expr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);

@@ -64,7 +64,7 @@ private:
     bool match(const std::string& expected);
     void scanToken();
     char advance();
-    void addCharLiteral(i32 ch) const;
+    void addCharLiteral(char ch) const;
     void addStringLiteral(const std::string& str) const;
     void addToken(Token::Type type, u64 num, i32 ahead, std::string& text) const;
     void addToken(Token::Type type);

@@ -209,7 +209,7 @@ std::unique_ptr<Expr> deepCopy(const ConstExpr& expr)
         case Type::Double:
             return std::make_unique<ConstExpr>(expr.location, expr.getValue<double>(), std::make_unique<VarType>(Type::Double));
         case Type::Char:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<i32>(), std::make_unique<VarType>(Type::Char));
+            return std::make_unique<ConstExpr>(expr.location, expr.getValue<char>(), std::make_unique<VarType>(Type::Char));
         default:
             std::abort();
     }

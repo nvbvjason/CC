@@ -15,14 +15,14 @@ namespace Semantics {
 template<typename TargetType>
 void processSwitchCase(const Parsing::ConstExpr* constantExpr,
                        std::unordered_map<std::string,
-                       std::vector<std::variant<i8, u8, i32, i64, u32, u64>>>& switchCases,
+                       std::vector<std::variant<i32, i64, u32, u64>>>& switchCases,
                        const std::string& switchLabel,
                        Parsing::CaseStmt& caseStmt,
                        std::vector<Error>& errors)
 {
     TargetType value = constantExpr->getValue<TargetType>();
     const auto it = switchCases.find(switchLabel);
-    for (const std::variant<i8, u8, i32, i64, u32, u64>& v : it->second) {
+    for (const std::variant<i32, i64, u32, u64>& v : it->second) {
         if (value == std::get<TargetType>(v)) {
             errors.emplace_back("Duplicate case value in switch statement ", constantExpr->location);
             return;
@@ -35,7 +35,7 @@ void processSwitchCase(const Parsing::ConstExpr* constantExpr,
 class LoopLabeling : public Parsing::ASTTraverser {
     std::vector<Error> errors;
     std::unordered_set<std::string> m_default;
-    std::unordered_map<std::string, std::vector<std::variant<i8, u8, i32, i64, u32, u64>>> switchCases;
+    std::unordered_map<std::string, std::vector<std::variant<i32, i64, u32, u64>>> switchCases;
     Type conditionType = Type::I32;
     std::string breakLabel;
     std::string continueLabel;
@@ -57,6 +57,10 @@ private:
     static bool isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt);
     static bool isNonConstantInSwitchCase(const Parsing::CaseStmt& caseStmt);
     static std::string makeTemporary(const std::string& name);
+    void emplaceError(std::string&& message, const i64 location)
+    {
+        errors.emplace_back(std::move(message), location);
+    }
 };
 
 inline bool LoopLabeling::isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt)
@@ -76,12 +80,24 @@ inline std::string LoopLabeling::makeTemporary(const std::string& name)
 }
 
 void initCharacterArray(Parsing::VarDecl& varDecl,
-                        Parsing::SingleInitializer& singleInit,
+                        const Parsing::SingleInitializer& singleInit,
                         const Parsing::ArrayType& arrayType);
 
-void initArray(Parsing::VarDecl& array);
+void initArray(Parsing::VarDecl& array, std::vector<Error>& errors);
 std::vector<i64> getDimensions(const Parsing::VarDecl& array);
+void createInitsWithPositionsSingle(Type innerArrayType,
+                                    std::vector<Error>& errors,
+                                    const std::vector<i64>& dimensions,
+                                    std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,
+                                    std::vector<std::vector<i64>>& emplacedPositions,
+                                    const std::vector<i64>& position,
+                                    Parsing::SingleInitializer& singleInit);
 std::vector<i64> getScales(const std::vector<i64>& dimensions, i64 size);
+std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
+    createInitsWithPositions(Type innerArrayType,
+                             Parsing::Initializer* arrayInit,
+                             std::vector<Error>& errors,
+                             const std::vector<i64>& dimensions);
 bool isZeroSingleInit(const Parsing::Initializer& init);
 std::vector<std::unique_ptr<Parsing::Initializer>> getZeroInits(
     const std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,
@@ -89,8 +105,6 @@ std::vector<std::unique_ptr<Parsing::Initializer>> getZeroInits(
     const std::vector<std::vector<i64>>& emplacedPositions);
 std::unique_ptr<Parsing::Initializer> emplaceNewSingleInit(
     Type innerArrayType, Parsing::SingleInitializer& singleInit);
-std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
-    getSingleInitAndPositions(Type innerArrayType, Parsing::Initializer* arrayInit);
 i64 getDistance(const std::vector<i64>& positionBefore,
                 const std::vector<i64>& position,
                 const std::vector<i64>& dimensions);

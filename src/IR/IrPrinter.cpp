@@ -260,11 +260,14 @@ std::string IrPrinter::print(const ValueVar& val)
 std::string IrPrinter::print(const ValueConst& val)
 {
     switch (val.type) {
-        case Type::I32:             return "Const(" + std::to_string(std::get<i32>(val.value)) + ") i32";
-        case Type::I64:             return "Const(" + std::to_string(std::get<i64>(val.value)) + ") i64";
-        case Type::U32:             return "Const(" + std::to_string(std::get<u32>(val.value)) + ") u32";
-        case Type::U64:             return "Const(" + std::to_string(std::get<u64>(val.value)) + ") u64";
-        case Type::Double:          return "Const(" + std::to_string(std::get<double>(val.value)) + ") double";
+        case Type::I8:           return "Const(" + std::to_string(std::get<i8>(val.value)) + ") I8";
+        case Type::U8:           return "Const(" + std::to_string(std::get<u8>(val.value)) + ") U8";
+        case Type::Char:         return "Const(" + std::to_string(std::get<char>(val.value)) + ") Char";
+        case Type::I32:          return "Const(" + std::to_string(std::get<i32>(val.value)) + ") i32";
+        case Type::I64:          return "Const(" + std::to_string(std::get<i64>(val.value)) + ") i64";
+        case Type::U32:          return "Const(" + std::to_string(std::get<u32>(val.value)) + ") u32";
+        case Type::U64:          return "Const(" + std::to_string(std::get<u64>(val.value)) + ") u64";
+        case Type::Double:       return "Const(" + std::to_string(std::get<double>(val.value)) + ") double";
         default:
             std::abort();
     }

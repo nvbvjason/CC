@@ -106,6 +106,9 @@ void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std
 u64 getSingleInitValue(const Type type, const Ir::ValueConst* const value)
 {
     switch (type) {
+        case Type::Char:    return std::get<char>(value->value);
+        case Type::I8:      return std::get<i8>(value->value);
+        case Type::U8:      return std::get<u8>(value->value);
         case Type::I32:     return std::get<i32>(value->value);
         case Type::U32:     return std::get<u32>(value->value);
         case Type::I64:     return std::get<i64>(value->value);
@@ -484,10 +487,12 @@ void GenerateAsmTree::genDoubleToInt(const Ir::DoubleToIntInst& doubleToInt)
 {
     const std::shared_ptr<Operand> src = genOperand(doubleToInt.src);
     const std::shared_ptr<Operand> dst = genOperand(doubleToInt.dst);
-    if (Operators::getSizeAsmType(src->type) < 4) {
-        const auto rax = std::make_shared<RegisterOperand>(RegType::AX, AsmType::LongWord);
-        emplaceCvttsd2si(src, rax, AsmType::LongWord);
-        emplaceMove(rax, dst, dst->type);
+
+    if (Operators::getSizeAsmType(dst->type) < 4) {
+        const auto raxLongWord = std::make_shared<RegisterOperand>(RegType::AX, AsmType::LongWord);
+        emplaceCvttsd2si(src, raxLongWord, AsmType::LongWord);
+        const auto raxByte = std::make_shared<RegisterOperand>(RegType::AX, AsmType::Byte);
+        emplaceMove(raxByte, dst, dst->type);
     }
     else
         emplaceCvttsd2si(src, dst, dst->type);
@@ -540,7 +545,13 @@ void GenerateAsmTree::genIntToDouble(const Ir::IntToDoubleInst& intToDouble)
     const std::shared_ptr<Operand> src = genOperand(intToDouble.src);
     const std::shared_ptr<Operand> dst = genOperand(intToDouble.dst);
 
-    emplaceCvtsi2sd(src, dst, src->type);
+    if (Operators::getSizeAsmType(src->type) < 4) {
+        const auto rax = std::make_shared<RegisterOperand>(RegType::AX, AsmType::LongWord);
+        emplaceMoveSX(src, dst, AsmType::Byte, AsmType::LongWord);
+        emplaceCvtsi2sd(src, dst, AsmType::LongWord);
+    }
+    else
+        emplaceCvtsi2sd(src, dst, src->type);
 }
 
 void GenerateAsmTree::genUIntToDouble(const Ir::UIntToDoubleInst& uintToDouble)
@@ -1053,10 +1064,12 @@ std::shared_ptr<Operand> GenerateAsmTree::getZeroOperand(const AsmType type)
 std::shared_ptr<ImmOperand> GenerateAsmTree::getImmOperandFromValue(const Ir::ValueConst& valueConst)
 {
     switch (valueConst.type) {
+        case Type::Char:
+            return std::make_shared<ImmOperand>(std::get<char>(valueConst.value), AsmType::Byte);
         case Type::I8:
-            return std::make_shared<ImmOperand>(std::get<i8>(valueConst.value), AsmType::LongWord);
+            return std::make_shared<ImmOperand>(std::get<i8>(valueConst.value), AsmType::Byte);
         case Type::U8:
-            return std::make_shared<ImmOperand>(std::get<u8>(valueConst.value), AsmType::LongWord);
+            return std::make_shared<ImmOperand>(std::get<u8>(valueConst.value), AsmType::Byte);
         case Type::I32:
             return std::make_shared<ImmOperand>(std::get<i32>(valueConst.value), AsmType::LongWord);
         case Type::U32:

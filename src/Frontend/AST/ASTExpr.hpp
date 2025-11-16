@@ -13,7 +13,7 @@
 namespace Parsing {
 
 struct ConstExpr final : Expr {
-    std::variant<i8, u8, i32, i64, u32, u64, double> value;
+    std::variant<char, i8, u8, i32, i64, u32, u64, double> value;
 
     template<typename T>
     ConstExpr(T&& value, std::unique_ptr<TypeBase> varType) noexcept
@@ -34,7 +34,7 @@ struct ConstExpr final : Expr {
             case Type::I64:     return std::get<i64>(value);
             case Type::U64:     return std::get<u64>(value);
             case Type::Double:  return std::get<double>(value);
-            case Type::Char:    return std::get<i32>(value);
+            case Type::Char:    return std::get<char>(value);
             default:
                 std::abort();
         }

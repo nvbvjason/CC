@@ -48,7 +48,6 @@ public:
     void genDeclaration(const Parsing::Declaration& decl);
     void genStaticLocal(const Parsing::VarDecl& varDecl);
     void genCompoundLocalInit(const Parsing::VarDecl& varDecl);
-    void genStringLocalInit(const Parsing::VarDecl& varDecl);
 
     void genStmt(const Parsing::Stmt& stmt);
     void genReturnStmt(const Parsing::ReturnStmt& returnStmt);

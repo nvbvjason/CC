@@ -7,7 +7,7 @@
 #include <vector>
 
 class TokenStore {
-    std::vector<std::variant<i8, u8, i32, i64, u32, u64, double>> m_data;
+    std::vector<std::variant<char, i8, u8, i32, i64, u32, u64, double>> m_data;
     std::vector<i32> m_line;
     std::vector<u16> m_column;
     std::vector<Lexing::Token::Type> m_type;
@@ -30,7 +30,7 @@ public:
         m_lexeme.reserve(size);
     }
     void emplaceBack(
-        std::variant<i8, u8, i32, i64, u32, u64, double> value,
+        std::variant<char, i8, u8, i32, i64, u32, u64, double> value,
         const i32 line,
         const u16 column,
         Lexing::Token::Type type,
@@ -47,7 +47,7 @@ public:
         assert(i < m_line.size());
         return {getValue(i), getLineNumber(i), getColumnNumber(i), getType(i), getLexeme(i)};
     }
-    [[nodiscard]] std::variant<i8, u8, i32, i64, u32, u64, double> getValue(const size_t i) const
+    [[nodiscard]] std::variant<char, i8, u8, i32, i64, u32, u64, double> getValue(const size_t i) const
     {
         assert(i < m_line.size());
         return m_data[i];

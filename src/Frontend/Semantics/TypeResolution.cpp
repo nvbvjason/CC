@@ -84,8 +84,12 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         m_definedFunctions.insert(varDecl.name);
     m_isConst = true;
 
-    if (varDecl.init)
+    if (varDecl.init) {
+        if (varDecl.type->type == Type::Array)
+            m_inArrayInit = true;
         varDecl.init->accept(*this);
+        m_inArrayInit = false;
+    }
 
     if (hasError())
         return;
@@ -112,13 +116,8 @@ void TypeResolution::verifyArrayInSingleInit(
         addError("Cannot initialize array with single init", varDecl.location);
         return;
     }
-    if (singleInitializer.expr->kind == Parsing::Expr::Kind::AddrOf) {
-        const auto addrOf = dynCast<Parsing::AddrOffExpr>(singleInitializer.expr.get());
-        if (addrOf->reference->kind != Parsing::Expr::Kind::String) {
-            addError("Character array initializer must be a String", varDecl.location);
-            return;
-        }
-        const auto stringExpr = dynCast<Parsing::StringExpr>(addrOf->reference.get());
+    if (singleInitializer.expr->kind == Parsing::Expr::Kind::String) {
+        const auto stringExpr = dynCast<Parsing::StringExpr>(singleInitializer.expr.get());
         if (arrayType->size < stringExpr->value.size())
             addError("Character array shorter than string init", varDecl.location);
     }
@@ -144,8 +143,7 @@ void TypeResolution::verifyArrayInSingleInit(
             }
             auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
             varDecl.init = std::make_unique<Parsing::SingleInitializer>(
-                std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr))
-            );
+                std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr)));
         }
     }
 }
@@ -170,6 +168,8 @@ void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
                 addError("Cannot init ptr with double", varDecl.location);
                 break;
             }
+            if (singleInit->expr->kind == Parsing::Expr::Kind::String)
+                continue;
             if (singleInit->expr->type->type != arrayTypeInner) {
                 singleInit->expr = std::make_unique<Parsing::CastExpr>(
                     singleInit->expr->location,
@@ -348,6 +348,8 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(const Parsing::ConstExpr&
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::StringExpr& expr)
 {
+    if (m_inArrayInit)
+        return deepCopy(expr);
     expr.type = std::make_unique<Parsing::ArrayType>(
         std::make_unique<Parsing::VarType>(Type::Char), expr.value.size() + 1);
     return deepCopy(expr);
@@ -385,9 +387,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::FuncCallExpr& fu
             addError("Cannot cast pointer arg to non pointer", funCallExpr.args[i]->location);
             return Parsing::deepCopy(funCallExpr);
         }
-        if (typeInner != castTo)
+        if (typeInner != castTo) {
             funCallExpr.args[i] = std::make_unique<Parsing::CastExpr>(
                 Parsing::deepCopy(*it->second.paramTypes[i]), std::move(funCallExpr.args[i]));
+        }
     }
     return Parsing::deepCopy(funCallExpr);
 }
@@ -436,7 +439,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::UnaryExpr& unary
     else
         unaryExpr.type = Parsing::deepCopy(*unaryExpr.innerExpr->type);
 
-    if (unaryExpr.innerExpr->type->type == Type::Char &&
+    if (isCharacterType(unaryExpr.innerExpr->type->type) &&
         (unaryExpr.op == Operator::Negate || unaryExpr.op == Operator::Complement))
         unaryExpr.innerExpr = convertOrCastToType(*unaryExpr.innerExpr, Type::I32);
 
