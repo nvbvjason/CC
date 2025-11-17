@@ -186,6 +186,14 @@ std::unique_ptr<Expr> deepCopy(const Expr& expr)
             const auto subscriptExpr = dynCast<const SubscriptExpr>(&expr);
             return deepCopy(*subscriptExpr);
         }
+        case Expr::Kind::SizeOfExpr: {
+            const auto sizeOfExpr = dynCast<const SizeOfExprExpr>(&expr);
+            return deepCopy(*sizeOfExpr);
+        }
+        case Expr::Kind::SizeOfType: {
+            const auto sizeOfTypeExpr = dynCast<const SizeOfTypeExpr>(&expr);
+            return deepCopy(*sizeOfTypeExpr);
+        }
         default:
             std::abort();
     }
@@ -309,5 +317,18 @@ std::unique_ptr<Expr> deepCopy(const SubscriptExpr& expr)
     if (expr.type)
         result->type = deepCopy(*expr.type);
     return result;
+}
+
+std::unique_ptr<Expr> deepCopy(const SizeOfExprExpr& expr)
+{
+    auto result = std::make_unique<SizeOfExprExpr>(expr.location, deepCopy(*expr.innerExpr));
+    if (expr.type)
+        result->type = deepCopy(*expr.type);
+    return result;
+}
+
+std::unique_ptr<Expr> deepCopy(const SizeOfTypeExpr& expr)
+{
+    return std::make_unique<SizeOfTypeExpr>(expr.location, deepCopy(*expr.sizeType));
 }
 } // Parsing

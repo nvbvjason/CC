@@ -10,6 +10,8 @@
 #include <variant>
 #include <vector>
 
+#include "ASTTypes.hpp"
+
 namespace Parsing {
 
 struct ConstExpr final : Expr {
@@ -275,7 +277,7 @@ struct SizeOfExprExpr final : Expr {
     std::unique_ptr<Expr> innerExpr;
 
     explicit SizeOfExprExpr(const i64 loc, std::unique_ptr<Expr>&& innerExpr)
-        : Expr(loc, Kind::SizeOfExpr), innerExpr(std::move(innerExpr)) {}
+        : Expr(loc, Kind::SizeOfExpr, std::make_unique<VarType>(Type::I64)), innerExpr(std::move(innerExpr)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -289,7 +291,7 @@ struct SizeOfTypeExpr final : Expr {
     std::unique_ptr<TypeBase> sizeType;
 
     explicit SizeOfTypeExpr(const i64 loc, std::unique_ptr<TypeBase>&& sizeType)
-        : Expr(loc, Kind::SizeOfType), sizeType(std::move(sizeType)) {}
+        : Expr(loc, Kind::SizeOfType, std::make_unique<VarType>(Type::I64)), sizeType(std::move(sizeType)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

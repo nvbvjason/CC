@@ -219,7 +219,8 @@ void TypeResolution::visit(Parsing::ExprForInit& exprForInit)
 
 void TypeResolution::visit(Parsing::ReturnStmt& stmt)
 {
-    stmt.expr = convertArrayType(*stmt.expr);
+    if (stmt.expr)
+        stmt.expr = convertArrayType(*stmt.expr);
 }
 
 void TypeResolution::visit(Parsing::ExprStmt& stmt)
@@ -336,6 +337,14 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::Expr& expr)
             const auto subscript = dynCast<Parsing::SubscriptExpr>(&expr);
             return convert(*subscript);
         }
+        case ExprKind::SizeOfExpr: {
+            const auto sizeOfExpr = dynCast<Parsing::SizeOfExprExpr>(&expr);
+            return convert(*sizeOfExpr);
+        }
+        case ExprKind::SizeOfType: {
+            const auto sizeOfType = dynCast<Parsing::SizeOfTypeExpr>(&expr);
+            return convert(*sizeOfType);
+        }
         default:
             std::abort();
     }
@@ -346,7 +355,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(const Parsing::ConstExpr&
     return deepCopy(expr);
 }
 
-std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::StringExpr& expr)
+std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::StringExpr& expr) const
 {
     if (m_inArrayInit)
         return deepCopy(expr);
@@ -461,6 +470,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::BinaryExpr& bina
     }
     const Type leftType = binaryExpr.lhs->type->type;
     const Type rightType = binaryExpr.rhs->type->type;
+    if (leftType == Type::Void || rightType == Type::Void) {
+        addError("Cannot have void type in binary expression.", binaryExpr.location);
+        return Parsing::deepCopy(binaryExpr);
+    }
     const Type commonType = getCommonType(leftType, rightType);
 
     if (commonType == Type::Double && (isBinaryBitwise(binaryExpr.op) || binaryExpr.op == BinaryOp::Modulo)) {
@@ -637,6 +650,10 @@ bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
 
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
+    if (rightType == Type::Void) {
+        addError("Cannot assign with type void.", assignmentExpr.rhs->location);
+        return false;
+    }
     const Type commonType = getCommonType(leftType, rightType);
     if ((leftType == Type::Pointer || rightType == Type::Pointer) &&
         isIllegalPointerCompoundAssignOperation(assignmentExpr.op)) {
@@ -681,6 +698,14 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::TernaryExpr& ter
 
     const Type trueType = ternaryExpr.trueExpr->type->type;
     const Type falseType = ternaryExpr.falseExpr->type->type;
+    if (trueType == Type::Void && falseType == Type::Void) {
+        ternaryExpr.type = Parsing::deepCopy(*ternaryExpr.trueExpr->type);
+        return Parsing::deepCopy(ternaryExpr);
+    }
+    if (trueType == Type::Void || falseType == Type::Void) {
+        addError("Ternary true and false expression must not have type void", ternaryExpr.location);
+        return Parsing::deepCopy(ternaryExpr);
+    }
     const Type commonType = getCommonType(trueType, falseType);
     if (trueType == Type::Pointer || falseType == Type::Pointer) {
         if (trueType == Type::Pointer && falseType == Type::Pointer) {
@@ -782,6 +807,17 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SubscriptExpr& s
     const auto ptrType = dynCast<Parsing::PointerType>(subscriptExprPtr->referencing->type.get());
     result->type = Parsing::deepCopy(*ptrType->referenced);
     return result;
+}
+
+std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::SizeOfExprExpr& sizeOfExprExpr)
+{
+    sizeOfExprExpr.innerExpr = convertArrayType(*sizeOfExprExpr.innerExpr);
+    return Parsing::deepCopy(sizeOfExprExpr);
+}
+
+std::unique_ptr<Parsing::Expr> TypeResolution::convert(const Parsing::SizeOfTypeExpr& sizeOfTypeExpr)
+{
+    return Parsing::deepCopy(sizeOfTypeExpr);
 }
 
 bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)

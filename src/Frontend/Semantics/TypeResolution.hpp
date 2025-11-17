@@ -75,7 +75,7 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
 
     static std::unique_ptr<Parsing::Expr> convert(const Parsing::ConstExpr& expr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::StringExpr& expr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::StringExpr& expr) const;
     std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
@@ -91,6 +91,8 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::DereferenceExpr& dereferenceExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::AddrOffExpr& addrOffExpr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::SubscriptExpr& subscriptExpr);
+    std::unique_ptr<Parsing::Expr> convert(Parsing::SizeOfExprExpr& sizeOfExprExpr);
+    static std::unique_ptr<Parsing::Expr> convert(const Parsing::SizeOfTypeExpr& sizeOfTypeExpr);
 
     bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);

@@ -45,6 +45,17 @@ void ValidateReturn::visit(Parsing::FuncDeclaration& funDecl)
         returnStmt->expr = std::make_unique<Parsing::CastExpr>(
             Parsing::deepCopy(*funcType->returnType), std::move(returnStmt->expr));
     }
+    if (funcType->returnType->type == Type::Void) {
+        if (returnStmt->expr) {
+            m_errors.emplace_back("Cannot return expression from function with return type void",
+                returnStmt->expr->location);
+        }
+        return;
+    }
+    if (!returnStmt->expr) {
+        m_errors.emplace_back("Must have return expression on non void function",returnStmt->location);
+        return;
+    }
     assert(funcType->returnType->type);
     assert(returnStmt->expr->type);
     assert(returnStmt->expr->type->type);

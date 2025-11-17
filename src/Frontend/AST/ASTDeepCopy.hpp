@@ -32,5 +32,7 @@ namespace Parsing {
 [[nodiscard]] std::unique_ptr<Expr> deepCopy(const DereferenceExpr& expr);
 [[nodiscard]] std::unique_ptr<Expr> deepCopy(const AddrOffExpr& expr);
 [[nodiscard]] std::unique_ptr<Expr> deepCopy(const SubscriptExpr& expr);
+[[nodiscard]] std::unique_ptr<Expr> deepCopy(const SizeOfExprExpr& expr);
+[[nodiscard]] std::unique_ptr<Expr> deepCopy(const SizeOfTypeExpr& expr);
 
 } // Parsing

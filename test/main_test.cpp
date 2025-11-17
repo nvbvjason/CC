@@ -967,12 +967,7 @@ TEST(Chapter16_Characters_and_Strings, validSemantics)
     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!isCFile(path))
             continue;
-        try {
-            EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
-        }
-        catch(const std::exception& e) {
-            std::cerr << path.path().string() << std::endl;
-        }
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
     }
 }
 
@@ -993,6 +988,26 @@ TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, invalidParsing)
         if (!isCFile(path))
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, invalidTypes)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_17/invalid_types";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, validSemantics)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_17/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
     }
 }
 

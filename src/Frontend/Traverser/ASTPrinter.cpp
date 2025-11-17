@@ -419,6 +419,20 @@ void ASTPrinter::visit(const SubscriptExpr& subscriptExpr)
     ConstASTTraverser::visit(subscriptExpr);
 }
 
+void ASTPrinter::visit(const SizeOfExprExpr& sizeOfExprExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("SizeOfExprExpr");
+    ConstASTTraverser::visit(sizeOfExprExpr);
+}
+
+void ASTPrinter::visit(const SizeOfTypeExpr& sizeOfTypeExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("SizeOfTypeExpr");
+    ConstASTTraverser::visit(sizeOfTypeExpr);
+}
+
 void ASTPrinter::addLine(const std::string& line)
 {
     oss << getIndent() << line << '\n';
