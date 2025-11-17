@@ -70,7 +70,7 @@ protected:
 struct Expr : ASTNode {
     enum class Kind {
         Constant, String, Var, Cast, Unary, Binary, Assignment, Ternary, FunctionCall,
-        Dereference, AddrOf, Subscript
+        Dereference, AddrOf, Subscript, SizeOfExpr, SizeOfType
     };
     const Kind kind;
     std::unique_ptr<TypeBase> type = nullptr;

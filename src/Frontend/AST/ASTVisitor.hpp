@@ -65,6 +65,8 @@ public:
     virtual void visit(DereferenceExpr&) = 0;
     virtual void visit(AddrOffExpr&) = 0;
     virtual void visit(SubscriptExpr&) = 0;
+    virtual void visit(SizeOfExprExpr&) = 0;
+    virtual void visit(SizeOfTypeExpr&) = 0;
 };
 
 class ConstASTVisitor {
@@ -128,6 +130,8 @@ public:
     virtual void visit(const DereferenceExpr&) = 0;
     virtual void visit(const AddrOffExpr&) = 0;
     virtual void visit(const SubscriptExpr&) = 0;
+    virtual void visit(const SizeOfExprExpr&) = 0;
+    virtual void visit(const SizeOfTypeExpr&) = 0;
 };
 
 } // Parsing

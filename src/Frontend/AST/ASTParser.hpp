@@ -142,6 +142,9 @@ struct FuncDeclaration final : Declaration {
 struct ReturnStmt final : Stmt {
     std::unique_ptr<Expr> expr;
 
+    explicit ReturnStmt(const i64 loc)
+        : Stmt(loc, Kind::Return), expr(nullptr) {}
+
     explicit ReturnStmt(std::unique_ptr<Expr> expr)
         : Stmt(Kind::Return), expr(std::move(expr)) {}
 

@@ -93,6 +93,7 @@ std::string Token::getTypeName() const
         case Type::Default:                 return "Default";
         case Type::Static:                  return "Static";
         case Type::Extern:                  return "extern";
+        case Type::SizeOf:                  return "sizeof";
 
         // Special Tokens
         case Type::EndOfFile:               return "End Of File";

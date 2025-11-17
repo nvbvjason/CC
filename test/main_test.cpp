@@ -921,7 +921,6 @@ TEST(Chapter16_Characters_and_Strings, lexingInvalid)
     }
 }
 
-
 TEST(Chapter16_Characters_and_Strings, validParsing)
 {
     const fs::path validPath = testsFolderPath / "chapter_16/valid";
@@ -974,6 +973,26 @@ TEST(Chapter16_Characters_and_Strings, validSemantics)
         catch(const std::exception& e) {
             std::cerr << path.path().string() << std::endl;
         }
+    }
+}
+
+TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, validParsing)
+{
+    const fs::path validPath = testsFolderPath / "chapter_17/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, invalidParsing)
+{
+    const fs::path validPath = testsFolderPath / "chapter_17/invalid_parse";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
     }
 }
 

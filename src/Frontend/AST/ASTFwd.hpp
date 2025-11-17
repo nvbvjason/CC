@@ -11,7 +11,7 @@ namespace Parsing {
     variable_declaration = (identifier name, exp? init, type var_type, storage_class?)
     function_definition = (identifier name, identifier* params, block? body, type var_type, storage_class?)
 
-    type = Int | Long | UInt | ULong | Double | Char | SChar | UChar
+    type = Int | Long | UInt | ULong | Double | Char | SChar | UChar | Void
          | FunType(type* params, type ret)
          | Pointer(type referenced)
          | Array(type element, int size)
@@ -19,7 +19,7 @@ namespace Parsing {
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
     for_init = InitDecl(variable_declaration) | InitExp(exp?)
-    statement = Return(exp)
+    statement = Return(exp?)
               | Expression(exp)
               | If(exp condition, statement then, statement? else)
               | Goto(identifier label)
@@ -47,6 +47,8 @@ namespace Parsing {
         | Dereference(exp)
         | AddrOf(exp)
         | Subscript(exp, exp)
+        | SizeOf(exp)
+        | SizeOf(type)
     unary_operator = Complement | Negate | Not | Plus
                    | PrefixIncrement | PostFixIncrement
                    | PrefixDecrement | PostFixDecrement
@@ -130,4 +132,6 @@ struct FuncCallExpr;
 struct DereferenceExpr;
 struct AddrOffExpr;
 struct SubscriptExpr;
+struct SizeOfExprExpr;
+struct SizeOfTypeExpr;
 } // Parsing

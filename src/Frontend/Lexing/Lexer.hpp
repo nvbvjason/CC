@@ -39,11 +39,12 @@ class Lexer {
         { "default", Type::Default },
         { "static", Type::Static },
         { "extern", Type::Extern },
-        {"long", Type::LongKeyword},
-        {"signed", Type::Signed},
-        {"unsigned", Type::Unsigned},
-        {"double", Type::DoubleKeyword},
-        {"char", Type::CharKeyword},
+        { "long", Type::LongKeyword},
+        { "signed", Type::Signed},
+        { "unsigned", Type::Unsigned},
+        { "double", Type::DoubleKeyword},
+        { "char", Type::CharKeyword},
+        { "sizeof", Type::SizeOf},
     };
 public:
     explicit Lexer(const std::string& input, TokenStore& tokenStore)

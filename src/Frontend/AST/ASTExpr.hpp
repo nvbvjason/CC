@@ -270,4 +270,32 @@ struct SubscriptExpr final : Expr {
 
     SubscriptExpr() = delete;
 };
+
+struct SizeOfExprExpr final : Expr {
+    std::unique_ptr<Expr> innerExpr;
+
+    explicit SizeOfExprExpr(std::unique_ptr<Expr>&& innerExpr, const i64 loc)
+        : Expr(loc, Kind::SizeOfExpr), innerExpr(std::move(innerExpr)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::SizeOfExpr; }
+
+    SizeOfExprExpr() = delete;
+};
+
+struct SizeOfTypeExpr final : Expr {
+    std::unique_ptr<TypeBase> sizeType;
+
+    explicit SizeOfTypeExpr(std::unique_ptr<TypeBase>&& sizeType, const i64 loc)
+        : Expr(loc, Kind::SizeOfType), sizeType(std::move(sizeType)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Expr* expr) { return expr->kind == Kind::SizeOfType; }
+
+    SizeOfTypeExpr() = delete;
+};
 } // Parsing

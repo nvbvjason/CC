@@ -98,6 +98,7 @@ struct Token {
         Extern,                          // extern
         Signed,                          // Signed
         Unsigned,                        // Unsigned
+        SizeOf,                          // SizeOf
 
         // Special Tokens
         EndOfFile,                       // EOF marker
