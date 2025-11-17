@@ -1,3 +1,10 @@
+// ──────────────────────────────────────────────────────────────
+//  Example: static_var_indirection.c
+//  Source: "Writing a C Compiler" writing-a-c-compiler-tests
+//  License: MIT (original)
+//  Author: Nora Sandler
+// ──────────────────────────────────────────────────────────────
+
 int getchar(void);
 int puts(char *c);
 char *strncat(char *sr, char *s2, unsigned long n);
