@@ -15,7 +15,7 @@ Linux x86_64 required
 `./build/src/CC examples/hello_name.c`
 
 #### Run it:
-`./examples/hello_world`
+`./examples/hello_name`
 
 ## Language Specification
 
