@@ -277,7 +277,9 @@ std::unique_ptr<Expr> deepCopy(const TernaryExpr& expr)
 {
     auto result = std::make_unique<TernaryExpr>(
         expr.location,
-        deepCopy(*expr.condition), deepCopy(*expr.trueExpr), deepCopy(*expr.falseExpr));
+        deepCopy(*expr.condition),
+        deepCopy(*expr.trueExpr),
+        deepCopy(*expr.falseExpr));
     if (expr.type)
         result->type = deepCopy(*expr.type);
     return result;

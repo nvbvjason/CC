@@ -60,6 +60,7 @@ public:
     bool isValidFuncCall(i64 location, const SymbolTable::ReturnedEntry& returnedEntry);
     bool isValidVarExpr(i64 location, const SymbolTable::ReturnedEntry& returnedEntry);
 private:
+    void checkFuncDeclForTypeVoid(const Parsing::FuncDeclaration& funDecl);
     std::string makeTemporaryName(const std::string &name);
     void addError(const std::string& msg, const i64 location) { m_errors.emplace_back(msg, location); }
 };

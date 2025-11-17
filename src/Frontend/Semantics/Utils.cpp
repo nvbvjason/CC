@@ -1,6 +1,8 @@
 #include "ASTDeepCopy.hpp"
 #include "ASTTypes.hpp"
 #include "Utils.hpp"
+
+#include "AstToIrOperators.hpp"
 #include "DynCast.hpp"
 #include "TypeConversion.hpp"
 
@@ -111,6 +113,44 @@ std::unique_ptr<Parsing::Expr> convertToArithmeticType(const Parsing::Expr& expr
         std::make_unique<Parsing::VarType>(targetType));
 }
 
+bool isVoidPointer(const Parsing::TypeBase& type)
+{
+    if (type.kind != Parsing::TypeBase::Kind::Pointer)
+        return false;
+    const auto pointer = dynCast<const Parsing::PointerType>(&type);
+    return pointer->referenced->type == Type::Void;
+}
+
+bool isVoidArray(const Parsing::TypeBase& type)
+{
+    return Ir::getArrayType(&type) == Type::Void;
+}
+
+bool isArrayOfVoidPointer(const Parsing::TypeBase& type)
+{
+    const Parsing::TypeBase* currentType = &type;
+    while (currentType->kind == Parsing::TypeBase::Kind::Array) {
+        const auto arrayType = dynCast<const Parsing::ArrayType>(currentType);
+        currentType = arrayType->elementType.get();
+    }
+    return isVoidPointer(*currentType);
+}
+
+bool isPointerToVoidArray(const Parsing::TypeBase& type)
+{
+    if (type.kind != Parsing::TypeBase::Kind::Pointer)
+        return false;
+    const auto pointer = dynCast<const Parsing::PointerType>(&type);
+    if (pointer->referenced->kind != Parsing::TypeBase::Kind::Array)
+        return false;
+    return isVoidArray(*pointer->referenced);
+}
+
+bool isScalarType(const Parsing::TypeBase& type)
+{
+    return type.type != Type::Void;
+}
+
 std::unique_ptr<Parsing::Expr> convertOrCastToType(const Parsing::Expr& expr, const Type targetType)
 {
     if (expr.kind != Parsing::Expr::Kind::Constant) {
@@ -119,7 +159,6 @@ std::unique_ptr<Parsing::Expr> convertOrCastToType(const Parsing::Expr& expr, co
             std::make_unique<Parsing::VarType>(targetType),
             Parsing::deepCopy(expr));
     }
-
     return convertToArithmeticType(expr, targetType);
 }
 

@@ -65,36 +65,41 @@ public:
     void visit(Parsing::ReturnStmt& stmt) override;
     void visit(Parsing::ExprStmt& stmt) override;
     void visit(Parsing::IfStmt& ifStmt) override;
-    void visit(Parsing::CaseStmt& stmt) override;
-    void visit(Parsing::WhileStmt& stmt) override;
-    void visit(Parsing::DoWhileStmt& stmt) override;
-    void visit(Parsing::ForStmt& stmt) override;
-    void visit(Parsing::SwitchStmt& stmt) override;
+    void visit(Parsing::CaseStmt& caseStmt) override;
+    void visit(Parsing::WhileStmt& whileStmt) override;
+    void visit(Parsing::DoWhileStmt& doWhileStmt) override;
+    void visit(Parsing::ForStmt& forStmt) override;
+    void visit(Parsing::SwitchStmt& switchStmt) override;
 
     std::unique_ptr<Parsing::Expr> convertArrayType(Parsing::Expr& expr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
 
-    static std::unique_ptr<Parsing::Expr> convert(const Parsing::ConstExpr& expr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::StringExpr& expr) const;
-    std::unique_ptr<Parsing::Expr> convert(Parsing::VarExpr& varExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::CastExpr& castExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::UnaryExpr& unaryExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::BinaryExpr& binaryExpr);
+    static std::unique_ptr<Parsing::Expr> convertConstExpr(const Parsing::ConstExpr& expr);
+    std::unique_ptr<Parsing::Expr> convertStringExpr(Parsing::StringExpr& expr);
+    std::unique_ptr<Parsing::Expr> convertVarExpr(Parsing::VarExpr& varExpr);
+    std::unique_ptr<Parsing::Expr> convertCastExpr(Parsing::CastExpr& castExpr);
+    std::unique_ptr<Parsing::Expr> convertUnaryExpr(Parsing::UnaryExpr& unaryExpr);
+    std::unique_ptr<Parsing::Expr> convertBinaryExpr(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> handleAddSubtractPtrToIntegerTypes(Parsing::BinaryExpr& binaryExpr,
                                                                     Type leftType, Type rightType);
-    std::unique_ptr<Parsing::Expr> handlePtrToPtrBinaryOperations(Parsing::BinaryExpr& binaryExpr);
+    std::unique_ptr<Parsing::Expr> handlePtrToPtrBinaryOpers(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> handleBinaryPtr(Parsing::BinaryExpr& binaryExpr,
                                                    Type leftType, Type rightType, Type commonType);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::AssignmentExpr& assignmentExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::TernaryExpr& ternaryExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::FuncCallExpr& funCallExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::DereferenceExpr& dereferenceExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::AddrOffExpr& addrOffExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::SubscriptExpr& subscriptExpr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::SizeOfExprExpr& sizeOfExprExpr);
-    static std::unique_ptr<Parsing::Expr> convert(const Parsing::SizeOfTypeExpr& sizeOfTypeExpr);
+    std::unique_ptr<Parsing::Expr> convertAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
+    std::unique_ptr<Parsing::Expr> convertTernaryExpr(Parsing::TernaryExpr& ternaryExpr);
+    std::unique_ptr<Parsing::Expr> convertFuncCallExpr(Parsing::FuncCallExpr& funCallExpr);
+    void validateAndConvertFuncCallArgs(
+        Parsing::FuncCallExpr& funCallExpr,
+        const std::unordered_map<std::string, FuncEntry>::iterator& it);
+    std::unique_ptr<Parsing::Expr> convertDerefExpr(Parsing::DereferenceExpr& dereferenceExpr);
+    std::unique_ptr<Parsing::Expr> convertAddrOfExpr(Parsing::AddrOffExpr& addrOffExpr);
+    std::unique_ptr<Parsing::Expr> convertSubscriptExpr(Parsing::SubscriptExpr& subscriptExpr);
+    std::unique_ptr<Parsing::Expr> convertSizeOfExprExpr(Parsing::SizeOfExprExpr& sizeOfExprExpr);
+    std::unique_ptr<Parsing::Expr> convertSizeOfExprType(const Parsing::SizeOfTypeExpr& sizeOfTypeExpr);
 
     bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
+    std::unique_ptr<Parsing::Expr> validateAndConvertPtrsInTernaryExpr(
+        Parsing::TernaryExpr& ternaryExpr, Type trueType, Type falseType);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
     [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDeclaration& funDecl);
     void handelCompoundInit(const Parsing::VarDecl& varDecl);
@@ -105,6 +110,9 @@ public:
 private:
     void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }
     [[nodiscard]] bool hasError() const { return !m_errors.empty(); }
+    std::unique_ptr<Parsing::TypeBase> getCommonPointerType(
+        const std::unique_ptr<Parsing::Expr>& left,
+        const std::unique_ptr<Parsing::Expr>& right);
 };
 
 inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
@@ -166,5 +174,4 @@ inline bool isUnallowedComparisonBetweenPtrAndInteger(const Parsing::BinaryExpr:
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr,
     Type leftType, Type rightType, Type commonType);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
-
 } // Semantics

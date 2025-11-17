@@ -6,6 +6,8 @@
 
 #include <unordered_set>
 
+#include "Utils.hpp"
+
 namespace Semantics {
 
 std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
@@ -30,6 +32,7 @@ void VariableResolution::validateFuncDecl(const Parsing::FuncDeclaration& funDec
                                           const SymbolTable& symbolTable,
                                           const SymbolTable::ReturnedEntry& returnedEntry)
 {
+    checkFuncDeclForTypeVoid(funDecl);
     if (funDecl.storage == Storage::Static && symbolTable.inFunc())
         addError("Cannot declare a static function inside another function", funDecl.location);
     if (duplicatesInArgs(funDecl.params))
@@ -50,6 +53,23 @@ void VariableResolution::validateFuncDecl(const Parsing::FuncDeclaration& funDec
         const auto funcType = dynCast<const Parsing::FuncType>(returnedEntry.typeBase.get());
         if (funcType->params.size() != funDecl.params.size())
             addError("Functions with different parameter count", funDecl.location);
+    }
+}
+
+void VariableResolution::checkFuncDeclForTypeVoid(const Parsing::FuncDeclaration& funDecl)
+{
+    const auto funcType = dynCast<const Parsing::FuncType>(funDecl.type.get());
+    for (const auto& param : funcType->params) {
+        if (param->type == Type::Void) {
+            addError("Function with void param type", funDecl.location);
+            continue;
+        }
+        if (isVoidArray(*param)) {
+            addError("Functions with void array type", funDecl.location);
+            continue;
+        }
+        if (isPointerToVoidArray(*param))
+            addError("Functions with pointer void array type", funDecl.location);
     }
 }
 
@@ -88,6 +108,12 @@ void VariableResolution::validateVarDecl(const Parsing::VarDecl& varDecl,
                                          const SymbolTable& symbolTable,
                                          const SymbolTable::ReturnedEntry& prevEntry)
 {
+    if (isVoidArray(*varDecl.type))
+        addError("Cannot void array", varDecl.location);
+    if (isPointerToVoidArray(*varDecl.type))
+        addError("Cannot declare pointer to void array", varDecl.location);
+    if (varDecl.type->type == Type::Void)
+        addError("Cannot declare with type of void", varDecl.location);
     if (prevEntry.isInArgs())
         addError("Variable declarations with the same name as arg", varDecl.location);
     if (!prevEntry.contains())

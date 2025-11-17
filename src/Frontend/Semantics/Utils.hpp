@@ -29,4 +29,9 @@ bool canConvertToPtr(const Parsing::ConstExpr& constExpr);
 bool isBinaryComparison(Parsing::BinaryExpr::Operator oper);
 std::unique_ptr<Parsing::Expr> convertToArithmeticType(const Parsing::Expr& expr, Type targetType);
 
+bool isVoidPointer(const Parsing::TypeBase& type);
+bool isVoidArray(const Parsing::TypeBase& type);
+bool isArrayOfVoidPointer(const Parsing::TypeBase& type);
+bool isPointerToVoidArray(const Parsing::TypeBase& type);
+bool isScalarType(const Parsing::TypeBase& type);
 } // Parsing

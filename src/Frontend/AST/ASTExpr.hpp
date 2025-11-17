@@ -183,17 +183,17 @@ struct TernaryExpr final : Expr {
     std::unique_ptr<Expr> falseExpr;
 
     TernaryExpr(std::unique_ptr<Expr> condition,
-                std::unique_ptr<Expr> first,
-                std::unique_ptr<Expr> second)
+                std::unique_ptr<Expr> trueExpr,
+                std::unique_ptr<Expr> falseExpr)
         : Expr(Kind::Ternary), condition(std::move(condition)),
-          trueExpr(std::move(first)), falseExpr(std::move(second)) {}
+          trueExpr(std::move(trueExpr)), falseExpr(std::move(falseExpr)) {}
 
     TernaryExpr(const i64 location,
                 std::unique_ptr<Expr> condition,
-                std::unique_ptr<Expr> first,
-                std::unique_ptr<Expr> second)
+                std::unique_ptr<Expr> trueExpr,
+                std::unique_ptr<Expr> falseExpr)
     : Expr(Kind::Ternary), condition(std::move(condition)),
-      trueExpr(std::move(first)), falseExpr(std::move(second)) {}
+      trueExpr(std::move(trueExpr)), falseExpr(std::move(falseExpr)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

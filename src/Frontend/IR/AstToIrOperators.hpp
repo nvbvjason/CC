@@ -108,21 +108,22 @@ inline bool isBitShift(const Parsing::AssignmentExpr::Operator oper)
 inline i64 getArraySize(Parsing::TypeBase* type)
 {
     i64 result = 1;
-    do {
+    while (type->kind == Parsing::TypeBase::Kind::Array) {
         const auto arrayType = dynCast<Parsing::ArrayType>(type);
         result *= arrayType->size;
         type = arrayType->elementType.get();
-    } while (type->kind == Parsing::TypeBase::Kind::Array);
+    }
     return result;
 }
 
-inline Type getArrayType(Parsing::TypeBase* type)
+inline Type getArrayType(const Parsing::TypeBase* const type)
 {
-    do {
-        const auto arrayType = dynCast<Parsing::ArrayType>(type);
-        type = arrayType->elementType.get();
-    } while (type->kind == Parsing::TypeBase::Kind::Array);
-    return type->type;
+    const Parsing::TypeBase* currentType = type;
+    while (currentType->kind == Parsing::TypeBase::Kind::Array) {
+        const auto arrayType = dynCast<const Parsing::ArrayType>(currentType);
+        currentType = arrayType->elementType.get();
+    }
+    return currentType->type;
 }
 
 inline i64 getArrayAlignment(const i64 size, const Type type)
