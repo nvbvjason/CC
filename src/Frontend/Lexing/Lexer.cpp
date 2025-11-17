@@ -327,8 +327,7 @@ void Lexer::floating()
 
 i32 Lexer::handleEscapedChars()
 {
-    const char nextChar = advance();
-    switch (nextChar) {
+    switch (advance()) {
         case '?':   return '\?';
         case '\"':  return '\"';
         case '\'':  return '\'';
@@ -468,7 +467,7 @@ void Lexer::addStringLiteral(const std::string& str) const
 void Lexer::addToken(const Token::Type type)
 {
     const i32 ahead = m_current - m_start;
-    const std::variant<char, i8, u8, i32, i64, u32, u64, double> valueToStore;
+    constexpr std::variant<char, i8, u8, i32, i64, u32, u64, double> valueToStore;
     tokenStore.emplaceBack(
         valueToStore,
         m_line,

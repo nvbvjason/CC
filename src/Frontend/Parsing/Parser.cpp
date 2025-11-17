@@ -661,7 +661,7 @@ std::unique_ptr<Expr> Parser::binaryExprParse(std::unique_ptr<Expr>& left, const
 
 std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
 {
-    auto left = castExprParse();
+    std::unique_ptr<Expr> left = castExprParse();
     if (left == nullptr)
         return nullptr;
     Lexing::Token nextToken = peek();
@@ -723,7 +723,7 @@ std::unique_ptr<Expr> Parser::unaryExprParse()
 std::unique_ptr<Expr> Parser::sizeOfExprParse()
 {
     advance();
-    if (Operators::isType(peekNextNextTokenType())) {
+    if (Operators::isType(peekNextTokenType())) {
         if (!expect(TokenType::OpenParen))
             return nullptr;
         auto typeBase = typeNameParse();
@@ -742,7 +742,7 @@ std::unique_ptr<Expr> Parser::sizeOfExprParse()
 std::unique_ptr<Expr> Parser::addrOFExprParse()
 {
     advance();
-    std::unique_ptr<Expr> expr = unaryExprParse();
+    std::unique_ptr<Expr> expr = castExprParse();
     if (expr == nullptr)
         return nullptr;
     return std::make_unique<AddrOffExpr>(m_current, std::move(expr));
@@ -751,7 +751,7 @@ std::unique_ptr<Expr> Parser::addrOFExprParse()
 std::unique_ptr<Expr> Parser::dereferenceExprParse()
 {
     advance();
-    std::unique_ptr<Expr> expr = unaryExprParse();
+    std::unique_ptr<Expr> expr = castExprParse();
     if (expr == nullptr)
         return nullptr;
     return std::make_unique<DereferenceExpr>(m_current, std::move(expr));
@@ -902,6 +902,18 @@ std::unique_ptr<AbstractDeclarator> Parser::abstractDeclaratorParse()
 
 std::unique_ptr<AbstractDeclarator> Parser::directAbstractDeclaratorParse()
 {
+    if (peekTokenType() == TokenType::OpenSqBracket) {
+        std::unique_ptr<AbstractDeclarator> abstractDeclarator = nullptr;
+        while (expect(TokenType::OpenSqBracket)) {
+            auto expr = constExprParse();
+            if (!expect(TokenType::CloseSqBracket))
+                return nullptr;
+            const auto constExpr = dynCast<ConstExpr>(expr.get());
+            const i64 size = constExpr->getValue<i64>();
+            abstractDeclarator = std::make_unique<AbstractArrayDeclarator>(std::move(abstractDeclarator), size);
+        }
+        return abstractDeclarator;
+    }
     if (!expect(TokenType::OpenParen))
         return nullptr;
     std::unique_ptr<AbstractDeclarator> abstractDeclarator = abstractDeclaratorParse();
@@ -923,6 +935,8 @@ std::unique_ptr<AbstractDeclarator> Parser::directAbstractDeclaratorParse()
 std::unique_ptr<TypeBase> Parser::abstractDeclaratorProcess(
     std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<TypeBase>&& type)
 {
+    if (!abstractDeclarator)
+        return type;
     switch (abstractDeclarator->kind) {
         case AbstractArrayDeclarator::Kind::Pointer: {
             type = std::make_unique<PointerType>(std::move(type));
