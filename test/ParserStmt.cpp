@@ -13,7 +13,7 @@ TEST_F(ParserStmtTest, ReturnStmtVariations)
             {Return, IntegerLiteral, Semicolon}},
         {"MissingReturn", false,
             {IntegerLiteral, Semicolon}},
-        {"MissingExpr", false,
+        {"MissingExpr", true,
             {Return, Semicolon}},
         {"MissingSemicolon", false,
             {Return, IntegerLiteral}}

@@ -11,13 +11,13 @@
     <param-list>            ::= "(" "void" ")" | "(" <param> [ "," <param> ] ")"
     <param>                 ::= { <type-specifier> }+ <declarator>
     <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
-    <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double" | "char"
+    <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double" | "char" | "void"
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
     <block-item>            ::= <statement> | <declaration>
     <initializer>           ::= <exp> | "{" <initializer> { "," <initializer> } [ "," ] ")"
     <for-init>              ::= <variable-declaration> | <exp> ";"
-    <statement>             ::= "return" <exp> ";"
+    <statement>             ::= "return" [ <exp> ] ";"
                               | <exp> ";"
                               | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
                               | "switch" "(" <exp> ")" <statement>
@@ -37,7 +37,11 @@
                               | <exp> "?" <exp> ":" <exp>
     <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                               | <unary-exp>
-    <unary-exp>             ::= <postfix-exp> | <unary-op> <cast-exp>
+    <unary-exp>             ::= <postfix-exp>
+                              | <unary-op> <cast-exp>
+                              | "sizeof" <unary-exp>
+                              | "sizeof" "(" <type-name> ")"
+    <type-name>             ::= { <type-specifier> }+ [ <abstract-declarator> ]
     <postfix-exp>           ::= <factor> | <postfix-exp> <postfix-op>
     <factor>                ::= <const>
                               | { <string> }+
@@ -139,12 +143,14 @@ public:
     [[nodiscard]] std::unique_ptr<Expr> unaryExprParse();
     [[nodiscard]] std::unique_ptr<Expr> addrOFExprParse();
     [[nodiscard]] std::unique_ptr<Expr> dereferenceExprParse();
+    [[nodiscard]] std::unique_ptr<Expr> sizeOfExprParse();
     [[nodiscard]] std::unique_ptr<Expr> subscriptExprParse(std::unique_ptr<Expr>&& expr);
     [[nodiscard]] std::unique_ptr<Expr> castExprParse();
     [[nodiscard]] std::unique_ptr<Expr> exprPostfixParse();
     [[nodiscard]] std::unique_ptr<Expr> factorParse();
     [[nodiscard]] std::unique_ptr<Expr> constExprParse();
 
+    [[nodiscard]] std::unique_ptr<TypeBase> typeNameParse();
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> abstractDeclaratorParse();
     [[nodiscard]] std::unique_ptr<AbstractDeclarator> directAbstractDeclaratorParse();
 

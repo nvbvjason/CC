@@ -83,7 +83,8 @@ void ASTTraverser::visit(ExprForInit& exprForInit)
 // Statements
 void ASTTraverser::visit(ReturnStmt& returnStmt)
 {
-    returnStmt.expr->accept(*this);
+    if (returnStmt.expr)
+        returnStmt.expr->accept(*this);
 }
 
 void ASTTraverser::visit(ExprStmt& exprStmt)
@@ -199,5 +200,15 @@ void ASTTraverser::visit(SubscriptExpr& subscriptExpr)
 {
     subscriptExpr.referencing->accept(*this);
     subscriptExpr.index->accept(*this);
+}
+
+void ASTTraverser::visit(SizeOfTypeExpr& sizeOfTypeExpr)
+{
+    sizeOfTypeExpr.sizeType->accept(*this);
+}
+
+void ASTTraverser::visit(SizeOfExprExpr& sizeOfExprExpr)
+{
+    sizeOfExprExpr.innerExpr->accept(*this);
 }
 } // Parsing

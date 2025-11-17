@@ -138,6 +138,7 @@ constexpr bool isUnaryOperator(const TokenType type)
         case TokenType::Decrement:
         case TokenType::Ampersand:
         case TokenType::Asterisk:
+        case TokenType::SizeOf:
             return true;
         default:
             return false;
@@ -248,19 +249,7 @@ constexpr i32 getPrecedenceLevel(const AssignmentExpr::Operator oper)
 
 constexpr bool isSpecifier(const TokenType type)
 {
-    switch (type) {
-        case TokenType::Static:
-        case TokenType::Extern:
-        case TokenType::CharKeyword:
-        case TokenType::IntKeyword:
-        case TokenType::LongKeyword:
-        case TokenType::DoubleKeyword:
-        case TokenType::Signed:
-        case TokenType::Unsigned:
-            return true;
-        default:
-            return false;
-    }
+    return isType(type) || isStorageSpecifier(type);
 }
 
 constexpr bool isStorageSpecifier(const TokenType type)
@@ -283,6 +272,7 @@ constexpr bool isType(const TokenType type)
         case TokenType::Signed:
         case TokenType::Unsigned:
         case TokenType::DoubleKeyword:
+        case TokenType::Void:
             return true;
         default:
             return false;

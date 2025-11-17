@@ -84,7 +84,8 @@ void ConstASTTraverser::visit(const ExprForInit& exprForInit)
 // Statements
 void ConstASTTraverser::visit(const ReturnStmt& returnStmt)
 {
-    returnStmt.expr->accept(*this);
+    if (returnStmt.expr)
+        returnStmt.expr->accept(*this);
 }
 
 void ConstASTTraverser::visit(const ExprStmt& exprStmt)
@@ -200,5 +201,15 @@ void ConstASTTraverser::visit(const SubscriptExpr& subscriptExpr)
 {
     subscriptExpr.referencing->accept(*this);
     subscriptExpr.index->accept(*this);
+}
+
+void ConstASTTraverser::visit(const SizeOfTypeExpr& sizeOfTypeExpr)
+{
+    sizeOfTypeExpr.sizeType->accept(*this);
+}
+
+void ConstASTTraverser::visit(const SizeOfExprExpr& sizeOfExprExpr)
+{
+    sizeOfExprExpr.innerExpr->accept(*this);
 }
 } // Parsing

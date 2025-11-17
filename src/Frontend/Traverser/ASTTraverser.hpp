@@ -63,6 +63,8 @@ public:
     void visit(DereferenceExpr& dereferenceExpr) override;
     void visit(AddrOffExpr& addrOffExpr) override;
     void visit(SubscriptExpr& subscriptExpr) override;
+    void visit(SizeOfTypeExpr& sizeOfTypeExpr) override;
+    void visit(SizeOfExprExpr& sizeOfExprExpr) override;
 };
 
 } // Parsing

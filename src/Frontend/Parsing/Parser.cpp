@@ -206,11 +206,9 @@ std::unique_ptr<std::vector<ParamInfo>> Parser::paramsListParse()
     if (!expect(TokenType::OpenParen))
         return nullptr;
     std::vector<ParamInfo> params;
-    if (expect(TokenType::Void)) {
-        if (!expect(TokenType::CloseParen)) {
-            addError("Expected close parenthesis after param list");
-            return nullptr;
-        }
+    if (peekTokenType() == TokenType::Void && peekNextTokenType() == TokenType::CloseParen) {
+        advance();
+        advance();
         return std::make_unique<std::vector<ParamInfo>>(std::move(params));
     }
     do {
@@ -347,17 +345,20 @@ std::unique_ptr<Stmt> Parser::returnStmtParse()
 {
     if (!expect(TokenType::Return))
         return nullptr;
+    auto result = std::make_unique<ReturnStmt>(m_current);
+    if (expect(TokenType::Semicolon))
+        return result;
     std::unique_ptr<Expr> expr = exprParse(0);
     if (expr == nullptr) {
         addError("Return without Expression", m_current - 1);
         return nullptr;
     }
-    auto statement = std::make_unique<ReturnStmt>(m_current, std::move(expr));
+    result->expr = std::move(expr);
     if (!expect(TokenType::Semicolon)) {
         addError("Return without semicolon", m_current - 1);
         return nullptr;
     }
-    return statement;
+    return result;
 }
 
 std::unique_ptr<Stmt> Parser::exprStmtParse()
@@ -709,12 +710,33 @@ std::unique_ptr<Expr> Parser::unaryExprParse()
         return addrOFExprParse();
     if (peekTokenType() == TokenType::Asterisk)
         return dereferenceExprParse();
+    if (peekTokenType() == TokenType::SizeOf)
+        return sizeOfExprParse();
     UnaryExpr::Operator oper = Operators::unaryOperator(peekTokenType());
     advance();
     std::unique_ptr<Expr> expr = castExprParse();
     if (expr == nullptr)
         return nullptr;
     return std::make_unique<UnaryExpr>(m_current, oper, std::move(expr));
+}
+
+std::unique_ptr<Expr> Parser::sizeOfExprParse()
+{
+    advance();
+    if (Operators::isType(peekNextNextTokenType())) {
+        if (!expect(TokenType::OpenParen))
+            return nullptr;
+        auto typeBase = typeNameParse();
+        if (typeBase == nullptr)
+            return nullptr;
+        if (!expect(TokenType::CloseParen))
+            return nullptr;
+        return std::make_unique<SizeOfTypeExpr>(m_current, std::move(typeBase));
+    }
+    std::unique_ptr<Expr> innerExpr = unaryExprParse();
+    if (innerExpr == nullptr)
+        return nullptr;
+    return std::make_unique<SizeOfExprExpr>(m_current, std::move(innerExpr));
 }
 
 std::unique_ptr<Expr> Parser::addrOFExprParse()
@@ -846,6 +868,25 @@ std::unique_ptr<Expr> Parser::constExprParse()
     return std::make_unique<ConstExpr>(m_current, value, std::move(type));
 }
 
+std::unique_ptr<TypeBase> Parser::typeNameParse()
+{
+    std::vector<TokenType> types;
+    TokenType type = peekTokenType();
+    while (Operators::isType(type)) {
+        types.emplace_back(type);
+        advance();
+        type = peekTokenType();
+    }
+    const Type parsedType = typeResolve(types);
+    if (parsedType == Type::Invalid)
+        return nullptr;
+    std::unique_ptr<AbstractDeclarator> abstractDeclarator = abstractDeclaratorParse();
+    if (abstractDeclarator == nullptr)
+        return nullptr;
+    std::unique_ptr<TypeBase> typeBaseInner = std::make_unique<VarType>(parsedType);
+    return abstractDeclaratorProcess(std::move(abstractDeclarator), std::move(typeBaseInner));
+}
+
 std::unique_ptr<AbstractDeclarator> Parser::abstractDeclaratorParse()
 {
     if (peekTokenType() == TokenType::OpenParen || peekTokenType() == TokenType::OpenSqBracket)
@@ -974,10 +1015,16 @@ Type Parser::typeResolve(std::vector<TokenType>& tokens)
             return Type::I8;
         return Type::Invalid;
     }
-    if (tokens.size() == 1 && tokens.front() == TokenType::DoubleKeyword)
-        return Type::Double;
-    if (std::ranges::find(tokens, TokenType::DoubleKeyword) != tokens.end())
+    if (std::ranges::find(tokens, TokenType::Void) != tokens.end()) {
+        if (tokens.size() == 1 && tokens.front() == TokenType::Void)
+            return Type::Void;
         return Type::Invalid;
+    }
+    if (std::ranges::find(tokens, TokenType::DoubleKeyword) != tokens.end()) {
+        if (tokens.size() == 1 && tokens.front() == TokenType::DoubleKeyword)
+            return Type::Double;
+        return Type::Invalid;
+    }
     if (tokens.empty())
         return Type::Invalid;
     if (containsSameTwice(tokens))

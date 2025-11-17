@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ASTExpr.hpp"
 #include "ASTTypes.hpp"
 #include "ASTVisitor.hpp"
 
@@ -64,6 +65,8 @@ public:
     void visit(const DereferenceExpr& dereferenceExpr) override;
     void visit(const AddrOffExpr& addrOffExpr) override;
     void visit(const SubscriptExpr& subscriptExpr) override;
+    void visit(const SizeOfTypeExpr& sizeOfTypeExpr) override;
+    void visit(const SizeOfExprExpr& sizeOfExprExpr) override;
 };
 
 } // Parsing

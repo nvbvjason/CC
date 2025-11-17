@@ -274,7 +274,7 @@ struct SubscriptExpr final : Expr {
 struct SizeOfExprExpr final : Expr {
     std::unique_ptr<Expr> innerExpr;
 
-    explicit SizeOfExprExpr(std::unique_ptr<Expr>&& innerExpr, const i64 loc)
+    explicit SizeOfExprExpr(const i64 loc, std::unique_ptr<Expr>&& innerExpr)
         : Expr(loc, Kind::SizeOfExpr), innerExpr(std::move(innerExpr)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
@@ -288,7 +288,7 @@ struct SizeOfExprExpr final : Expr {
 struct SizeOfTypeExpr final : Expr {
     std::unique_ptr<TypeBase> sizeType;
 
-    explicit SizeOfTypeExpr(std::unique_ptr<TypeBase>&& sizeType, const i64 loc)
+    explicit SizeOfTypeExpr(const i64 loc, std::unique_ptr<TypeBase>&& sizeType)
         : Expr(loc, Kind::SizeOfType), sizeType(std::move(sizeType)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
