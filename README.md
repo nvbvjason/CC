@@ -12,7 +12,7 @@ Linux x86_64 required
 - `cmake --build build  --target CC`
 
 #### Build example file:
-`./build/src/CC examples/hello_world.c`
+`./build/src/CC examples/hello_name.c`
 
 #### Run it:
 `./examples/hello_world`
