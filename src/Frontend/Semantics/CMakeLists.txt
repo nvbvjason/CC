@@ -5,6 +5,8 @@ add_library(Semantics STATIC
         GotoLabelsUnique.cpp
         LoopLabeling.cpp
         TypeResolution.cpp
+        InitArray.cpp
+        InitArray.hpp
 )
 
 target_include_directories(Semantics PUBLIC
