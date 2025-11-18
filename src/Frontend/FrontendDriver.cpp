@@ -5,11 +5,10 @@
 #include "StateCode.hpp"
 #include "ASTPrinter.hpp"
 #include "GenerateIr.hpp"
-#include "GotoLabelsUnique.hpp"
 #include "Lexer.hpp"
 #include "LvalueVerification.hpp"
 #include "Parser.hpp"
-#include "LoopLabeling.hpp"
+#include "Labeling.hpp"
 #include "ValidateReturn.hpp"
 #include "TypeResolution.hpp"
 
@@ -85,10 +84,7 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& pro
     Semantics::ValidateReturn validateReturn;
     if (std::vector<Error> errors = validateReturn.programValidate(program); !errors.empty())
         return {StateCode::ValidateReturn, errors};
-    Semantics::GotoLabelsUnique labelsUnique;
-    if (const std::vector<Error> errors = labelsUnique.programValidate(program); !errors.empty())
-        return {StateCode::LabelsUnique, errors};
-    Semantics::LoopLabeling loopLabeling;
+    Semantics::Labeling loopLabeling;
     if (const std::vector<Error> errors = loopLabeling.programValidate(program); !errors.empty())
         return {StateCode::LoopLabeling, errors};
     return {StateCode::Done, {}};

@@ -32,10 +32,13 @@ void processSwitchCase(const Parsing::ConstExpr* constantExpr,
     caseStmt.identifier += std::to_string(value);
 }
 
-class LoopLabeling : public Parsing::ASTTraverser {
+class Labeling : public Parsing::ASTTraverser {
     std::vector<Error> errors;
-    std::unordered_set<std::string> m_default;
+    std::unordered_set<std::string> defaultCase;
     std::unordered_map<std::string, std::vector<std::variant<i32, i64, u32, u64>>> switchCases;
+    std::unordered_map<std::string, std::vector<i64>> m_labels;
+    std::unordered_set<Parsing::GotoStmt*> m_goto;
+    std::string m_funName;
     Type conditionType = Type::I32;
     std::string breakLabel;
     std::string continueLabel;
@@ -43,8 +46,12 @@ class LoopLabeling : public Parsing::ASTTraverser {
 public:
     std::vector<Error> programValidate(Parsing::Program& program);
 
+    void visit(Parsing::FuncDecl& funDecl) override;
+
     void visit(Parsing::VarDecl& varDecl) override;
 
+    void visit(Parsing::GotoStmt& gotoStmt) override;
+    void visit(Parsing::LabelStmt& labelStmt) override;
     void visit(Parsing::BreakStmt& breakStmt) override;
     void visit(Parsing::ContinueStmt& continueStmt) override;
     void visit(Parsing::DefaultStmt& defaultStmt) override;
@@ -63,17 +70,17 @@ private:
     }
 };
 
-inline bool LoopLabeling::isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt)
+inline bool Labeling::isOutsideSwitchStmt(const Parsing::CaseStmt& caseStmt)
 {
     return caseStmt.identifier.empty();
 }
 
-inline bool LoopLabeling::isNonConstantInSwitchCase(const Parsing::CaseStmt& caseStmt)
+inline bool Labeling::isNonConstantInSwitchCase(const Parsing::CaseStmt& caseStmt)
 {
     return caseStmt.condition->kind != Parsing::Expr::Kind::Constant;
 }
 
-inline std::string LoopLabeling::makeTemporary(const std::string& name)
+inline std::string Labeling::makeTemporary(const std::string& name)
 {
     static i32 m_counter = 0;
     return name + '.' + std::to_string(m_counter++);

@@ -2,8 +2,7 @@ add_library(Semantics STATIC
         ValidateReturn.cpp
         VariableResolution.cpp
         LvalueVerification.cpp
-        GotoLabelsUnique.cpp
-        LoopLabeling.cpp
+        Labeling.cpp
         TypeResolution.cpp
         InitArray.cpp
         InitArray.hpp

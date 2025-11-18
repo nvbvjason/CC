@@ -1,4 +1,4 @@
-#include "LoopLabeling.hpp"
+#include "Labeling.hpp"
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
@@ -8,15 +8,33 @@
 
 #include <cassert>
 #include <numeric>
+#include <ranges>
 
 namespace Semantics {
-std::vector<Error> LoopLabeling::programValidate(Parsing::Program& program)
+std::vector<Error> Labeling::programValidate(Parsing::Program& program)
 {
     ASTTraverser::visit(program);
     return std::move(errors);
 }
 
-void LoopLabeling::visit(Parsing::VarDecl& varDecl)
+void Labeling::visit(Parsing::FuncDecl& funDecl)
+{
+    if (funDecl.body == nullptr)
+        return;
+    m_labels.clear();
+    m_goto.clear();
+    m_funName = funDecl.name;
+    ASTTraverser::visit(funDecl);
+    for (const std::vector<i64>& locations: m_labels | std::views::values)
+        if (1 < locations.size())
+            for (const auto& location: locations)
+                emplaceError("Duplicate labels at ", location);
+    for (auto& gotoStmt : m_goto)
+        if (!m_labels.contains(gotoStmt->identifier))
+            emplaceError("Did not find goto label ", gotoStmt->location);
+}
+
+void Labeling::visit(Parsing::VarDecl& varDecl)
 {
     if (!varDecl.init)
         return;
@@ -32,7 +50,7 @@ void LoopLabeling::visit(Parsing::VarDecl& varDecl)
     }
 }
 
-void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
+void Labeling::visit(Parsing::CaseStmt& caseStmt)
 {
     caseStmt.identifier = switchLabel;
     if (isOutsideSwitchStmt(caseStmt)) {
@@ -75,32 +93,32 @@ void LoopLabeling::visit(Parsing::CaseStmt& caseStmt)
     ASTTraverser::visit(caseStmt);
 }
 
-void LoopLabeling::visit(Parsing::DefaultStmt& defaultStmt)
+void Labeling::visit(Parsing::DefaultStmt& defaultStmt)
 {
     defaultStmt.identifier = switchLabel;
-    if (m_default.contains(defaultStmt.identifier))
+    if (defaultCase.contains(defaultStmt.identifier))
         emplaceError("Duplicate default statement ", defaultStmt.location);
-    m_default.insert(defaultStmt.identifier);
+    defaultCase.insert(defaultStmt.identifier);
     if (defaultStmt.identifier.empty())
         emplaceError("Default must be in switch statement ", defaultStmt.location);
     ASTTraverser::visit(defaultStmt);
 }
 
-void LoopLabeling::visit(Parsing::ContinueStmt& continueStmt)
+void Labeling::visit(Parsing::ContinueStmt& continueStmt)
 {
     continueStmt.identifier = continueLabel;
     if (continueStmt.identifier.empty())
         emplaceError("Continue statement has nothing to refer to ", continueStmt.location);
 }
 
-void LoopLabeling::visit(Parsing::BreakStmt& breakStmt)
+void Labeling::visit(Parsing::BreakStmt& breakStmt)
 {
     breakStmt.identifier = breakLabel;
     if (breakStmt.identifier.empty())
         emplaceError("Break statement has nothing to refer to ", breakStmt.location);
 }
 
-void LoopLabeling::visit(Parsing::WhileStmt& whileStmt)
+void Labeling::visit(Parsing::WhileStmt& whileStmt)
 {
     const std::string continueTemp = continueLabel;
     const std::string breakTemp = breakLabel;
@@ -112,7 +130,7 @@ void LoopLabeling::visit(Parsing::WhileStmt& whileStmt)
     breakLabel = breakTemp;
 }
 
-void LoopLabeling::visit(Parsing::DoWhileStmt& doWhileStmt)
+void Labeling::visit(Parsing::DoWhileStmt& doWhileStmt)
 {
     const std::string continueTemp = continueLabel;
     const std::string breakTemp = breakLabel;
@@ -124,7 +142,7 @@ void LoopLabeling::visit(Parsing::DoWhileStmt& doWhileStmt)
     breakLabel = breakTemp;
 }
 
-void LoopLabeling::visit(Parsing::ForStmt& forStmt)
+void Labeling::visit(Parsing::ForStmt& forStmt)
 {
     const std::string continueTemp = continueLabel;
     const std::string breakTemp = breakLabel;
@@ -136,7 +154,7 @@ void LoopLabeling::visit(Parsing::ForStmt& forStmt)
     breakLabel = breakTemp;
 }
 
-void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
+void Labeling::visit(Parsing::SwitchStmt& switchStmt)
 {
     const std::string breakTemp = breakLabel;
     const std::string switchTemp = switchLabel;
@@ -160,10 +178,24 @@ void LoopLabeling::visit(Parsing::SwitchStmt& switchStmt)
     switchCases[switchStmt.identifier] = std::vector<std::variant<i32, i64, u32, u64>>();
     ASTTraverser::visit(switchStmt);
     switchStmt.cases = switchCases[switchStmt.identifier];
-    if (m_default.contains(switchStmt.identifier))
+    if (defaultCase.contains(switchStmt.identifier))
         switchStmt.hasDefault = true;
     breakLabel = breakTemp;
     switchLabel = switchTemp;
     conditionType = conditionTypeTemp;
+}
+
+void Labeling::visit(Parsing::GotoStmt& gotoStmt)
+{
+    gotoStmt.identifier += '.' + m_funName;
+    m_goto.insert(&gotoStmt);
+    ASTTraverser::visit(gotoStmt);
+}
+
+void Labeling::visit(Parsing::LabelStmt& labelStmt)
+{
+    labelStmt.identifier += '.' + m_funName;
+    m_labels[labelStmt.identifier].emplace_back(labelStmt.location);
+    ASTTraverser::visit(labelStmt);
 }
 } // Semantics
