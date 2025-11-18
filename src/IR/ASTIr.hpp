@@ -53,7 +53,7 @@ struct Identifier {
 };
 
 struct Value {
-    enum class Kind {
+    enum class Kind : u8 {
         Variable, Constant
     };
     Type type;
@@ -106,7 +106,7 @@ struct ValueConst final : Value {
 };
 
 struct Initializer {
-    enum class Kind {
+    enum class Kind : u8 {
         Value, Zero
     };
     const Kind kind;
@@ -137,7 +137,7 @@ struct ZeroInitializer final : Initializer {
 };
 
 struct Instruction {
-    enum class Kind {
+    enum class Kind : u8 {
         Return,
         SignExtend, Truncate, ZeroExtend,
         DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble,
@@ -453,7 +453,7 @@ struct AllocateInst final : Instruction {
 };
 
 struct TopLevel {
-    enum class Kind {
+    enum class Kind : u8 {
         Function, StaticVariable, StaticArray, StaticConstant
     };
     const Kind kind;

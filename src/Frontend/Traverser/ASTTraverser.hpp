@@ -10,18 +10,21 @@ public:
 
     // Declaration
     void visit(VarDecl& varDecl) override;
-    void visit(FuncDeclaration& funDecl) override;
+    void visit(FuncDecl& funDecl) override;
 
     void visit(Block& block) override;
 
     void visit(StmtBlockItem& stmtBlockItem) override;
     void visit(DeclBlockItem& declBlockItem) override;
+    void visit(StructDecl& structDecl) override;
+    void visit(MemberDecl& memberDecl) override {}
 
     // Type
     void visit(VarType& varType) override {}
     void visit(FuncType& functionType) override;
     void visit(PointerType& pointerType) override;
     void visit(ArrayType& arrayType) override;
+    void visit(StructType& structType) override {}
 
     // Initializers
     void visit(SingleInitializer& singleInitializer) override;
@@ -65,6 +68,8 @@ public:
     void visit(SubscriptExpr& subscriptExpr) override;
     void visit(SizeOfTypeExpr& sizeOfTypeExpr) override;
     void visit(SizeOfExprExpr& sizeOfExprExpr) override;
+    void visit(DotExpr& dotExpr) override;
+    void visit(ArrowExpr& arrowExpr) override;
 };
 
 } // Parsing

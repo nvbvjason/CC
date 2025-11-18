@@ -17,7 +17,7 @@ std::vector<Error> TypeResolution::validate(Parsing::Program& program)
     return std::move(m_errors);
 }
 
-void TypeResolution::visit(Parsing::FuncDeclaration& funDecl)
+void TypeResolution::visit(Parsing::FuncDecl& funDecl)
 {
     const auto it = m_functions.find(funDecl.name);
     if (it != m_functions.end() && !validFuncDecl(it->second, funDecl)) {
@@ -47,7 +47,7 @@ void TypeResolution::visit(Parsing::FuncDeclaration& funDecl)
     }
 }
 
-bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDeclaration& funDecl)
+bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDecl& funDecl)
 {
     if ((funcEntry.storage == Storage::Extern || funcEntry.storage == Storage::None) &&
         funDecl.storage == Storage::Static) {

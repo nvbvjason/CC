@@ -7,7 +7,7 @@
 namespace Ir {
 
 struct ExprResult {
-    enum class Kind {
+    enum class Kind : u8 {
         PlainOperand, DereferencedPointer,
     };
     const Kind kind;

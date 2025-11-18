@@ -16,7 +16,7 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
     return std::move(m_errors);
 }
 
-void VariableResolution::visit(Parsing::FuncDeclaration& funDecl)
+void VariableResolution::visit(Parsing::FuncDecl& funDecl)
 {
     const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookup(funDecl.name);
     validateFuncDecl(funDecl, m_symbolTable, prevEntry);
@@ -28,7 +28,7 @@ void VariableResolution::visit(Parsing::FuncDeclaration& funDecl)
     }
 }
 
-void VariableResolution::validateFuncDecl(const Parsing::FuncDeclaration& funDecl,
+void VariableResolution::validateFuncDecl(const Parsing::FuncDecl& funDecl,
                                           const SymbolTable& symbolTable,
                                           const SymbolTable::ReturnedEntry& returnedEntry)
 {
@@ -56,7 +56,7 @@ void VariableResolution::validateFuncDecl(const Parsing::FuncDeclaration& funDec
     }
 }
 
-void VariableResolution::checkFuncDeclForTypeVoid(const Parsing::FuncDeclaration& funDecl)
+void VariableResolution::checkFuncDeclForTypeVoid(const Parsing::FuncDecl& funDecl)
 {
     const auto funcType = dynCast<const Parsing::FuncType>(funDecl.type.get());
     for (const auto& param : funcType->params) {
@@ -206,7 +206,7 @@ bool VariableResolution::isValidFuncCall(const i64 location, const SymbolTable::
 }
 
 void VariableResolution::addFuncToSymbolTable(
-    const Parsing::FuncDeclaration& funDecl,
+    const Parsing::FuncDecl& funDecl,
     const SymbolTable::ReturnedEntry& prevEntry) const
 {
     const bool defined = funDecl.body != nullptr;

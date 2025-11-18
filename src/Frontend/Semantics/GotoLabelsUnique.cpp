@@ -10,7 +10,7 @@ std::vector<Error> GotoLabelsUnique::programValidate(Parsing::Program& program)
     return std::move(m_errors);
 }
 
-void GotoLabelsUnique::visit(Parsing::FuncDeclaration& funDecl)
+void GotoLabelsUnique::visit(Parsing::FuncDecl& funDecl)
 {
     if (funDecl.body == nullptr)
         return;

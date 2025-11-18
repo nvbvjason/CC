@@ -15,8 +15,8 @@ struct ASTNode {
 };
 
 struct TypeBase {
-    enum class Kind {
-        Var, Func, Pointer, Array
+    enum class Kind : u8 {
+        Var, Func, Pointer, Array, Struct
     };
     const Kind kind;
     Type type;
@@ -50,7 +50,7 @@ protected:
 };
 
 struct ForInit : ASTNode {
-    enum class Kind {
+    enum class Kind : u8 {
         Declaration, Expression
     };
     const Kind kind;
@@ -68,9 +68,9 @@ protected:
 };
 
 struct Expr : ASTNode {
-    enum class Kind {
+    enum class Kind : u8 {
         Constant, String, Var, Cast, Unary, Binary, Assignment, Ternary, FunctionCall,
-        Dereference, AddrOf, Subscript, SizeOfExpr, SizeOfType
+        Dereference, AddrOf, Subscript, SizeOfExpr, SizeOfType, Dot, Arrow
     };
     const Kind kind;
     std::unique_ptr<TypeBase> type = nullptr;
@@ -93,7 +93,7 @@ protected:
 };
 
 struct Stmt : ASTNode {
-    enum class Kind {
+    enum class Kind : u8 {
         Return, Expression, If, Goto, Compound,
         Break, Continue, Label, Case, Default, While, DoWhile, For, Switch,
         Null
@@ -115,7 +115,7 @@ protected:
 
 struct Declaration : ASTNode {
     enum class Kind : u8 {
-        VarDecl, FuncDecl
+        VarDecl, FuncDecl, StructDecl, MemberDecl
     };
     enum class StorageClass : u8 {
         None,
@@ -139,7 +139,7 @@ protected:
 };
 
 struct Initializer {
-    enum class Kind {
+    enum class Kind : u8 {
         Single, Compound, Zero, String
     };
     const Kind kind;

@@ -20,7 +20,7 @@ public:
         : m_symbolTable(symbolTable) {}
     void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
     std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
-    std::unique_ptr<TopLevel> functionIr(const Parsing::FuncDeclaration& parsingFunction);
+    std::unique_ptr<TopLevel> functionIr(const Parsing::FuncDecl& parsingFunction);
 
     std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl);
     std::unique_ptr<TopLevel> genStaticArray(const Parsing::VarDecl& varDecl, bool defined);

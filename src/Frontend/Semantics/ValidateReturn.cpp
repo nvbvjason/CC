@@ -12,7 +12,7 @@ std::vector<Error> ValidateReturn::programValidate(Parsing::Program& program)
     return std::move(m_errors);
 }
 
-void ValidateReturn::visit(Parsing::FuncDeclaration& funDecl)
+void ValidateReturn::visit(Parsing::FuncDecl& funDecl)
 {
     if (funDecl.body == nullptr)
         return;

@@ -20,8 +20,8 @@ class VariableResolution : public Parsing::ASTTraverser {
     };
     struct FunctionGuard {
         SymbolTable& table;
-        Parsing::FuncDeclaration& funDecl;
-        FunctionGuard(SymbolTable& table, Parsing::FuncDeclaration& funDecl)
+        Parsing::FuncDecl& funDecl;
+        FunctionGuard(SymbolTable& table, Parsing::FuncDecl& funDecl)
             : table(table), funDecl(funDecl)
         {
             table.setArgs(funDecl);
@@ -35,7 +35,7 @@ public:
     explicit VariableResolution(SymbolTable& symbolTable)
         : m_symbolTable(symbolTable) {}
     std::vector<Error> resolve(Parsing::Program& program);
-    void visit(Parsing::FuncDeclaration& funDecl) override;
+    void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
@@ -45,14 +45,14 @@ public:
 
     void addVarToSymbolTable(Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry);
     void addFuncToSymbolTable(
-        const Parsing::FuncDeclaration& funDecl,
+        const Parsing::FuncDecl& funDecl,
         const SymbolTable::ReturnedEntry& prevEntry
     ) const;
     void validateVarDecl(
         const Parsing::VarDecl& varDecl,
         const SymbolTable& symbolTable,
         const SymbolTable::ReturnedEntry& prevEntry);
-    void validateFuncDecl(const Parsing::FuncDeclaration& funDecl,
+    void validateFuncDecl(const Parsing::FuncDecl& funDecl,
                          const SymbolTable& symbolTable,
                          const SymbolTable::ReturnedEntry& returnedEntry);
     void validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
@@ -60,7 +60,7 @@ public:
     bool isValidFuncCall(i64 location, const SymbolTable::ReturnedEntry& returnedEntry);
     bool isValidVarExpr(i64 location, const SymbolTable::ReturnedEntry& returnedEntry);
 private:
-    void checkFuncDeclForTypeVoid(const Parsing::FuncDeclaration& funDecl);
+    void checkFuncDeclForTypeVoid(const Parsing::FuncDecl& funDecl);
     std::string makeTemporaryName(const std::string &name);
     void addError(const std::string& msg, const i64 location) { m_errors.emplace_back(msg, location); }
 };

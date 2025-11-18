@@ -11,11 +11,11 @@ class ValidateReturn : public Parsing::ASTTraverser {
 public:
     std::vector<Error> programValidate(Parsing::Program& program);
 private:
-    static void addReturnZero(Parsing::FuncDeclaration& funDecl);
-    void visit(Parsing::FuncDeclaration& funDecl) override;
+    static void addReturnZero(Parsing::FuncDecl& funDecl);
+    void visit(Parsing::FuncDecl& funDecl) override;
 };
 
-inline void ValidateReturn::addReturnZero(Parsing::FuncDeclaration& funDecl)
+inline void ValidateReturn::addReturnZero(Parsing::FuncDecl& funDecl)
 {
     auto zeroConstExpr = std::make_unique<Parsing::ConstExpr>(0, std::make_unique<Parsing::VarType>(Type::I32));
     auto returnStmt = std::make_unique<Parsing::ReturnStmt>(std::move(zeroConstExpr));

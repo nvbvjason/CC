@@ -53,7 +53,7 @@ class TypeResolution final : public Parsing::ASTTraverser {
 public:
     std::vector<Error> validate(Parsing::Program& program);
 
-    void visit(Parsing::FuncDeclaration& funDecl) override;
+    void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
     bool isIllegalVarDecl(const Parsing::VarDecl& varDecl);
     void visit(Parsing::DeclForInit& declForInit) override;
@@ -101,7 +101,7 @@ public:
     std::unique_ptr<Parsing::Expr> validateAndConvertPtrsInTernaryExpr(
         Parsing::TernaryExpr& ternaryExpr, Type trueType, Type falseType);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
-    [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDeclaration& funDecl);
+    [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDecl& funDecl);
     void handelCompoundInit(const Parsing::VarDecl& varDecl);
     void verifyArrayInSingleInit(
         const Parsing::VarDecl& varDecl,  const Parsing::SingleInitializer& singleInitializer);

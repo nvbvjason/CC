@@ -535,7 +535,7 @@ struct ReturnInst final : Inst {
 };
 
 struct TopLevel {
-    enum class Kind {
+    enum class Kind : u8 {
         Function, StaticVariable, StaticConstant, StaticArray, StaticString
     };
     const Kind kind;

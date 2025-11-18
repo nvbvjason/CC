@@ -6,7 +6,7 @@
 namespace Parsing {
 
 struct AbstractDeclarator {
-    enum class Kind {
+    enum class Kind : u8 {
         Pointer, Base, Array
     };
     const Kind kind;
@@ -49,7 +49,7 @@ struct AbstractBase : AbstractDeclarator {
 };
 
 struct Declarator {
-    enum class Kind {
+    enum class Kind : u8 {
         Identifier, Pointer, Function, Array
     };
     const Kind kind;

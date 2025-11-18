@@ -4,6 +4,7 @@
 #include "ASTBase.hpp"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace Parsing {
@@ -56,4 +57,15 @@ struct ArrayType final : TypeBase {
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Array; }
 };
 
+struct StructType final : TypeBase {
+    const std::string identifier;
+
+    explicit StructType(std::string identifier)
+        : TypeBase(Type::Struct, Kind::Struct), identifier(std::move(identifier)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Struct; }
+};
 } // Parsing

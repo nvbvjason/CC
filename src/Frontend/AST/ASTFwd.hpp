@@ -6,15 +6,20 @@ namespace Parsing {
 
 /*
     program = Program(declaration*)
-    declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
+    declaration = FunDecl(function_declaration)
+                | VarDecl(variable_declaration)
+                | StructDecl(struct_declaration)
 
     variable_declaration = (identifier name, exp? init, type var_type, storage_class?)
-    function_definition = (identifier name, identifier* params, block? body, type var_type, storage_class?)
+    function_declaration = (identifier name, identifier* params, block? body, type var_type, storage_class?)
+    struct_declaration = (identifier tag, member_declaration* members)
+    member_declaration = (identifier member_name, type member_type)
 
     type = Int | Long | UInt | ULong | Double | Char | SChar | UChar | Void
          | FunType(type* params, type ret)
          | Pointer(type referenced)
          | Array(type element, int size)
+         | StructDecl(identifier tag)
     storage_class = Static | Extern
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
@@ -49,6 +54,8 @@ namespace Parsing {
         | Subscript(exp, exp)
         | SizeOf(exp)
         | SizeOf(type)
+        | Dot(exp structure, identifier member)
+        | Arrow(exp pointer, identifier member)
     unary_operator = Complement | Negate | Not | Plus
                    | PrefixIncrement | PostFixIncrement
                    | PrefixDecrement | PostFixDecrement
@@ -71,8 +78,10 @@ struct Program;
 
 // Declaration
 struct Declaration;
-struct FuncDeclaration;
+struct FuncDecl;
 struct VarDecl;
+struct StructDecl;
+struct MemberDecl;
 
 struct Block;
 
@@ -87,6 +96,7 @@ struct VarType;
 struct FuncType;
 struct PointerType;
 struct ArrayType;
+struct StructType;
 
 // Initializer
 struct Initializer;
@@ -134,4 +144,6 @@ struct AddrOffExpr;
 struct SubscriptExpr;
 struct SizeOfExprExpr;
 struct SizeOfTypeExpr;
+struct DotExpr;
+struct ArrowExpr;
 } // Parsing

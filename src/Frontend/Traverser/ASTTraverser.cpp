@@ -17,7 +17,7 @@ void ASTTraverser::visit(VarDecl& varDecl)
 }
 
 // Declaration
-void ASTTraverser::visit(FuncDeclaration& funDecl)
+void ASTTraverser::visit(FuncDecl& funDecl)
 {
     if (funDecl.body)
         funDecl.body->accept(*this);
@@ -38,6 +38,12 @@ void ASTTraverser::visit(StmtBlockItem& stmtBlockItem)
 void ASTTraverser::visit(DeclBlockItem& declBlockItem)
 {
     declBlockItem.decl->accept(*this);
+}
+
+void ASTTraverser::visit(StructDecl& structDecl)
+{
+    for (const auto& member : structDecl.members)
+        member->accept(*this);
 }
 
 void ASTTraverser::visit(FuncType& functionType)
@@ -210,5 +216,15 @@ void ASTTraverser::visit(SizeOfTypeExpr& sizeOfTypeExpr)
 void ASTTraverser::visit(SizeOfExprExpr& sizeOfExprExpr)
 {
     sizeOfExprExpr.innerExpr->accept(*this);
+}
+
+void ASTTraverser::visit(DotExpr& dotExpr)
+{
+    dotExpr.structExpr->accept(*this);
+}
+
+void ASTTraverser::visit(ArrowExpr& arrowExpr)
+{
+    arrowExpr.pointerExpr->accept(*this);
 }
 } // Parsing

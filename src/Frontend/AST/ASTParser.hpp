@@ -106,13 +106,13 @@ struct Block {
     void accept(ConstASTVisitor& visitor) const { visitor.visit(*this); }
 };
 
-struct FuncDeclaration final : Declaration {
+struct FuncDecl final : Declaration {
     std::string name;
     std::vector<std::string> params;
     std::unique_ptr<Block> body = nullptr;
     std::unique_ptr<TypeBase> type = nullptr;
 
-    FuncDeclaration(const StorageClass storageClass,
+    FuncDecl(const StorageClass storageClass,
             std::string name,
             std::vector<std::string>&& ps,
             std::unique_ptr<TypeBase>&& t)
@@ -121,7 +121,7 @@ struct FuncDeclaration final : Declaration {
             params(std::move(ps)),
             type(std::move(t)){}
 
-    FuncDeclaration(const i64 loc,
+    FuncDecl(const i64 loc,
             const StorageClass storageClass,
             std::string name,
             std::vector<std::string>&& ps,
@@ -136,7 +136,47 @@ struct FuncDeclaration final : Declaration {
 
     static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::FuncDecl; }
 
-    FuncDeclaration() = delete;
+    FuncDecl() = delete;
+};
+
+struct StructDecl final : Declaration {
+    const std::string identifier;
+    std::vector<std::unique_ptr<Declaration>> members;
+
+    StructDecl(const StorageClass storageClass,
+               const i64 loc,
+               std::string identifier,
+               std::vector<std::unique_ptr<Declaration>>&& members)
+        : Declaration(loc, Kind::StructDecl, storageClass),
+            identifier(std::move(identifier)),
+            members(std::move(members)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::StructDecl; }
+
+    StructDecl() = delete;
+};
+
+struct MemberDecl final : Declaration {
+    const std::string identifier;
+    std::unique_ptr<VarType> type;
+
+    MemberDecl(const StorageClass storageClass,
+               const i64 loc,
+               std::string identifier,
+               std::unique_ptr<VarType>&& type)
+        : Declaration(loc, Kind::MemberDecl, storageClass),
+            identifier(std::move(identifier)),
+            type(std::move(type)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::MemberDecl; }
+
+    MemberDecl() = delete;
 };
 
 struct ReturnStmt final : Stmt {

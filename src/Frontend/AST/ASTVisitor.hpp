@@ -12,7 +12,9 @@ public:
 
     // Declaration
     virtual void visit(VarDecl&) = 0;
-    virtual void visit(FuncDeclaration&) = 0;
+    virtual void visit(FuncDecl&) = 0;
+    virtual void visit(StructDecl&) = 0;
+    virtual void visit(MemberDecl&) = 0;
 
     virtual void visit(Block&) = 0;
 
@@ -21,6 +23,7 @@ public:
     virtual void visit(FuncType&) = 0;
     virtual void visit(PointerType&) = 0;
     virtual void visit(ArrayType&) = 0;
+    virtual void visit(StructType&) = 0;
 
     // Initializer
     virtual void visit(SingleInitializer&) = 0;
@@ -67,6 +70,8 @@ public:
     virtual void visit(SubscriptExpr&) = 0;
     virtual void visit(SizeOfExprExpr&) = 0;
     virtual void visit(SizeOfTypeExpr&) = 0;
+    virtual void visit(DotExpr&) = 0;
+    virtual void visit(ArrowExpr&) = 0;
 };
 
 class ConstASTVisitor {
@@ -77,7 +82,9 @@ public:
 
     // Declaration
     virtual void visit(const VarDecl&) = 0;
-    virtual void visit(const FuncDeclaration&) = 0;
+    virtual void visit(const FuncDecl&) = 0;
+    virtual void visit(const StructDecl&) = 0;
+    virtual void visit(const MemberDecl&) = 0;
 
     virtual void visit(const Block&) = 0;
 
@@ -86,6 +93,7 @@ public:
     virtual void visit(const FuncType&) = 0;
     virtual void visit(const PointerType&) = 0;
     virtual void visit(const ArrayType&) = 0;
+    virtual void visit(const StructType&) = 0;
 
     // Initializer
     virtual void visit(const SingleInitializer&) = 0;
@@ -132,6 +140,8 @@ public:
     virtual void visit(const SubscriptExpr&) = 0;
     virtual void visit(const SizeOfExprExpr&) = 0;
     virtual void visit(const SizeOfTypeExpr&) = 0;
+    virtual void visit(const DotExpr&) = 0;
+    virtual void visit(const ArrowExpr&) = 0;
 };
 
 } // Parsing

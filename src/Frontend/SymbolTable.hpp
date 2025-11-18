@@ -109,7 +109,7 @@ public:
     [[nodiscard]] bool contains(const std::string& name) const;
     [[nodiscard]] ReturnedEntry lookup(const std::string& uniqueName) const;
     std::string getUniqueName(const std::string& unique) const;
-    void setArgs(Parsing::FuncDeclaration& funDecl);
+    void setArgs(Parsing::FuncDecl& funDecl);
     void clearArgs();
     void addEntry(const std::string& name,
                   const std::string& uniqueName,

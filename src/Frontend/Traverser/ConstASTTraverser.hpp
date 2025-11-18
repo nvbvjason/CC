@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ASTExpr.hpp"
-#include "ASTTypes.hpp"
 #include "ASTVisitor.hpp"
 
 namespace Parsing {
@@ -13,7 +11,9 @@ public:
 
     // Declaration
     void visit(const VarDecl& varDecl) override;
-    void visit(const FuncDeclaration& funDecl) override;
+    void visit(const FuncDecl& funDecl) override;
+    void visit(const StructDecl& structDecl) override;
+    void visit(const MemberDecl& memberDecl) override {}
 
     // BlockItem
     void visit(const StmtBlockItem& stmtBlockItem) override;
@@ -24,6 +24,7 @@ public:
     void visit(const FuncType& functionType) override;
     void visit(const PointerType& pointerType) override;
     void visit(const ArrayType& arrayType) override;
+    void visit(const StructType& structType) override {}
 
     // Initializers
     void visit(const SingleInitializer& singleInitializer) override;
@@ -67,6 +68,8 @@ public:
     void visit(const SubscriptExpr& subscriptExpr) override;
     void visit(const SizeOfTypeExpr& sizeOfTypeExpr) override;
     void visit(const SizeOfExprExpr& sizeOfExprExpr) override;
+    void visit(const DotExpr& dotExpr) override;
+    void visit(const ArrowExpr& arrowExpr) override;
 };
 
 } // Parsing

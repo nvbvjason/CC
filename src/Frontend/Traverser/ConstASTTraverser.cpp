@@ -1,7 +1,7 @@
-#include "../Traverser/ConstASTTraverser.hpp"
+#include "ConstASTTraverser.hpp"
 
 #include "ASTTypes.hpp"
-#include "../AST/ASTParser.hpp"
+#include "ASTParser.hpp"
 
 namespace Parsing {
 
@@ -24,10 +24,16 @@ void ConstASTTraverser::visit(const VarDecl& varDecl)
         varDecl.init->accept(*this);
 }
 
-void ConstASTTraverser::visit(const FuncDeclaration& funDecl)
+void ConstASTTraverser::visit(const FuncDecl& funDecl)
 {
     if (funDecl.body)
         funDecl.body->accept(*this);
+}
+
+void ConstASTTraverser::visit(const StructDecl& structDecl)
+{
+    for (const auto& member : structDecl.members)
+        member->accept(*this);
 }
 
 // BlockItem
@@ -211,5 +217,15 @@ void ConstASTTraverser::visit(const SizeOfTypeExpr& sizeOfTypeExpr)
 void ConstASTTraverser::visit(const SizeOfExprExpr& sizeOfExprExpr)
 {
     sizeOfExprExpr.innerExpr->accept(*this);
+}
+
+void ConstASTTraverser::visit(const DotExpr& dotExpr)
+{
+    dotExpr.structExpr->accept(*this);
+}
+
+void ConstASTTraverser::visit(const ArrowExpr& arrowExpr)
+{
+    arrowExpr.pointerExpr->accept(*this);
 }
 } // Parsing

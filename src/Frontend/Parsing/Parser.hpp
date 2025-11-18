@@ -96,7 +96,7 @@ public:
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
                                                         std::unique_ptr<TypeBase>&& type,
                                                         Storage storage);
-    [[nodiscard]] std::unique_ptr<FuncDeclaration> funDeclParse(
+    [[nodiscard]] std::unique_ptr<FuncDecl> funDeclParse(
             const std::string& iden,
             std::unique_ptr<TypeBase>&& type,
             Storage storage,
