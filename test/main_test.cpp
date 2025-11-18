@@ -1011,6 +1011,26 @@ TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, validSemantics)
     }
 }
 
+TEST(Chapter18_Structures, lexingValid)
+{
+    const fs::path validPath = testsFolderPath / "chapter_18/valid";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_TRUE(lexerValid(path)) << path.path().string();
+    }
+}
+
+TEST(Chapter18_Structures, lexingInvalid)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_18/invalid_lex";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_FALSE(lexerValid(path)) << path.path().string();
+    }
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

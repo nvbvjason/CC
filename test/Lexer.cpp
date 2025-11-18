@@ -97,6 +97,7 @@ TEST(LexerTests, Tokens)
         {"signed", TokenType::Signed},
         {"unsigned", TokenType::Unsigned},
         {"double", TokenType::DoubleKeyword},
+        {"struct", TokenType::StructKeyword},
         {"%", TokenType::Percent},
         {"+", TokenType::Plus},
         {"*", TokenType::Asterisk},
@@ -137,6 +138,8 @@ TEST(LexerTests, Tokens)
         {"}", TokenType::CloseBrace},
         {"(", TokenType::OpenParen},
         {")", TokenType::CloseParen},
+        {".", TokenType::Period},
+        {"->", TokenType::Arrow},
     };
     for (const TestCaseLexer& testCase : testCases)
         TestSingleTokenLexing(testCase);

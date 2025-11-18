@@ -52,6 +52,14 @@ void Lexer::scanToken()
         case ',':
             addToken(Type::Comma);
             break;
+        case '.': {
+            if (isdigit(peek())) {
+                floating();
+                break;
+            }
+            addToken(Type::Period);
+            break;
+        }
         case '+': {
             if (match('+')) {
                 addToken(Type::Increment);
@@ -155,6 +163,10 @@ void Lexer::scanToken()
             addToken(Type::Less);
             break;
         case '-':
+            if (match('>')) {
+                addToken(Type::Arrow);
+                break;
+            }
             if (match('=')) {
                 addToken(Type::MinusAssign);
                 break;
@@ -182,8 +194,6 @@ void Lexer::scanToken()
         default:
             if (isdigit(ch))
                 number();
-            else if (ch == '.')
-                floating();
             else if (isalpha(ch) || ch == '_')
                 identifier();
             else

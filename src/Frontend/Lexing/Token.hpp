@@ -20,6 +20,8 @@ struct Token {
         Comma,                           // ,
         Tilde,                           // ~
         ExclamationMark,                 // !
+        Period,                          // .
+        Arrow,                           // ->
 
         // Arithmetic Operators
         Plus,                            // +
@@ -83,6 +85,7 @@ struct Token {
         IntKeyword,                      // int
         LongKeyword,                     // long
         DoubleKeyword,                   // double
+        StructKeyword,                   // struct
         If,                              // if
         Else,                            // else
         Do,                              // do

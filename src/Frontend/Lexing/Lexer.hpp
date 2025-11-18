@@ -43,6 +43,7 @@ class Lexer {
         { "signed", Type::Signed},
         { "unsigned", Type::Unsigned},
         { "double", Type::DoubleKeyword},
+        { "struct", Type::StructKeyword},
         { "char", Type::CharKeyword},
         { "sizeof", Type::SizeOf},
     };
