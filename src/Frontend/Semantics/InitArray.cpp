@@ -44,7 +44,7 @@ void initArray(Parsing::VarDecl& array, std::vector<Error>& errors)
     const auto arrayInit = array.init.get();
     const std::vector<i64> dimensions = getDimensions(array);
     auto[staticInitializer, emplacedPositions] =
-        createInitsWithPositions(innerArrayType, arrayInit, errors, dimensions);
+        flattenWithPositions(innerArrayType, arrayInit, errors, dimensions);
     staticInitializer = getZeroInits(staticInitializer, dimensions, emplacedPositions);
     auto newArrayInit = std::make_unique<Parsing::CompoundInitializer>(std::move(staticInitializer));
     array.init = std::move(newArrayInit);
@@ -108,7 +108,7 @@ void createInitsWithPositionsSingle(const Type innerArrayType,
 }
 
 std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
-    createInitsWithPositions(
+    flattenWithPositions(
         const Type innerArrayType,
         Parsing::Initializer* arrayInit,
         std::vector<Error>& errors,
@@ -204,7 +204,7 @@ std::vector<std::unique_ptr<Parsing::Initializer>> getZeroInits(
             newInitializers.emplace_back(std::make_unique<Parsing::ZeroInitializer>(distance));
         const auto sinleInit = dynCast<Parsing::SingleInitializer>(init);
         newInitializers.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-            Parsing::deepCopy(*sinleInit->expr)));
+            std::move(sinleInit->expr)));
     }
     const i64 arrayLastPosition = std::accumulate(dimensions.begin(), dimensions.end(), i64{1}, std::multiplies<>{});
     const i64 positionLast = getPosition(positionBefore, dimensions);

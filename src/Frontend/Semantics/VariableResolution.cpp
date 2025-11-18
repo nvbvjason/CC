@@ -14,9 +14,19 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
     return std::move(m_errors);
 }
 
+void VariableResolution::visit(Parsing::StructDecl& structDecl)
+{
+    ASTTraverser::visit(structDecl);
+}
+
+void VariableResolution::visit(Parsing::UnionDecl& unionDecl)
+{
+    ASTTraverser::visit(unionDecl);
+}
+
 void VariableResolution::visit(Parsing::FuncDecl& funDecl)
 {
-    const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookup(funDecl.name);
+    const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookupEntry(funDecl.name);
     validateFuncDecl(funDecl, m_symbolTable, prevEntry);
     addFuncToSymbolTable(funDecl, prevEntry);
     if (funDecl.body) {
@@ -96,7 +106,7 @@ void VariableResolution::visit(Parsing::ForStmt& forStmt)
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookup(varDecl.name);
+    const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookupEntry(varDecl.name);
     validateVarDecl(varDecl, m_symbolTable, prevEntry);
     addVarToSymbolTable(varDecl, prevEntry);
     ASTTraverser::visit(varDecl);
@@ -152,7 +162,7 @@ void VariableResolution::validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookup(varExpr.name);
+    const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookupEntry(varExpr.name);
     if (isValidVarExpr(varExpr.location, returnedEntry)) {
         if (returnedEntry.hasExternalLinkage() && !returnedEntry.isGlobal())
             varExpr.referingTo = ReferingTo::Extern;
@@ -184,7 +194,7 @@ bool VariableResolution::isValidVarExpr(const i64 location, const SymbolTable::R
 
 void VariableResolution::visit(Parsing::FuncCallExpr& funcCallExpr)
 {
-    const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookup(funcCallExpr.name);
+    const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookupEntry(funcCallExpr.name);
     if (isValidFuncCall(funcCallExpr.location, returnedEntry)) {
         const auto funcType = dynCast<const Parsing::FuncType>(returnedEntry.typeBase.get());
         funcCallExpr.type = Parsing::deepCopy(*funcType->returnType);

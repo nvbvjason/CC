@@ -324,7 +324,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertArrayType(Parsing::Expr& e
     if (genExpr->type && genExpr->type->type == Type::Array && genExpr->kind != Parsing::Expr::Kind::AddrOf) {
         if (genExpr->kind != Parsing::Expr::Kind::AddrOf) {
             const auto arrayType = dynCast<Parsing::ArrayType>(genExpr->type.get());
-            auto addressOf = std::make_unique<Parsing::AddrOffExpr>(genExpr->location, Parsing::deepCopy(*genExpr));
+            auto addressOf = std::make_unique<Parsing::AddrOffExpr>(genExpr->location, std::move(genExpr));
             addressOf->type = std::make_unique<Parsing::PointerType>(Parsing::deepCopy(*arrayType->elementType));
             return addressOf;
         }

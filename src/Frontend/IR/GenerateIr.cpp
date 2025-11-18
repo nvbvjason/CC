@@ -186,7 +186,7 @@ void GenerateIr::genStaticLocal(const Parsing::VarDecl& varDecl)
 
 std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& varDecl)
 {
-    const auto entry = m_symbolTable.lookup(varDecl.name);
+    const auto entry = m_symbolTable.lookupEntry(varDecl.name);
     const bool defined = entry.isDefined();
 
     if (defined && varDecl.init == nullptr)
@@ -287,7 +287,7 @@ std::shared_ptr<Value> genZeroValueForType(const Type type)
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FuncDecl& parsingFunction)
 {
-    bool global = !m_symbolTable.lookup(parsingFunction.name).hasInternalLinkage();
+    bool global = !m_symbolTable.lookupEntry(parsingFunction.name).hasInternalLinkage();
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);
     m_global = true;
     m_insts = std::move(functionTacky->insts);

@@ -48,30 +48,18 @@ public:
             return (static_cast<u32>(flags) & static_cast<u32>(flag)) != 0;
         }
     };
-    struct StructuredEntry : FlagBase<StructuredEntry>  {
+    struct ReturnedStructuredEntry : FlagBase<ReturnedStructuredEntry>  {
         std::unique_ptr<Parsing::TypeBase> typeBase;
-        StructuredEntry(std::unique_ptr<Parsing::TypeBase>&& t,
+        ReturnedStructuredEntry(std::unique_ptr<Parsing::TypeBase>&& t,
                         const bool contains,
-                        const bool inArgs,
                         const bool fromCurrentScope,
-                        const bool internal,
-                        const bool external,
-                        const bool global,
                         const bool defined)
             : typeBase(std::move(t))
         {
             if (contains)
                 set(State::Contains);
-            if (inArgs)
-                set(State::InArgs);
             if (fromCurrentScope)
                 set(State::FromCurrentScope);
-            if (internal)
-                set(State::InternalLinkage);
-            if (external)
-                set(State::ExternalLinkage);
-            if (global)
-                set(State::Global);
             if (defined)
                 set(State::Defined);
         }
@@ -109,6 +97,7 @@ private:
         std::string uniqueName;
         State returnFlag = State::None;
         std::unique_ptr<Parsing::TypeBase> varType;
+
         Entry(std::string uniqueName,
               std::unique_ptr<Parsing::TypeBase>&& typeBase,
               const bool internal,
@@ -128,14 +117,31 @@ private:
                 set(State::Defined);
         }
     };
+    struct StructuredEntry : FlagBase<StructuredEntry>  {
+        std::string uniqueName;
+        std::unique_ptr<Parsing::TypeBase> varType;
+        State returnFlag = State::None;
+
+        StructuredEntry(std::string uniqueName,
+                        std::unique_ptr<Parsing::TypeBase>&& typeBase,
+                        const bool defined)
+            : uniqueName(std::move(uniqueName))
+        {
+            varType = std::move(typeBase);
+            if (defined)
+                set(State::Defined);
+        }
+    };
     std::vector<std::unordered_map<std::string, Entry>> m_entries;
+    std::vector<std::unordered_map<std::string, StructuredEntry>> m_StructuredEntries;
     std::unordered_map<std::string, i32> m_funcs;
     std::vector<std::string> m_args;
     std::vector<std::unique_ptr<Parsing::TypeBase>> m_argTypes;
 public:
     SymbolTable();
     [[nodiscard]] bool contains(const std::string& name) const;
-    [[nodiscard]] ReturnedEntry lookup(const std::string& uniqueName) const;
+    [[nodiscard]] ReturnedEntry lookupEntry(const std::string& uniqueName) const;
+    [[nodiscard]] ReturnedStructuredEntry lookupStructuredEntry(const std::string& uniqueName) const;
     std::string getUniqueName(const std::string& unique) const;
     void setArgs(const Parsing::FuncDecl& funDecl);
     void clearArgs();
@@ -143,6 +149,10 @@ public:
                   const std::string& uniqueName,
                   const Parsing::TypeBase& typeBase,
                   bool internal, bool external, bool global, bool defined);
+    void addStructuredEntry(const std::string& name,
+                            const std::string& uniqueName,
+                            const Parsing::TypeBase& typeBase,
+                            bool defined);
     void addScope();
     void removeScope();
 

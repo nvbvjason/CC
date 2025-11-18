@@ -18,7 +18,9 @@ bool SymbolTable::contains(const std::string& name) const
     return false;
 }
 
-SymbolTable::ReturnedEntry SymbolTable::lookup(const std::string& uniqueName) const
+
+
+SymbolTable::ReturnedEntry SymbolTable::lookupEntry(const std::string& uniqueName) const
 {
     const bool inArgs = isInArgs(uniqueName);
     if (inArgs) {
@@ -38,6 +40,19 @@ SymbolTable::ReturnedEntry SymbolTable::lookup(const std::string& uniqueName) co
         return {Parsing::deepCopy(*it->second.varType), true, inArgs, fromCurrentScope, internal, external, global, defined};
     }
     return {nullptr, false, inArgs, false, false, false, false, false};
+}
+
+SymbolTable::ReturnedStructuredEntry SymbolTable::lookupStructuredEntry(const std::string& uniqueName) const
+{
+    for (size_t i = m_entries.size(); 0 < i--;) {
+        const auto it = m_entries[i].find(uniqueName);
+        if (it == m_entries[i].end())
+            continue;
+        const bool fromCurrentScope = i == m_entries.size() - 1;
+        const bool defined = it->second.isDefined();
+        return {Parsing::deepCopy(*it->second.varType), true, fromCurrentScope, defined};
+    }
+    return {nullptr, false, false, false};
 }
 
 std::string SymbolTable::getUniqueName(const std::string& unique) const
@@ -80,21 +95,34 @@ void SymbolTable::addEntry(const std::string& name,
                            const bool global,
                            const bool defined)
 {
-
-    m_entries.back().insert_or_assign(name,Entry(
+    m_entries.back().insert_or_assign(name, Entry(
         uniqueName, Parsing::deepCopy(typeBase),
         internal, external, global, defined)
-        );
+    );
+}
+
+void SymbolTable::addStructuredEntry(const std::string& name,
+                                     const std::string& uniqueName,
+                                     const Parsing::TypeBase& typeBase,
+                                     const bool defined)
+{
+    m_StructuredEntries.back().insert_or_assign(name, StructuredEntry(
+        uniqueName,
+        Parsing::deepCopy(typeBase),
+        defined)
+    );
 }
 
 void SymbolTable::addScope()
 {
     m_entries.emplace_back();
+    m_StructuredEntries.emplace_back();
 }
 
 void SymbolTable::removeScope()
 {
     m_entries.pop_back();
+    m_StructuredEntries.pop_back();
 }
 
 bool SymbolTable::isFunc(const std::string& name) const

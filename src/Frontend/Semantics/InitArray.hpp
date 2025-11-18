@@ -19,10 +19,10 @@ void createInitsWithPositionsSingle(Type innerArrayType,
                                     Parsing::SingleInitializer& singleInit);
 std::vector<i64> getScales(const std::vector<i64>& dimensions, i64 size);
 std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
-    createInitsWithPositions(Type innerArrayType,
-                             Parsing::Initializer* arrayInit,
-                             std::vector<Error>& errors,
-                             const std::vector<i64>& dimensions);
+    flattenWithPositions(Type innerArrayType,
+                         Parsing::Initializer* arrayInit,
+                         std::vector<Error>& errors,
+                         const std::vector<i64>& dimensions);
 bool isZeroSingleInit(const Parsing::Initializer& init);
 std::vector<std::unique_ptr<Parsing::Initializer>> getZeroInits(
     const std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,

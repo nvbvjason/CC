@@ -38,6 +38,9 @@ public:
     std::vector<Error> resolve(Parsing::Program& program);
     void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
+    void visit(Parsing::StructDecl& structDecl) override;
+    void visit(Parsing::UnionDecl& unionDecl) override;
+
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
 
@@ -97,9 +100,9 @@ inline bool isArrayOfUndefinedStructuredType(
         return false;
     if (type->kind == Parsing::TypeBase::Kind::Struct) {
         const auto structType = dynamic_cast<const Parsing::StructType*>(type);
-        return !symbolTable.lookup(structType->identifier).isDefined();
+        return !symbolTable.lookupEntry(structType->identifier).isDefined();
     }
     const auto unionType = dynamic_cast<const Parsing::UnionType*>(type);
-    return !symbolTable.lookup(unionType->identifier).isDefined();
+    return !symbolTable.lookupEntry(unionType->identifier).isDefined();
 }
 } // Semantics
