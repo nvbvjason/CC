@@ -175,7 +175,7 @@ void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
 void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
 {
     const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
-    if (varDecl.type->type != Type::Array) {
+    if (varDecl.type->type != Type::Array && !isStructuredType(*varDecl.type)) {
         addError("Cannot have compound initializer on non array", varDecl.location);
         return;
     }
@@ -214,7 +214,7 @@ void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
         return;
     if (!isArithmetic(varDecl.type->type))
         return;
-    auto newExpr = convertOrCastToType(*singleInit->expr, varDecl.type->type);
+    auto newExpr = convertOrCastToType(singleInit->expr, varDecl.type->type);
     varDecl.init = std::make_unique<Parsing::SingleInitializer>(std::move(newExpr));
 }
 
@@ -519,7 +519,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertUnaryExpr(Parsing::UnaryEx
 
     if (isCharacterType(unaryExpr.innerExpr->type->type) &&
         (unaryExpr.op == Operator::Negate || unaryExpr.op == Operator::Complement)) {
-        unaryExpr.innerExpr = convertOrCastToType(*unaryExpr.innerExpr, Type::I32);
+        unaryExpr.innerExpr = convertOrCastToType(unaryExpr.innerExpr, Type::I32);
         unaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
     }
 
@@ -577,7 +577,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleAddSubtractPtrToIntegerType
     }
     if (isIntegerType(rightType)) {
         if (rightType != Type::I64)
-            binaryExpr.rhs = convertOrCastToType(*binaryExpr.rhs, Type::I64);
+            binaryExpr.rhs = convertOrCastToType(binaryExpr.rhs, Type::I64);
         binaryExpr.type = Parsing::deepCopy(*binaryExpr.lhs->type);
     }
     else if (isIntegerType(leftType)) {
@@ -586,7 +586,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleAddSubtractPtrToIntegerType
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
         if (leftType != Type::I64)
-            binaryExpr.lhs = convertOrCastToType(*binaryExpr.lhs, Type::I64);
+            binaryExpr.lhs = convertOrCastToType(binaryExpr.lhs, Type::I64);
         binaryExpr.type = Parsing::deepCopy(*binaryExpr.rhs->type);
         auto returnExpr = std::make_unique<Parsing::BinaryExpr>(binaryExpr.location,
             binaryExpr.op, std::move(binaryExpr.rhs), std::move(binaryExpr.lhs));
@@ -696,7 +696,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertAssignExpr(Parsing::Assign
     if (leftType != rightType && assignmentExpr.op == Parsing::AssignmentExpr::Operator::Assign &&
         leftType != Type::Pointer) {
         if (!isCharacterType(leftType)) {
-            assignmentExpr.rhs = convertOrCastToType(*assignmentExpr.rhs, leftType);
+            assignmentExpr.rhs = convertOrCastToType(assignmentExpr.rhs, leftType);
         }
         else {
             assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
@@ -704,7 +704,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertAssignExpr(Parsing::Assign
         }
     }
     if (leftType == Type::Pointer && isIntegerType(rightType))
-        assignmentExpr.rhs = convertOrCastToType(*assignmentExpr.rhs, Type::I64);
+        assignmentExpr.rhs = convertOrCastToType(assignmentExpr.rhs, Type::I64);
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
     return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
 }
@@ -730,7 +730,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertCastExpr(Parsing::CastExpr
     if (outerType == Type::Pointer && innerType == Type::Double)
         addError("Cannot convert double to pointer", castExpr.location);
     if (isArithmetic(outerType) && isArithmetic(innerType))
-        return convertOrCastToType(*castExpr.innerExpr, outerType);
+        return convertOrCastToType(castExpr.innerExpr, outerType);
     if (outerType == Type::Pointer && innerType == Type::Pointer) {
         auto innerTypeCopy = Parsing::deepCopy(*castExpr.type);
         castExpr.innerExpr->type = std::move(innerTypeCopy);
@@ -922,7 +922,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSubscriptExpr(Parsing::Sub
     }
     const auto subscriptExprPtr = dynCast<Parsing::SubscriptExpr>(result.get());
     if (subscriptExprPtr->index->type->type != Type::I64)
-        subscriptExprPtr->index = convertOrCastToType(*subscriptExprPtr->index, Type::I64);
+        subscriptExprPtr->index = convertOrCastToType(subscriptExprPtr->index, Type::I64);
     const auto ptrType = dynCast<Parsing::PointerType>(subscriptExprPtr->referencing->type.get());
     result->type = Parsing::deepCopy(*ptrType->referenced);
     return result;

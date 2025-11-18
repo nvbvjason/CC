@@ -42,13 +42,13 @@ SymbolTable::ReturnedEntry SymbolTable::lookupEntry(const std::string& uniqueNam
     return {nullptr, false, inArgs, false, false, false, false, false};
 }
 
-SymbolTable::ReturnedStructuredEntry SymbolTable::lookupStructuredEntry(const std::string& uniqueName) const
+SymbolTable::ReturnedStructuredEntry SymbolTable::lookupStructuredEntry(const std::string& name) const
 {
-    for (size_t i = m_entries.size(); 0 < i--;) {
-        const auto it = m_entries[i].find(uniqueName);
-        if (it == m_entries[i].end())
+    for (size_t i = m_StructuredEntries.size(); 0 < i--;) {
+        const auto it = m_StructuredEntries[i].find(name);
+        if (it == m_StructuredEntries[i].end())
             continue;
-        const bool fromCurrentScope = i == m_entries.size() - 1;
+        const bool fromCurrentScope = i == m_StructuredEntries.size() - 1;
         const bool defined = it->second.isDefined();
         return {Parsing::deepCopy(*it->second.varType), true, fromCurrentScope, defined};
     }

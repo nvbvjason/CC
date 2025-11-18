@@ -174,7 +174,7 @@ void VariableResolution::validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
 void VariableResolution::visit(Parsing::StructType& structType)
 {
     if (!m_symbolTable.lookupStructuredEntry(structType.identifier).isDefined()) {
-        addError("Cannot cast to undefined struct type", structType.location);
+        addError("Cannot use undefined struct type", structType.location);
         return;
     }
     ASTTraverser::visit(structType);
@@ -183,7 +183,7 @@ void VariableResolution::visit(Parsing::StructType& structType)
 void VariableResolution::visit(Parsing::UnionType& unionType)
 {
     if (!m_symbolTable.lookupStructuredEntry(unionType.identifier).isDefined()) {
-        addError("Cannot cast to undefined union type", unionType.location);
+        addError("Cannot use undefined union type", unionType.location);
         return;
     }
     ASTTraverser::visit(unionType);

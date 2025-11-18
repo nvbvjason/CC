@@ -101,6 +101,16 @@ bool areEquivalentTypes(const TypeBase& left, const TypeBase& right)
             const auto typeFunctionRight = dynCast<const ArrayType>(&right);
             return areEquivalentTypes(*typeFunctionLeft, *typeFunctionRight);
         }
+        case Type::Struct: {
+            const auto typeVarRight = dynCast<const StructType>(&left);
+            const auto typeVarLeft = dynCast<const StructType>(&right);
+            return areEquivalentTypes(*typeVarRight, *typeVarLeft);
+        }
+        case Type::Union: {
+            const auto typeVarRight = dynCast<const UnionType>(&left);
+            const auto typeVarLeft = dynCast<const UnionType>(&right);
+            return areEquivalentTypes(*typeVarRight, *typeVarLeft);
+        }
         default: {
             const auto typeVarRight = dynCast<const VarType>(&left);
             const auto typeVarLeft = dynCast<const VarType>(&right);
@@ -165,221 +175,6 @@ bool areEquivalentArrayConversion(const TypeBase& left, const TypeBase& right)
     return areEquivalentTypes(*leftPtr, *rightPtr);
 }
 
-std::unique_ptr<Expr> deepCopy(const Expr& expr)
-{
-    switch (expr.kind) {
-        case Expr::Kind::Constant: {
-            const auto constExpr = dynCast<const ConstExpr>(&expr);
-            return deepCopy(*constExpr);
-        }
-        case Expr::Kind::String: {
-            const auto stringExpr = dynCast<const StringExpr>(&expr);
-            return deepCopy(*stringExpr);
-        }
-        case Expr::Kind::Var: {
-            const auto varExpr = dynCast<const VarExpr>(&expr);
-            return deepCopy(*varExpr);
-        }
-        case Expr::Kind::Cast: {
-            const auto castExpr = dynCast<const CastExpr>(&expr);
-            return deepCopy(*castExpr);
-        }
-        case Expr::Kind::Unary: {
-            const auto unaryExpr = dynCast<const UnaryExpr>(&expr);
-            return deepCopy(*unaryExpr);
-        }
-        case Expr::Kind::Binary: {
-            const auto binaryExpr = dynCast<const BinaryExpr>(&expr);
-            return deepCopy(*binaryExpr);
-        }
-        case Expr::Kind::Assignment: {
-            const auto assignmentExpr = dynCast<const AssignmentExpr>(&expr);
-            return deepCopy(*assignmentExpr);
-        }
-        case Expr::Kind::Ternary: {
-            const auto ternaryExpr = dynCast<const TernaryExpr>(&expr);
-            return deepCopy(*ternaryExpr);
-        }
-        case Expr::Kind::FunctionCall: {
-            const auto funcCallExpr = dynCast<const FuncCallExpr>(&expr);
-            return deepCopy(*funcCallExpr);
-        }
-        case Expr::Kind::Dereference: {
-            const auto dereferenceExpr = dynCast<const DereferenceExpr>(&expr);
-            return deepCopy(*dereferenceExpr);
-        }
-        case Expr::Kind::AddrOf: {
-            const auto addrOffExpr = dynCast<const AddrOffExpr>(&expr);
-            return deepCopy(*addrOffExpr);
-        }
-        case Expr::Kind::Subscript: {
-            const auto subscriptExpr = dynCast<const SubscriptExpr>(&expr);
-            return deepCopy(*subscriptExpr);
-        }
-        case Expr::Kind::SizeOfExpr: {
-            const auto sizeOfExpr = dynCast<const SizeOfExprExpr>(&expr);
-            return deepCopy(*sizeOfExpr);
-        }
-        case Expr::Kind::SizeOfType: {
-            const auto sizeOfTypeExpr = dynCast<const SizeOfTypeExpr>(&expr);
-            return deepCopy(*sizeOfTypeExpr);
-        }
-        default:
-            std::abort();
-    }
-}
-
-std::unique_ptr<Expr> deepCopy(const ConstExpr& expr)
-{
-    switch (expr.type->type) {
-        case Type::I8:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<i8>(), std::make_unique<VarType>(Type::I8));
-        case Type::U8:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<u8>(), std::make_unique<VarType>(Type::U8));
-        case Type::I32:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<i32>(), std::make_unique<VarType>(Type::I32));
-        case Type::U32:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<u32>(), std::make_unique<VarType>(Type::U32));
-        case Type::I64:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<i64>(), std::make_unique<VarType>(Type::I64));
-        case Type::U64:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<u64>(), std::make_unique<VarType>(Type::U64));
-        case Type::Double:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<double>(), std::make_unique<VarType>(Type::Double));
-        case Type::Char:
-            return std::make_unique<ConstExpr>(expr.location, expr.getValue<char>(), std::make_unique<VarType>(Type::Char));
-        default:
-            std::abort();
-    }
-}
-
-std::unique_ptr<Expr> deepCopy(const StringExpr& expr)
-{
-    std::string value = expr.value;
-    auto result = std::make_unique<StringExpr>(expr.location, std::move(value));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const VarExpr& expr)
-{
-    auto result = std::make_unique<VarExpr>(expr.location, expr.name);
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    result->referingTo = expr.referingTo;
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const CastExpr& expr)
-{
-    return std::make_unique<CastExpr>(
-        expr.location, deepCopy(*expr.type), deepCopy(*expr.innerExpr));
-}
-
-std::unique_ptr<Expr> deepCopy(const UnaryExpr& expr)
-{
-    auto result = std::make_unique<UnaryExpr>(expr.location, expr.op, deepCopy(*expr.innerExpr));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const BinaryExpr& expr)
-{
-    auto result = std::make_unique<BinaryExpr>(
-        expr.location, expr.op, deepCopy(*expr.lhs), deepCopy(*expr.rhs));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const AssignmentExpr& expr)
-{
-    auto result = std::make_unique<AssignmentExpr>(
-        expr.location, expr.op, deepCopy(*expr.lhs), deepCopy(*expr.rhs));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const TernaryExpr& expr)
-{
-    auto result = std::make_unique<TernaryExpr>(
-        expr.location,
-        deepCopy(*expr.condition),
-        deepCopy(*expr.trueExpr),
-        deepCopy(*expr.falseExpr));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const FuncCallExpr& expr)
-{
-    std::vector<std::unique_ptr<Expr>> args;
-    for (const auto& arg : expr.args)
-        args.push_back(deepCopy(*arg));
-    auto result = std::make_unique<FuncCallExpr>(expr.location, expr.name, std::move(args));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const DereferenceExpr& expr)
-{
-    auto result = std::make_unique<DereferenceExpr>(expr.location, deepCopy(*expr.reference));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const AddrOffExpr& expr)
-{
-    auto result = std::make_unique<AddrOffExpr>(expr.location, deepCopy(*expr.reference));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const SubscriptExpr& expr)
-{
-    auto result = std::make_unique<SubscriptExpr>(
-        expr.location, deepCopy(*expr.referencing), deepCopy(*expr.index));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const SizeOfExprExpr& expr)
-{
-    auto result = std::make_unique<SizeOfExprExpr>(expr.location, deepCopy(*expr.innerExpr));
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const SizeOfTypeExpr& expr)
-{
-    return std::make_unique<SizeOfTypeExpr>(expr.location, deepCopy(*expr.sizeType));
-}
-
-std::unique_ptr<Expr> deepCopy(const DotExpr& expr)
-{
-    auto result = std::make_unique<DotExpr>(expr.location, deepCopy(*expr.structuredExpr), expr.identifier);
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
-std::unique_ptr<Expr> deepCopy(const ArrowExpr& expr)
-{
-    auto result = std::make_unique<ArrowExpr>(expr.location, deepCopy(*expr.pointerExpr), expr.identifier);
-    if (expr.type)
-        result->type = deepCopy(*expr.type);
-    return result;
-}
-
 void assignTypeToArithmeticBinaryExpr(BinaryExpr& binaryExpr)
 {
     using BinaryOp = BinaryExpr::Operator;
@@ -388,9 +183,9 @@ void assignTypeToArithmeticBinaryExpr(BinaryExpr& binaryExpr)
     const Type commonType = getCommonType(leftType, rightType);
 
     if (commonType != leftType)
-        binaryExpr.lhs = convertOrCastToType(*binaryExpr.lhs, commonType);
+        binaryExpr.lhs = convertOrCastToType(binaryExpr.lhs, commonType);
     if (commonType != rightType)
-        binaryExpr.rhs = convertOrCastToType(*binaryExpr.rhs, commonType);
+        binaryExpr.rhs = convertOrCastToType(binaryExpr.rhs, commonType);
     if (binaryExpr.op == BinaryOp::LeftShift || binaryExpr.op == BinaryOp::RightShift) {
         if (isCharacterType(leftType)) {
             binaryExpr.lhs = std::make_unique<CastExpr>(
@@ -547,15 +342,15 @@ const TypeBase* getArrayBaseType(const TypeBase& highestType)
     return type;
 }
 
-std::unique_ptr<Expr> convertOrCastToType(const Expr& expr, const Type targetType)
+std::unique_ptr<Expr> convertOrCastToType(std::unique_ptr<Expr>& expr, const Type targetType)
 {
-    if (expr.kind != Expr::Kind::Constant) {
+    if (expr->kind != Expr::Kind::Constant) {
         return std::make_unique<CastExpr>(
-            expr.location,
+            expr->location,
             std::make_unique<VarType>(targetType),
-            deepCopy(expr));
+            std::move(expr));
     }
-    return convertToArithmeticType(expr, targetType);
+    return convertToArithmeticType(*expr, targetType);
 }
 
 i64 getArraySize(TypeBase* type)

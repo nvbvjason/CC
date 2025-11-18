@@ -24,24 +24,6 @@ namespace Parsing {
 
 [[nodiscard]] std::unique_ptr<TypeBase> convertArrayFirstDimToPtr(const TypeBase& typeBase);
 
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const Expr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const ConstExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const StringExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const VarExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const CastExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const UnaryExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const BinaryExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const AssignmentExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const TernaryExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const FuncCallExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const DereferenceExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const AddrOffExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const SubscriptExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const SizeOfExprExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const SizeOfTypeExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const DotExpr& expr);
-[[nodiscard]] std::unique_ptr<Expr> deepCopy(const ArrowExpr& expr);
-
 template<typename TargetType>
 TargetType getValueFromConst(const ConstExpr& constExpr)
 {
@@ -59,7 +41,7 @@ TargetType getValueFromConst(const ConstExpr& constExpr)
     }
 }
 
-std::unique_ptr<Expr> convertOrCastToType(const Expr& expr, Type targetType);
+std::unique_ptr<Expr> convertOrCastToType(std::unique_ptr<Expr>& expr, Type targetType);
 void assignTypeToArithmeticBinaryExpr(BinaryExpr& binaryExpr);
 bool isZeroArithmeticType(const ConstExpr& constExpr);
 bool canConvertToNullPtr(const Expr& expr);

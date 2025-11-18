@@ -167,7 +167,7 @@ std::unique_ptr<Parsing::Initializer> emplaceNewSingleInit(
 {
     std::unique_ptr<Parsing::Expr> newExpr = nullptr;
     if (singleInit.expr->kind != Parsing::Expr::Kind::Cast)
-        newExpr = convertOrCastToType(*singleInit.expr, innerArrayType);
+        newExpr = convertOrCastToType(singleInit.expr, innerArrayType);
     else {
         const auto castExpr = dynCast<Parsing::CastExpr>(singleInit.expr.get());
         if (castExpr->innerExpr->kind == Parsing::Expr::Kind::Constant) {

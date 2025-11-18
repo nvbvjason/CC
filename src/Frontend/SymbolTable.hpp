@@ -141,7 +141,7 @@ public:
     SymbolTable();
     [[nodiscard]] bool contains(const std::string& name) const;
     [[nodiscard]] ReturnedEntry lookupEntry(const std::string& uniqueName) const;
-    [[nodiscard]] ReturnedStructuredEntry lookupStructuredEntry(const std::string& uniqueName) const;
+    [[nodiscard]] ReturnedStructuredEntry lookupStructuredEntry(const std::string& name) const;
     std::string getUniqueName(const std::string& unique) const;
     void setArgs(const Parsing::FuncDecl& funDecl);
     void clearArgs();
