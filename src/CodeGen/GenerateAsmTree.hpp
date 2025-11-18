@@ -91,10 +91,12 @@ public:
     void genLabel(const Ir::LabelInst& irLabel);
     void genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset);
     void genAllocate(const Ir::AllocateInst& allocate);
+    std::shared_ptr<Operand> getReturnRegister(const Ir::ReturnInst& returnInst);
 
     void genFunCall(const Ir::FunCallInst& funcCall);
     std::vector<bool> genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall);
     void genFunCallPushArgs(const Ir::FunCallInst& funcCall);
+    void deAllocateStack(const Ir::FunCallInst& funcCall, i64 stackPadding);
 
     std::shared_ptr<Operand> genDoubleLocalConst(double value, i32 alignment);
     std::shared_ptr<Operand> getOperandFromConstant(const std::shared_ptr<Ir::Value>& value);
@@ -102,7 +104,6 @@ public:
     std::shared_ptr<Operand> getZeroOperand(AsmType type);
 
     static std::shared_ptr<ImmOperand> getImmOperandFromValue(const Ir::ValueConst& valueConst);
-
 private:
     void zeroOutReg(const std::shared_ptr<RegisterOperand>& reg);
     void emplaceUnary(const std::shared_ptr<Operand>& target, UnaryInst::Operator oper, const AsmType type)
@@ -210,7 +211,7 @@ std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVari
 std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray);
 std::unique_ptr<TopLevel> genStaticString(const Ir::StaticConstant& staticConstant);
 u64 getSingleInitValue(Type type, const Ir::ValueConst* value);
-i32 getStackPadding(size_t numArgs);
+i64 getStackPadding(size_t numArgs);
 
 std::string makeTemporaryPseudoName();
 

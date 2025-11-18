@@ -93,10 +93,12 @@ void IrPrinter::print(const Function& function)
         addLine("is Global");
     else
         addLine("is not Global");
-    std::string args;
-    for (const auto& arg : function.args)
-        args += print(arg) + ", ";
-    addLine("args: " + args);
+    if (!function.args.empty()) {
+        std::string args;
+        for (const auto& arg : function.args)
+            args += print(arg) + ", ";
+        addLine("args: " + args);
+    }
     for (const auto& inst : function.insts)
         print(*inst);
 }
@@ -120,7 +122,10 @@ std::string IrPrinter::print(const Identifier& identifier)
 
 void IrPrinter::print(const ReturnInst& inst)
 {
-    addLine("Return: " + print(*inst.returnValue));
+    if (inst.returnValue)
+        addLine("Return: " + print(*inst.returnValue));
+    else
+        addLine("Return:");
     addLine("");
 }
 
@@ -239,10 +244,14 @@ void IrPrinter::print(const FunCallInst &inst)
 {
     addLine("FunCall: " + inst.funName.value);
     IndentGuard guard2(m_indentLevel);
-    std::string args;
-    for (const auto& arg : inst.args)
-        args += print(*arg) + ", ";
-    addLine("args: " + args);
+    if (!inst.args.empty()) {
+        std::string args;
+        for (const auto& arg : inst.args)
+            args += print(*arg) + ", ";
+        addLine("args: " + args);
+    }
+    if (inst.destination)
+        print(*inst.destination);
 }
 
 void IrPrinter::print(const AllocateInst& inst)
@@ -324,6 +333,7 @@ std::string to_string(const Type type)
         case Type::Pointer:  return "pointer";
         case Type::Array:    return "array";
         case Type::String:   return "string";
+        case Type::Void:     return "void";
         default:
             std::unreachable();
     }

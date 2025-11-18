@@ -921,17 +921,35 @@ void GenerateAsmTree::genAllocate(const Ir::AllocateInst& allocate)
     emplacePushPseudo(allocate.size, Operators::getAsmType(allocate.type), allocate.iden.value);
 }
 
+std::shared_ptr<Operand> GenerateAsmTree::getReturnRegister(const Ir::ReturnInst& returnInst)
+{
+    if (Operators::getAsmType(returnInst.type) == AsmType::Double)
+        return std::make_shared<RegisterOperand>(RegType::XMM0, Operators::getAsmType(returnInst.type));
+    else
+        return std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(returnInst.type));
+}
+
 void GenerateAsmTree::genReturn(const Ir::ReturnInst& returnInst)
 {
+    if (!returnInst.returnValue) {
+        emplaceReturn();
+        return;
+    }
     const std::shared_ptr<Operand> val = genOperand(returnInst.returnValue);
-    std::shared_ptr<Operand> regReturn;
-    if (Operators::getAsmType(returnInst.type) == AsmType::Double)
-        regReturn = std::make_shared<RegisterOperand>(RegType::XMM0, Operators::getAsmType(returnInst.type));
-    else
-        regReturn = std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(returnInst.type));
+    const std::shared_ptr<Operand> regReturn = getReturnRegister(returnInst);
 
     emplaceMove(val, regReturn, Operators::getAsmType(returnInst.type));
     emplaceReturn();
+}
+
+void GenerateAsmTree::deAllocateStack(const Ir::FunCallInst& funcCall, const i64 stackPadding)
+{
+    const i64 bytesToRemove = 8l * (funcCall.args.size() - 6l) + stackPadding;
+    if (0 < bytesToRemove) {
+        const auto bytesToRemoveOperand = std::make_shared<ImmOperand>(bytesToRemove, AsmType::LongWord);
+        const auto sp = std::make_shared<RegisterOperand>(RegType::SP, AsmType::QuadWord);
+        emplaceBinary(bytesToRemoveOperand, sp, BinaryInst::Operator::Add, AsmType::QuadWord);
+    }
 }
 
 void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
@@ -944,12 +962,9 @@ void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
             BinaryInst::Operator::Sub, AsmType::QuadWord);
     genFunCallPushArgs(funcCall);
     emplaceCall(Identifier(funcCall.funName.value));
-    const i32 bytesToRemove = 8 * (funcCall.args.size() - 6) + stackPadding;
-    if (0 < bytesToRemove) {
-        const auto bytesToRemoveOperand = std::make_shared<ImmOperand>(bytesToRemove, AsmType::LongWord);
-        const auto sp = std::make_shared<RegisterOperand>(RegType::SP, AsmType::QuadWord);
-        emplaceBinary(bytesToRemoveOperand, sp, BinaryInst::Operator::Add, AsmType::QuadWord);
-    }
+    deAllocateStack(funcCall, stackPadding);
+    if (!funcCall.destination)
+        return;
     const std::shared_ptr<Operand> dst = genOperand(funcCall.destination);
     std::shared_ptr<Operand> src;
     if (Operators::getAsmType(funcCall.type) != AsmType::Double)
@@ -1000,7 +1015,7 @@ void GenerateAsmTree::genFunCallPushArgs(const Ir::FunCallInst& funcCall)
     }
 }
 
-i32 getStackPadding(const size_t numArgs)
+i64 getStackPadding(const size_t numArgs)
 {
     if (numArgs <= 6)
         return 0;

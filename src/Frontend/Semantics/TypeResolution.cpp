@@ -141,6 +141,11 @@ void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
                 std::make_unique<Parsing::VarType>(Type::Void));
             return;
         }
+        if (isVoidPointer(*singleInit->expr->type) && varDecl.type->type == Type::Pointer) {
+            singleInit->expr->type = std::make_unique<Parsing::PointerType>(
+                std::make_unique<Parsing::VarType>(Type::Void));
+            return;
+        }
         if (varDecl.type->type == Type::Pointer) {
             if (!canConvertToNullPtr(*singleInit->expr) && !isVoidPointer(*singleInit->expr->type)) {
                 addError("Cannot convert pointer init to pointer", varDecl.location);
@@ -903,7 +908,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSubscriptExpr(Parsing::Sub
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprExpr(Parsing::SizeOfExprExpr& sizeOfExprExpr)
 {
-    sizeOfExprExpr.innerExpr = convertArrayType(*sizeOfExprExpr.innerExpr);
+    sizeOfExprExpr.innerExpr = convert(*sizeOfExprExpr.innerExpr);
     if (sizeOfExprExpr.innerExpr && sizeOfExprExpr.innerExpr->type) {
         if (isVoidArray(*sizeOfExprExpr.innerExpr->type)) {
             addError("Cannot call sizeof on void array expression", sizeOfExprExpr.location);

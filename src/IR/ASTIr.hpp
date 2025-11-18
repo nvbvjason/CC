@@ -15,7 +15,7 @@ program = Program(top_level*)
 top_level = Function(identifier, bool global, identifier params, instruction* body)
           | StaticVariable(identifier, bool global, type t, init)
           | StaticConstant(identifier, type t, static_init)
-instruction = Return(val)
+instruction = Return(val?)
             | SignExtend(val src, val dst)
             | Truncate(val src, val dst)
             | ZeroExtern(val src, val dst)
@@ -35,7 +35,7 @@ instruction = Return(val)
             | JumpIfZero(val condition, identifier target)
             | JumpIfNotZero(val condition, identifier target)
             | Label(identifier)
-            | FunCall(identifier fun_name, val* args, val dst)
+            | FunCall(identifier fun_name, val* args, val dst?)
             | PushStackSlot(identifier name, int size)
 val = Constant(init, type) | Var(identifier, type)
 unary_operator = Complement | Negate | Not
@@ -158,7 +158,10 @@ protected:
 };
 
 struct ReturnInst final : Instruction {
-    std::shared_ptr<Value> returnValue;
+    std::shared_ptr<Value> returnValue = nullptr;
+
+    explicit ReturnInst(const Type t)
+        : Instruction(Kind::Return, t) {}
     explicit ReturnInst(std::shared_ptr<Value> v, const Type t)
         : Instruction(Kind::Return, t), returnValue(std::move(v)) {}
 
@@ -381,7 +384,9 @@ struct JumpIfZeroInst final : Instruction {
     std::shared_ptr<Value> condition;
     Identifier target;
     JumpIfZeroInst(std::shared_ptr<Value> condition, Identifier target)
-        : Instruction(Kind::JumpIfZero, condition->type), condition(std::move(condition)), target(std::move(target)) {}
+        : Instruction(Kind::JumpIfZero, condition->type),
+            condition(std::move(condition)),
+            target(std::move(target)) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::JumpIfZero; }
 
@@ -392,7 +397,9 @@ struct JumpIfNotZeroInst final : Instruction {
     std::shared_ptr<Value> condition;
     Identifier target;
     JumpIfNotZeroInst(std::shared_ptr<Value> condition, Identifier target)
-        : Instruction(Kind::JumpIfNotZero, condition->type), condition(std::move(condition)), target(std::move(target)) {}
+        : Instruction(Kind::JumpIfNotZero, condition->type),
+            condition(std::move(condition)),
+            target(std::move(target)) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::JumpIfNotZero; }
 
@@ -412,12 +419,21 @@ struct LabelInst final : Instruction {
 struct FunCallInst final : Instruction {
     Identifier funName;
     std::vector<std::shared_ptr<Value>> args;
-    std::shared_ptr<Value> destination;
+    std::shared_ptr<Value> destination = nullptr;
+
     FunCallInst(Identifier funName,
                 std::vector<std::shared_ptr<Value>> args,
                 std::shared_ptr<Value> dst,
                 const Type t)
-        : Instruction(Kind::FunCall, t), funName(std::move(funName)), args(std::move(args)), destination(std::move(dst)) {}
+        : Instruction(Kind::FunCall, t),
+            funName(std::move(funName)),
+            args(std::move(args)),
+            destination(std::move(dst)) {}
+
+    FunCallInst(Identifier funName,
+            std::vector<std::shared_ptr<Value>> args,
+            const Type t)
+    : Instruction(Kind::FunCall, t), funName(std::move(funName)), args(std::move(args)) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::FunCall; }
 

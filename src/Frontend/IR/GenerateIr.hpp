@@ -98,14 +98,20 @@ public:
     std::unique_ptr<ExprResult> genTernaryInst(const Parsing::TernaryExpr& ternaryExpr);
     std::unique_ptr<ExprResult> genFuncCallInst(const Parsing::FuncCallExpr& funcCallExpr);
     std::unique_ptr<ExprResult> genAddrOfInst(const Parsing::AddrOffExpr& addrOffExpr);
-    std::unique_ptr<ExprResult> genSubscript(const Parsing::SubscriptExpr& subscriptExpr);
+    std::unique_ptr<ExprResult> genSubscriptInst(const Parsing::SubscriptExpr& subscriptExpr);
     std::unique_ptr<ExprResult> genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr);
+    static std::unique_ptr<ExprResult> genSizeOfExprInst(const Parsing::SizeOfExprExpr& sizeOfExprExpr);
+    static std::unique_ptr<ExprResult> genSizeOfTypeInst(const Parsing::SizeOfTypeExpr& sizeOfTypeExpr);
     static std::unique_ptr<ExprResult> genVarInst(const Parsing::VarExpr& varExpr);
 
 private:
     void allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl);
     void directlyPushConstant32Bit(const Parsing::VarDecl& varDecl, const std::shared_ptr<Value>& value);
 
+    void emplaceReturn()
+    {
+        m_insts.emplace_back(std::make_unique<ReturnInst>(Type::Void));
+    }
     void emplaceReturn(const std::shared_ptr<Value>& src, const Type type)
     {
         m_insts.emplace_back(std::make_unique<ReturnInst>(src, type));
@@ -200,6 +206,12 @@ private:
     void emplaceLabel(const Identifier& iden)
     {
         m_insts.emplace_back(std::make_unique<LabelInst>(iden));
+    }
+    void emplaceFunCall(const Identifier& iden,
+                    std::vector<std::shared_ptr<Value>>&& src,
+                    const Type type)
+    {
+        m_insts.emplace_back(std::make_unique<FunCallInst>(iden, src, type));
     }
     void emplaceFunCall(const Identifier& iden,
                         std::vector<std::shared_ptr<Value>>&& src,
