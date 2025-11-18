@@ -78,7 +78,7 @@ TEST(TokenTest, AllTypeNamesAreCorrect) {
 
         // Keywords
         {Type::Return,              "Return"},
-        {Type::Void,                "Void"},
+        {Type::VoidKeyword,                "Void"},
         {Type::IntKeyword,          "Int"},
         {Type::LongKeyword,         "Long"},
         {Type::DoubleKeyword,       "Double"},

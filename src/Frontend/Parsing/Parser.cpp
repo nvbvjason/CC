@@ -24,14 +24,15 @@ std::vector<Error> Parser::programParse(Program& program)
 
 std::unique_ptr<Declaration> Parser::declarationParse()
 {
-    auto [type, storageClass] = specifierParse();
-    if (type == Type::Invalid)
+    auto [varType, storageClass] = specifierParse();
+    if (varType == nullptr)
         return nullptr;
+    if (isStructDeclaration(varType))
+        return structDeclParse(std::move(varType));
     const Declaration::StorageClass storage = Operators::getStorageClass(storageClass);
     std::unique_ptr<Declarator> declarator = declaratorParse();
     if (declarator == nullptr)
         return nullptr;
-    auto varType = std::make_unique<VarType>(type);
     auto [iden, typeBase, params] =
             declaratorProcess(std::move(declarator), std::move(varType));
     if (iden.empty())
@@ -41,19 +42,70 @@ std::unique_ptr<Declaration> Parser::declarationParse()
     return varDeclParse(iden, std::move(typeBase), storage);
 }
 
+std::unique_ptr<Declaration> Parser::structDeclParse(std::unique_ptr<TypeBase>&& typeBase)
+{
+    const i64 location = m_current - 2;
+    const auto structType = dynCast<StructType>(typeBase.get());
+    std::vector<std::unique_ptr<Declaration>> memberDecls;
+    if (match(TokenType::OpenBrace)) {
+        while (peekTokenType() != TokenType::CloseBrace) {
+            std::unique_ptr<Declaration> declaration = memberDeclParse();
+            if (declaration == nullptr)
+                return nullptr;
+            const auto memberDecl = dynCast<MemberDecl>(declaration.get());
+            if (memberDecl->type->type == Type::Function) {
+                addError("Function cannot be a struct member", m_current);
+                return nullptr;
+            }
+            memberDecls.push_back(std::move(declaration));
+        }
+        if (memberDecls.empty()) {
+            addError("Empty struct definition is not allowed", m_current);
+            return nullptr;
+        }
+        advance();
+    }
+    if (!match(TokenType::Semicolon)) {
+        addError("Expected semicolon after struct declaration", m_current);
+        return nullptr;
+    }
+    return std::make_unique<StructDecl>(location, structType->identifier, std::move(memberDecls));
+}
+
+std::unique_ptr<Declaration> Parser::memberDeclParse()
+{
+    auto varType = typeParse();
+    if (varType == nullptr) {
+        addError("Could not parse type mem ber");
+        return nullptr;
+    }
+    std::unique_ptr<Declarator> declarator = declaratorParse();
+    if (declarator == nullptr)
+        return nullptr;
+    if (!match(TokenType::Semicolon)) {
+        addError("Semicolon must come after member declaration");
+        return nullptr;
+    }
+    auto [iden, typeBase, params] =
+            declaratorProcess(std::move(declarator), std::move(varType));
+    if (iden.empty())
+        return nullptr;
+    return std::make_unique<MemberDecl>(m_current, iden, std::move(typeBase));
+}
+
 std::unique_ptr<VarDecl> Parser::varDeclParse(const std::string& iden,
                                               std::unique_ptr<TypeBase>&& type,
                                               const Storage storage)
 {
     std::unique_ptr<Initializer> init = nullptr;
-    if (expect(TokenType::Equal)) {
+    if (match(TokenType::Equal)) {
         init = initializerParse();
         if (init == nullptr) {
             addError("no initialization expression for variable declaration after =");
             return nullptr;
         }
     }
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Expected semicolon after variable declaration");
         return nullptr;
     }
@@ -71,7 +123,7 @@ std::unique_ptr<FuncDecl> Parser::funDeclParse(
     )
 {
     auto result = std::make_unique<FuncDecl>(m_current, storage, iden, std::move(params), std::move(type));
-    if (expect(TokenType::Semicolon))
+    if (match(TokenType::Semicolon))
         return result;
     const size_t before = m_current;
     auto block = blockParse();
@@ -85,7 +137,7 @@ std::unique_ptr<FuncDecl> Parser::funDeclParse(
 
 std::unique_ptr<Declarator> Parser::declaratorParse()
 {
-    if (expect(TokenType::Asterisk)) {
+    if (match(TokenType::Asterisk)) {
         std::unique_ptr<Declarator> result = declaratorParse();
         if (result == nullptr)
             return nullptr;
@@ -114,7 +166,7 @@ std::unique_ptr<Declarator> Parser::arrayDeclaratorParse(std::unique_ptr<Declara
 {
     if (peekTokenType() != TokenType::OpenSqBracket)
         return nullptr;
-    while (expect(TokenType::OpenSqBracket)) {
+    while (match(TokenType::OpenSqBracket)) {
         auto expr = constExprParse();
         if (expr == nullptr) {
             addError("Unexpected token in array declaration", m_current - 1);
@@ -127,7 +179,7 @@ std::unique_ptr<Declarator> Parser::arrayDeclaratorParse(std::unique_ptr<Declara
         const auto constExpr = dynCast<ConstExpr>(expr.get());
         const i64 size = constExpr->getValue<i64>();
         declarator = std::make_unique<ArrayDeclarator>(std::move(declarator), size);
-        if (!expect(TokenType::CloseSqBracket)) {
+        if (!match(TokenType::CloseSqBracket)) {
             addError("Expected closing bracket", m_current);
             return nullptr;
         }
@@ -137,7 +189,7 @@ std::unique_ptr<Declarator> Parser::arrayDeclaratorParse(std::unique_ptr<Declara
 
 std::unique_ptr<Declarator> Parser::simpleDeclaratorParse()
 {
-    if (expect(TokenType::OpenParen)) {
+    if (match(TokenType::OpenParen)) {
         std::unique_ptr<Declarator> result = declaratorParse();
         if (peekTokenType() != TokenType::CloseParen)
             return nullptr;
@@ -203,10 +255,10 @@ std::tuple<std::string, std::unique_ptr<TypeBase>, std::vector<std::string>> Par
 
 std::unique_ptr<std::vector<ParamInfo>> Parser::paramsListParse()
 {
-    if (!expect(TokenType::OpenParen))
+    if (!match(TokenType::OpenParen))
         return nullptr;
     std::vector<ParamInfo> params;
-    if (peekTokenType() == TokenType::Void && peekNextTokenType() == TokenType::CloseParen) {
+    if (peekTokenType() == TokenType::VoidKeyword && peekNextTokenType() == TokenType::CloseParen) {
         advance();
         advance();
         return std::make_unique<std::vector<ParamInfo>>(std::move(params));
@@ -216,8 +268,8 @@ std::unique_ptr<std::vector<ParamInfo>> Parser::paramsListParse()
         if (param == nullptr)
             return nullptr;
         params.push_back(std::move(*param));
-    } while (expect(TokenType::Comma));
-    if (!expect(TokenType::CloseParen)) {
+    } while (match(TokenType::Comma));
+    if (!match(TokenType::CloseParen)) {
         addError("Expected close paren after param list");
         return nullptr;
     }
@@ -226,31 +278,30 @@ std::unique_ptr<std::vector<ParamInfo>> Parser::paramsListParse()
 
 std::unique_ptr<ParamInfo> Parser::paramParse()
 {
-    const Type type = typeParse();
-    if (type == Type::Invalid) {
+    std::unique_ptr<TypeBase> typeExpr = typeParse();
+    if (typeExpr == nullptr) {
         addError("Could not parse type");
         return nullptr;
     }
     std::unique_ptr<Declarator> declarator = declaratorParse();
     if (declarator == nullptr)
         return nullptr;
-    std::unique_ptr<TypeBase> typeExpr = std::make_unique<VarType>(type);
     return std::make_unique<ParamInfo>(std::move(typeExpr), std::move(declarator));
 }
 
 std::unique_ptr<Block> Parser::blockParse()
 {
     auto block = std::make_unique<Block>();
-    if (!expect(TokenType::OpenBrace))
+    if (!match(TokenType::OpenBrace))
         return nullptr;
-    if (expect(TokenType::CloseBrace))
+    if (match(TokenType::CloseBrace))
         return block;
     do {
         std::unique_ptr<BlockItem> blockItem = blockItemParse();
         if (blockItem == nullptr)
             return nullptr;
         block->body.push_back(std::move(blockItem));
-    } while (!expect(TokenType::CloseBrace));
+    } while (!match(TokenType::CloseBrace));
     return block;
 }
 
@@ -270,13 +321,13 @@ std::unique_ptr<BlockItem> Parser::blockItemParse()
 
 std::unique_ptr<Initializer> Parser::initializerParse()
 {
-    if (expect(TokenType::OpenBrace)) {
+    if (match(TokenType::OpenBrace)) {
         std::vector<std::unique_ptr<Initializer>> initializers;
         std::unique_ptr<Initializer> first = initializerParse();
         if (first == nullptr)
             return nullptr;
         initializers.push_back(std::move(first));
-        while (expect(TokenType::Comma)) {
+        while (match(TokenType::Comma)) {
             if (peekTokenType() == TokenType::CloseBrace)
                 break;
             auto inner = initializerParse();
@@ -284,7 +335,7 @@ std::unique_ptr<Initializer> Parser::initializerParse()
                 return nullptr;
             initializers.push_back(std::move(inner));
         }
-        if (!expect(TokenType::CloseBrace))
+        if (!match(TokenType::CloseBrace))
             return nullptr;
         return std::make_unique<CompoundInitializer>(std::move(initializers));
     }
@@ -296,7 +347,7 @@ std::unique_ptr<Initializer> Parser::initializerParse()
 
 std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
 {
-    if (expect(TokenType::Semicolon))
+    if (match(TokenType::Semicolon))
         return {nullptr, false};
     if (Operators::isSpecifier(peekTokenType()))  {
         auto decl = declarationParse();
@@ -310,7 +361,7 @@ std::tuple<std::unique_ptr<ForInit>, bool> Parser::forInitParse()
         return {std::make_unique<DeclForInit>(m_current, std::unique_ptr<VarDecl>(varDecl)), false};
     }
     std::unique_ptr<Expr> expr = exprParse(0);
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Expected semicolon after for loop condition");
         return {nullptr, true};
     }
@@ -343,10 +394,10 @@ std::unique_ptr<Stmt> Parser::stmtParse()
 
 std::unique_ptr<Stmt> Parser::returnStmtParse()
 {
-    if (!expect(TokenType::Return))
+    if (!match(TokenType::Return))
         return nullptr;
     auto result = std::make_unique<ReturnStmt>(m_current);
-    if (expect(TokenType::Semicolon))
+    if (match(TokenType::Semicolon))
         return result;
     std::unique_ptr<Expr> expr = exprParse(0);
     if (expr == nullptr) {
@@ -354,7 +405,7 @@ std::unique_ptr<Stmt> Parser::returnStmtParse()
         return nullptr;
     }
     result->expr = std::move(expr);
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Return without semicolon", m_current - 1);
         return nullptr;
     }
@@ -370,7 +421,7 @@ std::unique_ptr<Stmt> Parser::exprStmtParse()
         return nullptr;
     }
     auto statement = std::make_unique<ExprStmt>(m_current, std::move(expr));
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Expression statement without semicolon");
         return nullptr;
     }
@@ -379,23 +430,23 @@ std::unique_ptr<Stmt> Parser::exprStmtParse()
 
 std::unique_ptr<Stmt> Parser::ifStmtParse()
 {
-    if (!expect(TokenType::If))
+    if (!match(TokenType::If))
         return nullptr;
-    if (!expect(TokenType::OpenParen)) {
+    if (!match(TokenType::OpenParen)) {
         addError("Expected open paren before if condition");
         return nullptr;
     }
     std::unique_ptr<Expr> condition = exprParse(0);
     if (condition == nullptr)
         return nullptr;
-    if (!expect(TokenType::CloseParen)) {
+    if (!match(TokenType::CloseParen)) {
         addError("Expected close paren after if condition");
         return nullptr;
     }
     std::unique_ptr<Stmt> thenStmt = stmtParse();
     if (thenStmt == nullptr)
         return nullptr;
-    if (expect(TokenType::Else)) {
+    if (match(TokenType::Else)) {
         std::unique_ptr<Stmt> elseStmt = stmtParse();
         if (elseStmt == nullptr)
             return nullptr;
@@ -407,14 +458,14 @@ std::unique_ptr<Stmt> Parser::ifStmtParse()
 
 std::unique_ptr<Stmt> Parser::gotoStmtParse()
 {
-    if (!expect(TokenType::Goto))
+    if (!match(TokenType::Goto))
         return nullptr;
     Lexing::Token lexeme = peek();
-    if (!expect(TokenType::Identifier)) {
+    if (!match(TokenType::Identifier)) {
         addError("Expected identifier after goto statement");
         return nullptr;
     }
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Expected semicolon after goto statement");
         return nullptr;
     }
@@ -423,9 +474,9 @@ std::unique_ptr<Stmt> Parser::gotoStmtParse()
 
 std::unique_ptr<Stmt> Parser::breakStmtParse()
 {
-    if (!expect(TokenType::Break))
+    if (!match(TokenType::Break))
         return nullptr;
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Expected semicolon after break statement");
         return nullptr;
     }
@@ -434,9 +485,9 @@ std::unique_ptr<Stmt> Parser::breakStmtParse()
 
 std::unique_ptr<Stmt> Parser::continueStmtParse()
 {
-    if (!expect(TokenType::Continue))
+    if (!match(TokenType::Continue))
         return nullptr;
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Expected semicolon after continue statement");
         return nullptr;
     }
@@ -446,9 +497,9 @@ std::unique_ptr<Stmt> Parser::continueStmtParse()
 std::unique_ptr<Stmt> Parser::labelStmtParse()
 {
     Lexing::Token lexeme = peek();
-    if (!expect(TokenType::Identifier))
+    if (!match(TokenType::Identifier))
         return nullptr;
-    if (!expect(TokenType::Colon)) {
+    if (!match(TokenType::Colon)) {
         addError("Expected colon after label statement");
         return nullptr;
     }
@@ -460,7 +511,7 @@ std::unique_ptr<Stmt> Parser::labelStmtParse()
 
 std::unique_ptr<Stmt> Parser::caseStmtParse()
 {
-    if (!expect(TokenType::Case))
+    if (!match(TokenType::Case))
         return nullptr;
     const size_t beforeCondition = m_current;
     std::unique_ptr<Expr> expr = exprParse(0);
@@ -468,7 +519,7 @@ std::unique_ptr<Stmt> Parser::caseStmtParse()
         addError("Expected condition after case", beforeCondition);
         return nullptr;
     }
-    if (!expect(TokenType::Colon))
+    if (!match(TokenType::Colon))
         return nullptr;
     std::unique_ptr<Stmt> stmt = stmtParse();
     if (stmt == nullptr) {
@@ -480,9 +531,9 @@ std::unique_ptr<Stmt> Parser::caseStmtParse()
 
 std::unique_ptr<Stmt> Parser::defaultStmtParse()
 {
-    if (!expect(TokenType::Default))
+    if (!match(TokenType::Default))
         return nullptr;
-    if (!expect(TokenType::Colon)) {
+    if (!match(TokenType::Colon)) {
         addError("Expected colon after default statement");
         return nullptr;
     }
@@ -496,9 +547,9 @@ std::unique_ptr<Stmt> Parser::defaultStmtParse()
 
 std::unique_ptr<Stmt> Parser::whileStmtParse()
 {
-    if (!expect(TokenType::While))
+    if (!match(TokenType::While))
         return nullptr;
-    if (!expect(TokenType::OpenParen)) {
+    if (!match(TokenType::OpenParen)) {
         addError("Expected open paren before while condition");
         return nullptr;
     }
@@ -507,7 +558,7 @@ std::unique_ptr<Stmt> Parser::whileStmtParse()
         addError("Expected condition in while loop");
         return nullptr;
     }
-    if (!expect(TokenType::CloseParen)) {
+    if (!match(TokenType::CloseParen)) {
         addError("Expected close paren after while condition");
         return nullptr;
     }
@@ -521,27 +572,27 @@ std::unique_ptr<Stmt> Parser::whileStmtParse()
 
 std::unique_ptr<Stmt> Parser::doWhileStmtParse()
 {
-    if (!expect(TokenType::Do))
+    if (!match(TokenType::Do))
         return nullptr;
     std::unique_ptr<Stmt> body = stmtParse();
     if (body == nullptr)
         return nullptr;
-    if (!expect(TokenType::While)) {
+    if (!match(TokenType::While)) {
         addError("Expected while after do body");
         return nullptr;
     }
-    if (!expect(TokenType::OpenParen))
+    if (!match(TokenType::OpenParen))
         return nullptr;
     std::unique_ptr<Expr> condition = exprParse(0);
     if (condition == nullptr) {
         addError("Expected condition in do while loop");
         return nullptr;
     }
-    if (!expect(TokenType::CloseParen)) {
+    if (!match(TokenType::CloseParen)) {
         addError("Expected close parenthesis after do while loop condition");
         return nullptr;
     }
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Expected semicolon after do while");
         return nullptr;
     }
@@ -550,9 +601,9 @@ std::unique_ptr<Stmt> Parser::doWhileStmtParse()
 
 std::unique_ptr<Stmt> Parser::forStmtParse()
 {
-    if (!expect(TokenType::For))
+    if (!match(TokenType::For))
         return nullptr;
-    if (!expect(TokenType::OpenParen)) {
+    if (!match(TokenType::OpenParen)) {
         addError("Expected open parenthesis after for keyword");
         return nullptr;
     }
@@ -560,12 +611,12 @@ std::unique_ptr<Stmt> Parser::forStmtParse()
     if (err)
         return nullptr;
     std::unique_ptr<Expr> condition = exprParse(0);
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Expected semicolon after for condition");
         return nullptr;
     }
     std::unique_ptr<Expr> post = exprParse(0);
-    if (!expect(TokenType::CloseParen)) {
+    if (!match(TokenType::CloseParen)) {
         addError("Expected close parenthesis after for loop initialization");
         return nullptr;
     }
@@ -586,16 +637,16 @@ std::unique_ptr<Stmt> Parser::forStmtParse()
 
 std::unique_ptr<Stmt> Parser::switchStmtParse()
 {
-    if (!expect(TokenType::Switch))
+    if (!match(TokenType::Switch))
         return nullptr;
-    if (!expect(TokenType::OpenParen)) {
+    if (!match(TokenType::OpenParen)) {
         addError("Expected open parenthesis before switch condition");
         return nullptr;
     }
     std::unique_ptr<Expr> expr = exprParse(0);
     if (expr == nullptr)
         return nullptr;
-    if (!expect(TokenType::CloseParen)) {
+    if (!match(TokenType::CloseParen)) {
         addError("Expected close parenthesis after switch condition");
         return nullptr;
     }
@@ -609,7 +660,7 @@ std::unique_ptr<Stmt> Parser::switchStmtParse()
 
 std::unique_ptr<Stmt> Parser::nullStmtParse()
 {
-    if (!expect(TokenType::Semicolon)) {
+    if (!match(TokenType::Semicolon)) {
         addError("Expected semicolon in null statement");
         return nullptr;
     }
@@ -623,7 +674,7 @@ std::unique_ptr<Expr> Parser::ternaryExprParse(std::unique_ptr<Expr>& condition)
         addError("Expected true expression in ternary");
         return nullptr;
     }
-    if (!expect(TokenType::Colon)) {
+    if (!match(TokenType::Colon)) {
         addError("Expected colon in ternary");
         return nullptr;
     }
@@ -682,17 +733,16 @@ std::unique_ptr<Expr> Parser::exprParse(const i32 minPrecedence)
 
 std::unique_ptr<Expr> Parser::castExprParse()
 {
-    if (Operators::isType(peekNextTokenType()) && expect(TokenType::OpenParen)) {
-        const Type type = typeParse();
-        if (type == Type::Invalid)
+    if (Operators::isType(peekNextTokenType()) && match(TokenType::OpenParen)) {
+        std::unique_ptr<TypeBase> typeBaseInner = typeParse();
+        if (typeBaseInner == nullptr)
             return nullptr;
         std::unique_ptr<AbstractDeclarator> abstractDeclarator = abstractDeclaratorParse();
         if (abstractDeclarator == nullptr)
             return nullptr;
-        std::unique_ptr<TypeBase> typeBaseInner = std::make_unique<VarType>(type);
         std::unique_ptr<TypeBase> typeBase = abstractDeclaratorProcess(std::move(abstractDeclarator),
                                                                        std::move(typeBaseInner));
-        if (!expect(TokenType::CloseParen))
+        if (!match(TokenType::CloseParen))
             return nullptr;
         auto innerExpr = castExprParse();
         if (innerExpr == nullptr)
@@ -724,12 +774,12 @@ std::unique_ptr<Expr> Parser::sizeOfExprParse()
 {
     advance();
     if (Operators::isType(peekNextTokenType())) {
-        if (!expect(TokenType::OpenParen))
+        if (!match(TokenType::OpenParen))
             return nullptr;
         auto typeBase = typeNameParse();
         if (typeBase == nullptr)
             return nullptr;
-        if (!expect(TokenType::CloseParen))
+        if (!match(TokenType::CloseParen))
             return nullptr;
         return std::make_unique<SizeOfTypeExpr>(m_current, std::move(typeBase));
     }
@@ -761,14 +811,40 @@ std::unique_ptr<Expr> Parser::exprPostfixParse()
 {
     auto expr = factorParse();
     while (true) {
-        if (expect(TokenType::Increment))
+        if (match(TokenType::Increment))
             expr = std::make_unique<UnaryExpr>(
                 m_current, UnaryExpr::Operator::PostFixIncrement, std::move(expr));
-        else if (expect(TokenType::Decrement))
+        else if (match(TokenType::Decrement))
             expr = std::make_unique<UnaryExpr>(
                 m_current, UnaryExpr::Operator::PostFixDecrement, std::move(expr));
         else if (peekTokenType() == TokenType::OpenSqBracket)
             expr = std::move(subscriptExprParse(std::move(expr)));
+        else if (peekTokenType() == TokenType::Period) {
+            if (expr == nullptr) {
+                addError("Expression must be before period");
+                return nullptr;
+            }
+            advance();
+            if (peekTokenType() != TokenType::Identifier) {
+                addError("Identifier must come after period postfix");
+                return nullptr;
+            }
+            std::string iden = advance().m_lexeme;
+            expr = std::make_unique<DotExpr>(m_current, std::move(expr), iden);
+        }
+        else if (peekTokenType() == TokenType::Arrow) {
+            if (expr == nullptr) {
+                addError("Expression must be before arrow");
+                return nullptr;
+            }
+            advance();
+            if (peekTokenType() != TokenType::Identifier) {
+                addError("Identifier must come after arrow postfix");
+                return nullptr;
+            }
+            std::string iden = advance().m_lexeme;
+            expr = std::make_unique<ArrowExpr>(m_current, std::move(expr), iden);
+        }
         else
             break;
     }
@@ -777,9 +853,9 @@ std::unique_ptr<Expr> Parser::exprPostfixParse()
 
 std::unique_ptr<Expr> Parser::subscriptExprParse(std::unique_ptr<Expr>&& expr)
 {
-    while (expect(TokenType::OpenSqBracket)) {
+    while (match(TokenType::OpenSqBracket)) {
         auto index = exprParse(0);
-        if (!expect(TokenType::CloseSqBracket))
+        if (!match(TokenType::CloseSqBracket))
             return nullptr;
         expr = std::make_unique<SubscriptExpr>(m_current, std::move(expr), std::move(index));
     }
@@ -803,12 +879,12 @@ std::unique_ptr<Expr> Parser::factorParse()
         }
         case TokenType::Identifier: {
             advance();
-            if (!expect(TokenType::OpenParen))
+            if (!match(TokenType::OpenParen))
                 return std::make_unique<VarExpr>(m_current, lexeme.m_lexeme);
             const std::unique_ptr<std::vector<std::unique_ptr<Expr>>> arguments = argumentListParse();
             if (arguments == nullptr)
                 return nullptr;
-            if (!expect(TokenType::CloseParen))
+            if (!match(TokenType::CloseParen))
                 return nullptr;
             return std::make_unique<FuncCallExpr>(m_current, lexeme.m_lexeme, std::move(*arguments));
         }
@@ -816,7 +892,7 @@ std::unique_ptr<Expr> Parser::factorParse()
             if (advance().m_type == TokenType::EndOfFile)
                 return nullptr;
             auto expr = exprParse(0);
-            if (!expect(TokenType::CloseParen))
+            if (!match(TokenType::CloseParen))
                 return nullptr;
             return expr;
         }
@@ -870,21 +946,34 @@ std::unique_ptr<Expr> Parser::constExprParse()
 
 std::unique_ptr<TypeBase> Parser::typeNameParse()
 {
-    std::vector<TokenType> types;
-    TokenType type = peekTokenType();
-    while (Operators::isType(type)) {
-        types.emplace_back(type);
-        advance();
-        type = peekTokenType();
-    }
-    const Type parsedType = typeResolve(types);
-    if (parsedType == Type::Invalid)
+    std::unique_ptr<TypeBase> typeBaseInner = typeParse();
+    if (typeBaseInner == nullptr)
         return nullptr;
     std::unique_ptr<AbstractDeclarator> abstractDeclarator = abstractDeclaratorParse();
     if (abstractDeclarator == nullptr)
         return nullptr;
-    std::unique_ptr<TypeBase> typeBaseInner = std::make_unique<VarType>(parsedType);
     return abstractDeclaratorProcess(std::move(abstractDeclarator), std::move(typeBaseInner));
+}
+
+std::unique_ptr<TypeBase> Parser::typeParse()
+{
+    TokenType type = peekTokenType();
+    std::vector<TokenType> types;
+    while (Operators::isType(type)) {
+        types.emplace_back(type);
+        if (type == TokenType::StructKeyword) {
+            advance();
+            const TokenType shouldBeIdenAfterStruct = peekTokenType();
+            if (shouldBeIdenAfterStruct != TokenType::Identifier) {
+                addError("Struct must be followed by identifier");
+                return nullptr;
+            }
+            types.emplace_back(shouldBeIdenAfterStruct);
+        }
+        advance();
+        type = peekTokenType();
+    }
+    return typeResolve(types);
 }
 
 std::unique_ptr<AbstractDeclarator> Parser::abstractDeclaratorParse()
@@ -892,7 +981,7 @@ std::unique_ptr<AbstractDeclarator> Parser::abstractDeclaratorParse()
     if (peekTokenType() == TokenType::OpenParen || peekTokenType() == TokenType::OpenSqBracket)
         return directAbstractDeclaratorParse();
     auto base = std::make_unique<AbstractBase>();
-    if (!expect(TokenType::Asterisk))
+    if (!match(TokenType::Asterisk))
         return base;
     std::unique_ptr<AbstractDeclarator> inner = abstractDeclaratorParse();
     if (inner != nullptr)
@@ -904,9 +993,9 @@ std::unique_ptr<AbstractDeclarator> Parser::directAbstractDeclaratorParse()
 {
     if (peekTokenType() == TokenType::OpenSqBracket) {
         std::unique_ptr<AbstractDeclarator> abstractDeclarator = nullptr;
-        while (expect(TokenType::OpenSqBracket)) {
+        while (match(TokenType::OpenSqBracket)) {
             auto expr = constExprParse();
-            if (!expect(TokenType::CloseSqBracket))
+            if (!match(TokenType::CloseSqBracket))
                 return nullptr;
             const auto constExpr = dynCast<ConstExpr>(expr.get());
             const i64 size = constExpr->getValue<i64>();
@@ -914,16 +1003,16 @@ std::unique_ptr<AbstractDeclarator> Parser::directAbstractDeclaratorParse()
         }
         return abstractDeclarator;
     }
-    if (!expect(TokenType::OpenParen))
+    if (!match(TokenType::OpenParen))
         return nullptr;
     std::unique_ptr<AbstractDeclarator> abstractDeclarator = abstractDeclaratorParse();
     if (abstractDeclarator == nullptr)
         return nullptr;
-    if (!expect(TokenType::CloseParen))
+    if (!match(TokenType::CloseParen))
         return nullptr;
-    while (expect(TokenType::OpenSqBracket)) {
+    while (match(TokenType::OpenSqBracket)) {
         auto expr = constExprParse();
-        if (!expect(TokenType::CloseSqBracket))
+        if (!match(TokenType::CloseSqBracket))
             return nullptr;
         const auto constExpr = dynCast<ConstExpr>(expr.get());
         const i64 size = constExpr->getValue<i64>();
@@ -963,7 +1052,7 @@ std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()
     if (expr == nullptr)
         return nullptr;
     arguments.push_back(std::move(expr));
-    while (expect(TokenType::Comma)) {
+    while (match(TokenType::Comma)) {
         expr = exprParse(0);
         if (expr == nullptr)
             return nullptr;
@@ -972,88 +1061,95 @@ std::unique_ptr<std::vector<std::unique_ptr<Expr>>> Parser::argumentListParse()
     return std::make_unique<std::vector<std::unique_ptr<Expr>>>(std::move(arguments));
 }
 
-std::tuple<Type, Lexing::Token::Type> Parser::specifierParse()
+std::tuple<std::unique_ptr<TypeBase>, Lexing::Token::Type> Parser::specifierParse()
 {
     std::vector<TokenType> declarations;
     std::vector<TokenType> types;
     TokenType type = peekTokenType();
     while (Operators::isSpecifier(type)) {
-        if (Operators::isType(type))
-            types.push_back(type);
+        if (Operators::isType(type)) {
+            types.emplace_back(type);
+            if (type == TokenType::StructKeyword) {
+                advance();
+                const TokenType shouldBeIdenAfterStruct = peekTokenType();
+                if (shouldBeIdenAfterStruct != TokenType::Identifier) {
+                    addError("Struct must be followed by identifier");
+                    return {nullptr, TokenType::NotAToken};
+                }
+                types.emplace_back(shouldBeIdenAfterStruct);
+            }
+        }
         else if (Operators::isStorageSpecifier(type))
-            declarations.push_back(type);
+            declarations.emplace_back(type);
         else {
             addError("Could not parse specifier");
-            return {Type::Invalid, TokenType::NotAToken};
+            return {nullptr, TokenType::NotAToken};
         }
         advance();
         type = peekTokenType();
     }
-    const Type varType = typeResolve(types);
-    if (varType == Type::Invalid) {
+    std::unique_ptr<TypeBase> varType = typeResolve(types);
+    if (varType == nullptr) {
         addError("Could not resolve type");
-        return {Type::Invalid, TokenType::NotAToken};
+        return {nullptr, TokenType::NotAToken};
     }
     if (1 < declarations.size()) {
         addError("Too many declarators type");
-        return {Type::Invalid, TokenType::NotAToken};
+        return {nullptr, TokenType::NotAToken};
     }
     auto storage = TokenType::NotAToken;
     if (!declarations.empty())
         storage = declarations.front();
-    return std::make_tuple(varType, storage);
+    return std::make_tuple(std::move(varType), storage);
 }
 
-Type Parser::typeParse()
+std::unique_ptr<TypeBase> Parser::typeResolve(std::vector<TokenType>& tokens) const
 {
-    TokenType type = peekTokenType();
-    std::vector<TokenType> types;
-    while (Operators::isType(type)) {
-        types.push_back(type);
-        advance();
-        type = peekTokenType();
+    if (std::ranges::find(tokens, TokenType::StructKeyword) != tokens.end()) {
+        if (2 != tokens.size())
+            return nullptr;
+        if (tokens.front() != TokenType::StructKeyword)
+            return nullptr;
+        if (tokens.back() != TokenType::Identifier)
+            return nullptr;
+        return std::make_unique<StructType>(c_tokenStore.getLexeme(m_current - 1));
     }
-    return typeResolve(types);
-}
-
-Type Parser::typeResolve(std::vector<TokenType>& tokens)
-{
     if (std::ranges::find(tokens, TokenType::CharKeyword) != tokens.end()) {
         if (2 < tokens.size())
-            return Type::Invalid;
+            return nullptr;
         if (tokens.size() == 1)
-            return Type::Char;
+            return std::make_unique<VarType>(Type::Char);
         if (std::ranges::find(tokens, TokenType::Unsigned) != tokens.end())
-            return Type::U8;
+            return std::make_unique<VarType>(Type::U8);
         if (std::ranges::find(tokens, TokenType::Signed) != tokens.end())
-            return Type::I8;
-        return Type::Invalid;
+            return std::make_unique<VarType>(Type::I8);
+        return nullptr;
     }
-    if (std::ranges::find(tokens, TokenType::Void) != tokens.end()) {
-        if (tokens.size() == 1 && tokens.front() == TokenType::Void)
-            return Type::Void;
-        return Type::Invalid;
+    if (std::ranges::find(tokens, TokenType::VoidKeyword) != tokens.end()) {
+        if (tokens.size() == 1 && tokens.front() == TokenType::VoidKeyword)
+            return std::make_unique<VarType>(Type::Void);
+        return nullptr;
     }
     if (std::ranges::find(tokens, TokenType::DoubleKeyword) != tokens.end()) {
         if (tokens.size() == 1 && tokens.front() == TokenType::DoubleKeyword)
-            return Type::Double;
-        return Type::Invalid;
+            return std::make_unique<VarType>(Type::Double);
+        return nullptr;
     }
     if (tokens.empty())
-        return Type::Invalid;
+        return nullptr;
     if (containsSameTwice(tokens))
-        return Type::Invalid;
+        return nullptr;
     if (std::ranges::find(tokens, TokenType::Unsigned) != tokens.end() &&
         std::ranges::find(tokens, TokenType::Signed) != tokens.end())
-        return Type::Invalid;
+        return nullptr;
     if (std::ranges::find(tokens, TokenType::Unsigned) != tokens.end() &&
         std::ranges::find(tokens, TokenType::LongKeyword) != tokens.end())
-        return Type::U64;
+        return std::make_unique<VarType>(Type::U64);
     if (std::ranges::find(tokens, TokenType::Unsigned) != tokens.end())
-        return Type::U32;
+        return std::make_unique<VarType>(Type::U32);
     if (std::ranges::find(tokens, TokenType::LongKeyword) != tokens.end())
-        return Type::I64;
-    return Type::I32;
+        return std::make_unique<VarType>(Type::I64);
+    return std::make_unique<VarType>(Type::I32);
 }
 
 bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens)
@@ -1065,7 +1161,7 @@ bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens)
     return false;
 }
 
-bool Parser::expect(const TokenType type)
+bool Parser::match(const TokenType type)
 {
     if (peekTokenType() == type) {
         if (advance().m_type == TokenType::EndOfFile)

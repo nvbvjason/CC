@@ -2,9 +2,11 @@
 
 /*
     <program>               ::= { <declaration> }
-    <declaration>           ::= <function-declaration> | <variable-declaration>
+    <declaration>           ::= <function-declaration> | <variable-declaration> | <struct-declaration>
     <variable-declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
     <function-declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
+    <struct-declaration>    ::= "struct" <identifier> [ "{" { <member-declaration> }+ "}" ] ";"
+    <member-declaration>    ::= { <type-specifier> }+ <declarator> ";"
     <declarator>            ::= "*" <declarator> | <direct-declarator>
     <direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
     <declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
@@ -12,6 +14,7 @@
     <param>                 ::= { <type-specifier> }+ <declarator>
     <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
     <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double" | "char" | "void"
+                              | "struct" <identifier>
     <specifier>             ::= <type-specifier> | "static" | "extern"
     <block>                 ::= "{" { <block-item> } "}"
     <block-item>            ::= <statement> | <declaration>
@@ -42,7 +45,11 @@
                               | "sizeof" <unary-exp>
                               | "sizeof" "(" <type-name> ")"
     <type-name>             ::= { <type-specifier> }+ [ <abstract-declarator> ]
-    <postfix-exp>           ::= <factor> | <postfix-exp> <postfix-op>
+    <postfix-exp>           ::= <factor>
+                              | <postfix-exp> <postfix-op>
+                              | "[" <exp> "]"
+                              | "." <identifier>
+                              | "->" <identifier>
     <factor>                ::= <const>
                               | { <string> }+
                               | <identifier>
@@ -85,7 +92,7 @@ class Parser {
 
     bool m_atFileScope = true;
     const TokenStore& c_tokenStore;
-    size_t m_current = 0;
+    i64 m_current = 0;
     std::vector<Error> m_errors;
 public:
     Parser() = delete;
@@ -93,6 +100,8 @@ public:
         : c_tokenStore(tokenStore) {}
     std::vector<Error> programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
+    [[nodiscard]] std::unique_ptr<Declaration> structDeclParse(std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] std::unique_ptr<Declaration> memberDeclParse();
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
                                                         std::unique_ptr<TypeBase>&& type,
                                                         Storage storage);
@@ -100,8 +109,7 @@ public:
             const std::string& iden,
             std::unique_ptr<TypeBase>&& type,
             Storage storage,
-            std::vector<std::string>&& params
-        );
+            std::vector<std::string>&& params);
 
     [[nodiscard]] std::unique_ptr<Declarator> declaratorParse();
     [[nodiscard]] std::unique_ptr<Declarator> directDeclaratorParse();
@@ -158,9 +166,9 @@ public:
         std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, std::unique_ptr<TypeBase>&& type);
 
     [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<Expr>>> argumentListParse();
-    [[nodiscard]] Type typeParse();
-    [[nodiscard]] std::tuple<Type, TokenType> specifierParse();
-    [[nodiscard]] static Type typeResolve(std::vector<TokenType>& tokens);
+    [[nodiscard]] std::unique_ptr<TypeBase> typeParse();
+    [[nodiscard]] std::tuple<std::unique_ptr<TypeBase>, TokenType> specifierParse();
+    [[nodiscard]] std::unique_ptr<TypeBase> typeResolve(std::vector<TokenType>& tokens) const;
 private:
     Lexing::Token advance() { return c_tokenStore.getToken(m_current++); }
     [[nodiscard]] bool isAtEnd() const { return peekTokenType() == TokenType::EndOfFile; }
@@ -169,9 +177,15 @@ private:
     [[nodiscard]] TokenType peekTokenType() const;
     [[nodiscard]] TokenType peekNextTokenType() const;
     [[nodiscard]] TokenType peekNextNextTokenType() const;
-    [[nodiscard]] bool expect(TokenType type);
+    [[nodiscard]] bool match(TokenType type);
     void addError(std::string message);
     void addError(std::string message, size_t index);
+
+    [[nodiscard]] bool isStructDeclaration(const std::unique_ptr<TypeBase>& typeBase) const
+    {
+        return typeBase->kind == TypeBase::Kind::Struct &&
+        (peekTokenType() == TokenType::Semicolon || peekTokenType() == TokenType::OpenBrace);
+    }
 };
 
 bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens);

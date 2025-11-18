@@ -25,7 +25,7 @@ class Lexer {
     static inline std::unordered_map<std::string, Token::Type> keywords = {
         { "return", Type::Return },
         { "int", Type::IntKeyword },
-        { "void", Type::Void },
+        { "void", Type::VoidKeyword },
         { "if", Type::If },
         { "else", Type::Else },
         { "do", Type::Do },

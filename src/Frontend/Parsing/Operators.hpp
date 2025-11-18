@@ -272,7 +272,8 @@ constexpr bool isType(const TokenType type)
         case TokenType::Signed:
         case TokenType::Unsigned:
         case TokenType::DoubleKeyword:
-        case TokenType::Void:
+        case TokenType::StructKeyword:
+        case TokenType::VoidKeyword:
             return true;
         default:
             return false;

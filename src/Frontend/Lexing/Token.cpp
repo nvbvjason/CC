@@ -78,7 +78,7 @@ std::string Token::getTypeName() const
 
         // Keywords
         case Type::Return:                  return "Return";
-        case Type::Void:                    return "Void";
+        case Type::VoidKeyword:             return "Void";
         case Type::IntKeyword:              return "Int";
         case Type::LongKeyword:             return "Long";
         case Type::DoubleKeyword:           return "Double";

@@ -80,7 +80,7 @@ struct Token {
 
         // Keywords
         Return,                          // return
-        Void,                            // void
+        VoidKeyword,                     // void
         CharKeyword,                     // char
         IntKeyword,                      // int
         LongKeyword,                     // long

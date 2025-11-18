@@ -305,7 +305,7 @@ struct DotExpr final : Expr {
     std::unique_ptr<Expr> structExpr;
     const std::string identifier;
 
-    explicit DotExpr(const i64 loc, std::unique_ptr<Expr>&& sizeType, std::string  identifier)
+    explicit DotExpr(const i64 loc, std::unique_ptr<Expr>&& sizeType, std::string identifier)
         : Expr(loc, Kind::Dot), structExpr(std::move(sizeType)), identifier(std::move(identifier)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
@@ -320,7 +320,7 @@ struct ArrowExpr final : Expr {
     std::unique_ptr<Expr> pointerExpr;
     const std::string identifier;
 
-    explicit ArrowExpr(const i64 loc, std::unique_ptr<Expr>&& sizeType, std::string  identifier)
+    explicit ArrowExpr(const i64 loc, std::unique_ptr<Expr>&& sizeType, std::string identifier)
         : Expr(loc, Kind::Arrow), pointerExpr(std::move(sizeType)), identifier(std::move(identifier)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }

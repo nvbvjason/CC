@@ -61,7 +61,7 @@ TEST(LexerTests, GetTokens)
         {1, 1, TokenType::IntKeyword, ""},
         {1, 5, TokenType::Identifier, "main"},
         {1, 9, TokenType::OpenParen, ""},
-        {1, 10, TokenType::Void, ""},
+        {1, 10, TokenType::VoidKeyword, ""},
         {1, 14, TokenType::CloseParen, ""},
         {1, 16, TokenType::OpenBrace, ""},
         {3, 5, TokenType::Return, ""},
@@ -80,7 +80,7 @@ TEST(LexerTests, Tokens)
     const std::vector<TestCaseLexer> testCases = {
         {"return", TokenType::Return},
         {"int", TokenType::IntKeyword},
-        {"void", TokenType::Void},
+        {"void", TokenType::VoidKeyword},
         {"if", TokenType::If},
         {"else", TokenType::Else},
         {"do", TokenType::Do},

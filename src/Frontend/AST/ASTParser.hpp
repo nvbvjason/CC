@@ -143,11 +143,10 @@ struct StructDecl final : Declaration {
     const std::string identifier;
     std::vector<std::unique_ptr<Declaration>> members;
 
-    StructDecl(const StorageClass storageClass,
-               const i64 loc,
+    StructDecl(const i64 loc,
                std::string identifier,
                std::vector<std::unique_ptr<Declaration>>&& members)
-        : Declaration(loc, Kind::StructDecl, storageClass),
+        : Declaration(loc, Kind::StructDecl, StorageClass::None),
             identifier(std::move(identifier)),
             members(std::move(members)) {}
 
@@ -161,13 +160,12 @@ struct StructDecl final : Declaration {
 
 struct MemberDecl final : Declaration {
     const std::string identifier;
-    std::unique_ptr<VarType> type;
+    std::unique_ptr<TypeBase> type;
 
-    MemberDecl(const StorageClass storageClass,
-               const i64 loc,
+    MemberDecl(const i64 loc,
                std::string identifier,
-               std::unique_ptr<VarType>&& type)
-        : Declaration(loc, Kind::MemberDecl, storageClass),
+               std::unique_ptr<TypeBase>&& type)
+        : Declaration(loc, Kind::MemberDecl, StorageClass::None),
             identifier(std::move(identifier)),
             type(std::move(type)) {}
 
