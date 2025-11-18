@@ -32,13 +32,13 @@ Linux x86_64 required
 <param-list>            ::= "(" "void" ")" | "(" <param> [ "," <param> ] ")"
 <param>                 ::= { <type-specifier> }+ <declarator>
 <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
-<type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double" | "char"
+<type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double" | "char" | "void"
 <specifier>             ::= <type-specifier> | "static" | "extern"
 <block>                 ::= "{" { <block-item> } "}"
 <block-item>            ::= <statement> | <declaration>
 <initializer>           ::= <exp> | "{" <initializer> { "," <initializer> } [ "," ] ")"
 <for-init>              ::= <variable-declaration> | <exp> ";"
-<statement>             ::= "return" <exp> ";"
+<statement>             ::= "return" [ <exp> ] ";"
                           | <exp> ";"
                           | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
                           | "switch" "(" <exp> ")" <statement>
@@ -58,7 +58,11 @@ Linux x86_64 required
                           | <exp> "?" <exp> ":" <exp>
 <cast-exp>              ::= "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <cast-exp>
                           | <unary-exp>
-<unary-exp>             ::= <postfix-exp> | <unary-op> <cast-exp>
+<unary-exp>             ::= <postfix-exp>
+                          | <unary-op> <cast-exp>
+                          | "sizeof" <unary-exp>
+                          | "sizeof" "(" <type-name> ")"
+<type-name>             ::= { <type-specifier> }+ [ <abstract-declarator> ]
 <postfix-exp>           ::= <factor> | <postfix-exp> <postfix-op>
 <factor>                ::= <const>
                           | { <string> }+
