@@ -24,7 +24,6 @@ struct ConstExpr final : Expr {
     ConstExpr(const i64 location, T&& value, std::unique_ptr<TypeBase> varType) noexcept
         : Expr(location, Kind::Constant, std::move(varType)), value(std::forward<T>(value)) {}
 
-    template<typename T>
     explicit ConstExpr(ConstExpr&& constExpr) noexcept
         : Expr(constExpr.location, Kind::Constant, std::move(constExpr.type)),
           value(std::move(constExpr.value)) {}
