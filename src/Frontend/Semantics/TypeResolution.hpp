@@ -75,7 +75,7 @@ public:
     std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
 
     static std::unique_ptr<Parsing::Expr> convertConstExpr(const Parsing::ConstExpr& expr);
-    std::unique_ptr<Parsing::Expr> convertStringExpr(Parsing::StringExpr& expr);
+    std::unique_ptr<Parsing::Expr> convertStringExpr(Parsing::StringExpr& expr) const;
     std::unique_ptr<Parsing::Expr> convertVarExpr(Parsing::VarExpr& varExpr);
     std::unique_ptr<Parsing::Expr> convertCastExpr(Parsing::CastExpr& castExpr);
     std::unique_ptr<Parsing::Expr> convertUnaryExpr(Parsing::UnaryExpr& unaryExpr);

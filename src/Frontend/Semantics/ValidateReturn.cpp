@@ -60,6 +60,16 @@ void ValidateReturn::visit(Parsing::FuncDeclaration& funDecl)
     assert(returnStmt->expr->type);
     assert(returnStmt->expr->type->type);
     if (funcType->returnType->type == Type::Pointer || returnStmt->expr->type->type == Type::Pointer) {
+        if (isVoidPointer(*funcType->returnType)) {
+            returnStmt->expr->type = std::make_unique<Parsing::PointerType>(
+                std::make_unique<Parsing::VarType>(Type::Void));
+            return;
+        }
+        if (isVoidPointer(*returnStmt->expr->type) && funcType->returnType->type == Type::Pointer) {
+            returnStmt->expr->type = std::make_unique<Parsing::PointerType>(
+                std::make_unique<Parsing::VarType>(Type::Void));
+            return;
+        }
         if (!Parsing::areEquivalentTypes(*funcType->returnType, *returnStmt->expr->type)) {
             m_errors.emplace_back("Return type does not conform to function return type ",
                                 returnStmt->expr->location);

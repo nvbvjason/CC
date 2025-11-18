@@ -136,6 +136,11 @@ void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
         return;
 
     if (!Parsing::areEquivalentTypes(*varDecl.type, *singleInit->expr->type)) {
+        if (isVoidPointer(*varDecl.type) && singleInit->expr->type->type == Type::Pointer) {
+            singleInit->expr->type = std::make_unique<Parsing::PointerType>(
+                std::make_unique<Parsing::VarType>(Type::Void));
+            return;
+        }
         if (varDecl.type->type == Type::Pointer) {
             if (!canConvertToNullPtr(*singleInit->expr) && !isVoidPointer(*singleInit->expr->type)) {
                 addError("Cannot convert pointer init to pointer", varDecl.location);
@@ -378,7 +383,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertConstExpr(const Parsing::C
     return deepCopy(expr);
 }
 
-std::unique_ptr<Parsing::Expr> TypeResolution::convertStringExpr(Parsing::StringExpr& expr)
+std::unique_ptr<Parsing::Expr> TypeResolution::convertStringExpr(Parsing::StringExpr& expr) const
 {
     if (m_inArrayInit)
         return deepCopy(expr);
@@ -398,7 +403,7 @@ void TypeResolution::validateAndConvertFuncCallArgs(
         const Type castToType = it->second.paramTypes[i]->type;
         if (typeInner == Type::Pointer && castToType == Type::Pointer) {
             if (!Parsing::areEquivalentTypes(*callExpr->type, *argTypeBase)
-                && !isVoidPointer(*argTypeBase))
+                && !isVoidPointer(*callExpr->type) && !isVoidPointer(*argTypeBase))
                 addError("Function arg of of different type with param", callExpr->location);
         }
         if (castToType != Type::Pointer && typeInner == Type::Pointer)
@@ -581,6 +586,11 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handlePtrToPtrBinaryOpers(Parsing
             return Parsing::deepCopy(binaryExpr);
         }
     }
+    if ((binaryExpr.op == BinaryOp::Equal || binaryExpr.op == BinaryOp::NotEqual) &&
+        (isVoidPointer(*binaryExpr.lhs->type) || isVoidPointer(*binaryExpr.rhs->type))) {
+        binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
+        return Parsing::deepCopy(binaryExpr);
+    }
     addError("Cannot apply operator to pointers", binaryExpr.location);
     return Parsing::deepCopy(binaryExpr);
 }
@@ -680,8 +690,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertCastExpr(Parsing::CastExpr
         return Parsing::deepCopy(castExpr);
     const Type outerType = castExpr.type->type;
     const Type innerType = castExpr.innerExpr->type->type;
+    if (Parsing::areEquivalentTypes(*castExpr.type, *castExpr.innerExpr->type))
+        return Parsing::deepCopy(castExpr);
     if (innerType == Type::Void)
-        addError("Cannot from void pointer", castExpr.location);
+        addError("Cannot cast to void", castExpr.location);
     if (isPointerToVoidArray(*castExpr.type))
         addError("Cannot cast to pointer to void array", castExpr.location);
     if (isArrayOfVoidPointer(*castExpr.type))
@@ -721,6 +733,11 @@ bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
         return false;
     }
     if (leftType == Type::Pointer && rightType == Type::Pointer) {
+        if (isVoidPointer(*assignmentExpr.lhs->type)) {
+            assignmentExpr.rhs->type = std::make_unique<Parsing::PointerType>(
+                std::make_unique<Parsing::VarType>(Type::Void));
+            return true;
+        }
         if (!Parsing::areEquivalentTypes(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type)
             && !isVoidPointer(*assignmentExpr.rhs->type)) {
             addError("Cannot assign pointer of different types", assignmentExpr.location);

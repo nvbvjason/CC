@@ -128,6 +128,8 @@ bool isVoidArray(const Parsing::TypeBase& type)
 
 bool isArrayOfVoidPointer(const Parsing::TypeBase& type)
 {
+    if (type.kind != Parsing::TypeBase::Kind::Array)
+        return false;
     const Parsing::TypeBase* currentType = &type;
     while (currentType->kind == Parsing::TypeBase::Kind::Array) {
         const auto arrayType = dynCast<const Parsing::ArrayType>(currentType);
@@ -148,7 +150,14 @@ bool isPointerToVoidArray(const Parsing::TypeBase& type)
 
 bool isScalarType(const Parsing::TypeBase& type)
 {
-    return type.type != Type::Void;
+    switch (type.type) {
+        case Type::Void:
+        case Type::Array:
+        case Type::Function:
+            return false;
+        default:
+            return true;
+    }
 }
 
 std::unique_ptr<Parsing::Expr> convertOrCastToType(const Parsing::Expr& expr, const Type targetType)
