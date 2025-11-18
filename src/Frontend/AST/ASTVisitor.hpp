@@ -14,6 +14,7 @@ public:
     virtual void visit(VarDecl&) = 0;
     virtual void visit(FuncDecl&) = 0;
     virtual void visit(StructDecl&) = 0;
+    virtual void visit(UnionDecl&) = 0;
     virtual void visit(MemberDecl&) = 0;
 
     virtual void visit(Block&) = 0;
@@ -24,6 +25,7 @@ public:
     virtual void visit(PointerType&) = 0;
     virtual void visit(ArrayType&) = 0;
     virtual void visit(StructType&) = 0;
+    virtual void visit(UnionType&) = 0;
 
     // Initializer
     virtual void visit(SingleInitializer&) = 0;
@@ -84,6 +86,7 @@ public:
     virtual void visit(const VarDecl&) = 0;
     virtual void visit(const FuncDecl&) = 0;
     virtual void visit(const StructDecl&) = 0;
+    virtual void visit(const UnionDecl&) = 0;
     virtual void visit(const MemberDecl&) = 0;
 
     virtual void visit(const Block&) = 0;
@@ -94,6 +97,7 @@ public:
     virtual void visit(const PointerType&) = 0;
     virtual void visit(const ArrayType&) = 0;
     virtual void visit(const StructType&) = 0;
+    virtual void visit(const UnionType&) = 0;
 
     // Initializer
     virtual void visit(const SingleInitializer&) = 0;

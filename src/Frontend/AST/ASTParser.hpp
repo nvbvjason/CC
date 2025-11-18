@@ -158,6 +158,25 @@ struct StructDecl final : Declaration {
     StructDecl() = delete;
 };
 
+struct UnionDecl final : Declaration {
+    const std::string identifier;
+    std::vector<std::unique_ptr<Declaration>> members;
+
+    UnionDecl(const i64 loc,
+              std::string identifier,
+              std::vector<std::unique_ptr<Declaration>>&& members)
+        : Declaration(loc, Kind::UnionDecl, StorageClass::None),
+            identifier(std::move(identifier)),
+            members(std::move(members)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::UnionDecl; }
+
+    UnionDecl() = delete;
+};
+
 struct MemberDecl final : Declaration {
     const std::string identifier;
     std::unique_ptr<TypeBase> type;

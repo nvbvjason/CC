@@ -27,8 +27,8 @@ std::unique_ptr<Declaration> Parser::declarationParse()
     auto [varType, storageClass] = specifierParse();
     if (varType == nullptr)
         return nullptr;
-    if (isStructDeclaration(varType))
-        return structDeclParse(std::move(varType));
+    if (isStructuredDeclaration(varType))
+        return structuredDeclParse(std::move(varType));
     const Declaration::StorageClass storage = Operators::getStorageClass(storageClass);
     std::unique_ptr<Declarator> declarator = declaratorParse();
     if (declarator == nullptr)
@@ -42,10 +42,9 @@ std::unique_ptr<Declaration> Parser::declarationParse()
     return varDeclParse(iden, std::move(typeBase), storage);
 }
 
-std::unique_ptr<Declaration> Parser::structDeclParse(std::unique_ptr<TypeBase>&& typeBase)
+std::unique_ptr<Declaration> Parser::structuredDeclParse(std::unique_ptr<TypeBase>&& typeBase)
 {
     const i64 location = m_current - 2;
-    const auto structType = dynCast<StructType>(typeBase.get());
     std::vector<std::unique_ptr<Declaration>> memberDecls;
     if (match(TokenType::OpenBrace)) {
         while (peekTokenType() != TokenType::CloseBrace) {
@@ -54,22 +53,30 @@ std::unique_ptr<Declaration> Parser::structDeclParse(std::unique_ptr<TypeBase>&&
                 return nullptr;
             const auto memberDecl = dynCast<MemberDecl>(declaration.get());
             if (memberDecl->type->type == Type::Function) {
-                addError("Function cannot be a struct member", m_current);
+                addError("Function cannot be a structured member", m_current);
                 return nullptr;
             }
             memberDecls.push_back(std::move(declaration));
         }
         if (memberDecls.empty()) {
-            addError("Empty struct definition is not allowed", m_current);
+            addError("Empty structured definition is not allowed", m_current);
             return nullptr;
         }
         advance();
     }
     if (!match(TokenType::Semicolon)) {
-        addError("Expected semicolon after struct declaration", m_current);
+        addError("Expected semicolon after structured declaration", m_current);
         return nullptr;
     }
-    return std::make_unique<StructDecl>(location, structType->identifier, std::move(memberDecls));
+    if (typeBase->kind == TypeBase::Kind::Struct) {
+        const auto structType = dynCast<StructType>(typeBase.get());
+        return std::make_unique<StructDecl>(location, structType->identifier, std::move(memberDecls));
+    }
+    if (typeBase->kind == TypeBase::Kind::Union) {
+        const auto unionType = dynCast<UnionType>(typeBase.get());
+        return std::make_unique<StructDecl>(location, unionType->identifier, std::move(memberDecls));
+    }
+    return nullptr;
 }
 
 std::unique_ptr<Declaration> Parser::memberDeclParse()
@@ -961,11 +968,11 @@ std::unique_ptr<TypeBase> Parser::typeParse()
     std::vector<TokenType> types;
     while (Operators::isType(type)) {
         types.emplace_back(type);
-        if (type == TokenType::StructKeyword) {
+        if (Operators::isStructuredType(type)) {
             advance();
             const TokenType shouldBeIdenAfterStruct = peekTokenType();
             if (shouldBeIdenAfterStruct != TokenType::Identifier) {
-                addError("Struct must be followed by identifier");
+                addError("Structured type must be followed by identifier");
                 return nullptr;
             }
             types.emplace_back(shouldBeIdenAfterStruct);
@@ -1069,11 +1076,11 @@ std::tuple<std::unique_ptr<TypeBase>, Lexing::Token::Type> Parser::specifierPars
     while (Operators::isSpecifier(type)) {
         if (Operators::isType(type)) {
             types.emplace_back(type);
-            if (type == TokenType::StructKeyword) {
+            if (Operators::isStructuredType(type)) {
                 advance();
                 const TokenType shouldBeIdenAfterStruct = peekTokenType();
                 if (shouldBeIdenAfterStruct != TokenType::Identifier) {
-                    addError("Struct must be followed by identifier");
+                    addError("Structured must be followed by identifier");
                     return {nullptr, TokenType::NotAToken};
                 }
                 types.emplace_back(shouldBeIdenAfterStruct);
@@ -1105,6 +1112,15 @@ std::tuple<std::unique_ptr<TypeBase>, Lexing::Token::Type> Parser::specifierPars
 
 std::unique_ptr<TypeBase> Parser::typeResolve(std::vector<TokenType>& tokens) const
 {
+    if (std::ranges::find(tokens, TokenType::UnionKeyword) != tokens.end()) {
+        if (2 != tokens.size())
+            return nullptr;
+        if (tokens.front() != TokenType::UnionKeyword)
+            return nullptr;
+        if (tokens.back() != TokenType::Identifier)
+            return nullptr;
+        return std::make_unique<UnionType>(c_tokenStore.getLexeme(m_current - 1));
+    }
     if (std::ranges::find(tokens, TokenType::StructKeyword) != tokens.end()) {
         if (2 != tokens.size())
             return nullptr;

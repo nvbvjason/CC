@@ -13,6 +13,7 @@ public:
     void visit(const VarDecl& varDecl) override;
     void visit(const FuncDecl& funDecl) override;
     void visit(const StructDecl& structDecl) override;
+    void visit(const UnionDecl& unionDecl) override;
     void visit(const MemberDecl& memberDecl) override {}
 
     // BlockItem
@@ -25,6 +26,7 @@ public:
     void visit(const PointerType& pointerType) override;
     void visit(const ArrayType& arrayType) override;
     void visit(const StructType& structType) override {}
+    void visit(const UnionType& unionType) override {}
 
     // Initializers
     void visit(const SingleInitializer& singleInitializer) override;

@@ -46,6 +46,12 @@ void ASTTraverser::visit(StructDecl& structDecl)
         member->accept(*this);
 }
 
+void ASTTraverser::visit(UnionDecl& unionDecl)
+{
+    for (const auto& member : unionDecl.members)
+        member->accept(*this);
+}
+
 void ASTTraverser::visit(FuncType& functionType)
 {
     functionType.returnType->accept(*this);

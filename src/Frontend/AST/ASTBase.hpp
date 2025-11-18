@@ -16,7 +16,7 @@ struct ASTNode {
 
 struct TypeBase {
     enum class Kind : u8 {
-        Var, Func, Pointer, Array, Struct
+        Var, Func, Pointer, Array, Struct, Union
     };
     const Kind kind;
     Type type;
@@ -115,7 +115,7 @@ protected:
 
 struct Declaration : ASTNode {
     enum class Kind : u8 {
-        VarDecl, FuncDecl, StructDecl, MemberDecl
+        VarDecl, FuncDecl, StructDecl, UnionDecl, MemberDecl
     };
     enum class StorageClass : u8 {
         None,

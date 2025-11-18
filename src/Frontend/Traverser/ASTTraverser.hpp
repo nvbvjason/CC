@@ -17,6 +17,7 @@ public:
     void visit(StmtBlockItem& stmtBlockItem) override;
     void visit(DeclBlockItem& declBlockItem) override;
     void visit(StructDecl& structDecl) override;
+    void visit(UnionDecl& unionDecl) override;
     void visit(MemberDecl& memberDecl) override {}
 
     // Type
@@ -25,6 +26,7 @@ public:
     void visit(PointerType& pointerType) override;
     void visit(ArrayType& arrayType) override;
     void visit(StructType& structType) override {}
+    void visit(UnionType& unionType) override {}
 
     // Initializers
     void visit(SingleInitializer& singleInitializer) override;

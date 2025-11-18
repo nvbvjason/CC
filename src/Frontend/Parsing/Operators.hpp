@@ -17,6 +17,7 @@ using TokenType = Lexing::Token::Type;
 [[nodiscard]] constexpr bool isStorageSpecifier(TokenType type);
 [[nodiscard]] constexpr bool isSpecifier(TokenType type);
 [[nodiscard]] constexpr bool isType(TokenType type);
+[[nodiscard]] constexpr bool isStructuredType(TokenType type);
 [[nodiscard]] constexpr BinaryExpr::Operator getBinaryOperator(AssignmentExpr::Operator oper);
 [[nodiscard]] Declaration::StorageClass getStorageClass(Lexing::Token::Type tokenType);
 
@@ -273,11 +274,17 @@ constexpr bool isType(const TokenType type)
         case TokenType::Unsigned:
         case TokenType::DoubleKeyword:
         case TokenType::StructKeyword:
+        case TokenType::UnionKeyword:
         case TokenType::VoidKeyword:
             return true;
         default:
             return false;
     }
+}
+
+constexpr bool isStructuredType(const TokenType type)
+{
+    return type == TokenType::StructKeyword || type == TokenType::UnionKeyword;
 }
 
 constexpr BinaryExpr::Operator getBinaryOperator(const AssignmentExpr::Operator oper)

@@ -68,4 +68,16 @@ struct StructType final : TypeBase {
 
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Struct; }
 };
+
+struct UnionType final : TypeBase {
+    const std::string identifier;
+
+    explicit UnionType(std::string identifier)
+        : TypeBase(Type::Union, Kind::Union), identifier(std::move(identifier)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Union; }
+};
 } // Parsing

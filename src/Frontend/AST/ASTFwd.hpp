@@ -9,10 +9,12 @@ namespace Parsing {
     declaration = FunDecl(function_declaration)
                 | VarDecl(variable_declaration)
                 | StructDecl(struct_declaration)
+                | UnionDecl(union_declaration)
 
     variable_declaration = (identifier name, exp? init, type var_type, storage_class?)
     function_declaration = (identifier name, identifier* params, block? body, type var_type, storage_class?)
     struct_declaration = (identifier tag, member_declaration* members)
+    union_declaration = (identifier tag, member_declaration* members)
     member_declaration = (identifier member_name, type member_type)
 
     type = Int | Long | UInt | ULong | Double | Char | SChar | UChar | Void
@@ -81,6 +83,7 @@ struct Declaration;
 struct FuncDecl;
 struct VarDecl;
 struct StructDecl;
+struct UnionDecl;
 struct MemberDecl;
 
 struct Block;
@@ -97,6 +100,7 @@ struct FuncType;
 struct PointerType;
 struct ArrayType;
 struct StructType;
+struct UnionType;
 
 // Initializer
 struct Initializer;

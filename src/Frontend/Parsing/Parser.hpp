@@ -100,7 +100,7 @@ public:
         : c_tokenStore(tokenStore) {}
     std::vector<Error> programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
-    [[nodiscard]] std::unique_ptr<Declaration> structDeclParse(std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] std::unique_ptr<Declaration> structuredDeclParse(std::unique_ptr<TypeBase>&& typeBase);
     [[nodiscard]] std::unique_ptr<Declaration> memberDeclParse();
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
                                                         std::unique_ptr<TypeBase>&& type,
@@ -181,10 +181,10 @@ private:
     void addError(std::string message);
     void addError(std::string message, size_t index);
 
-    [[nodiscard]] bool isStructDeclaration(const std::unique_ptr<TypeBase>& typeBase) const
+    [[nodiscard]] bool isStructuredDeclaration(const std::unique_ptr<TypeBase>& typeBase) const
     {
-        return typeBase->kind == TypeBase::Kind::Struct &&
-        (peekTokenType() == TokenType::Semicolon || peekTokenType() == TokenType::OpenBrace);
+        return (typeBase->kind == TypeBase::Kind::Struct || typeBase->kind == TypeBase::Kind::Union) &&
+               (peekTokenType() == TokenType::Semicolon || peekTokenType() == TokenType::OpenBrace);
     }
 };
 

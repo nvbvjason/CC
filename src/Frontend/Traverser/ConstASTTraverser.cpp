@@ -36,6 +36,12 @@ void ConstASTTraverser::visit(const StructDecl& structDecl)
         member->accept(*this);
 }
 
+void ConstASTTraverser::visit(const UnionDecl& unionDecl)
+{
+    for (const auto& member : unionDecl.members)
+        member->accept(*this);
+}
+
 // BlockItem
 void ConstASTTraverser::visit(const StmtBlockItem& stmtBlockItem)
 {

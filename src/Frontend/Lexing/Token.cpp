@@ -83,6 +83,7 @@ std::string Token::getTypeName() const
         case Type::LongKeyword:             return "Long";
         case Type::DoubleKeyword:           return "Double";
         case Type::StructKeyword:           return "Struct";
+        case Type::UnionKeyword:            return "Union";
         case Type::If:                      return "If";
         case Type::Else:                    return "Else";
         case Type::Do:                      return "Do";

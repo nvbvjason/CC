@@ -86,6 +86,7 @@ struct Token {
         LongKeyword,                     // long
         DoubleKeyword,                   // double
         StructKeyword,                   // struct
+        UnionKeyword,                    // union
         If,                              // if
         Else,                            // else
         Do,                              // do
