@@ -498,6 +498,11 @@ bool isVoidArray(const TypeBase& type)
     return getArrayType(&type) == Type::Void;
 }
 
+bool isStructuredType(const TypeBase& type)
+{
+    return type.type == Type::Struct || type.type == Type::Union;
+}
+
 bool isArrayOfVoidPointer(const TypeBase& type)
 {
     if (type.kind != TypeBase::Kind::Array)
@@ -532,6 +537,16 @@ bool isScalarType(const TypeBase& type)
     }
 }
 
+const TypeBase* getArrayBaseType(const TypeBase& highestType)
+{
+    const TypeBase* type = &highestType;
+    while (type->kind == TypeBase::Kind::Array) {
+        const auto arrayType = dynCast<const ArrayType>(type);
+        type = arrayType->elementType.get();
+    }
+    return type;
+}
+
 std::unique_ptr<Expr> convertOrCastToType(const Expr& expr, const Type targetType)
 {
     if (expr.kind != Expr::Kind::Constant) {
@@ -556,12 +571,7 @@ i64 getArraySize(TypeBase* type)
 
 Type getArrayType(const TypeBase* const type)
 {
-    const TypeBase* currentType = type;
-    while (currentType->kind == TypeBase::Kind::Array) {
-        const auto arrayType = dynCast<const ArrayType>(currentType);
-        currentType = arrayType->elementType.get();
-    }
-    return currentType->type;
+    return getArrayBaseType(*type)->type;
 }
 
 i64 getArrayAlignment(const i64 size, const Type type)

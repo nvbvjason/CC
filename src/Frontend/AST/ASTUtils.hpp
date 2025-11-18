@@ -69,10 +69,12 @@ std::unique_ptr<Expr> convertToArithmeticType(const Expr& expr, Type targetType)
 
 bool isVoidPointer(const TypeBase& type);
 bool isVoidArray(const TypeBase& type);
+bool isStructuredType(const TypeBase& type);
 bool isArrayOfVoidPointer(const TypeBase& type);
 bool isPointerToVoidArray(const TypeBase& type);
 bool isScalarType(const TypeBase& type);
 i64 getArraySize(TypeBase* type);
 Type getArrayType(const TypeBase* type);
+const TypeBase* getArrayBaseType(const TypeBase& highestType);
 i64 getArrayAlignment(i64 size, Type type);
 } // Parsing

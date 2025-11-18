@@ -13,6 +13,9 @@ struct VarType final : TypeBase {
     explicit VarType(const Type type)
         : TypeBase(type, Kind::Var) {}
 
+    explicit VarType(VarType&& varType) noexcept
+        : TypeBase(varType.type, Kind::Var) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -26,6 +29,10 @@ struct FuncType final : TypeBase {
     explicit FuncType(std::unique_ptr<TypeBase>&& rT, std::vector<std::unique_ptr<TypeBase>>&& params)
         : TypeBase(Type::Function, Kind::Func), params(std::move(params)), returnType(std::move(rT)) {}
 
+    explicit FuncType(FuncType&& funcType) noexcept
+        : TypeBase(Type::Function, Kind::Func),
+          params(std::move(funcType.params)), returnType(std::move(funcType.returnType)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -38,6 +45,10 @@ struct PointerType final : TypeBase {
     explicit PointerType(std::unique_ptr<TypeBase>&& r)
         : TypeBase(Type::Pointer, Kind::Pointer), referenced(std::move(r)) {}
 
+    explicit PointerType(PointerType&& pointerType) noexcept
+        : TypeBase(Type::Pointer, Kind::Pointer),
+          referenced(std::move(pointerType.referenced)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -46,10 +57,15 @@ struct PointerType final : TypeBase {
 
 struct ArrayType final : TypeBase {
     std::unique_ptr<TypeBase> elementType;
-    i64 size;
+    const i64 size;
 
     explicit ArrayType(std::unique_ptr<TypeBase>&& elementType, const i64 size)
         : TypeBase(Type::Array, Kind::Array), elementType(std::move(elementType)), size(size) {}
+
+    explicit ArrayType(ArrayType&& arrayType) noexcept
+        : TypeBase(Type::Array, Kind::Array),
+          elementType(std::move(arrayType.elementType)),
+          size(arrayType.size) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -63,6 +79,9 @@ struct StructType final : TypeBase {
     explicit StructType(std::string identifier)
         : TypeBase(Type::Struct, Kind::Struct), identifier(std::move(identifier)) {}
 
+    explicit StructType(StructType&& structType) noexcept
+        : TypeBase(Type::Struct, Kind::Struct), identifier(std::move(structType.identifier)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -74,6 +93,9 @@ struct UnionType final : TypeBase {
 
     explicit UnionType(std::string identifier)
         : TypeBase(Type::Union, Kind::Union), identifier(std::move(identifier)) {}
+
+    explicit UnionType(UnionType&& unionType) noexcept
+        : TypeBase(Type::Union, Kind::Union), identifier(std::move(unionType.identifier)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

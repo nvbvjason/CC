@@ -106,7 +106,7 @@ void VariableResolution::validateVarDecl(const Parsing::VarDecl& varDecl,
                                          const SymbolTable& symbolTable,
                                          const SymbolTable::ReturnedEntry& prevEntry)
 {
-    if (isArrayOfUndefinedStructuredType(varDecl, symbolTable, prevEntry))
+    if (isArrayOfUndefinedStructuredType(varDecl, symbolTable))
         addError("Is Array of Undefined Structured Type", varDecl.location);
     if (isVoidArray(*varDecl.type))
         addError("Cannot void array", varDecl.location);

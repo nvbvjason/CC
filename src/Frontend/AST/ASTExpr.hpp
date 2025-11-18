@@ -3,14 +3,13 @@
 #include "ASTVisitor.hpp"
 #include "ASTBase.hpp"
 #include "ShortTypes.hpp"
+#include "ASTTypes.hpp"
 
 #include <memory>
 #include <string>
 #include <utility>
 #include <variant>
 #include <vector>
-
-#include "ASTTypes.hpp"
 
 namespace Parsing {
 
@@ -24,6 +23,11 @@ struct ConstExpr final : Expr {
     template<typename T>
     ConstExpr(const i64 location, T&& value, std::unique_ptr<TypeBase> varType) noexcept
         : Expr(location, Kind::Constant, std::move(varType)), value(std::forward<T>(value)) {}
+
+    template<typename T>
+    explicit ConstExpr(ConstExpr&& constExpr) noexcept
+        : Expr(constExpr.location, Kind::Constant, std::move(constExpr.type)),
+          value(std::move(constExpr.value)) {}
 
     template<typename TargetType>
     TargetType getValue() const
@@ -55,8 +59,17 @@ struct StringExpr final : Expr {
 
     StringExpr(const i64 location, std::string&& value) noexcept
         : Expr(location, Kind::String), value(std::move(value)) {}
+
     StringExpr(const i64 location, std::string&& value, std::unique_ptr<TypeBase> varType) noexcept
         : Expr(location, Kind::String, std::move(varType)), value(std::move(value)) {}
+
+    explicit StringExpr(StringExpr&& stringExpr) noexcept
+        : Expr(stringExpr.location, Kind::String),
+          value(stringExpr.value)
+    {
+        if (stringExpr.type)
+            type = std::move(stringExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -70,11 +83,17 @@ struct VarExpr final : Expr {
     std::string name;
     ReferingTo referingTo = ReferingTo::Local;
 
-    explicit VarExpr(std::string name) noexcept
-        : Expr(Kind::Var), name(std::move(name)) {}
-
     VarExpr(const i64 loc, std::string name) noexcept
         : Expr(loc, Kind::Var), name(std::move(name)) {}
+
+    explicit VarExpr(VarExpr&& varExpr) noexcept
+        : Expr(varExpr.location, Kind::Var),
+          name(std::move(varExpr.name)),
+          referingTo(varExpr.referingTo)
+    {
+        if (varExpr.type)
+            type = std::move(varExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -93,6 +112,10 @@ struct CastExpr final : Expr {
     CastExpr(const i64 loc, std::unique_ptr<TypeBase>&& type, std::unique_ptr<Expr>&& expr) noexcept
         : Expr(loc, Kind::Cast, std::move(type)), innerExpr(std::move(expr)) {}
 
+    explicit CastExpr(CastExpr&& castExpr) noexcept
+        : Expr(castExpr.location, Kind::Cast, std::move(castExpr.type)),
+         innerExpr(std::move(castExpr.innerExpr)) {}
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -110,11 +133,17 @@ struct UnaryExpr final : Expr {
     Operator op;
     std::unique_ptr<Expr> innerExpr;
 
-    UnaryExpr(const Operator op, std::unique_ptr<Expr> expr)
-        : Expr(Kind::Unary), op(op), innerExpr(std::move(expr)) {}
-
     UnaryExpr(const i64 loc, const Operator op, std::unique_ptr<Expr> expr)
         : Expr(loc, Kind::Unary), op(op), innerExpr(std::move(expr)) {}
+
+    explicit UnaryExpr(UnaryExpr&& unaryExpr) noexcept
+        : Expr(unaryExpr.location, Kind::Unary),
+          op(unaryExpr.op),
+          innerExpr(std::move(unaryExpr.innerExpr))
+    {
+        if (unaryExpr.type)
+            type = std::move(unaryExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -138,11 +167,18 @@ struct BinaryExpr final : Expr {
     std::unique_ptr<Expr> lhs;
     std::unique_ptr<Expr> rhs;
 
-    BinaryExpr(const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
-        : Expr(Kind::Binary), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
-
     BinaryExpr(const i64 loc, const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : Expr(loc, Kind::Binary), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+
+    explicit BinaryExpr(BinaryExpr&& binaryExpr) noexcept
+        : Expr(binaryExpr.location, Kind::Binary),
+          op(binaryExpr.op),
+          lhs(std::move(binaryExpr.lhs)),
+          rhs(std::move(binaryExpr.rhs))
+    {
+        if (binaryExpr.type)
+            type = std::move(binaryExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -163,11 +199,18 @@ struct AssignmentExpr final : Expr {
     std::unique_ptr<Expr> lhs;
     std::unique_ptr<Expr> rhs;
 
-    AssignmentExpr(const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
-        : Expr(Kind::Assignment), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
-
     AssignmentExpr(const i64 loc, const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : Expr(loc, Kind::Assignment), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+
+    explicit AssignmentExpr(AssignmentExpr&& assignmentExpr) noexcept
+        : Expr(assignmentExpr.location, Kind::Assignment),
+          op(assignmentExpr.op),
+          lhs(std::move(assignmentExpr.lhs)),
+          rhs(std::move(assignmentExpr.rhs))
+    {
+        if (assignmentExpr.type)
+            type = std::move(assignmentExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -182,18 +225,22 @@ struct TernaryExpr final : Expr {
     std::unique_ptr<Expr> trueExpr;
     std::unique_ptr<Expr> falseExpr;
 
-    TernaryExpr(std::unique_ptr<Expr> condition,
-                std::unique_ptr<Expr> trueExpr,
-                std::unique_ptr<Expr> falseExpr)
-        : Expr(Kind::Ternary), condition(std::move(condition)),
-          trueExpr(std::move(trueExpr)), falseExpr(std::move(falseExpr)) {}
-
     TernaryExpr(const i64 location,
                 std::unique_ptr<Expr> condition,
                 std::unique_ptr<Expr> trueExpr,
                 std::unique_ptr<Expr> falseExpr)
-    : Expr(Kind::Ternary), condition(std::move(condition)),
+    : Expr(location, Kind::Ternary), condition(std::move(condition)),
       trueExpr(std::move(trueExpr)), falseExpr(std::move(falseExpr)) {}
+
+    explicit TernaryExpr(TernaryExpr&& ternaryExpr) noexcept
+        : Expr(ternaryExpr.location, Kind::Ternary),
+          condition(std::move(ternaryExpr.condition)),
+          trueExpr(std::move(ternaryExpr.trueExpr)),
+          falseExpr(std::move(ternaryExpr.falseExpr))
+    {
+        if (ternaryExpr.type)
+            type = std::move(ternaryExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -207,11 +254,17 @@ struct FuncCallExpr final : Expr {
     std::string name;
     std::vector<std::unique_ptr<Expr>> args;
 
-    FuncCallExpr(std::string identifier, std::vector<std::unique_ptr<Expr>> args)
-        : Expr(Kind::FunctionCall), name(std::move(identifier)), args(std::move(args)) {}
-
     FuncCallExpr(const i64 loc, std::string identifier, std::vector<std::unique_ptr<Expr>> args)
         : Expr(loc, Kind::FunctionCall), name(std::move(identifier)), args(std::move(args)) {}
+
+    explicit FuncCallExpr(FuncCallExpr&& funcCallExpr) noexcept
+        : Expr(funcCallExpr.location, Kind::FunctionCall),
+          name(std::move(funcCallExpr.name)),
+          args(std::move(funcCallExpr.args))
+    {
+        if (funcCallExpr.type)
+            type = std::move(funcCallExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -224,11 +277,16 @@ struct FuncCallExpr final : Expr {
 struct DereferenceExpr final : Expr {
     std::unique_ptr<Expr> reference;
 
-    explicit DereferenceExpr(std::unique_ptr<Expr>&& reference)
-        : Expr(Kind::Dereference), reference(std::move(reference)) {}
-
     DereferenceExpr(const i64 loc, std::unique_ptr<Expr>&& reference)
         : Expr(loc, Kind::Dereference), reference(std::move(reference)) {}
+
+    explicit DereferenceExpr(DereferenceExpr&& dereferenceExpr) noexcept
+        : Expr(dereferenceExpr.location, Kind::Dereference),
+          reference(std::move(dereferenceExpr.reference))
+    {
+        if (dereferenceExpr.type)
+            type = std::move(dereferenceExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -241,11 +299,16 @@ struct DereferenceExpr final : Expr {
 struct AddrOffExpr final : Expr {
     std::unique_ptr<Expr> reference;
 
-    explicit AddrOffExpr(std::unique_ptr<Expr>&& reference)
-        : Expr(Kind::AddrOf), reference(std::move(reference)) {}
-
     AddrOffExpr(const i64 loc, std::unique_ptr<Expr>&& reference)
         : Expr(loc, Kind::AddrOf), reference(std::move(reference)) {}
+
+    explicit AddrOffExpr(AddrOffExpr&& addrOffExpr) noexcept
+        : Expr(addrOffExpr.location, Kind::AddrOf),
+          reference(std::move(addrOffExpr.reference))
+    {
+        if (addrOffExpr.type)
+            type = std::move(addrOffExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -259,11 +322,17 @@ struct SubscriptExpr final : Expr {
     std::unique_ptr<Expr> referencing;
     std::unique_ptr<Expr> index;
 
-    SubscriptExpr(std::unique_ptr<Expr> re, std::unique_ptr<Expr> index)
-        : Expr(Kind::Subscript), referencing(std::move(re)), index(std::move(index)) {}
-
     SubscriptExpr(const i64 loc, std::unique_ptr<Expr> re, std::unique_ptr<Expr> index)
         : Expr(loc, Kind::Subscript), referencing(std::move(re)), index(std::move(index)) {}
+
+    explicit SubscriptExpr(SubscriptExpr&& subscriptExpr) noexcept
+        : Expr(subscriptExpr.location, Kind::Subscript),
+          referencing(std::move(subscriptExpr.referencing)),
+          index(std::move(subscriptExpr.index))
+    {
+        if (subscriptExpr.type)
+            type = std::move(subscriptExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -277,7 +346,12 @@ struct SizeOfExprExpr final : Expr {
     std::unique_ptr<Expr> innerExpr;
 
     explicit SizeOfExprExpr(const i64 loc, std::unique_ptr<Expr>&& innerExpr)
-        : Expr(loc, Kind::SizeOfExpr, std::make_unique<VarType>(Type::U64)), innerExpr(std::move(innerExpr)) {}
+        : Expr(loc, Kind::SizeOfExpr, std::make_unique<VarType>(Type::U64)),
+          innerExpr(std::move(innerExpr)) {}
+
+    explicit SizeOfExprExpr(SizeOfExprExpr&& sizeOfExprExpr) noexcept
+        : Expr(sizeOfExprExpr.location, Kind::SizeOfExpr, std::make_unique<VarType>(Type::U64)),
+          innerExpr(std::move(sizeOfExprExpr.innerExpr)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -291,7 +365,12 @@ struct SizeOfTypeExpr final : Expr {
     std::unique_ptr<TypeBase> sizeType;
 
     explicit SizeOfTypeExpr(const i64 loc, std::unique_ptr<TypeBase>&& sizeType)
-        : Expr(loc, Kind::SizeOfType, std::make_unique<VarType>(Type::U64)), sizeType(std::move(sizeType)) {}
+        : Expr(loc, Kind::SizeOfType, std::make_unique<VarType>(Type::U64)),
+          sizeType(std::move(sizeType)) {}
+
+    explicit SizeOfTypeExpr(SizeOfTypeExpr&& sizeOfTypeExpr) noexcept
+        : Expr(sizeOfTypeExpr.location, Kind::SizeOfType, std::make_unique<VarType>(Type::U64)),
+          sizeType(std::move(sizeOfTypeExpr.sizeType)) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -308,6 +387,15 @@ struct DotExpr final : Expr {
     explicit DotExpr(const i64 loc, std::unique_ptr<Expr>&& structuredExpr, std::string identifier)
         : Expr(loc, Kind::Dot), structuredExpr(std::move(structuredExpr)), identifier(std::move(identifier)) {}
 
+    explicit DotExpr(DotExpr&& dotExpr) noexcept
+        : Expr(dotExpr.location, Kind::Arrow),
+          structuredExpr(std::move(dotExpr.structuredExpr)),
+          identifier(std::move(dotExpr.identifier))
+    {
+        if (dotExpr.type)
+            type = std::move(dotExpr.type);
+    }
+
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
@@ -322,6 +410,15 @@ struct ArrowExpr final : Expr {
 
     explicit ArrowExpr(const i64 loc, std::unique_ptr<Expr>&& pointerExpr, std::string identifier)
         : Expr(loc, Kind::Arrow), pointerExpr(std::move(pointerExpr)), identifier(std::move(identifier)) {}
+
+    explicit ArrowExpr(ArrowExpr&& arrowExpr) noexcept
+        : Expr(arrowExpr.location, Kind::Arrow),
+          pointerExpr(std::move(arrowExpr.pointerExpr)),
+          identifier(std::move(arrowExpr.identifier))
+    {
+        if (arrowExpr.type)
+            type = std::move(arrowExpr.type);
+    }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }

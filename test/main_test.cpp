@@ -1051,6 +1051,16 @@ TEST(Chapter18_Structures, invalidParsing)
     }
 }
 
+TEST(Chapter18_Structures, invalidTypes)
+{
+    const fs::path invalidPath = testsFolderPath / "chapter_18/invalid_struct_tags";
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!isCFile(path))
+            continue;
+        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+    }
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

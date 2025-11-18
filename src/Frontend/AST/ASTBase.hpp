@@ -19,7 +19,7 @@ struct TypeBase {
         Var, Func, Pointer, Array, Struct, Union
     };
     const Kind kind;
-    Type type;
+    const Type type;
 
     virtual ~TypeBase() = default;
     virtual void accept(ASTVisitor& visitor) = 0;

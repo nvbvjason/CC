@@ -48,18 +48,46 @@ public:
             return (static_cast<u32>(flags) & static_cast<u32>(flag)) != 0;
         }
     };
+    struct StructuredEntry : FlagBase<StructuredEntry>  {
+        std::unique_ptr<Parsing::TypeBase> typeBase;
+        StructuredEntry(std::unique_ptr<Parsing::TypeBase>&& t,
+                        const bool contains,
+                        const bool inArgs,
+                        const bool fromCurrentScope,
+                        const bool internal,
+                        const bool external,
+                        const bool global,
+                        const bool defined)
+            : typeBase(std::move(t))
+        {
+            if (contains)
+                set(State::Contains);
+            if (inArgs)
+                set(State::InArgs);
+            if (fromCurrentScope)
+                set(State::FromCurrentScope);
+            if (internal)
+                set(State::InternalLinkage);
+            if (external)
+                set(State::ExternalLinkage);
+            if (global)
+                set(State::Global);
+            if (defined)
+                set(State::Defined);
+        }
+    };
     struct ReturnedEntry : FlagBase<ReturnedEntry>  {
         std::unique_ptr<Parsing::TypeBase> typeBase;
         ReturnedEntry(std::unique_ptr<Parsing::TypeBase>&& t,
-                         const bool contains,
-                         const bool inArgs,
-                         const bool fromCurrentScope,
-                         const bool internal,
-                         const bool external,
-                         const bool global,
-                         const bool defined)
+                      const bool contains,
+                      const bool inArgs,
+                      const bool fromCurrentScope,
+                      const bool internal,
+                      const bool external,
+                      const bool global,
+                      const bool defined)
+            : typeBase(std::move(t))
         {
-            typeBase = std::move(t);
             if (contains)
                 set(State::Contains);
             if (inArgs)
@@ -109,7 +137,7 @@ public:
     [[nodiscard]] bool contains(const std::string& name) const;
     [[nodiscard]] ReturnedEntry lookup(const std::string& uniqueName) const;
     std::string getUniqueName(const std::string& unique) const;
-    void setArgs(Parsing::FuncDecl& funDecl);
+    void setArgs(const Parsing::FuncDecl& funDecl);
     void clearArgs();
     void addEntry(const std::string& name,
                   const std::string& uniqueName,

@@ -5,10 +5,9 @@
 #include "ASTParser.hpp"
 #include "Frontend/SymbolTable.hpp"
 #include "Error.hpp"
+#include "ASTUtils.hpp"
 
 #include <string>
-
-#include "DynCast.hpp"
 
 namespace Semantics {
 
@@ -89,13 +88,18 @@ inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl, bool global)
 
 inline bool isArrayOfUndefinedStructuredType(
     const Parsing::VarDecl& varDecl,
-    const SymbolTable& symbolTable,
-    const SymbolTable::ReturnedEntry& prevEntry)
+    const SymbolTable& symbolTable)
 {
     if (varDecl.type->kind != Parsing::TypeBase::Kind::Array)
         return false;
-    const auto arrayType = dynCast<const Parsing::ArrayType>(varDecl.type.get());
-
-    return false;
+    const Parsing::TypeBase* type = Parsing::getArrayBaseType(*varDecl.type);
+    if (!Parsing::isStructuredType(*type))
+        return false;
+    if (type->kind == Parsing::TypeBase::Kind::Struct) {
+        const auto structType = dynamic_cast<const Parsing::StructType*>(type);
+        return !symbolTable.lookup(structType->identifier).isDefined();
+    }
+    const auto unionType = dynamic_cast<const Parsing::UnionType*>(type);
+    return !symbolTable.lookup(unionType->identifier).isDefined();
 }
 } // Semantics

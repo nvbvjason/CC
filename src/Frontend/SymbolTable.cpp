@@ -51,7 +51,7 @@ std::string SymbolTable::getUniqueName(const std::string& unique) const
     assert(false && "Should always get called after contains never happen in SymbolTable::getUniqueName");
 }
 
-void SymbolTable::setArgs(Parsing::FuncDecl& funDecl)
+void SymbolTable::setArgs(const Parsing::FuncDecl& funDecl)
 {
     m_args = funDecl.params;
     m_argTypes.clear();
