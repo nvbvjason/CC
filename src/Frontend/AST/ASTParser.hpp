@@ -140,7 +140,7 @@ struct FuncDecl final : Declaration {
 };
 
 struct StructDecl final : Declaration {
-    const std::string identifier;
+    std::string identifier;
     std::vector<std::unique_ptr<Declaration>> members;
 
     StructDecl(const i64 loc,
@@ -159,7 +159,7 @@ struct StructDecl final : Declaration {
 };
 
 struct UnionDecl final : Declaration {
-    const std::string identifier;
+    std::string identifier;
     std::vector<std::unique_ptr<Declaration>> members;
 
     UnionDecl(const i64 loc,

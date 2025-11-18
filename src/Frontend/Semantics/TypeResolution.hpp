@@ -114,9 +114,6 @@ public:
 private:
     void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }
     [[nodiscard]] bool hasError() const { return !m_errors.empty(); }
-    std::unique_ptr<Parsing::TypeBase> getCommonPointerType(
-        const std::unique_ptr<Parsing::Expr>& left,
-        const std::unique_ptr<Parsing::Expr>& right);
 };
 
 inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
@@ -150,7 +147,7 @@ inline bool isIllegalDoubleCompoundAssignOperation(const Parsing::AssignmentExpr
     using Oper = Parsing::AssignmentExpr::Operator;
     return oper == Oper::ModuloAssign || oper == Oper::BitwiseAndAssign ||
            oper == Oper::BitwiseOrAssign || oper == Oper::BitwiseXorAssign ||
-           oper == Oper::LeftShiftAssign || oper == Oper::RightShiftAssign;;
+           oper == Oper::LeftShiftAssign || oper == Oper::RightShiftAssign;
 }
 
 inline bool isIllegalPointerCompoundAssignOperation(const Parsing::AssignmentExpr::Operator oper)

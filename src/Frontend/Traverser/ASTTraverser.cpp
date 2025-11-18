@@ -10,13 +10,15 @@ void ASTTraverser::visit(Program& program)
         decl->accept(*this);
 }
 
+// Declaration
 void ASTTraverser::visit(VarDecl& varDecl)
 {
+    if (varDecl.type)
+        varDecl.type->accept(*this);
     if (varDecl.init)
         varDecl.init->accept(*this);
 }
 
-// Declaration
 void ASTTraverser::visit(FuncDecl& funDecl)
 {
     if (funDecl.body)
@@ -50,6 +52,12 @@ void ASTTraverser::visit(UnionDecl& unionDecl)
 {
     for (const auto& member : unionDecl.members)
         member->accept(*this);
+}
+
+void ASTTraverser::visit(MemberDecl& memberDecl)
+{
+    if (memberDecl.type)
+        memberDecl.type->accept(*this);
 }
 
 void ASTTraverser::visit(FuncType& functionType)
@@ -165,6 +173,8 @@ void ASTTraverser::visit(SwitchStmt& switchStmt)
 // Expression
 void ASTTraverser::visit(CastExpr& castExpr)
 {
+    if (castExpr.type)
+        castExpr.type->accept(*this);
     castExpr.innerExpr->accept(*this);
 }
 
@@ -200,6 +210,8 @@ void ASTTraverser::visit(FuncCallExpr& functionCallExpr)
 
 void ASTTraverser::visit(DereferenceExpr& dereferenceExpr)
 {
+    if (dereferenceExpr.type)
+        dereferenceExpr.type->accept(*this);
     dereferenceExpr.reference->accept(*this);
 }
 
@@ -216,6 +228,8 @@ void ASTTraverser::visit(SubscriptExpr& subscriptExpr)
 
 void ASTTraverser::visit(SizeOfTypeExpr& sizeOfTypeExpr)
 {
+    if (sizeOfTypeExpr.sizeType)
+        sizeOfTypeExpr.sizeType->accept(*this);
     sizeOfTypeExpr.sizeType->accept(*this);
 }
 

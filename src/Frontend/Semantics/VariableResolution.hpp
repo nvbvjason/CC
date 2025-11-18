@@ -41,6 +41,9 @@ public:
     void visit(Parsing::StructDecl& structDecl) override;
     void visit(Parsing::UnionDecl& unionDecl) override;
 
+    void visit(Parsing::StructType& structType) override;
+    void visit(Parsing::UnionType& unionType) override;
+
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
 

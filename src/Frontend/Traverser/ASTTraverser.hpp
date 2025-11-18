@@ -18,7 +18,7 @@ public:
     void visit(DeclBlockItem& declBlockItem) override;
     void visit(StructDecl& structDecl) override;
     void visit(UnionDecl& unionDecl) override;
-    void visit(MemberDecl& memberDecl) override {}
+    void visit(MemberDecl& memberDecl) override;
 
     // Type
     void visit(VarType& varType) override {}

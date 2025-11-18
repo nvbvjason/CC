@@ -1119,7 +1119,7 @@ std::unique_ptr<TypeBase> Parser::typeResolve(std::vector<TokenType>& tokens) co
             return nullptr;
         if (tokens.back() != TokenType::Identifier)
             return nullptr;
-        return std::make_unique<UnionType>(c_tokenStore.getLexeme(m_current - 1));
+        return std::make_unique<UnionType>(c_tokenStore.getLexeme(m_current - 1), m_current - 2);
     }
     if (std::ranges::find(tokens, TokenType::StructKeyword) != tokens.end()) {
         if (2 != tokens.size())
@@ -1128,7 +1128,7 @@ std::unique_ptr<TypeBase> Parser::typeResolve(std::vector<TokenType>& tokens) co
             return nullptr;
         if (tokens.back() != TokenType::Identifier)
             return nullptr;
-        return std::make_unique<StructType>(c_tokenStore.getLexeme(m_current - 1));
+        return std::make_unique<StructType>(c_tokenStore.getLexeme(m_current - 1), m_current - 2);
     }
     if (std::ranges::find(tokens, TokenType::CharKeyword) != tokens.end()) {
         if (2 < tokens.size())

@@ -51,12 +51,12 @@ std::unique_ptr<TypeBase> deepCopy(const ArrayType& arrayType)
 
 std::unique_ptr<TypeBase> deepCopy(const StructType& structType)
 {
-    return std::make_unique<StructType>(structType.identifier);
+    return std::make_unique<StructType>(structType.identifier, structType.location);
 }
 
 std::unique_ptr<TypeBase> deepCopy(const UnionType& unionType)
 {
-    return std::make_unique<UnionType>(unionType.identifier);
+    return std::make_unique<UnionType>(unionType.identifier, unionType.location);
 }
 
 std::unique_ptr<TypeBase> deepCopy(const VarType& varType)

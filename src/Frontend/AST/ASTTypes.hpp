@@ -74,13 +74,18 @@ struct ArrayType final : TypeBase {
 };
 
 struct StructType final : TypeBase {
-    const std::string identifier;
+    std::string identifier;
+    const i64 location;
 
-    explicit StructType(std::string identifier)
-        : TypeBase(Type::Struct, Kind::Struct), identifier(std::move(identifier)) {}
+    explicit StructType(std::string identifier, const i64 location)
+        : TypeBase(Type::Struct, Kind::Struct),
+          identifier(std::move(identifier)),
+          location(location) {}
 
-    explicit StructType(StructType&& structType) noexcept
-        : TypeBase(Type::Struct, Kind::Struct), identifier(std::move(structType.identifier)) {}
+    StructType(StructType&& structType) noexcept
+        : TypeBase(Type::Struct, Kind::Struct),
+          identifier(std::move(structType.identifier)),
+          location(structType.location) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
@@ -89,13 +94,16 @@ struct StructType final : TypeBase {
 };
 
 struct UnionType final : TypeBase {
-    const std::string identifier;
+    std::string identifier;
+    const i64 location;
 
-    explicit UnionType(std::string identifier)
-        : TypeBase(Type::Union, Kind::Union), identifier(std::move(identifier)) {}
+    explicit UnionType(std::string identifier, const i64 location)
+        : TypeBase(Type::Union, Kind::Union), identifier(std::move(identifier)), location(location) {}
 
-    explicit UnionType(UnionType&& unionType) noexcept
-        : TypeBase(Type::Union, Kind::Union), identifier(std::move(unionType.identifier)) {}
+    UnionType(UnionType&& unionType) noexcept
+        : TypeBase(Type::Union, Kind::Union),
+          identifier(std::move(unionType.identifier)),
+          location(unionType.location) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
