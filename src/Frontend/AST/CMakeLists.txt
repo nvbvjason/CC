@@ -3,8 +3,8 @@ add_library(AST STATIC
         ASTVisitor.hpp
         ASTExpr.hpp
         ASTBase.hpp
-        ASTDeepCopy.cpp
-        ASTDeepCopy.hpp
+        ASTUtils.cpp
+        ASTUtils.hpp
 )
 
 target_include_directories(AST PUBLIC

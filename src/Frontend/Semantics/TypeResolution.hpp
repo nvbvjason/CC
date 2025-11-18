@@ -4,9 +4,8 @@
 #include "ASTTraverser.hpp"
 #include "ASTTypes.hpp"
 #include "TypeConversion.hpp"
-#include "ASTDeepCopy.hpp"
+#include "ASTUtils.hpp"
 #include "Error.hpp"
-#include "Utils.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -55,6 +54,9 @@ public:
 
     void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
+    void visit(Parsing::StructDecl& structDecl) override;
+    void visit(Parsing::UnionDecl& unionDecl) override;
+    void visit(Parsing::MemberDecl& memberDecl) override;
     bool isIllegalVarDecl(const Parsing::VarDecl& varDecl);
     void visit(Parsing::DeclForInit& declForInit) override;
     void visit(Parsing::ExprForInit& exprForInit) override;
@@ -90,12 +92,14 @@ public:
     std::unique_ptr<Parsing::Expr> convertFuncCallExpr(Parsing::FuncCallExpr& funCallExpr);
     void validateAndConvertFuncCallArgs(
         Parsing::FuncCallExpr& funCallExpr,
-        const std::unordered_map<std::string, FuncEntry>::iterator& it);
+        const std::vector<std::unique_ptr<Parsing::TypeBase>>& params);
     std::unique_ptr<Parsing::Expr> convertDerefExpr(Parsing::DereferenceExpr& dereferenceExpr);
     std::unique_ptr<Parsing::Expr> convertAddrOfExpr(Parsing::AddrOffExpr& addrOffExpr);
     std::unique_ptr<Parsing::Expr> convertSubscriptExpr(Parsing::SubscriptExpr& subscriptExpr);
     std::unique_ptr<Parsing::Expr> convertSizeOfExprExpr(Parsing::SizeOfExprExpr& sizeOfExprExpr);
     std::unique_ptr<Parsing::Expr> convertSizeOfExprType(const Parsing::SizeOfTypeExpr& sizeOfTypeExpr);
+    std::unique_ptr<Parsing::Expr> convertDotExpr(Parsing::DotExpr& dotExpr);
+    std::unique_ptr<Parsing::Expr> convertArrowExpr(Parsing::ArrowExpr& arrowExpr);
 
     bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     std::unique_ptr<Parsing::Expr> validateAndConvertPtrsInTernaryExpr(

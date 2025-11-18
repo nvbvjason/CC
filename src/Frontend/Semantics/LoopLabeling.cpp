@@ -2,9 +2,8 @@
 #include "ASTParser.hpp"
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
-#include "ASTDeepCopy.hpp"
+#include "ASTUtils.hpp"
 #include "AstToIrOperators.hpp"
-#include "Utils.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -200,7 +199,7 @@ struct Node {
 
 void initArray(Parsing::VarDecl& array, std::vector<Error>& errors)
 {
-    const Type innerArrayType = Ir::getArrayType(array.type.get());
+    const Type innerArrayType = getArrayType(array.type.get());
     const auto arrayInit = array.init.get();
     const std::vector<i64> dimensions = getDimensions(array);
     auto[staticInitializer, emplacedPositions] =

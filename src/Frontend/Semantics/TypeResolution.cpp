@@ -1,8 +1,7 @@
 #include "TypeResolution.hpp"
 #include "ASTIr.hpp"
 #include "TypeConversion.hpp"
-#include "Utils.hpp"
-#include "ASTDeepCopy.hpp"
+#include "ASTUtils.hpp"
 #include "AstToIrOperators.hpp"
 
 namespace {
@@ -108,6 +107,21 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     assignTypeToArithmeticUnaryExpr(varDecl);
 }
 
+void TypeResolution::visit(Parsing::StructDecl& structDecl)
+{
+    ASTTraverser::visit(structDecl);
+}
+
+void TypeResolution::visit(Parsing::UnionDecl& unionDecl)
+{
+    ASTTraverser::visit(unionDecl);
+}
+
+void TypeResolution::visit(Parsing::MemberDecl& memberDecl)
+{
+    ASTTraverser::visit(memberDecl);
+}
+
 void TypeResolution::verifyArrayInSingleInit(
     const Parsing::VarDecl& varDecl, const Parsing::SingleInitializer& singleInitializer)
 {
@@ -169,7 +183,7 @@ void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
     if (arrayType->size < compoundInit->initializers.size())
         addError("Compound initializer cannot be longer than array size", varDecl.location);
 
-    const Type arrayTypeInner = Ir::getArrayType(varDecl.type.get());
+    const Type arrayTypeInner = getArrayType(varDecl.type.get());
 
     for (const auto& initializer : compoundInit->initializers) {
         if (initializer->kind == Parsing::Initializer::Kind::Single) {
@@ -378,6 +392,14 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convert(Parsing::Expr& expr)
             const auto sizeOfType = dynCast<Parsing::SizeOfTypeExpr>(&expr);
             return convertSizeOfExprType(*sizeOfType);
         }
+        case ExprKind::Dot: {
+            const auto dot = dynCast<Parsing::DotExpr>(&expr);
+            return convertDotExpr(*dot);
+        }
+        case ExprKind::Arrow: {
+            const auto arrow = dynCast<Parsing::ArrowExpr>(&expr);
+            return convertArrowExpr(*arrow);
+        }
         default:
             std::abort();
     }
@@ -399,13 +421,13 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertStringExpr(Parsing::String
 
 void TypeResolution::validateAndConvertFuncCallArgs(
     Parsing::FuncCallExpr& funCallExpr,
-    const std::unordered_map<std::string, FuncEntry>::iterator& it)
+    const std::vector<std::unique_ptr<Parsing::TypeBase>>& params)
 {
     for (size_t i = 0; i < funCallExpr.args.size(); ++i) {
         const Parsing::Expr* const callExpr = funCallExpr.args[i].get();
-        const Parsing::TypeBase* const argTypeBase = it->second.paramTypes[i].get();
+        const Parsing::TypeBase* const argTypeBase = params[i].get();
         const Type typeInner = funCallExpr.args[i]->type->type;
-        const Type castToType = it->second.paramTypes[i]->type;
+        const Type castToType = params[i]->type;
         if (typeInner == Type::Pointer && castToType == Type::Pointer) {
             if (!Parsing::areEquivalentTypes(*callExpr->type, *argTypeBase)
                 && !isVoidPointer(*callExpr->type) && !isVoidPointer(*argTypeBase))
@@ -439,7 +461,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertFuncCallExpr(Parsing::Func
 
     if (hasError())
         return Parsing::deepCopy(funCallExpr);
-    validateAndConvertFuncCallArgs(funCallExpr, it);
+    validateAndConvertFuncCallArgs(funCallExpr, it->second.paramTypes);
     return Parsing::deepCopy(funCallExpr);
 }
 
@@ -937,6 +959,20 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprType(const Parsi
         return Parsing::deepCopy(sizeOfTypeExpr);
     }
     return Parsing::deepCopy(sizeOfTypeExpr);
+}
+
+std::unique_ptr<Parsing::Expr> TypeResolution::convertDotExpr(Parsing::DotExpr& dotExpr)
+{
+    dotExpr.structuredExpr = convert(*dotExpr.structuredExpr);
+    dotExpr.type = Parsing::deepCopy(*dotExpr.structuredExpr->type);
+    return Parsing::deepCopy(dotExpr);
+}
+
+std::unique_ptr<Parsing::Expr> TypeResolution::convertArrowExpr(Parsing::ArrowExpr& arrowExpr)
+{
+    arrowExpr.pointerExpr = convert(*arrowExpr.pointerExpr);
+    arrowExpr.type = Parsing::deepCopy(*arrowExpr.pointerExpr->type);
+    return Parsing::deepCopy(arrowExpr);
 }
 
 bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)

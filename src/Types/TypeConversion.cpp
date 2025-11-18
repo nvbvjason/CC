@@ -95,3 +95,8 @@ bool isCharacterType(const Type t)
 {
     return t == Type::Char || t == Type::I8 || t == Type::U8;
 }
+
+bool isStructuredType(const Type type)
+{
+    return type == Type::Struct || type == Type::Union;
+}

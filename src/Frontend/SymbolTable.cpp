@@ -1,7 +1,7 @@
 #include "SymbolTable.hpp"
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
-#include "ASTDeepCopy.hpp"
+#include "ASTUtils.hpp"
 
 #include <cassert>
 

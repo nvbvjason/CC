@@ -4,7 +4,7 @@
 #include "ASTTypes.hpp"
 #include "AstToIrOperators.hpp"
 #include "DynCast.hpp"
-#include "Utils.hpp"
+#include "ASTUtils.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -51,7 +51,7 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
 
 void GenerateIr::allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl)
 {
-    const i64 size = getArraySize(varDecl.type.get());
+    const i64 size = Parsing::getArraySize(varDecl.type.get());
     const Type type = getArrayType(varDecl.type.get());
     emplaceAllocate(size, varDecl.name, type);
 }
@@ -145,8 +145,8 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl& varDecl)
     const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
     const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
     const Type type = getArrayType(varDecl.type.get());
-    const i64 arraySize = getArraySize(arrayType);
-    const i64 alignment = getArrayAlignment(arraySize, type);
+    const i64 arraySize = Parsing::getArraySize(arrayType);
+    const i64 alignment = Parsing::getArrayAlignment(arraySize, type);
     i64 offset = 0;
     const auto zeroConst = genZeroValueForType(type);
     for (const auto& init : compoundInit->initializers) {
@@ -220,7 +220,7 @@ std::vector<std::unique_ptr<Initializer>> GenerateIr::genStaticArrayInit(
 {
     std::vector<std::unique_ptr<Initializer>> initializers;
     if (!defined) {
-        const i64 size = getArraySize(varDecl.type.get());
+        const i64 size = Parsing::getArraySize(varDecl.type.get());
         initializers.emplace_back(std::make_unique<ZeroInitializer>(size));
         return initializers;
     }
@@ -792,7 +792,7 @@ std::unique_ptr<ExprResult> GenerateIr::genVarInst(const Parsing::VarExpr& varEx
     auto var = std::make_shared<ValueVar>(iden, varExpr.type->type);
     var->referingTo = varExpr.referingTo;
     if (var->type == Type::Array) {
-        var->size = getArraySize(varExpr.type.get());
+        var->size = Parsing::getArraySize(varExpr.type.get());
         var->type = Type::Pointer;
     }
     return std::make_unique<PlainOperand>(var);
@@ -1088,7 +1088,7 @@ i64 getTypeOfSize(Parsing::TypeBase* typeBase)
         case Parsing::TypeBase::Kind::Pointer:
             return 8;
         case Parsing::TypeBase::Kind::Array:
-            return getArraySize(typeBase) * getTypeSize(getArrayType(typeBase));
+            return Parsing::getArraySize(typeBase) * getTypeSize(getArrayType(typeBase));
         default:
             return getTypeSize(typeBase->type);
     }

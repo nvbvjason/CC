@@ -226,7 +226,7 @@ void ASTTraverser::visit(SizeOfExprExpr& sizeOfExprExpr)
 
 void ASTTraverser::visit(DotExpr& dotExpr)
 {
-    dotExpr.structExpr->accept(*this);
+    dotExpr.structuredExpr->accept(*this);
 }
 
 void ASTTraverser::visit(ArrowExpr& arrowExpr)

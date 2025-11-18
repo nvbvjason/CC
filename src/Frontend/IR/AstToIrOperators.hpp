@@ -104,34 +104,4 @@ inline bool isBitShift(const Parsing::AssignmentExpr::Operator oper)
     return oper == Oper::LeftShiftAssign || oper == Oper::RightShiftAssign;
 }
 
-
-inline i64 getArraySize(Parsing::TypeBase* type)
-{
-    i64 result = 1;
-    while (type->kind == Parsing::TypeBase::Kind::Array) {
-        const auto arrayType = dynCast<Parsing::ArrayType>(type);
-        result *= arrayType->size;
-        type = arrayType->elementType.get();
-    }
-    return result;
-}
-
-inline Type getArrayType(const Parsing::TypeBase* const type)
-{
-    const Parsing::TypeBase* currentType = type;
-    while (currentType->kind == Parsing::TypeBase::Kind::Array) {
-        const auto arrayType = dynCast<const Parsing::ArrayType>(currentType);
-        currentType = arrayType->elementType.get();
-    }
-    return currentType->type;
-}
-
-inline i64 getArrayAlignment(const i64 size, const Type type)
-{
-    const i64 realSize = size * getTypeSize(type);
-    if (16 <= realSize)
-        return 16;
-    return getTypeSize(type);
-}
-
 } // Ir

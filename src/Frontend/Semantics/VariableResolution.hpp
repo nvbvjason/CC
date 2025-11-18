@@ -8,6 +8,8 @@
 
 #include <string>
 
+#include "DynCast.hpp"
+
 namespace Semantics {
 
 class VariableResolution : public Parsing::ASTTraverser {
@@ -83,5 +85,17 @@ inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl, bool global)
     if (global && varDecl.storage != Storage::Static)
         return true;
     return varDecl.storage == Storage::Extern;
+}
+
+inline bool isArrayOfUndefinedStructuredType(
+    const Parsing::VarDecl& varDecl,
+    const SymbolTable& symbolTable,
+    const SymbolTable::ReturnedEntry& prevEntry)
+{
+    if (varDecl.type->kind != Parsing::TypeBase::Kind::Array)
+        return false;
+    const auto arrayType = dynCast<const Parsing::ArrayType>(varDecl.type.get());
+
+    return false;
 }
 } // Semantics
