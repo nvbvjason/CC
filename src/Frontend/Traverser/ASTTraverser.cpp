@@ -40,15 +40,9 @@ void ASTTraverser::visit(DeclBlockItem& declBlockItem)
     declBlockItem.decl->accept(*this);
 }
 
-void ASTTraverser::visit(StructDecl& structDecl)
+void ASTTraverser::visit(StructuredDecl& structuredDecl)
 {
-    for (const auto& member : structDecl.members)
-        member->accept(*this);
-}
-
-void ASTTraverser::visit(UnionDecl& unionDecl)
-{
-    for (const auto& member : unionDecl.members)
+    for (const auto& member : structuredDecl.members)
         member->accept(*this);
 }
 

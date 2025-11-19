@@ -13,15 +13,14 @@ namespace Parsing {
 
     variable_declaration = (identifier name, exp? init, type var_type, storage_class?)
     function_declaration = (identifier name, identifier* params, block? body, type var_type, storage_class?)
-    struct_declaration = (identifier tag, member_declaration* members)
-    union_declaration = (identifier tag, member_declaration* members)
+    structured_declaration = (identifier tag, member_declaration* members)
     member_declaration = (identifier member_name, type member_type)
 
     type = Int | Long | UInt | ULong | Double | Char | SChar | UChar | Void
          | FunType(type* params, type ret)
          | Pointer(type referenced)
          | Array(type element, int size)
-         | StructDecl(identifier tag)
+         | StructuredTye(identifier tag, type)
     storage_class = Static | Extern
     block = Block(block_item)
     block_item = S(statement) | D(declaration)
@@ -82,8 +81,7 @@ struct Program;
 struct Declaration;
 struct FuncDecl;
 struct VarDecl;
-struct StructDecl;
-struct UnionDecl;
+struct StructuredDecl;
 struct MemberDecl;
 
 struct Block;

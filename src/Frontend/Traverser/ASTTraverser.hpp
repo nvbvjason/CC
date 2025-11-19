@@ -16,8 +16,7 @@ public:
 
     void visit(StmtBlockItem& stmtBlockItem) override;
     void visit(DeclBlockItem& declBlockItem) override;
-    void visit(StructDecl& structDecl) override;
-    void visit(UnionDecl& unionDecl) override;
+    void visit(StructuredDecl& structuredDecl) override;
     void visit(MemberDecl& memberDecl) override;
 
     // Type

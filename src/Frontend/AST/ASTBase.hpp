@@ -115,7 +115,7 @@ protected:
 
 struct Declaration : ASTNode {
     enum class Kind : u8 {
-        VarDecl, FuncDecl, StructDecl, UnionDecl, MemberDecl
+        VarDecl, FuncDecl, StructuredDecl, MemberDecl
     };
     enum class StorageClass : u8 {
         None,

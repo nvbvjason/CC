@@ -1,4 +1,4 @@
-#include "InitArray.hpp"
+#include "InitCompound.hpp"
 #include "ASTUtils.hpp"
 #include "DynCast.hpp"
 #include "TypeConversion.hpp"
@@ -8,13 +8,13 @@
 
 namespace Semantics {
 
-InitArray::InitArray(Parsing::VarDecl& varDecl, std::vector<Error>& errors)
+InitCompound::InitCompound(Parsing::VarDecl& varDecl, std::vector<Error>& errors)
     : varDecl(varDecl), errors(errors)
 {
     dimensions = getDimensions(varDecl);
 }
 
-void InitArray::initCharacterArray(const Parsing::SingleInitializer& singleInit,
+void InitCompound::initCharacterArray(const Parsing::SingleInitializer& singleInit,
                                    const Parsing::ArrayType& arrayType) const
 {
     if (singleInit.expr->kind != Parsing::Expr::Kind::String)
@@ -35,7 +35,7 @@ void InitArray::initCharacterArray(const Parsing::SingleInitializer& singleInit,
     varDecl.init = std::make_unique<Parsing::CompoundInitializer>(std::move(initializers));
 }
 
-void InitArray::initArray()
+void InitCompound::initArray()
 {
     const Type innerArrayType = Parsing::getArrayType(varDecl.type.get());
     if (isStructuredType(innerArrayType)) {
@@ -51,7 +51,7 @@ void InitArray::initArray()
 }
 
 std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
-    InitArray::flattenWithPositions(
+    InitCompound::flattenWithPositions(
         const Type innerArrayType,
         Parsing::Initializer* arrayInit)
 {
@@ -100,7 +100,7 @@ std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::
     return {std::move(staticInitializer), emplacedPositions};
 }
 
-void InitArray::createInitsWithPositionsCompound(
+void InitCompound::createInitsWithPositionsCompound(
     const std::vector<i64>& position,
     const Parsing::CompoundInitializer& compoundInit)
 {
@@ -111,7 +111,7 @@ void InitArray::createInitsWithPositionsCompound(
     }
 }
 
-void InitArray::createInitsWithPositionsSingle(
+void InitCompound::createInitsWithPositionsSingle(
     const Type innerArrayType,
     std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,
     std::vector<std::vector<i64>>& emplacedPositions,
@@ -177,7 +177,7 @@ std::unique_ptr<Parsing::Initializer> emplaceNewSingleInit(
     return std::make_unique<Parsing::SingleInitializer>(std::move(singleInit.expr));
 }
 
-std::vector<std::unique_ptr<Parsing::Initializer>> InitArray::getZeroInits(
+std::vector<std::unique_ptr<Parsing::Initializer>> InitCompound::getZeroInits(
     const std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,
     const std::vector<std::vector<i64>>& emplacedPositions)
 {
@@ -206,7 +206,7 @@ std::vector<std::unique_ptr<Parsing::Initializer>> InitArray::getZeroInits(
     return newInitializers;
 }
 
-i64 InitArray::getDistance(
+i64 InitCompound::getDistance(
     const std::vector<i64>& positionBefore,
     const std::vector<i64>& position) const
 {
@@ -215,7 +215,7 @@ i64 InitArray::getDistance(
     return now - before - 1;
 }
 
-i64 InitArray::getPosition(const std::vector<i64>& position) const
+i64 InitCompound::getPosition(const std::vector<i64>& position) const
 {
     if (position.empty())
         return -1;

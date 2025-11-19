@@ -26,8 +26,7 @@ public:
     // Declartion
     void visit(const VarDecl& varDecl) override;
     void visit(const FuncDecl& funDecl) override;
-    void visit(const StructDecl& structDecl) override;
-    void visit(const UnionDecl& unionDecl) override;
+    void visit(const StructuredDecl& structuredDecl) override;
 
     void visit(const Block& block) override;
 

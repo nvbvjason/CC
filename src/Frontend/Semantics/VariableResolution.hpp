@@ -39,8 +39,7 @@ public:
     std::vector<Error> resolve(Parsing::Program& program);
     void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
-    void visit(Parsing::StructDecl& structDecl) override;
-    void visit(Parsing::UnionDecl& unionDecl) override;
+    void visit(Parsing::StructuredDecl& structuredDecl) override;
 
     void visit(Parsing::StructuredType& structuredType) override;
 

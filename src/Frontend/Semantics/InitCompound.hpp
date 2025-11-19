@@ -7,7 +7,7 @@
 
 namespace Semantics {
 
-class InitArray {
+class InitCompound {
     struct Node {
         Parsing::Initializer* init;
         const std::vector<i64> position;
@@ -21,7 +21,7 @@ class InitArray {
     std::vector<i64> dimensions;
     std::stack<Node, std::vector<Node>> stack;
 public:
-    explicit InitArray(Parsing::VarDecl& varDecl, std::vector<Error>& errors);
+    explicit InitCompound(Parsing::VarDecl& varDecl, std::vector<Error>& errors);
     void initCharacterArray(const Parsing::SingleInitializer& singleInit,
                             const Parsing::ArrayType& arrayType) const;
     void initArray();

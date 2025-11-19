@@ -285,6 +285,8 @@ bool isStructuredTypeBase(const TypeBase& type)
 
 bool isInCompleteStructuredType(const TypeBase& type)
 {
+    if (type.type == Type::Void)
+        return true ;
     if (type.kind != TypeBase::Kind::Structured)
         return false;
     const auto structured = dynCast<const StructuredType>(&type);
@@ -356,13 +358,14 @@ std::unique_ptr<Expr> convertOrCastToType(std::unique_ptr<Expr>& expr, const Typ
     return convertToArithmeticType(*expr, targetType);
 }
 
-i64 getArraySize(TypeBase* type)
+i64 getArraySize(const TypeBase* const type)
 {
     i64 result = 1;
-    while (type->kind == TypeBase::Kind::Array) {
-        const auto arrayType = dynCast<ArrayType>(type);
+    const TypeBase* itType = dynCast<const ArrayType>(type);
+    while (itType->kind == TypeBase::Kind::Array) {
+        const auto arrayType = dynCast<const ArrayType>(itType);
         result *= arrayType->size;
-        type = arrayType->elementType.get();
+        itType = arrayType->elementType.get();
     }
     return result;
 }

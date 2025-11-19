@@ -4,7 +4,7 @@
 #include "DynCast.hpp"
 #include "ASTUtils.hpp"
 #include "AstToIrOperators.hpp"
-#include "InitArray.hpp"
+#include "InitCompound.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -40,14 +40,14 @@ void Labeling::visit(Parsing::VarDecl& varDecl)
         return;
     if (varDecl.type->type == Type::Array) {
         if (varDecl.init->kind == Parsing::Initializer::Kind::Compound) {
-            InitArray initArray(varDecl, errors);
+            InitCompound initArray(varDecl, errors);
             initArray.initArray();
             return;
         }
         const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
         auto singleInitializer = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
         if (isCharacterType(arrayType->elementType->type)) {
-            InitArray initArray(varDecl, errors);
+            InitCompound initArray(varDecl, errors);
             initArray.initCharacterArray(*singleInitializer, *arrayType);
         }
     }

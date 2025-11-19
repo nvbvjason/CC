@@ -15,65 +15,38 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
     return std::move(m_errors);
 }
 
-void VariableResolution::visit(Parsing::StructDecl& structDecl)
+void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
 {
-    const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structDecl.identifier);
-    if (structuredEntry.isFromCurrentScope() && structuredEntry.typeBase->type == Type::Union) {
-        addError("Cannot define union and struct of same name in same scope", structDecl.location);
+    const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredDecl.identifier);
+    if (structuredEntry.isFromCurrentScope() &&
+        structuredEntry.typeBase->type != structuredEntry.typeBase->type) {
+        addError("Cannot define union and struct of same name in same scope", structuredDecl.location);
         return;
     }
-    if (!structDecl.members.empty()) {
+    if (!structuredDecl.members.empty()) {
         if (structuredEntry.isDefined()) {
-            addError("Cannot redefine struct in same scope", structDecl.location);
+            addError("Cannot redefine struct in same scope", structuredDecl.location);
             return;
         }
-        if (duplicateIdentifierInMembers(structDecl.members)) {
-            addError("Cannot have duplicate identifiers in struct", structDecl.location);
+        if (duplicateIdentifierInMembers(structuredDecl.members)) {
+            addError("Cannot have duplicate identifiers in struct", structuredDecl.location);
             return;
         }
-        const std::string uniqueName = makeTemporaryName(structDecl.identifier);
+        const std::string uniqueName = makeTemporaryName(structuredDecl.identifier);
         auto structuredType = std::make_unique<Parsing::StructuredType>(
-            Type::Struct, uniqueName, structDecl.location);
+            Type::Struct, uniqueName, structuredDecl.location);
         structuredType->isComplete = true;
-        structDecl.identifier = uniqueName;
+        structuredDecl.identifier = uniqueName;
     }
-    m_symbolTable.addStructuredEntry(structDecl.identifier,
-                                     structDecl.identifier,
+    m_symbolTable.addStructuredEntry(structuredDecl.identifier,
+                                     structuredDecl.identifier,
                                      Parsing::StructuredType(
                                          Type::Struct,
-                                         structDecl.identifier,
-                                         structDecl.location
+                                         structuredDecl.identifier,
+                                         structuredDecl.location
                                      ),
-                                     !structDecl.members.empty());
-    ASTTraverser::visit(structDecl);
-}
-
-void VariableResolution::visit(Parsing::UnionDecl& unionDecl)
-{
-    const auto structuredEntry = m_symbolTable.lookupStructuredEntry(unionDecl.identifier);
-    if (structuredEntry.isFromCurrentScope() && structuredEntry.typeBase->type == Type::Struct)
-        addError("Cannot define union and struct of same name in same scope", unionDecl.location);
-    if (!unionDecl.members.empty()) {
-        if (structuredEntry.isDefined()) {
-            addError("Cannot redefine union in same scope", unionDecl.location);
-            return;
-        }
-        if (duplicateIdentifierInMembers(unionDecl.members)) {
-            addError("Cannot have duplicate identifiers in union", unionDecl.location);
-            return;
-        }
-        const std::string uniqueName = makeTemporaryName(unionDecl.identifier);
-        m_symbolTable.addStructuredEntry(unionDecl.identifier,
-                                         uniqueName,
-                                         Parsing::StructuredType(
-                                             Type::Union,
-                                             uniqueName,
-                                             unionDecl.location
-                                            ),
-                                         !unionDecl.members.empty());
-        unionDecl.identifier = uniqueName;
-    }
-    ASTTraverser::visit(unionDecl);
+                                     !structuredDecl.members.empty());
+    ASTTraverser::visit(structuredDecl);
 }
 
 void VariableResolution::visit(Parsing::FuncDecl& funDecl)

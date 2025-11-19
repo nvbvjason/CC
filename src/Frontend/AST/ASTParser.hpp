@@ -158,42 +158,29 @@ struct MemberDecl final : Declaration {
     MemberDecl() = delete;
 };
 
-struct StructDecl final : Declaration {
+struct StructuredDecl final : Declaration {
     std::string identifier;
     std::vector<std::unique_ptr<MemberDecl>> members;
+    const Type type;
 
-    StructDecl(const i64 loc,
-               std::string identifier,
-               std::vector<std::unique_ptr<MemberDecl>>&& members)
-        : Declaration(loc, Kind::StructDecl, StorageClass::None),
+    StructuredDecl(const i64 loc,
+                   std::string identifier,
+                   std::vector<std::unique_ptr<MemberDecl>>&& members,
+                   const Type type)
+        : Declaration(loc, Kind::StructuredDecl, StorageClass::None),
             identifier(std::move(identifier)),
-            members(std::move(members)) {}
+            members(std::move(members)),
+            type(type) {}
+
+    [[nodiscard]] bool isStruct() const { return type == Type::Struct; }
+    [[nodiscard]] bool isUnion() const { return type == Type::Union; }
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
-    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::StructDecl; }
+    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::StructuredDecl; }
 
-    StructDecl() = delete;
-};
-
-struct UnionDecl final : Declaration {
-    std::string identifier;
-    std::vector<std::unique_ptr<MemberDecl>> members;
-
-    UnionDecl(const i64 loc,
-              std::string identifier,
-              std::vector<std::unique_ptr<MemberDecl>>&& members)
-        : Declaration(loc, Kind::UnionDecl, StorageClass::None),
-            identifier(std::move(identifier)),
-            members(std::move(members)) {}
-
-    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
-    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
-
-    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::UnionDecl; }
-
-    UnionDecl() = delete;
+    StructuredDecl() = delete;
 };
 
 struct ReturnStmt final : Stmt {

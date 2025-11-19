@@ -105,16 +105,6 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     assignTypeToArithmeticUnaryExpr(varDecl);
 }
 
-void TypeResolution::visit(Parsing::StructDecl& structDecl)
-{
-    m_structuredMembers.emplace(structDecl.identifier, &structDecl.members);
-}
-
-void TypeResolution::visit(Parsing::UnionDecl& unionDecl)
-{
-    m_structuredMembers.emplace(unionDecl.identifier, &unionDecl.members);
-}
-
 void TypeResolution::verifyArrayInSingleInit(
     const Parsing::VarDecl& varDecl, const Parsing::SingleInitializer& singleInitializer)
 {

@@ -135,16 +135,13 @@ void ASTPrinter::visit(const FuncDecl& funDecl)
     addLine("");
 }
 
-void ASTPrinter::visit(const StructDecl& structDecl)
+void ASTPrinter::visit(const StructuredDecl& structuredDecl)
 {
-    addLine("Struct: " + structDecl.identifier);
-    ConstASTTraverser::visit(structDecl);
-}
-
-void ASTPrinter::visit(const UnionDecl& unionDecl)
-{
-    addLine("Union: " + unionDecl.identifier);
-    ConstASTTraverser::visit(unionDecl);
+    if (structuredDecl.isStruct())
+        addLine("Struct: " + structuredDecl.identifier);
+    if (structuredDecl.isUnion())
+        addLine("Union: " + structuredDecl.identifier);
+    ConstASTTraverser::visit(structuredDecl);
 }
 
 void ASTPrinter::visit(const Block& block)

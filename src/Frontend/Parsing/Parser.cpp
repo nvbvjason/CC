@@ -67,15 +67,9 @@ std::unique_ptr<Declaration> Parser::structuredDeclParse(std::unique_ptr<TypeBas
         addError("Expected semicolon after structured declaration", m_current);
         return nullptr;
     }
-    if (typeBase->type == Type::Struct) {
-        const auto structType = dynCast<StructuredType>(typeBase.get());
-        return std::make_unique<StructDecl>(location, structType->identifier, std::move(memberDecls));
-    }
-    if (typeBase->type == Type::Union) {
-        const auto unionType = dynCast<StructuredType>(typeBase.get());
-        return std::make_unique<UnionDecl>(location, unionType->identifier, std::move(memberDecls));
-    }
-    return nullptr;
+    const auto structuredType = dynCast<StructuredType>(typeBase.get());
+    return std::make_unique<StructuredDecl>(
+        location, structuredType->identifier, std::move(memberDecls), typeBase->type);
 }
 
 std::unique_ptr<MemberDecl> Parser::memberDeclParse()

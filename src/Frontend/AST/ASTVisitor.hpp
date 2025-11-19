@@ -13,8 +13,7 @@ public:
     // Declaration
     virtual void visit(VarDecl&) = 0;
     virtual void visit(FuncDecl&) = 0;
-    virtual void visit(StructDecl&) = 0;
-    virtual void visit(UnionDecl&) = 0;
+    virtual void visit(StructuredDecl&) = 0;
     virtual void visit(MemberDecl&) = 0;
 
     virtual void visit(Block&) = 0;
@@ -84,8 +83,7 @@ public:
     // Declaration
     virtual void visit(const VarDecl&) = 0;
     virtual void visit(const FuncDecl&) = 0;
-    virtual void visit(const StructDecl&) = 0;
-    virtual void visit(const UnionDecl&) = 0;
+    virtual void visit(const StructuredDecl&) = 0;
     virtual void visit(const MemberDecl&) = 0;
 
     virtual void visit(const Block&) = 0;

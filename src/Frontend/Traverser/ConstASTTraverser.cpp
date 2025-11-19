@@ -30,15 +30,9 @@ void ConstASTTraverser::visit(const FuncDecl& funDecl)
         funDecl.body->accept(*this);
 }
 
-void ConstASTTraverser::visit(const StructDecl& structDecl)
+void ConstASTTraverser::visit(const StructuredDecl& structuredDecl)
 {
-    for (const auto& member : structDecl.members)
-        member->accept(*this);
-}
-
-void ConstASTTraverser::visit(const UnionDecl& unionDecl)
-{
-    for (const auto& member : unionDecl.members)
+    for (const auto& member : structuredDecl.members)
         member->accept(*this);
 }
 
