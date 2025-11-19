@@ -50,7 +50,8 @@ std::unique_ptr<Expr> convertToArithmeticType(const Expr& expr, Type targetType)
 bool isVoidPointer(const TypeBase& type);
 bool isVoidArray(const TypeBase& type);
 bool isStructuredTypeBase(const TypeBase& type);
-bool isCompleteStructuredType(const TypeBase& type);
+bool isInCompleteStructuredType(const TypeBase& type);
+bool isInCompletePointerToStructuredType(const TypeBase& type);
 bool isArrayOfVoidPointer(const TypeBase& type);
 bool isPointerToVoidArray(const TypeBase& type);
 bool isScalarType(const TypeBase& type);

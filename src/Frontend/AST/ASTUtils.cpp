@@ -283,12 +283,20 @@ bool isStructuredTypeBase(const TypeBase& type)
     return type.type == Type::Struct || type.type == Type::Union;
 }
 
-bool isCompleteStructuredType(const TypeBase& type)
+bool isInCompleteStructuredType(const TypeBase& type)
 {
     if (type.kind != TypeBase::Kind::Structured)
-        return true;
+        return false;
     const auto structured = dynCast<const StructuredType>(&type);
-    return structured->isComplete;
+    return !structured->isComplete;
+}
+
+bool isInCompletePointerToStructuredType(const TypeBase& type)
+{
+    if (type.kind != TypeBase::Kind::Pointer)
+        return false;
+    const auto pointer = dynCast<const PointerType>(&type);
+    return isInCompleteStructuredType(*pointer->referenced);
 }
 
 bool isArrayOfVoidPointer(const TypeBase& type)

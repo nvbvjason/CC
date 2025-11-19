@@ -601,11 +601,19 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleAddSubtractPtrToIntegerType
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
     if (isIntegerType(rightType)) {
+        if (Parsing::isInCompletePointerToStructuredType(*binaryExpr.lhs->type)) {
+            addError("Cannot do pointer arithmetic on incomplete types", binaryExpr.lhs->location);
+            return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
+        }
         if (rightType != Type::I64)
             binaryExpr.rhs = convertOrCastToType(binaryExpr.rhs, Type::I64);
         binaryExpr.type = Parsing::deepCopy(*binaryExpr.lhs->type);
     }
     else if (isIntegerType(leftType)) {
+        if (Parsing::isInCompletePointerToStructuredType(*binaryExpr.rhs->type)) {
+            addError("Cannot do pointer arithmetic on incomplete types", binaryExpr.rhs->location);
+            return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
+        }
         if (binaryExpr.op == BinaryOp::Subtract) {
             addError("Cannot subtract a pointer form an integer type", binaryExpr.location);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
@@ -627,6 +635,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handlePtrToPtrBinaryOpers(Parsing
     if (Parsing::areEquivalentTypes(*binaryExpr.lhs->type, *binaryExpr.rhs->type)) {
         if (isBinaryComparison(binaryExpr.op)) {
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
+            return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
+        }
+        if (Parsing::isInCompletePointerToStructuredType(*binaryExpr.lhs->type)) {
+            addError("Cannot do pointer arithmetic on incomplete types", binaryExpr.location);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
         if (isVoidPointer(*binaryExpr.lhs->type) || isVoidPointer(*binaryExpr.rhs->type)) {
@@ -866,6 +878,9 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertTernaryExpr(Parsing::Terna
     ternaryExpr.trueExpr = convertArrayType(*ternaryExpr.trueExpr);
     ternaryExpr.falseExpr = convertArrayType(*ternaryExpr.falseExpr);
 
+    if (hasError())
+        return std::make_unique<Parsing::TernaryExpr>(std::move(ternaryExpr));
+
     if (!isScalarType(*ternaryExpr.condition->type))
         addError("Ternary condition must have scalar type", ternaryExpr.condition->location);
 
@@ -941,6 +956,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertDerefExpr(Parsing::Derefer
         return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
     }
     const auto referencedPtrType = dynCast<const Parsing::PointerType>(dereferenceExpr.reference->type.get());
+    if (Parsing::isInCompleteStructuredType(*referencedPtrType->referenced)) {
+        addError("Cannot dereference incomplete type", dereferenceExpr.location);
+        return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
+    }
     dereferenceExpr.type = Parsing::deepCopy(*referencedPtrType->referenced);
     return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
 }
@@ -953,12 +972,16 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSubscriptExpr(Parsing::Sub
     if (hasError())
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
 
-    if (isVoidPointer(*subscriptExpr.referencing->type)) {
-        addError("Cannot subscript void pointer", subscriptExpr.referencing->location);
+    if (Parsing::isInCompletePointerToStructuredType(*subscriptExpr.referencing->type)) {
+        addError("Cannot subscript incomplete pointer type", subscriptExpr.referencing->location);
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
     }
-    if (!Parsing::isCompleteStructuredType(*subscriptExpr.referencing->type)) {
+    if (Parsing::isInCompleteStructuredType(*subscriptExpr.referencing->type)) {
         addError("Cannot subscript incomplete type", subscriptExpr.referencing->location);
+        return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
+    }
+    if (isVoidPointer(*subscriptExpr.referencing->type)) {
+        addError("Cannot subscript void pointer", subscriptExpr.referencing->location);
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
     }
 

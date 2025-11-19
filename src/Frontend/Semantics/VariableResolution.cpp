@@ -3,10 +3,9 @@
 #include "DynCast.hpp"
 #include "ASTTypes.hpp"
 #include "ASTUtils.hpp"
+#include "TypeConversion.hpp"
 
 #include <unordered_set>
-
-#include "TypeConversion.hpp"
 
 namespace Semantics {
 
@@ -19,8 +18,10 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
 void VariableResolution::visit(Parsing::StructDecl& structDecl)
 {
     const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structDecl.identifier);
-    if (structuredEntry.isFromCurrentScope() && structuredEntry.typeBase->type == Type::Union)
+    if (structuredEntry.isFromCurrentScope() && structuredEntry.typeBase->type == Type::Union) {
         addError("Cannot define union and struct of same name in same scope", structDecl.location);
+        return;
+    }
     if (!structDecl.members.empty()) {
         if (structuredEntry.isDefined()) {
             addError("Cannot redefine struct in same scope", structDecl.location);
@@ -34,16 +35,16 @@ void VariableResolution::visit(Parsing::StructDecl& structDecl)
         auto structuredType = std::make_unique<Parsing::StructuredType>(
             Type::Struct, uniqueName, structDecl.location);
         structuredType->isComplete = true;
-        m_symbolTable.addStructuredEntry(structDecl.identifier,
-                                         uniqueName,
-                                         Parsing::StructuredType(
-                                             Type::Struct,
-                                             uniqueName,
-                                             structDecl.location
-                                         ),
-                                         !structDecl.members.empty());
         structDecl.identifier = uniqueName;
     }
+    m_symbolTable.addStructuredEntry(structDecl.identifier,
+                                     structDecl.identifier,
+                                     Parsing::StructuredType(
+                                         Type::Struct,
+                                         structDecl.identifier,
+                                         structDecl.location
+                                     ),
+                                     !structDecl.members.empty());
     ASTTraverser::visit(structDecl);
 }
 
