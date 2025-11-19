@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Error.hpp"
+
 struct MemberEntry {
     std::string name;
     std::unique_ptr<Parsing::TypeBase> type;
@@ -37,6 +39,7 @@ class VarTable {
 public:
     bool isDefined(const std::string& name) const { return entries.contains(name); }
     Parsing::TypeBase* getMemberType(const std::string& structuredName, const std::string& memberName) const;
+
     void emplaceMove(const std::string& name, StructuredEntry&& entry)
     {
         entries.emplace(name, std::move(entry));
@@ -45,9 +48,12 @@ public:
     {
         return getMemberType(structuredName, memberName) != nullptr;
     }
+    void addEntry(const Parsing::StructuredDecl& structuredDecl, std::vector<Error>& errors);
+
     [[nodiscard]] i32 getAlignment(const Parsing::TypeBase* type) const;
     [[nodiscard]] i64 getSize(const Parsing::TypeBase* type) const;
-    void addEntry(const Parsing::StructuredDecl& structuredDecl);
+    [[nodiscard]] i64 getStructuredSize(const Parsing::TypeBase* type) const;
+    [[nodiscard]] i32 getStructuredAlignment(const Parsing::TypeBase* type) const;
 };
 
 i64 roundUp(i64 structSize, i32 memberAlignment);

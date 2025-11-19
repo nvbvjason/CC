@@ -6,6 +6,7 @@
 #include "Error.hpp"
 #include "SymbolTable.hpp"
 #include "TokenStore.hpp"
+#include "VarTable.hpp"
 
 #include <filesystem>
 #include <string>
@@ -23,6 +24,9 @@ public:
     [[nodiscard]] std::tuple<std::optional<Ir::Program>, StateCode> run();
 };
 
-std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& program, SymbolTable& symbolTable);
+std::pair<StateCode, std::vector<Error>> validateSemantics(
+    Parsing::Program& program,
+    SymbolTable& symbolTable,
+    VarTable& varTable);
 void reportErrors(const std::vector<Error>& errors, const TokenStore& tokenStore);
 void reportError(const Error& error, const TokenStore& tokenStore);

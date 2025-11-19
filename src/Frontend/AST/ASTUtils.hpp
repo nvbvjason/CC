@@ -55,7 +55,7 @@ bool isInCompletePointerToStructuredType(const TypeBase& type);
 bool isArrayOfVoidPointer(const TypeBase& type);
 bool isPointerToVoidArray(const TypeBase& type);
 bool isScalarType(const TypeBase& type);
-i64 getArraySize(const TypeBase* const type);
+i64 getArraySize(const TypeBase* type);
 Type getArrayType(const TypeBase* type);
 const TypeBase* getArrayBaseType(const TypeBase& highestType);
 i64 getArrayAlignment(i64 size, Type type);

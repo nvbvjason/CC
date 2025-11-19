@@ -17,6 +17,7 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
 
 void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
 {
+    ASTTraverser::visit(structuredDecl);
     const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredDecl.identifier);
     if (structuredEntry.isFromCurrentScope() &&
         structuredEntry.typeBase->type != structuredEntry.typeBase->type) {
@@ -37,6 +38,7 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
             Type::Struct, uniqueName, structuredDecl.location);
         structuredType->isComplete = true;
         structuredDecl.identifier = uniqueName;
+        m_varTable.addEntry(structuredDecl, m_errors);
     }
     m_symbolTable.addStructuredEntry(structuredDecl.identifier,
                                      structuredDecl.identifier,

@@ -47,7 +47,9 @@ std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
         return {std::nullopt, StateCode::Done};
     }
     SymbolTable symbolTable;
-    if (const auto [err, errors] = validateSemantics(program, symbolTable); err != StateCode::Done) {
+    VarTable varTable;
+    if (const auto [err, errors] = validateSemantics(program, symbolTable, varTable);
+        err != StateCode::Done) {
         reportErrors(errors, m_tokenStore);
         return {std::nullopt, err};
     }
@@ -70,9 +72,12 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
     return source;
 }
 
-std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& program, SymbolTable& symbolTable)
+std::pair<StateCode, std::vector<Error>> validateSemantics(
+    Parsing::Program& program,
+    SymbolTable& symbolTable,
+    VarTable& varTable)
 {
-    Semantics::VariableResolution variableResolution(symbolTable);
+    Semantics::VariableResolution variableResolution(symbolTable, varTable);
     if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
         return {StateCode::VariableResolution, errors};
     Semantics::TypeResolution typeResolution;
