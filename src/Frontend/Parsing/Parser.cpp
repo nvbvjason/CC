@@ -45,18 +45,17 @@ std::unique_ptr<Declaration> Parser::declarationParse()
 std::unique_ptr<Declaration> Parser::structuredDeclParse(std::unique_ptr<TypeBase>&& typeBase)
 {
     const i64 location = m_current - 2;
-    std::vector<std::unique_ptr<Declaration>> memberDecls;
+    std::vector<std::unique_ptr<MemberDecl>> memberDecls;
     if (match(TokenType::OpenBrace)) {
         while (peekTokenType() != TokenType::CloseBrace) {
-            std::unique_ptr<Declaration> declaration = memberDeclParse();
-            if (declaration == nullptr)
+            std::unique_ptr<MemberDecl> memberDecl = memberDeclParse();
+            if (memberDecl == nullptr)
                 return nullptr;
-            const auto memberDecl = dynCast<MemberDecl>(declaration.get());
             if (memberDecl->type->type == Type::Function) {
                 addError("Function cannot be a structured member", m_current);
                 return nullptr;
             }
-            memberDecls.push_back(std::move(declaration));
+            memberDecls.push_back(std::move(memberDecl));
         }
         if (memberDecls.empty()) {
             addError("Empty structured definition is not allowed", m_current);
@@ -79,7 +78,7 @@ std::unique_ptr<Declaration> Parser::structuredDeclParse(std::unique_ptr<TypeBas
     return nullptr;
 }
 
-std::unique_ptr<Declaration> Parser::memberDeclParse()
+std::unique_ptr<MemberDecl> Parser::memberDeclParse()
 {
     auto varType = typeParse();
     if (varType == nullptr) {

@@ -167,7 +167,9 @@ void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
     }
 }
 
-void TypeResolution::handleCompoundInitArray(const Parsing::VarDecl& varDecl, Parsing::CompoundInitializer* const compoundInit)
+void TypeResolution::handleCompoundInitArray(
+    const Parsing::VarDecl& varDecl,
+    const Parsing::CompoundInitializer* const compoundInit)
 {
     const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
     if (arrayType->size < compoundInit->initializers.size())
@@ -541,6 +543,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertBinaryExpr(Parsing::Binary
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     const Type leftType = binaryExpr.lhs->type->type;
     const Type rightType = binaryExpr.rhs->type->type;
+    if (isStructuredType(leftType) || isStructuredType(rightType)) {
+        addError("Cannot apply binary operator to structured type", binaryExpr.location);
+        return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
+    }
     if (leftType == Type::Void || rightType == Type::Void) {
         addError("Cannot have void type in binary expression.", binaryExpr.location);
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
@@ -751,6 +757,10 @@ bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
 
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
+    if (isStructuredType(leftType) || isStructuredType(rightType)) {
+        addError("Cannot assign to structured type", assignmentExpr.location);
+        return false;
+    }
     if (rightType == Type::Void) {
         addError("Cannot assign with type void.", assignmentExpr.rhs->location);
         return false;
@@ -967,23 +977,52 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprType(Parsing::Si
     return std::make_unique<Parsing::SizeOfTypeExpr>(std::move(sizeOfTypeExpr));
 }
 
+const Parsing::TypeBase* TypeResolution::validateStructuredAccessors(
+    const Parsing::TypeBase* structuredType,
+    const std::string& identifier,
+    const i64 location)
+{
+    if (structuredType->kind != Parsing::TypeBase::Kind::Structured) {
+        addError("Initiated extern variable", location);
+        return nullptr;
+    }
+    const auto structType = dynCast<const Parsing::StructuredType>(structuredType);
+    const auto it = m_structuredMembers.find(structType->identifier);
+    if (it == m_structuredMembers.end()) {
+        addError("Cannot call dot expression on non structured type", location);
+        return nullptr;
+    }
+    return getTypeFromMembers(*it->second, identifier);
+}
+
 std::unique_ptr<Parsing::Expr> TypeResolution::convertDotExpr(Parsing::DotExpr& dotExpr)
 {
     dotExpr.structuredExpr = convert(*dotExpr.structuredExpr);
-    if (dotExpr.structuredExpr->type->kind != Parsing::TypeBase::Kind::Structured) {
-        addError("Initiated extern variable", dotExpr.structuredExpr->location);
+    const Parsing::TypeBase* type = validateStructuredAccessors(
+        dotExpr.structuredExpr->type.get(), dotExpr.identifier, dotExpr.location);
+    if (type == nullptr) {
+        addError("Could not find member for " + dotExpr.identifier, dotExpr.location);
         return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
     }
-    if (dotExpr.structuredExpr->type->kind == Parsing::TypeBase::Kind::Structured) {
-        const auto structType = dynCast<Parsing::StructuredType>(dotExpr.structuredExpr->type.get());
-
-    }
+    dotExpr.type = Parsing::deepCopy(*type);
     return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
 }
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertArrowExpr(Parsing::ArrowExpr& arrowExpr)
 {
     arrowExpr.pointerExpr = convert(*arrowExpr.pointerExpr);
+    if (arrowExpr.pointerExpr->type->kind != Parsing::TypeBase::Kind::Pointer) {
+        addError("Arrow prefix must be on pointer", arrowExpr.pointerExpr->location);
+        return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
+    }
+    const auto pointerType = dynCast<const Parsing::PointerType>(arrowExpr.pointerExpr->type.get());
+    const Parsing::TypeBase* type = validateStructuredAccessors(
+        pointerType, arrowExpr.identifier, arrowExpr.location);
+    if (type == nullptr) {
+        addError("Could not find member for " + arrowExpr.identifier, arrowExpr.location);
+        return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
+    }
+    arrowExpr.type = Parsing::deepCopy(*type);
     return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
 }
 
@@ -998,5 +1037,15 @@ bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)
         return true;
     }
     return false;
+}
+
+Parsing::TypeBase* getTypeFromMembers(
+    const std::vector<std::unique_ptr<Parsing::MemberDecl>>& varDecl,
+    const std::string& identifier)
+{
+    for (const auto& var : varDecl)
+        if (var->identifier == identifier)
+            return var->type.get();
+    return nullptr;
 }
 } // namespace Semantics

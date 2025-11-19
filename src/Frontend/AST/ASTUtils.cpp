@@ -96,7 +96,8 @@ bool areEquivalentTypes(const TypeBase& left, const TypeBase& right)
             const auto typeFunctionRight = dynCast<const ArrayType>(&right);
             return areEquivalentTypes(*typeFunctionLeft, *typeFunctionRight);
         }
-        case Type::Struct: {
+        case Type::Struct:
+        case Type::Union:{
             const auto typeVarRight = dynCast<const StructuredType>(&left);
             const auto typeVarLeft = dynCast<const StructuredType>(&right);
             return areEquivalentTypes(*typeVarRight, *typeVarLeft);

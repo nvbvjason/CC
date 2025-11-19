@@ -46,7 +46,7 @@ class TypeResolution final : public Parsing::ASTTraverser {
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
 
-    std::unordered_map<std::string, std::vector<std::unique_ptr<Parsing::Declaration>>*> m_structuredMembers;
+    std::unordered_map<std::string, std::vector<std::unique_ptr<Parsing::MemberDecl>>*> m_structuredMembers;
 
     std::vector<Error> m_errors;
     bool m_isConst = true;
@@ -100,6 +100,10 @@ public:
     std::unique_ptr<Parsing::Expr> convertSubscriptExpr(Parsing::SubscriptExpr& subscriptExpr);
     std::unique_ptr<Parsing::Expr> convertSizeOfExprExpr(Parsing::SizeOfExprExpr& sizeOfExprExpr);
     std::unique_ptr<Parsing::Expr> convertSizeOfExprType(Parsing::SizeOfTypeExpr& sizeOfTypeExpr);
+    const Parsing::TypeBase* validateStructuredAccessors(
+        const Parsing::TypeBase* structuredType,
+        const std::string& identifier,
+        i64 location);
     std::unique_ptr<Parsing::Expr> convertDotExpr(Parsing::DotExpr& dotExpr);
     std::unique_ptr<Parsing::Expr> convertArrowExpr(Parsing::ArrowExpr& arrowExpr);
 
@@ -112,7 +116,7 @@ public:
     void verifyArrayInSingleInit(
         const Parsing::VarDecl& varDecl,  const Parsing::SingleInitializer& singleInitializer);
     void handleSingleInit(Parsing::VarDecl& varDecl);
-    void handleCompoundInitArray(const Parsing::VarDecl& varDecl, Parsing::CompoundInitializer* compoundInit);
+    void handleCompoundInitArray(const Parsing::VarDecl& varDecl, const Parsing::CompoundInitializer* compoundInit);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 private:
     void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }
@@ -178,4 +182,7 @@ inline bool isUnallowedComparisonBetweenPtrAndInteger(const Parsing::BinaryExpr:
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr,
     Type leftType, Type rightType, Type commonType);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
+Parsing::TypeBase* getTypeFromMembers(
+    const std::vector<std::unique_ptr<Parsing::MemberDecl>>& varDecl,
+    const std::string& identifier);
 } // Semantics

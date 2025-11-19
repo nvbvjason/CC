@@ -168,11 +168,16 @@ void Labeling::visit(Parsing::SwitchStmt& switchStmt)
         switchStmt.condition = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(Type::I32), std::move(switchStmt.condition));
     }
-    if (conditionType == Type::Double || conditionType == Type::Pointer) {
-        if (conditionType == Type::Double)
-            emplaceError("Double as switch condition ", switchStmt.location);
-        if (conditionType == Type::Pointer)
-            emplaceError("Pointer as switch condition ", switchStmt.location);
+    if (conditionType == Type::Double) {
+        emplaceError("Double as switch condition ", switchStmt.location);
+        return;
+    }
+    if (conditionType == Type::Pointer) {
+        emplaceError("Pointer as switch condition ", switchStmt.location);
+        return;
+    }
+    if (isStructuredType(conditionType)) {
+        emplaceError("structured type as switch condition ", switchStmt.location);
         return;
     }
     switchCases[switchStmt.identifier] = std::vector<std::variant<i32, i64, u32, u64>>();

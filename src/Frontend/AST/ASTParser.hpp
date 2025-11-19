@@ -139,44 +139,6 @@ struct FuncDecl final : Declaration {
     FuncDecl() = delete;
 };
 
-struct StructDecl final : Declaration {
-    std::string identifier;
-    std::vector<std::unique_ptr<Declaration>> members;
-
-    StructDecl(const i64 loc,
-               std::string identifier,
-               std::vector<std::unique_ptr<Declaration>>&& members)
-        : Declaration(loc, Kind::StructDecl, StorageClass::None),
-            identifier(std::move(identifier)),
-            members(std::move(members)) {}
-
-    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
-    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
-
-    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::StructDecl; }
-
-    StructDecl() = delete;
-};
-
-struct UnionDecl final : Declaration {
-    std::string identifier;
-    std::vector<std::unique_ptr<Declaration>> members;
-
-    UnionDecl(const i64 loc,
-              std::string identifier,
-              std::vector<std::unique_ptr<Declaration>>&& members)
-        : Declaration(loc, Kind::UnionDecl, StorageClass::None),
-            identifier(std::move(identifier)),
-            members(std::move(members)) {}
-
-    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
-    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
-
-    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::UnionDecl; }
-
-    UnionDecl() = delete;
-};
-
 struct MemberDecl final : Declaration {
     const std::string identifier;
     std::unique_ptr<TypeBase> type;
@@ -194,6 +156,44 @@ struct MemberDecl final : Declaration {
     static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::MemberDecl; }
 
     MemberDecl() = delete;
+};
+
+struct StructDecl final : Declaration {
+    std::string identifier;
+    std::vector<std::unique_ptr<MemberDecl>> members;
+
+    StructDecl(const i64 loc,
+               std::string identifier,
+               std::vector<std::unique_ptr<MemberDecl>>&& members)
+        : Declaration(loc, Kind::StructDecl, StorageClass::None),
+            identifier(std::move(identifier)),
+            members(std::move(members)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::StructDecl; }
+
+    StructDecl() = delete;
+};
+
+struct UnionDecl final : Declaration {
+    std::string identifier;
+    std::vector<std::unique_ptr<MemberDecl>> members;
+
+    UnionDecl(const i64 loc,
+              std::string identifier,
+              std::vector<std::unique_ptr<MemberDecl>>&& members)
+        : Declaration(loc, Kind::UnionDecl, StorageClass::None),
+            identifier(std::move(identifier)),
+            members(std::move(members)) {}
+
+    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
+
+    static bool classOf(const Declaration* declaration) { return declaration->kind == Kind::UnionDecl; }
+
+    UnionDecl() = delete;
 };
 
 struct ReturnStmt final : Stmt {
