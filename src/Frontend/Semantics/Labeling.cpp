@@ -40,13 +40,16 @@ void Labeling::visit(Parsing::VarDecl& varDecl)
         return;
     if (varDecl.type->type == Type::Array) {
         if (varDecl.init->kind == Parsing::Initializer::Kind::Compound) {
-            initArray(varDecl, errors);
+            InitArray initArray(varDecl, errors);
+            initArray.initArray();
             return;
         }
         const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
         auto singleInitializer = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
-        if (isCharacterType(arrayType->elementType->type))
-            initCharacterArray(varDecl, *singleInitializer, *arrayType);
+        if (isCharacterType(arrayType->elementType->type)) {
+            InitArray initArray(varDecl, errors);
+            initArray.initCharacterArray(*singleInitializer, *arrayType);
+        }
     }
 }
 

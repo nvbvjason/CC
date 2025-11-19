@@ -39,9 +39,7 @@ void TypeResolution::visit(Parsing::FuncDecl& funDecl)
 
     if (funDecl.body) {
         m_global = false;
-
         funDecl.body->accept(*this);
-
         m_global = true;
     }
 }
@@ -489,6 +487,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertUnaryExpr(Parsing::UnaryEx
     if (hasError())
         return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
 
+    if (isStructuredType(unaryExpr.innerExpr->type->type)) {
+        addError("Cannot apply unary operation to structure type", unaryExpr.innerExpr->location);
+        return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
+    }
     if (unaryExpr.innerExpr->type->type == Type::Void) {
         addError("Cannot apply unary operation to void", unaryExpr.innerExpr->location);
         return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
@@ -1026,6 +1028,16 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertArrowExpr(Parsing::ArrowEx
     return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
 }
 
+Parsing::TypeBase* getTypeFromMembers(
+    const std::vector<std::unique_ptr<Parsing::MemberDecl>>& varDecl,
+    const std::string& identifier)
+{
+    for (const auto& var : varDecl)
+        if (var->identifier == identifier)
+            return var->type.get();
+    return nullptr;
+}
+
 bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)
 {
     if (varDecl.storage == Storage::Extern && varDecl.init != nullptr) {
@@ -1037,15 +1049,5 @@ bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)
         return true;
     }
     return false;
-}
-
-Parsing::TypeBase* getTypeFromMembers(
-    const std::vector<std::unique_ptr<Parsing::MemberDecl>>& varDecl,
-    const std::string& identifier)
-{
-    for (const auto& var : varDecl)
-        if (var->identifier == identifier)
-            return var->type.get();
-    return nullptr;
 }
 } // namespace Semantics
