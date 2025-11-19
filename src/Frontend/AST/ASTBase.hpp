@@ -16,7 +16,7 @@ struct ASTNode {
 
 struct TypeBase {
     enum class Kind : u8 {
-        Var, Func, Pointer, Array, Struct, Union
+        Var, Func, Pointer, Array, Structured
     };
     const Kind kind;
     const Type type;

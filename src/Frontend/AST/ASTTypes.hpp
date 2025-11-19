@@ -73,41 +73,23 @@ struct ArrayType final : TypeBase {
     static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Array; }
 };
 
-struct StructType final : TypeBase {
+struct StructuredType final : TypeBase {
     std::string identifier;
     const i64 location;
 
-    explicit StructType(std::string identifier, const i64 location)
-        : TypeBase(Type::Struct, Kind::Struct),
+    explicit StructuredType(const Type type, std::string identifier, const i64 location)
+        : TypeBase(type, Kind::Structured),
           identifier(std::move(identifier)),
           location(location) {}
 
-    StructType(StructType&& structType) noexcept
-        : TypeBase(Type::Struct, Kind::Struct),
-          identifier(std::move(structType.identifier)),
-          location(structType.location) {}
+    StructuredType(StructuredType&& structuredType) noexcept
+        : TypeBase(structuredType.type, Kind::Structured),
+          identifier(std::move(structuredType.identifier)),
+          location(structuredType.location) {}
 
     void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
     void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
 
-    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Struct; }
-};
-
-struct UnionType final : TypeBase {
-    std::string identifier;
-    const i64 location;
-
-    explicit UnionType(std::string identifier, const i64 location)
-        : TypeBase(Type::Union, Kind::Union), identifier(std::move(identifier)), location(location) {}
-
-    UnionType(UnionType&& unionType) noexcept
-        : TypeBase(Type::Union, Kind::Union),
-          identifier(std::move(unionType.identifier)),
-          location(unionType.location) {}
-
-    void accept(ASTVisitor& visitor) override { visitor.visit(*this); }
-    void accept(ConstASTVisitor& visitor) const override { visitor.visit(*this); }
-
-    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Union; }
+    static bool classOf(const TypeBase* typeBase) { return typeBase->kind == Kind::Structured; }
 };
 } // Parsing

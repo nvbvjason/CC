@@ -109,17 +109,12 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
 
 void TypeResolution::visit(Parsing::StructDecl& structDecl)
 {
-    ASTTraverser::visit(structDecl);
+    m_structuredMembers.emplace(structDecl.identifier, &structDecl.members);
 }
 
 void TypeResolution::visit(Parsing::UnionDecl& unionDecl)
 {
-    ASTTraverser::visit(unionDecl);
-}
-
-void TypeResolution::visit(Parsing::MemberDecl& memberDecl)
-{
-    ASTTraverser::visit(memberDecl);
+    m_structuredMembers.emplace(unionDecl.identifier, &unionDecl.members);
 }
 
 void TypeResolution::verifyArrayInSingleInit(
@@ -172,13 +167,8 @@ void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
     }
 }
 
-void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
+void TypeResolution::handleCompoundInitArray(const Parsing::VarDecl& varDecl, Parsing::CompoundInitializer* const compoundInit)
 {
-    const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
-    if (varDecl.type->type != Type::Array && !isStructuredType(*varDecl.type)) {
-        addError("Cannot have compound initializer on non array", varDecl.location);
-        return;
-    }
     const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
     if (arrayType->size < compoundInit->initializers.size())
         addError("Compound initializer cannot be longer than array size", varDecl.location);
@@ -201,6 +191,22 @@ void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
                     std::move(singleInit->expr));
             }
         }
+    }
+}
+
+void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
+{
+    const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
+    if (varDecl.type->type != Type::Array && !isStructuredTypeBase(*varDecl.type)) {
+        addError("Cannot have compound initializer on non array", varDecl.location);
+        return;
+    }
+    if (varDecl.type->type == Type::Array) {
+        handleCompoundInitArray(varDecl, compoundInit);
+        return;
+    }
+    if (varDecl.type->type == Type::Struct) {
+
     }
 }
 
@@ -964,14 +970,20 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprType(Parsing::Si
 std::unique_ptr<Parsing::Expr> TypeResolution::convertDotExpr(Parsing::DotExpr& dotExpr)
 {
     dotExpr.structuredExpr = convert(*dotExpr.structuredExpr);
-    dotExpr.type = Parsing::deepCopy(*dotExpr.structuredExpr->type);
+    if (dotExpr.structuredExpr->type->kind != Parsing::TypeBase::Kind::Structured) {
+        addError("Initiated extern variable", dotExpr.structuredExpr->location);
+        return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
+    }
+    if (dotExpr.structuredExpr->type->kind == Parsing::TypeBase::Kind::Structured) {
+        const auto structType = dynCast<Parsing::StructuredType>(dotExpr.structuredExpr->type.get());
+
+    }
     return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
 }
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertArrowExpr(Parsing::ArrowExpr& arrowExpr)
 {
     arrowExpr.pointerExpr = convert(*arrowExpr.pointerExpr);
-    arrowExpr.type = Parsing::deepCopy(*arrowExpr.pointerExpr->type);
     return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
 }
 

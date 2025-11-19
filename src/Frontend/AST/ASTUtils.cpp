@@ -14,29 +14,25 @@ std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase)
     assert(typeBase.type != Type::Invalid);
     switch (typeBase.kind) {
         case TypeBase::Kind::Pointer: {
-            const auto typePtr = dynCast<const PointerType>(&typeBase);
-            auto referencedCopy = deepCopy(*typePtr->referenced);
+            const auto pointerType = dynCast<const PointerType>(&typeBase);
+            auto referencedCopy = deepCopy(*pointerType->referenced);
             return std::make_unique<PointerType>(std::move(referencedCopy));
         }
         case TypeBase::Kind::Func: {
-            const auto typeFunction = dynCast<const FuncType>(&typeBase);
-            return deepCopy(*typeFunction);
+            const auto functionType = dynCast<const FuncType>(&typeBase);
+            return deepCopy(*functionType);
         }
         case TypeBase::Kind::Array: {
-            const auto typeArray = dynCast<const ArrayType>(&typeBase);
-            return deepCopy(*typeArray);
+            const auto arrayType = dynCast<const ArrayType>(&typeBase);
+            return deepCopy(*arrayType);
         }
         case TypeBase::Kind::Var: {
-            const auto typeVar = dynCast<const VarType>(&typeBase);
-            return deepCopy(*typeVar);
+            const auto varType = dynCast<const VarType>(&typeBase);
+            return deepCopy(*varType);
         }
-        case TypeBase::Kind::Struct: {
-            const auto typeStruct = dynCast<const StructType>(&typeBase);
-            return deepCopy(*typeStruct);
-        }
-        case TypeBase::Kind::Union: {
-            const auto typeUnion = dynCast<const UnionType>(&typeBase);
-            return deepCopy(*typeUnion);
+        case TypeBase::Kind::Structured: {
+            const auto structuredType = dynCast<const StructuredType>(&typeBase);
+            return deepCopy(*structuredType);
         }
         default:
             std::abort();
@@ -49,14 +45,13 @@ std::unique_ptr<TypeBase> deepCopy(const ArrayType& arrayType)
     return std::make_unique<ArrayType>(std::move(typeBase), arrayType.size);
 }
 
-std::unique_ptr<TypeBase> deepCopy(const StructType& structType)
+std::unique_ptr<TypeBase> deepCopy(const StructuredType& structuredType)
 {
-    return std::make_unique<StructType>(structType.identifier, structType.location);
-}
-
-std::unique_ptr<TypeBase> deepCopy(const UnionType& unionType)
-{
-    return std::make_unique<UnionType>(unionType.identifier, unionType.location);
+    return std::make_unique<StructuredType>(
+        structuredType.type,
+        structuredType.identifier,
+        structuredType.location
+    );
 }
 
 std::unique_ptr<TypeBase> deepCopy(const VarType& varType)
@@ -102,13 +97,8 @@ bool areEquivalentTypes(const TypeBase& left, const TypeBase& right)
             return areEquivalentTypes(*typeFunctionLeft, *typeFunctionRight);
         }
         case Type::Struct: {
-            const auto typeVarRight = dynCast<const StructType>(&left);
-            const auto typeVarLeft = dynCast<const StructType>(&right);
-            return areEquivalentTypes(*typeVarRight, *typeVarLeft);
-        }
-        case Type::Union: {
-            const auto typeVarRight = dynCast<const UnionType>(&left);
-            const auto typeVarLeft = dynCast<const UnionType>(&right);
+            const auto typeVarRight = dynCast<const StructuredType>(&left);
+            const auto typeVarLeft = dynCast<const StructuredType>(&right);
             return areEquivalentTypes(*typeVarRight, *typeVarLeft);
         }
         default: {
@@ -148,12 +138,7 @@ bool areEquivalentTypes(const ArrayType& left, const ArrayType& right)
     return areEquivalentTypes(*left.elementType, *right.elementType);
 }
 
-bool areEquivalentTypes(const StructType& left, const StructType& right)
-{
-    return left.identifier == right.identifier;
-}
-
-bool areEquivalentTypes(const UnionType& left, const UnionType& right)
+bool areEquivalentTypes(const StructuredType& left, const StructuredType& right)
 {
     return left.identifier == right.identifier;
 }
@@ -293,7 +278,7 @@ bool isVoidArray(const TypeBase& type)
     return getArrayType(&type) == Type::Void;
 }
 
-bool isStructuredType(const TypeBase& type)
+bool isStructuredTypeBase(const TypeBase& type)
 {
     return type.type == Type::Struct || type.type == Type::Union;
 }

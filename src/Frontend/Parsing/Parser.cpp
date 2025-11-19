@@ -68,12 +68,12 @@ std::unique_ptr<Declaration> Parser::structuredDeclParse(std::unique_ptr<TypeBas
         addError("Expected semicolon after structured declaration", m_current);
         return nullptr;
     }
-    if (typeBase->kind == TypeBase::Kind::Struct) {
-        const auto structType = dynCast<StructType>(typeBase.get());
+    if (typeBase->type == Type::Struct) {
+        const auto structType = dynCast<StructuredType>(typeBase.get());
         return std::make_unique<StructDecl>(location, structType->identifier, std::move(memberDecls));
     }
-    if (typeBase->kind == TypeBase::Kind::Union) {
-        const auto unionType = dynCast<UnionType>(typeBase.get());
+    if (typeBase->type == Type::Union) {
+        const auto unionType = dynCast<StructuredType>(typeBase.get());
         return std::make_unique<StructDecl>(location, unionType->identifier, std::move(memberDecls));
     }
     return nullptr;
@@ -1119,7 +1119,11 @@ std::unique_ptr<TypeBase> Parser::typeResolve(std::vector<TokenType>& tokens) co
             return nullptr;
         if (tokens.back() != TokenType::Identifier)
             return nullptr;
-        return std::make_unique<UnionType>(c_tokenStore.getLexeme(m_current - 1), m_current - 2);
+        return std::make_unique<StructuredType>(
+            Type::Union,
+            c_tokenStore.getLexeme(m_current - 1),
+            m_current - 2
+        );
     }
     if (std::ranges::find(tokens, TokenType::StructKeyword) != tokens.end()) {
         if (2 != tokens.size())
@@ -1128,7 +1132,11 @@ std::unique_ptr<TypeBase> Parser::typeResolve(std::vector<TokenType>& tokens) co
             return nullptr;
         if (tokens.back() != TokenType::Identifier)
             return nullptr;
-        return std::make_unique<StructType>(c_tokenStore.getLexeme(m_current - 1), m_current - 2);
+        return std::make_unique<StructuredType>(
+            Type::Struct,
+            c_tokenStore.getLexeme(m_current - 1),
+            m_current - 2
+        );
     }
     if (std::ranges::find(tokens, TokenType::CharKeyword) != tokens.end()) {
         if (2 < tokens.size())

@@ -113,19 +113,19 @@ struct FuncDecl final : Declaration {
     std::unique_ptr<TypeBase> type = nullptr;
 
     FuncDecl(const StorageClass storageClass,
-            std::string name,
-            std::vector<std::string>&& ps,
-            std::unique_ptr<TypeBase>&& t)
+             std::string name,
+             std::vector<std::string>&& ps,
+             std::unique_ptr<TypeBase>&& t)
         : Declaration(Kind::FuncDecl, storageClass),
             name(std::move(name)),
             params(std::move(ps)),
             type(std::move(t)){}
 
     FuncDecl(const i64 loc,
-            const StorageClass storageClass,
-            std::string name,
-            std::vector<std::string>&& ps,
-            std::unique_ptr<TypeBase>&& t)
+             const StorageClass storageClass,
+             std::string name,
+             std::vector<std::string>&& ps,
+             std::unique_ptr<TypeBase>&& t)
     : Declaration(loc, Kind::FuncDecl, storageClass),
             name(std::move(name)),
             params(std::move(ps)),

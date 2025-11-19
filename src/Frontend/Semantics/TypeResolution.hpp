@@ -45,6 +45,9 @@ class TypeResolution final : public Parsing::ASTTraverser {
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
+
+    std::unordered_map<std::string, std::vector<std::unique_ptr<Parsing::Declaration>>*> m_structuredMembers;
+
     std::vector<Error> m_errors;
     bool m_isConst = true;
     bool m_global = true;
@@ -56,7 +59,6 @@ public:
     void visit(Parsing::VarDecl& varDecl) override;
     void visit(Parsing::StructDecl& structDecl) override;
     void visit(Parsing::UnionDecl& unionDecl) override;
-    void visit(Parsing::MemberDecl& memberDecl) override;
     bool isIllegalVarDecl(const Parsing::VarDecl& varDecl);
     void visit(Parsing::DeclForInit& declForInit) override;
     void visit(Parsing::ExprForInit& exprForInit) override;
@@ -110,6 +112,7 @@ public:
     void verifyArrayInSingleInit(
         const Parsing::VarDecl& varDecl,  const Parsing::SingleInitializer& singleInitializer);
     void handleSingleInit(Parsing::VarDecl& varDecl);
+    void handleCompoundInitArray(const Parsing::VarDecl& varDecl, Parsing::CompoundInitializer* compoundInit);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 private:
     void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }

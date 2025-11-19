@@ -16,21 +16,35 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
 
 void VariableResolution::visit(Parsing::StructDecl& structDecl)
 {
-    const std::string uniqueName = makeTemporaryName(structDecl.identifier);
-    m_symbolTable.addStructuredEntry(structDecl.identifier,
-                                     uniqueName,
-                                     Parsing::StructType(structDecl.identifier, structDecl.location),
-                                     !structDecl.members.empty());
+    if (!structDecl.members.empty()) {
+        const std::string uniqueName = makeTemporaryName(structDecl.identifier);
+        m_symbolTable.addStructuredEntry(structDecl.identifier,
+                                         uniqueName,
+                                         Parsing::StructuredType(
+                                             Type::Struct,
+                                             structDecl.identifier,
+                                             structDecl.location
+                                         ),
+                                         !structDecl.members.empty());
+        structDecl.identifier = uniqueName;
+    }
     ASTTraverser::visit(structDecl);
 }
 
 void VariableResolution::visit(Parsing::UnionDecl& unionDecl)
 {
-    const std::string uniqueName = makeTemporaryName(unionDecl.identifier);
-    m_symbolTable.addStructuredEntry(unionDecl.identifier,
-                                     uniqueName,
-                                     Parsing::UnionType(unionDecl.identifier, unionDecl.location),
-                                     !unionDecl.members.empty());
+    if (!unionDecl.members.empty()) {
+        const std::string uniqueName = makeTemporaryName(unionDecl.identifier);
+        m_symbolTable.addStructuredEntry(unionDecl.identifier,
+                                         uniqueName,
+                                         Parsing::StructuredType(
+                                             Type::Union,
+                                             unionDecl.identifier,
+                                             unionDecl.location
+                                            ),
+                                         !unionDecl.members.empty());
+        unionDecl.identifier = uniqueName;
+    }
     ASTTraverser::visit(unionDecl);
 }
 
@@ -171,22 +185,12 @@ void VariableResolution::validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
         addError("Cannot define arrays with different types", varDecl.location);
 }
 
-void VariableResolution::visit(Parsing::StructType& structType)
+void VariableResolution::visit(Parsing::StructuredType& structType)
 {
-    if (!m_symbolTable.lookupStructuredEntry(structType.identifier).isDefined()) {
+    const auto entry = m_symbolTable.lookupStructuredEntry(structType.identifier);
+    if (!entry.isDefined())
         addError("Cannot use undefined struct type", structType.location);
-        return;
-    }
-    ASTTraverser::visit(structType);
-}
-
-void VariableResolution::visit(Parsing::UnionType& unionType)
-{
-    if (!m_symbolTable.lookupStructuredEntry(unionType.identifier).isDefined()) {
-        addError("Cannot use undefined union type", unionType.location);
-        return;
-    }
-    ASTTraverser::visit(unionType);
+    structType.identifier = entry.name;
 }
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)

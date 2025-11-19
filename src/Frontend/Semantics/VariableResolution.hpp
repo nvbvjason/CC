@@ -41,8 +41,7 @@ public:
     void visit(Parsing::StructDecl& structDecl) override;
     void visit(Parsing::UnionDecl& unionDecl) override;
 
-    void visit(Parsing::StructType& structType) override;
-    void visit(Parsing::UnionType& unionType) override;
+    void visit(Parsing::StructuredType& structType) override;
 
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
@@ -99,13 +98,9 @@ inline bool isArrayOfUndefinedStructuredType(
     if (varDecl.type->kind != Parsing::TypeBase::Kind::Array)
         return false;
     const Parsing::TypeBase* type = Parsing::getArrayBaseType(*varDecl.type);
-    if (!Parsing::isStructuredType(*type))
+    if (!Parsing::isStructuredTypeBase(*type))
         return false;
-    if (type->kind == Parsing::TypeBase::Kind::Struct) {
-        const auto structType = dynamic_cast<const Parsing::StructType*>(type);
-        return !symbolTable.lookupEntry(structType->identifier).isDefined();
-    }
-    const auto unionType = dynamic_cast<const Parsing::UnionType*>(type);
-    return !symbolTable.lookupEntry(unionType->identifier).isDefined();
+    const auto structType = dynamic_cast<const Parsing::StructuredType*>(type);
+    return !symbolTable.lookupStructuredEntry(structType->identifier).isDefined();
 }
 } // Semantics

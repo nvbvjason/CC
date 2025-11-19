@@ -183,7 +183,7 @@ private:
 
     [[nodiscard]] bool isStructuredDeclaration(const std::unique_ptr<TypeBase>& typeBase) const
     {
-        return (typeBase->kind == TypeBase::Kind::Struct || typeBase->kind == TypeBase::Kind::Union) &&
+        return typeBase->kind == TypeBase::Kind::Structured &&
                (peekTokenType() == TokenType::Semicolon || peekTokenType() == TokenType::OpenBrace);
     }
 };

@@ -24,8 +24,7 @@ public:
     virtual void visit(FuncType&) = 0;
     virtual void visit(PointerType&) = 0;
     virtual void visit(ArrayType&) = 0;
-    virtual void visit(StructType&) = 0;
-    virtual void visit(UnionType&) = 0;
+    virtual void visit(StructuredType&) = 0;
 
     // Initializer
     virtual void visit(SingleInitializer&) = 0;
@@ -96,8 +95,7 @@ public:
     virtual void visit(const FuncType&) = 0;
     virtual void visit(const PointerType&) = 0;
     virtual void visit(const ArrayType&) = 0;
-    virtual void visit(const StructType&) = 0;
-    virtual void visit(const UnionType&) = 0;
+    virtual void visit(const StructuredType&) = 0;
 
     // Initializer
     virtual void visit(const SingleInitializer&) = 0;

@@ -10,16 +10,14 @@ namespace Parsing {
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const PointerType& pointerType);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const ArrayType& arrayType);
-[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const StructType& structType);
-[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const UnionType& unionType);
+[[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const StructuredType& structuredType);
 
 [[nodiscard]] bool areEquivalentTypes(const TypeBase& left, const TypeBase& right);
 [[nodiscard]] bool areEquivalentTypes(const VarType& left, const VarType& right);
 [[nodiscard]] bool areEquivalentTypes(const FuncType& left, const FuncType& right);
 [[nodiscard]] bool areEquivalentTypes(const PointerType& left, const PointerType& right);
 [[nodiscard]] bool areEquivalentTypes(const ArrayType& left, const ArrayType& right);
-[[nodiscard]] bool areEquivalentTypes(const StructType& left, const StructType& right);
-[[nodiscard]] bool areEquivalentTypes(const UnionType& left, const UnionType& right);
+[[nodiscard]] bool areEquivalentTypes(const StructuredType& left, const StructuredType& right);
 [[nodiscard]] bool areEquivalentArrayConversion(const TypeBase& left, const TypeBase& right);
 
 [[nodiscard]] std::unique_ptr<TypeBase> convertArrayFirstDimToPtr(const TypeBase& typeBase);
@@ -51,7 +49,7 @@ std::unique_ptr<Expr> convertToArithmeticType(const Expr& expr, Type targetType)
 
 bool isVoidPointer(const TypeBase& type);
 bool isVoidArray(const TypeBase& type);
-bool isStructuredType(const TypeBase& type);
+bool isStructuredTypeBase(const TypeBase& type);
 bool isArrayOfVoidPointer(const TypeBase& type);
 bool isPointerToVoidArray(const TypeBase& type);
 bool isScalarType(const TypeBase& type);

@@ -50,9 +50,10 @@ SymbolTable::ReturnedStructuredEntry SymbolTable::lookupStructuredEntry(const st
             continue;
         const bool fromCurrentScope = i == m_StructuredEntries.size() - 1;
         const bool defined = it->second.isDefined();
-        return {Parsing::deepCopy(*it->second.varType), true, fromCurrentScope, defined};
+        std::string name = it->second.uniqueName;
+        return {Parsing::deepCopy(*it->second.varType), name, true, fromCurrentScope, defined};
     }
-    return {nullptr, false, false, false};
+    return {nullptr, "", false, false, false};
 }
 
 std::string SymbolTable::getUniqueName(const std::string& unique) const

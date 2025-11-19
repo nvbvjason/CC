@@ -25,8 +25,7 @@ public:
     void visit(FuncType& functionType) override;
     void visit(PointerType& pointerType) override;
     void visit(ArrayType& arrayType) override;
-    void visit(StructType& structType) override {}
-    void visit(UnionType& unionType) override {}
+    void visit(StructuredType& structuredType) override {}
 
     // Initializers
     void visit(SingleInitializer& singleInitializer) override;

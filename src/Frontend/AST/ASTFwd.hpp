@@ -99,8 +99,7 @@ struct VarType;
 struct FuncType;
 struct PointerType;
 struct ArrayType;
-struct StructType;
-struct UnionType;
+struct StructuredType;
 
 // Initializer
 struct Initializer;

@@ -50,11 +50,13 @@ public:
     };
     struct ReturnedStructuredEntry : FlagBase<ReturnedStructuredEntry>  {
         std::unique_ptr<Parsing::TypeBase> typeBase;
+        const std::string name;
         ReturnedStructuredEntry(std::unique_ptr<Parsing::TypeBase>&& t,
-                        const bool contains,
-                        const bool fromCurrentScope,
-                        const bool defined)
-            : typeBase(std::move(t))
+                                const std::string& name,
+                                const bool contains,
+                                const bool fromCurrentScope,
+                                const bool defined)
+            : typeBase(std::move(t)), name(name)
         {
             if (contains)
                 set(State::Contains);
