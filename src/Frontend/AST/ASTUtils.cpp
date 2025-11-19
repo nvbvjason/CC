@@ -347,6 +347,29 @@ const TypeBase* getArrayBaseType(const TypeBase& highestType)
     return type;
 }
 
+const TypeBase* getPointerBaseType(const TypeBase& highestType)
+{
+    const TypeBase* type = &highestType;
+    while (type->kind == TypeBase::Kind::Array || type->kind == TypeBase::Kind::Pointer) {
+        switch (type->kind) {
+            case TypeBase::Kind::Array: {
+                const auto arrayType = dynCast<const ArrayType>(type);
+                type = arrayType->elementType.get();
+                break;
+            }
+            case TypeBase::Kind::Pointer: {
+                const auto pointer = dynCast<const PointerType>(type);
+                type = pointer->referenced.get();
+                break;
+            }
+            default:
+                return type;
+        }
+
+    }
+    return type;
+}
+
 std::unique_ptr<Expr> convertOrCastToType(std::unique_ptr<Expr>& expr, const Type targetType)
 {
     if (expr->kind != Expr::Kind::Constant) {

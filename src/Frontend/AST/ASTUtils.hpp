@@ -58,5 +58,6 @@ bool isScalarType(const TypeBase& type);
 i64 getArraySize(const TypeBase* type);
 Type getArrayType(const TypeBase* type);
 const TypeBase* getArrayBaseType(const TypeBase& highestType);
+const TypeBase* getPointerBaseType(const TypeBase& highestType);
 i64 getArrayAlignment(i64 size, Type type);
 } // Parsing

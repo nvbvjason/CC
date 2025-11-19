@@ -18,9 +18,10 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
 void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
 {
     ASTTraverser::visit(structuredDecl);
+    const std::string nameBefore = structuredDecl.identifier;
     const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredDecl.identifier);
     if (structuredEntry.isFromCurrentScope() &&
-        structuredEntry.typeBase->type != structuredEntry.typeBase->type) {
+        structuredDecl.type != structuredEntry.typeBase->type) {
         addError("Cannot define union and struct of same name in same scope", structuredDecl.location);
         return;
     }
@@ -40,10 +41,10 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
         structuredDecl.identifier = uniqueName;
         m_varTable.addEntry(structuredDecl, m_errors);
     }
-    m_symbolTable.addStructuredEntry(structuredDecl.identifier,
+    m_symbolTable.addStructuredEntry(nameBefore,
                                      structuredDecl.identifier,
                                      Parsing::StructuredType(
-                                         Type::Struct,
+                                         structuredDecl.type,
                                          structuredDecl.identifier,
                                          structuredDecl.location
                                      ),
@@ -136,15 +137,34 @@ void VariableResolution::handleVarDeclOfStructuredType(Parsing::VarDecl& varDecl
 {
     const auto structuredType = dynCast<Parsing::StructuredType>(varDecl.type.get());
     const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredType->identifier);
+    if (structuredEntry.typeBase && structuredType->type != structuredEntry.typeBase->type) {
+        addError("Cannot declare with different structured type and same name", varDecl.location);
+        return;
+    }
     if (!structuredEntry.isDefined())
         addError("Cannot declare variable of structured type which is undefined", varDecl.location);
     else
         varDecl.type = Parsing::deepCopy(*structuredEntry.typeBase);
 }
 
+void VariableResolution::validatePointerType(Parsing::VarDecl& varDecl)
+{
+    const Parsing::TypeBase* typeBase = Parsing::getPointerBaseType(*varDecl.type);
+    if (Parsing::isStructuredTypeBase(*typeBase)) {
+        const auto structuredType = dynCast<const Parsing::StructuredType>(typeBase);
+        const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredType->identifier);
+        if (structuredEntry.typeBase && structuredType->type != structuredEntry.typeBase->type)
+            addError("Cannot use structured type with different type", varDecl.location);
+        if (!structuredEntry.isDefined())
+            addError("Cannot use variable of structured type which is undefined", varDecl.location);
+    }
+}
+
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookupEntry(varDecl.name);
+    if (varDecl.type->kind == Parsing::TypeBase::Kind::Pointer)
+        validatePointerType(varDecl);
     if (isStructuredType(varDecl.type->type))
         handleVarDeclOfStructuredType(varDecl);
     validateVarDecl(varDecl, m_symbolTable, prevEntry);

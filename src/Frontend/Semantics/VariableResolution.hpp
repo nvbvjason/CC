@@ -49,6 +49,7 @@ public:
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
     void handleVarDeclOfStructuredType(Parsing::VarDecl& varDecl);
+    void validatePointerType(Parsing::VarDecl& varDecl);
 
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::FuncCallExpr& funcCallExpr) override;
