@@ -10,6 +10,8 @@ class ValidateReturn : public Parsing::ASTTraverser {
     std::vector<Error> m_errors;
 public:
     std::vector<Error> programValidate(Parsing::Program& program);
+    void handlePtrReturnTypes(const Parsing::ReturnStmt* returnStmt, const Parsing::FuncType* funcType);
+
 private:
     static void addReturnZero(Parsing::FuncDecl& funDecl);
     void visit(Parsing::FuncDecl& funDecl) override;

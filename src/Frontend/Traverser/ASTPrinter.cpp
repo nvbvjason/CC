@@ -20,6 +20,8 @@ std::string varTypeToString(const Type kind)
         case Type::Double:  return "double";
         case Type::Pointer: return "pointer";
         case Type::Array:   return "array";
+        case Type::Struct:  return "struct";
+        case Type::Union:   return "union";
         default:            return "unknown";
     }
 }
@@ -131,6 +133,18 @@ void ASTPrinter::visit(const FuncDecl& funDecl)
     ConstASTTraverser::visit(funDecl);
     addLine("");
     addLine("");
+}
+
+void ASTPrinter::visit(const StructDecl& structDecl)
+{
+    addLine("Struct: " + structDecl.identifier);
+    ConstASTTraverser::visit(structDecl);
+}
+
+void ASTPrinter::visit(const UnionDecl& unionDecl)
+{
+    addLine("Union: " + unionDecl.identifier);
+    ConstASTTraverser::visit(unionDecl);
 }
 
 void ASTPrinter::visit(const Block& block)

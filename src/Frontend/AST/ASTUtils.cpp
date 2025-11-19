@@ -2,10 +2,9 @@
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
 #include "ASTExpr.hpp"
+#include "Types/TypeConversion.hpp"
 
 #include <cassert>
-
-#include "Types/TypeConversion.hpp"
 
 namespace Parsing {
 
@@ -284,6 +283,14 @@ bool isStructuredTypeBase(const TypeBase& type)
     return type.type == Type::Struct || type.type == Type::Union;
 }
 
+bool isCompleteStructuredType(const TypeBase& type)
+{
+    if (type.kind != TypeBase::Kind::Structured)
+        return true;
+    const auto structured = dynCast<const StructuredType>(&type);
+    return structured->isComplete;
+}
+
 bool isArrayOfVoidPointer(const TypeBase& type)
 {
     if (type.kind != TypeBase::Kind::Array)
@@ -312,6 +319,8 @@ bool isScalarType(const TypeBase& type)
         case Type::Void:
         case Type::Array:
         case Type::Function:
+        case Type::Struct:
+        case Type::Union:
             return false;
         default:
             return true;

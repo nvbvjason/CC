@@ -18,8 +18,6 @@ bool SymbolTable::contains(const std::string& name) const
     return false;
 }
 
-
-
 SymbolTable::ReturnedEntry SymbolTable::lookupEntry(const std::string& uniqueName) const
 {
     const bool inArgs = isInArgs(uniqueName);
@@ -50,8 +48,8 @@ SymbolTable::ReturnedStructuredEntry SymbolTable::lookupStructuredEntry(const st
             continue;
         const bool fromCurrentScope = i == m_StructuredEntries.size() - 1;
         const bool defined = it->second.isDefined();
-        std::string name = it->second.uniqueName;
-        return {Parsing::deepCopy(*it->second.varType), name, true, fromCurrentScope, defined};
+        const std::string uniqueName = it->second.uniqueName;
+        return {Parsing::deepCopy(*it->second.varType), uniqueName, true, fromCurrentScope, defined};
     }
     return {nullptr, "", false, false, false};
 }

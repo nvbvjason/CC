@@ -2,7 +2,6 @@
 
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
-#include "ASTTypes.hpp"
 #include "TypeConversion.hpp"
 #include "ASTUtils.hpp"
 #include "Error.hpp"
@@ -12,15 +11,6 @@
 #include <unordered_set>
 
 namespace Semantics {
-
-template<typename TargetType, Type TargetKind>
-void convertConstantExprRudolf(Parsing::VarDecl& varDecl, const Parsing::ConstExpr& constExpr)
-{
-    const TargetType value = getValueFromConst<TargetType>(constExpr);
-    varDecl.init = std::make_unique<Parsing::SingleInitializer>(
-            std::make_unique<Parsing::ConstExpr>(
-        value, std::make_unique<Parsing::VarType>(TargetKind)));
-}
 
 class TypeResolution final : public Parsing::ASTTraverser {
     static constexpr auto s_boolType = Type::I32;

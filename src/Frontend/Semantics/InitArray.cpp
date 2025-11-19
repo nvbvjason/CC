@@ -38,6 +38,10 @@ void InitArray::initCharacterArray(const Parsing::SingleInitializer& singleInit,
 void InitArray::initArray()
 {
     const Type innerArrayType = Parsing::getArrayType(varDecl.type.get());
+    if (isStructuredType(innerArrayType)) {
+        errors.emplace_back("Structured inner arrays types not supported", varDecl.location);
+        return;
+    }
     const auto arrayInit = varDecl.init.get();
     auto[staticInitializer, emplacedPositions] =
         flattenWithPositions(innerArrayType, arrayInit);

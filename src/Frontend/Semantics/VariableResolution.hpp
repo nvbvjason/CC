@@ -8,6 +8,7 @@
 #include "ASTUtils.hpp"
 
 #include <string>
+#include <unordered_set>
 
 namespace Semantics {
 
@@ -41,10 +42,11 @@ public:
     void visit(Parsing::StructDecl& structDecl) override;
     void visit(Parsing::UnionDecl& unionDecl) override;
 
-    void visit(Parsing::StructuredType& structType) override;
+    void visit(Parsing::StructuredType& structuredType) override;
 
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
+    void handleVarDeclOfStructuredType(Parsing::VarDecl& varDecl);
 
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::FuncCallExpr& funcCallExpr) override;
@@ -59,8 +61,8 @@ public:
         const SymbolTable& symbolTable,
         const SymbolTable::ReturnedEntry& prevEntry);
     void validateFuncDecl(const Parsing::FuncDecl& funDecl,
-                         const SymbolTable& symbolTable,
-                         const SymbolTable::ReturnedEntry& returnedEntry);
+                          const SymbolTable& symbolTable,
+                          const SymbolTable::ReturnedEntry& returnedEntry);
     void validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
                                const SymbolTable::ReturnedEntry& prevEntry);
     bool isValidFuncCall(i64 location, const SymbolTable::ReturnedEntry& returnedEntry);
@@ -72,7 +74,7 @@ private:
 };
 
 bool duplicatesInArgs(const std::vector<std::string>& args);
-inline bool isIllegalVarRedecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry)
+inline bool isIllegalVarReDecl(const Parsing::VarDecl& varDecl, const SymbolTable::ReturnedEntry& prevEntry)
 {
     using Storage = Parsing::Declaration::StorageClass;
     return prevEntry.isFromCurrentScope()
@@ -102,5 +104,16 @@ inline bool isArrayOfUndefinedStructuredType(
         return false;
     const auto structType = dynamic_cast<const Parsing::StructuredType*>(type);
     return !symbolTable.lookupStructuredEntry(structType->identifier).isDefined();
+}
+
+inline bool duplicateIdentifierInMembers(const std::vector<std::unique_ptr<Parsing::MemberDecl>>& memberDecls)
+{
+    std::unordered_set<std::string> identifiers;
+    for (const auto& member : memberDecls) {
+        if (identifiers.contains(member->identifier))
+            return true;
+        identifiers.insert(member->identifier);
+    }
+    return false;
 }
 } // Semantics

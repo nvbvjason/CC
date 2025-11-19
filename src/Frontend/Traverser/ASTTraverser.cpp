@@ -13,8 +13,6 @@ void ASTTraverser::visit(Program& program)
 // Declaration
 void ASTTraverser::visit(VarDecl& varDecl)
 {
-    if (varDecl.type)
-        varDecl.type->accept(*this);
     if (varDecl.init)
         varDecl.init->accept(*this);
 }
@@ -195,11 +193,15 @@ void ASTTraverser::visit(AssignmentExpr& assignmentExpr)
     assignmentExpr.rhs->accept(*this);
 }
 
-void ASTTraverser::visit(TernaryExpr& conditionalExpr)
+void ASTTraverser::visit(TernaryExpr& ternaryExpr)
 {
-    conditionalExpr.condition->accept(*this);
-    conditionalExpr.trueExpr->accept(*this);
-    conditionalExpr.falseExpr->accept(*this);
+    ternaryExpr.condition->accept(*this);
+    if (ternaryExpr.trueExpr->type)
+        ternaryExpr.trueExpr->type->accept(*this);
+    ternaryExpr.trueExpr->accept(*this);
+    if (ternaryExpr.falseExpr->type)
+        ternaryExpr.falseExpr->type->accept(*this);
+    ternaryExpr.falseExpr->accept(*this);
 }
 
 void ASTTraverser::visit(FuncCallExpr& functionCallExpr)

@@ -134,6 +134,12 @@ void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
 {
     const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
 
+    if (isStructuredType(varDecl.type->type) &&
+        !Parsing::areEquivalentTypes(*varDecl.type, *singleInit->expr->type)) {
+        addError("Cannot initialize structured type with different type", varDecl.location);
+        return;
+    }
+
     if (varDecl.type->type == Type::Array) {
         verifyArrayInSingleInit(varDecl, *singleInit);
         return;
@@ -434,6 +440,11 @@ void TypeResolution::validateAndConvertFuncCallArgs(
         const Parsing::TypeBase* const argTypeBase = params[i].get();
         const Type typeInner = funCallExpr.args[i]->type->type;
         const Type castToType = params[i]->type;
+        if (isStructuredType(typeInner) || isStructuredType(castToType)) {
+            if (!Parsing::areEquivalentTypes(*funCallExpr.args[i]->type, *params[i])) {
+                addError("Cannot convert structured types in funcall", callExpr->location);
+            }
+        }
         if (typeInner == Type::Pointer && castToType == Type::Pointer) {
             if (!Parsing::areEquivalentTypes(*callExpr->type, *argTypeBase)
                 && !isVoidPointer(*callExpr->type) && !isVoidPointer(*argTypeBase))
@@ -692,6 +703,12 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertAssignExpr(Parsing::Assign
         return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
+    if (isStructuredType(leftType)) {
+        if (!Parsing::areEquivalentTypes(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type)) {
+            addError("Cannot assign other type to structured type", assignmentExpr.rhs->location);
+            return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
+        }
+    }
     if ((assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign) &&
         rightType == Type::Pointer) {
         addError("Cannot have pointer as right hand side of compound assign", assignmentExpr.rhs->location);
@@ -731,6 +748,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertCastExpr(Parsing::CastExpr
         return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
     const Type outerType = castExpr.type->type;
     const Type innerType = castExpr.innerExpr->type->type;
+    if (isStructuredType(outerType))
+        addError("Cannot cast to structured type", castExpr.location);
+    if (isStructuredType(innerType))
+        addError("Cannot cast from structured type", castExpr.location);
     if (Parsing::areEquivalentTypes(*castExpr.type, *castExpr.innerExpr->type))
         return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
     if (innerType == Type::Void)
@@ -850,6 +871,20 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertTernaryExpr(Parsing::Terna
 
     const Type trueType = ternaryExpr.trueExpr->type->type;
     const Type falseType = ternaryExpr.falseExpr->type->type;
+    if (isStructuredType(trueType) || isStructuredType(falseType)) {
+        if (!isStructuredType(trueType) || !isStructuredType(falseType)) {
+            addError("Cannot have structured and unstructured type in ternary.", ternaryExpr.location);
+            return std::make_unique<Parsing::TernaryExpr>(std::move(ternaryExpr));
+        }
+        const auto trueTypeStructured = dynCast<const Parsing::StructuredType>(
+            ternaryExpr.trueExpr->type.get());
+        const auto falseTypeStructured = dynCast<const Parsing::StructuredType>(
+            ternaryExpr.falseExpr->type.get());
+        if (trueTypeStructured->identifier != falseTypeStructured->identifier) {
+            addError("Cannot have different structured types in ternary.", ternaryExpr.location);
+            return std::make_unique<Parsing::TernaryExpr>(std::move(ternaryExpr));
+        }
+    }
     if (trueType == Type::Void && falseType == Type::Void) {
         ternaryExpr.type = Parsing::deepCopy(*ternaryExpr.trueExpr->type);
         return std::make_unique<Parsing::TernaryExpr>(std::move(ternaryExpr));
@@ -920,6 +955,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSubscriptExpr(Parsing::Sub
 
     if (isVoidPointer(*subscriptExpr.referencing->type)) {
         addError("Cannot subscript void pointer", subscriptExpr.referencing->location);
+        return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
+    }
+    if (!Parsing::isCompleteStructuredType(*subscriptExpr.referencing->type)) {
+        addError("Cannot subscript incomplete type", subscriptExpr.referencing->location);
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
     }
 
@@ -1000,6 +1039,8 @@ const Parsing::TypeBase* TypeResolution::validateStructuredAccessors(
 std::unique_ptr<Parsing::Expr> TypeResolution::convertDotExpr(Parsing::DotExpr& dotExpr)
 {
     dotExpr.structuredExpr = convert(*dotExpr.structuredExpr);
+    if (hasError())
+        return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
     const Parsing::TypeBase* type = validateStructuredAccessors(
         dotExpr.structuredExpr->type.get(), dotExpr.identifier, dotExpr.location);
     if (type == nullptr) {
@@ -1013,6 +1054,8 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertDotExpr(Parsing::DotExpr& 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertArrowExpr(Parsing::ArrowExpr& arrowExpr)
 {
     arrowExpr.pointerExpr = convert(*arrowExpr.pointerExpr);
+    if (hasError())
+        return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
     if (arrowExpr.pointerExpr->type->kind != Parsing::TypeBase::Kind::Pointer) {
         addError("Arrow prefix must be on pointer", arrowExpr.pointerExpr->location);
         return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));

@@ -73,7 +73,7 @@ std::unique_ptr<Declaration> Parser::structuredDeclParse(std::unique_ptr<TypeBas
     }
     if (typeBase->type == Type::Union) {
         const auto unionType = dynCast<StructuredType>(typeBase.get());
-        return std::make_unique<StructDecl>(location, unionType->identifier, std::move(memberDecls));
+        return std::make_unique<UnionDecl>(location, unionType->identifier, std::move(memberDecls));
     }
     return nullptr;
 }

@@ -62,7 +62,7 @@ public:
     void visit(UnaryExpr& unaryExpr) override;
     void visit(BinaryExpr& binaryExpr) override;
     void visit(AssignmentExpr& assignmentExpr) override;
-    void visit(TernaryExpr& conditionalExpr) override;
+    void visit(TernaryExpr& ternaryExpr) override;
     void visit(FuncCallExpr& functionCallExpr) override;
     void visit(DereferenceExpr& dereferenceExpr) override;
     void visit(AddrOffExpr& addrOffExpr) override;

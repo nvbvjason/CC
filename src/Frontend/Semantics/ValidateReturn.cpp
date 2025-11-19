@@ -4,11 +4,32 @@
 
 #include <cassert>
 
+#include "TypeConversion.hpp"
+
 namespace Semantics {
 std::vector<Error> ValidateReturn::programValidate(Parsing::Program& program)
 {
     program.accept(*this);
     return std::move(m_errors);
+}
+
+void ValidateReturn::handlePtrReturnTypes(const Parsing::ReturnStmt* const returnStmt,
+                                          const Parsing::FuncType* const funcType)
+{
+    if (isVoidPointer(*funcType->returnType)) {
+        returnStmt->expr->type = std::make_unique<Parsing::PointerType>(
+            std::make_unique<Parsing::VarType>(Type::Void));
+        return;
+    }
+    if (isVoidPointer(*returnStmt->expr->type) && funcType->returnType->type == Type::Pointer) {
+        returnStmt->expr->type = std::make_unique<Parsing::PointerType>(
+            std::make_unique<Parsing::VarType>(Type::Void));
+        return;
+    }
+    if (!Parsing::areEquivalentTypes(*funcType->returnType, *returnStmt->expr->type)) {
+        m_errors.emplace_back("Return type does not conform to function return type ",
+                              returnStmt->expr->location);
+    }
 }
 
 void ValidateReturn::visit(Parsing::FuncDecl& funDecl)
@@ -59,19 +80,13 @@ void ValidateReturn::visit(Parsing::FuncDecl& funDecl)
     assert(returnStmt->expr->type);
     assert(returnStmt->expr->type->type);
     if (funcType->returnType->type == Type::Pointer || returnStmt->expr->type->type == Type::Pointer) {
-        if (isVoidPointer(*funcType->returnType)) {
-            returnStmt->expr->type = std::make_unique<Parsing::PointerType>(
-                std::make_unique<Parsing::VarType>(Type::Void));
-            return;
-        }
-        if (isVoidPointer(*returnStmt->expr->type) && funcType->returnType->type == Type::Pointer) {
-            returnStmt->expr->type = std::make_unique<Parsing::PointerType>(
-                std::make_unique<Parsing::VarType>(Type::Void));
-            return;
-        }
+        handlePtrReturnTypes(returnStmt, funcType);
+        return;
+    }
+    if (isStructuredType(funcType->returnType->type) || isStructuredType(funcType->returnType->type)) {
         if (!Parsing::areEquivalentTypes(*funcType->returnType, *returnStmt->expr->type)) {
-            m_errors.emplace_back("Return type does not conform to function return type ",
-                                returnStmt->expr->location);
+            m_errors.emplace_back("Structured return types must be the same as function return type",
+                                  returnStmt->location);
             return;
         }
     }

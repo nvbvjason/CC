@@ -6,6 +6,8 @@
 
 #include <unordered_set>
 
+#include "TypeConversion.hpp"
+
 namespace Semantics {
 
 std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
@@ -16,13 +18,27 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
 
 void VariableResolution::visit(Parsing::StructDecl& structDecl)
 {
+    const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structDecl.identifier);
+    if (structuredEntry.isFromCurrentScope() && structuredEntry.typeBase->type == Type::Union)
+        addError("Cannot define union and struct of same name in same scope", structDecl.location);
     if (!structDecl.members.empty()) {
+        if (structuredEntry.isDefined()) {
+            addError("Cannot redefine struct in same scope", structDecl.location);
+            return;
+        }
+        if (duplicateIdentifierInMembers(structDecl.members)) {
+            addError("Cannot have duplicate identifiers in struct", structDecl.location);
+            return;
+        }
         const std::string uniqueName = makeTemporaryName(structDecl.identifier);
+        auto structuredType = std::make_unique<Parsing::StructuredType>(
+            Type::Struct, uniqueName, structDecl.location);
+        structuredType->isComplete = true;
         m_symbolTable.addStructuredEntry(structDecl.identifier,
                                          uniqueName,
                                          Parsing::StructuredType(
                                              Type::Struct,
-                                             structDecl.identifier,
+                                             uniqueName,
                                              structDecl.location
                                          ),
                                          !structDecl.members.empty());
@@ -33,13 +49,24 @@ void VariableResolution::visit(Parsing::StructDecl& structDecl)
 
 void VariableResolution::visit(Parsing::UnionDecl& unionDecl)
 {
+    const auto structuredEntry = m_symbolTable.lookupStructuredEntry(unionDecl.identifier);
+    if (structuredEntry.isFromCurrentScope() && structuredEntry.typeBase->type == Type::Struct)
+        addError("Cannot define union and struct of same name in same scope", unionDecl.location);
     if (!unionDecl.members.empty()) {
+        if (structuredEntry.isDefined()) {
+            addError("Cannot redefine union in same scope", unionDecl.location);
+            return;
+        }
+        if (duplicateIdentifierInMembers(unionDecl.members)) {
+            addError("Cannot have duplicate identifiers in union", unionDecl.location);
+            return;
+        }
         const std::string uniqueName = makeTemporaryName(unionDecl.identifier);
         m_symbolTable.addStructuredEntry(unionDecl.identifier,
                                          uniqueName,
                                          Parsing::StructuredType(
                                              Type::Union,
-                                             unionDecl.identifier,
+                                             uniqueName,
                                              unionDecl.location
                                             ),
                                          !unionDecl.members.empty());
@@ -129,9 +156,21 @@ void VariableResolution::visit(Parsing::ForStmt& forStmt)
     ASTTraverser::visit(forStmt);
 }
 
+void VariableResolution::handleVarDeclOfStructuredType(Parsing::VarDecl& varDecl)
+{
+    const auto structuredType = dynCast<Parsing::StructuredType>(varDecl.type.get());
+    const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredType->identifier);
+    if (!structuredEntry.isDefined())
+        addError("Cannot declare variable of structured type which is undefined", varDecl.location);
+    else
+        varDecl.type = Parsing::deepCopy(*structuredEntry.typeBase);
+}
+
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookupEntry(varDecl.name);
+    if (isStructuredType(varDecl.type->type))
+        handleVarDeclOfStructuredType(varDecl);
     validateVarDecl(varDecl, m_symbolTable, prevEntry);
     addVarToSymbolTable(varDecl, prevEntry);
     ASTTraverser::visit(varDecl);
@@ -157,7 +196,7 @@ void VariableResolution::validateVarDecl(const Parsing::VarDecl& varDecl,
         validateVarDeclGlobal(varDecl, prevEntry);
         return;
     }
-    if (isIllegalVarRedecl(varDecl, prevEntry))
+    if (isIllegalVarReDecl(varDecl, prevEntry))
         addError("Illegal variable redeclaration in same scope", varDecl.location);
     if (varDecl.storage == Storage::Extern
         && prevEntry.hasExternalLinkage()
@@ -185,12 +224,13 @@ void VariableResolution::validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
         addError("Cannot define arrays with different types", varDecl.location);
 }
 
-void VariableResolution::visit(Parsing::StructuredType& structType)
+void VariableResolution::visit(Parsing::StructuredType& structuredType)
 {
-    const auto entry = m_symbolTable.lookupStructuredEntry(structType.identifier);
+    const auto entry = m_symbolTable.lookupStructuredEntry(structuredType.identifier);
     if (!entry.isDefined())
-        addError("Cannot use undefined struct type", structType.location);
-    structType.identifier = entry.name;
+        addError("Cannot use undefined structured type", structuredType.location);
+    structuredType.identifier = entry.name;
+    structuredType.isComplete = true;
 }
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
