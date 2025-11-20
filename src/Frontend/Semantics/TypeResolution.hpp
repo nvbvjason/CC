@@ -81,6 +81,7 @@ public:
     std::unique_ptr<Parsing::Expr> handlePtrToPtrBinaryOpers(Parsing::BinaryExpr& binaryExpr);
     std::unique_ptr<Parsing::Expr> handleBinaryPtr(Parsing::BinaryExpr& binaryExpr,
                                                    Type leftType, Type rightType);
+    std::unique_ptr<Parsing::Expr> converSimpleAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     std::unique_ptr<Parsing::Expr> convertAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
     std::unique_ptr<Parsing::Expr> convertTernaryExpr(Parsing::TernaryExpr& ternaryExpr);
     std::unique_ptr<Parsing::Expr> convertFuncCallExpr(Parsing::FuncCallExpr& funCallExpr);
@@ -99,7 +100,7 @@ public:
     std::unique_ptr<Parsing::Expr> convertDotExpr(Parsing::DotExpr& dotExpr);
     std::unique_ptr<Parsing::Expr> convertArrowExpr(Parsing::ArrowExpr& arrowExpr);
 
-    bool isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
+    bool isLegalAssignExpr(const Parsing::AssignmentExpr& assignmentExpr);
     std::unique_ptr<Parsing::Expr> validateAndConvertPtrsInTernaryExpr(
         Parsing::TernaryExpr& ternaryExpr, Type trueType, Type falseType);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
@@ -133,28 +134,18 @@ inline bool isBinaryBitwise(const Parsing::BinaryExpr::Operator binOper)
            binOper == Operator::RightShift;
 }
 
+inline bool isIllegalFloatBinaryOperator(const Parsing::BinaryExpr::Operator oper)
+{
+    return isBinaryBitwise(oper) || oper == Parsing::BinaryExpr::Operator::Modulo;
+}
+
 inline bool isIllegalUnaryPointerOperator(const Parsing::UnaryExpr::Operator oper)
 {
     using Operator = Parsing::UnaryExpr::Operator;
     return oper == Operator::Complement || oper == Operator::Negate;
 }
 
-inline bool isIllegalDoubleCompoundAssignOperation(const Parsing::AssignmentExpr::Operator oper)
-{
-    using Oper = Parsing::AssignmentExpr::Operator;
-    return oper == Oper::ModuloAssign || oper == Oper::BitwiseAndAssign ||
-           oper == Oper::BitwiseOrAssign || oper == Oper::BitwiseXorAssign ||
-           oper == Oper::LeftShiftAssign || oper == Oper::RightShiftAssign;
-}
-
-inline bool isIllegalPointerCompoundAssignOperation(const Parsing::AssignmentExpr::Operator oper)
-{
-    using Oper = Parsing::AssignmentExpr::Operator;
-    return oper == Oper::BitwiseAndAssign || oper == Oper::BitwiseOrAssign ||
-           oper == Oper::DivideAssign || oper == Oper::ModuloAssign;
-}
-
-inline bool isUnallowedPtrBinaryOperation(const Parsing::BinaryExpr::Operator oper)
+inline bool isIllegalPtrBinaryOperation(const Parsing::BinaryExpr::Operator oper)
 {
     using Oper = Parsing::BinaryExpr::Operator;
     return oper == Oper::Modulo || oper == Oper::Multiply ||

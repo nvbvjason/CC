@@ -6,6 +6,8 @@
 
 namespace Parsing {
 
+BinaryExpr::Operator convertAssignOperation(AssignmentExpr::Operator assignOperation);
+
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const VarType& varType);
 [[nodiscard]] std::unique_ptr<TypeBase> deepCopy(const FuncType& funcType);

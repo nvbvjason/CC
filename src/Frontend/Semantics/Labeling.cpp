@@ -10,6 +10,8 @@
 #include <numeric>
 #include <ranges>
 
+#include "TypeConversion.hpp"
+
 namespace Semantics {
 std::vector<Error> Labeling::programValidate(Parsing::Program& program)
 {

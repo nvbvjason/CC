@@ -8,6 +8,26 @@
 
 namespace Parsing {
 
+BinaryExpr::Operator convertAssignOperation(const AssignmentExpr::Operator assignOperation)
+{
+    using Assign = AssignmentExpr::Operator;
+    using Binary = BinaryExpr::Operator;
+    switch (assignOperation) {
+        case Assign::PlusAssign:         return Binary::Add;
+        case Assign::MinusAssign:        return Binary::Subtract;
+        case Assign::MultiplyAssign:     return Binary::Multiply;
+        case Assign::DivideAssign:       return Binary::Divide;
+        case Assign::ModuloAssign:       return Binary::Modulo;
+        case Assign::BitwiseAndAssign:   return Binary::BitwiseAnd;
+        case Assign::BitwiseOrAssign:    return Binary::BitwiseOr;
+        case Assign::BitwiseXorAssign:   return Binary::BitwiseXor;
+        case Assign::LeftShiftAssign:    return Binary::LeftShift;
+        case Assign::RightShiftAssign:   return Binary::RightShift;
+        default:
+            std::abort();
+    }
+}
+
 std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase)
 {
     assert(typeBase.type != Type::Invalid);

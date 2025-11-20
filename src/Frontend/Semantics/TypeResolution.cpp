@@ -524,7 +524,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertBinaryExpr(Parsing::Binary
     }
     const Type commonType = getCommonType(leftType, rightType);
 
-    if (commonType == Type::Double && (isBinaryBitwise(binaryExpr.op) || binaryExpr.op == BinaryOp::Modulo)) {
+    if (commonType == Type::Double && isIllegalFloatBinaryOperator(binaryExpr.op)) {
         addError("Cannot apply operator to double", binaryExpr.location);
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
@@ -618,7 +618,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
                                                                const Type leftType,
                                                                const Type rightType)
 {
-    if (isUnallowedPtrBinaryOperation(binaryExpr.op)) {
+    if (isIllegalPtrBinaryOperation(binaryExpr.op)) {
         addError("Cannot apply operator to pointer", binaryExpr.location);
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
@@ -667,42 +667,34 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertAssignExpr(Parsing::Assign
 
     if (hasError())
         return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
-    if (assignmentExpr.op == Oper::Assign) {
-        assignmentExpr.rhs = converOrAssign(
-            *assignmentExpr.lhs->type,
-            *assignmentExpr.rhs->type,
-            assignmentExpr.rhs,
-            m_errors);
-        assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
-        return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
-    }
-    const Type leftType = assignmentExpr.lhs->type->type;
-    const Type rightType = assignmentExpr.rhs->type->type;
-    if ((assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign) &&
-        rightType == Type::Pointer) {
-        addError("Cannot have pointer as right hand side of compound assign", assignmentExpr.rhs->location);
-        return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
-    }
-    if (isVoidPointer(*assignmentExpr.lhs->type)) {
-        addError("Cannot compound assign to void ptr", assignmentExpr.lhs->location);
-        return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
-    }
+    if (assignmentExpr.op == Oper::Assign)
+        return converSimpleAssignExpr(assignmentExpr);
+
     if (!isLegalAssignExpr(assignmentExpr))
         return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
-    if (leftType == Type::Pointer && isIntegerType(rightType))
+
+    if (assignmentExpr.lhs->type->type == Type::Pointer && isIntegerType(assignmentExpr.rhs->type->type))
         assignmentExpr.rhs = convertOrCastToType(assignmentExpr.rhs, Type::I64);
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
     return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
 }
 
-bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
+bool TypeResolution::isLegalAssignExpr(const Parsing::AssignmentExpr& assignmentExpr)
 {
     using Oper = Parsing::AssignmentExpr::Operator;
 
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
+    if (rightType == Type::Pointer) {
+        addError("Cannot have pointer as right hand side of compound assign", assignmentExpr.rhs->location);
+        return false;
+    }
+    if (isVoidPointer(*assignmentExpr.lhs->type)) {
+        addError("Cannot compound assign to void ptr", assignmentExpr.lhs->location);
+        return false;
+    }
     if (isStructuredType(leftType) || isStructuredType(rightType)) {
-        addError("Cannot assign to structured type", assignmentExpr.location);
+        addError("Cannot compound assign to structured type", assignmentExpr.location);
         return false;
     }
     if (rightType == Type::Void) {
@@ -710,45 +702,35 @@ bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
         return false;
     }
     const Type commonType = getCommonType(leftType, rightType);
-    if ((leftType == Type::Pointer || rightType == Type::Pointer) &&
-        isIllegalPointerCompoundAssignOperation(assignmentExpr.op)) {
-        addError("Is illegal pointer assign operator", assignmentExpr.location);
-        return false;
-    }
-    if (commonType == Type::Double && isIllegalDoubleCompoundAssignOperation(assignmentExpr.op)) {
+    const BinaryOp binaryOp = convertAssignOperation(assignmentExpr.op);
+    if (commonType == Type::Double && isIllegalFloatBinaryOperator(binaryOp)) {
         addError("Is double compound assign operator", assignmentExpr.location);
         return false;
     }
-    if (leftType == Type::Pointer && rightType == Type::Pointer) {
-        if (isVoidPointer(*assignmentExpr.lhs->type)) {
-            assignmentExpr.rhs->type = std::make_unique<Parsing::PointerType>(
-                std::make_unique<Parsing::VarType>(Type::Void));
-            return true;
-        }
-        if (!Parsing::areEquivalentTypes(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type)
-            && !isVoidPointer(*assignmentExpr.rhs->type)) {
-            addError("Cannot assign pointer of different types", assignmentExpr.location);
+    if (leftType == Type::Pointer) {
+        if (isIllegalPtrBinaryOperation(binaryOp)) {
+            addError("Is illegal pointer assign operator", assignmentExpr.location);
             return false;
         }
-        return true;
-    }
-    if (leftType == Type::Pointer) {
-        if (canConvertToNullPtr(*assignmentExpr.rhs)) {
-            assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
-                Parsing::deepCopy(*assignmentExpr.lhs->type), std::move(assignmentExpr.rhs));
-        }
-        else if (assignmentExpr.lhs->kind == Parsing::Expr::Kind::Subscript)
-            return true;
-        else if ((assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign) &&
+        if ((assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign) &&
                  isIntegerType(rightType)) {
             return true;
         }
-        else {
-            addError("Cannot convert one type to pointer", assignmentExpr.location);
-            return false;
-        }
+        addError("Cannot convert one type to pointer", assignmentExpr.location);
+        return false;
     }
     return true;
+}
+
+std::unique_ptr<Parsing::Expr> TypeResolution::converSimpleAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
+{
+    assignmentExpr.rhs = converOrAssign(
+        *assignmentExpr.lhs->type,
+        *assignmentExpr.rhs->type,
+        assignmentExpr.rhs,
+        m_errors);
+    assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
+    return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
 }
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertCastExpr(Parsing::CastExpr& castExpr)

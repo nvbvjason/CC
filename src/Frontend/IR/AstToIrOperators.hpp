@@ -3,7 +3,6 @@
 #include "ASTExpr.hpp"
 #include "ASTIr.hpp"
 #include "DynCast.hpp"
-#include "Types/TypeConversion.hpp"
 
 namespace Ir {
 inline UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
