@@ -71,6 +71,34 @@ bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::Fu
     return true;
 }
 
+std::unique_ptr<Parsing::Expr> converOrAssign(const Parsing::TypeBase& left,
+                                              const Parsing::TypeBase& right,
+                                              std::unique_ptr<Parsing::Expr>& expr,
+                                              std::vector<Error>& errors)
+{
+    if (Parsing::areEquivalentTypes(left, right))
+        return std::move(expr);
+
+    if (isArithmeticTypeBase(left) && isArithmeticTypeBase(*expr->type))
+        return convertOrCastToType(expr, left.type);
+
+    if (canConvertToNullPtr(*expr) && left.type == Type::Pointer)
+        return convertOrCastToType(expr, Type::U64);
+
+    if (expr->type->type == Type::Pointer && isVoidPointer(left)) {
+        expr->type = std::make_unique<Parsing::PointerType>(std::make_unique<Parsing::VarType>(Type::Void));
+        return std::move(expr);
+    }
+
+    if (left.type == Type::Pointer && isVoidPointer(right)) {
+        expr->type = Parsing::deepCopy(left);
+        return std::move(expr);
+    }
+
+    errors.emplace_back("Faulty assignment", expr->location);
+    return std::move(expr);
+}
+
 void TypeResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (isIllegalVarDecl(varDecl))
@@ -96,8 +124,18 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     }
     if (varDecl.init == nullptr)
         return;
-    if (varDecl.init->kind == Parsing::Initializer::Kind::Single)
-        handleSingleInit(varDecl);
+    if (varDecl.init->kind == Parsing::Initializer::Kind::Single) {
+        const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+        if (varDecl.type->type == Type::Array) {
+            verifyArrayInSingleInit(varDecl, *singleInit);
+            return;
+        }
+        singleInit->expr = converOrAssign(
+            *varDecl.type,
+            *singleInit->expr->type,
+            singleInit->expr,
+            m_errors);
+    }
     else {
         handelCompoundInit(varDecl);
         return;
@@ -105,52 +143,19 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     assignTypeToArithmeticUnaryExpr(varDecl);
 }
 
-void TypeResolution::verifyArrayInSingleInit(
-    const Parsing::VarDecl& varDecl, const Parsing::SingleInitializer& singleInitializer)
+void TypeResolution::verifyArrayInSingleInit(const Parsing::VarDecl& varDecl,
+                                             const Parsing::SingleInitializer& singleInit)
 {
     const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
     if (!isCharacterType(arrayType->elementType->type)) {
         addError("Cannot initialize array with single init", varDecl.location);
         return;
     }
-    if (singleInitializer.expr->kind == Parsing::Expr::Kind::String) {
-        const auto stringExpr = dynCast<Parsing::StringExpr>(singleInitializer.expr.get());
+    if (singleInit.expr->kind == Parsing::Expr::Kind::String) {
+        const auto stringExpr = dynCast<Parsing::StringExpr>(singleInit.expr.get());
         if (arrayType->size < stringExpr->value.size())
             addError("Character array shorter than string init", varDecl.location);
     }
-}
-
-void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
-{
-    const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
-    const auto expr = singleInit->expr.get();
-
-    if (Parsing::areEquivalentTypes(*varDecl.type, *expr->type))
-        return;
-
-    if (isArithmeticTypeBase(*varDecl.type) && isArithmeticTypeBase(*expr->type))
-        return;
-
-    if (canConvertToNullPtr(*expr) && varDecl.type->type == Type::Pointer)
-        return;
-
-    if (expr->type->type == Type::Pointer && isVoidPointer(*varDecl.type)) {
-        singleInit->expr->type = std::make_unique<Parsing::PointerType>(
-            std::make_unique<Parsing::VarType>(Type::Void));
-        return;
-    }
-
-    if (varDecl.type->type == Type::Pointer && isVoidPointer(*singleInit->expr->type)) {
-        singleInit->expr->type = Parsing::deepCopy(*varDecl.type);
-        return;
-    }
-
-    if (varDecl.type->type == Type::Array) {
-        verifyArrayInSingleInit(varDecl, *singleInit);
-        return;
-    }
-
-    addError("Faulty assignment", varDecl.location);
 }
 
 void TypeResolution::handleCompoundInitArray(

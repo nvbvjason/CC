@@ -48,7 +48,6 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
                                          structuredDecl.location
                                      ),
                                      !structuredDecl.members.empty());
-    ASTTraverser::visit(structuredDecl);
 }
 
 void VariableResolution::visit(Parsing::FuncDecl& funDecl)

@@ -77,9 +77,12 @@ void VarTable::addEntry(const Parsing::StructuredDecl& structuredDecl, std::vect
             errors.emplace_back("Cannot have void type as structured member", member->location);
             return;
         }
-        if (isStructuredTypeBase(*member->type) && !isDefined(member->identifier)) {
-            errors.emplace_back("Cannot have undefined type as structured member", member->location);
-            return;
+        if (isStructuredTypeBase(*member->type)) {
+            const auto structuredType = dynCast<const Parsing::StructuredType>(member->type.get());
+            if (!isDefined(structuredType->identifier))  {
+                errors.emplace_back("Cannot have undefined type as structured member", member->location);
+                return;
+            }
         }
         if (member->type->kind == Parsing::TypeBase::Kind::Array) {
             const Parsing::TypeBase* innerType = Parsing::getArrayBaseType(*member->type);
