@@ -226,7 +226,6 @@ void ASTTraverser::visit(SizeOfTypeExpr& sizeOfTypeExpr)
 {
     if (sizeOfTypeExpr.sizeType)
         sizeOfTypeExpr.sizeType->accept(*this);
-    sizeOfTypeExpr.sizeType->accept(*this);
 }
 
 void ASTTraverser::visit(SizeOfExprExpr& sizeOfExprExpr)

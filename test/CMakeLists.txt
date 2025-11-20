@@ -20,6 +20,8 @@ add_executable(CC_test
         FixUpInstructionsTest.cpp
         CodeGenOperatorsTest.cpp
         ParserOperators.cpp
+        TestReadUtils.cpp
+        TestReadUtils.hpp
 )
 
 target_include_directories(CC_test PRIVATE

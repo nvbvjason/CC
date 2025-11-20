@@ -158,7 +158,7 @@ void VariableResolution::validatePointerType(Parsing::VarDecl& varDecl)
             addError("Cannot use variable of structured type which is undefined", varDecl.location);
             return;
         }
-        varDecl.type = Parsing::deepCopy(*structuredEntry.typeBase);
+        varDecl.type = std::make_unique<Parsing::PointerType>(Parsing::deepCopy(*structuredEntry.typeBase));
     }
 }
 

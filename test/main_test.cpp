@@ -2,7 +2,7 @@
 #include "../src/Frontend/Lexing/Lexer.hpp"
 #include "../src/Frontend/Parsing/Parser.hpp"
 #include "../src/Frontend/Semantics/VariableResolution.hpp"
-#include "FrontendDriver.hpp"
+#include "TestReadUtils.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -10,67 +10,6 @@
 namespace fs = std::filesystem;
 
 const fs::path testsFolderPath = fs::path(PROJECT_ROOT_DIR) / "test/external/writing-a-c-compiler-tests/tests";
-
-std::string getSourceCode(const std::filesystem::path& inputFile)
-{
-    std::ifstream file(inputFile);
-    std::string source((std::istreambuf_iterator(file)), std::istreambuf_iterator<char>());
-    return source;
-}
-
-std::string removeLinesStartingWithHash(const std::string& input)
-{
-    std::istringstream iss(input);
-    std::string line;
-    std::string result;
-    while (std::getline(iss, line))
-        if (line.empty() || line[0] != '#')
-            result += line + '\n';
-    if (!result.empty())
-        result.pop_back();
-    return result;
-}
-
-bool lexerValid(const std::filesystem::directory_entry& filePath)
-{
-    const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
-    TokenStore tokenStore;
-    Lexing::Lexer lexer(sourceCode, tokenStore);
-    const std::vector<Error> errors = lexer.getLexemes();
-    return errors.empty();
-}
-
-bool ParseFileAndGiveResult(const std::filesystem::directory_entry& filePath)
-{
-    const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
-    TokenStore tokenStore;
-    Lexing::Lexer lexer(sourceCode, tokenStore);
-    lexer.getLexemes();
-    Parsing::Parser parser(tokenStore);
-    Parsing::Program program;
-    return parser.programParse(program).empty();
-}
-
-bool CheckSemantics(const std::filesystem::directory_entry& filePath)
-{
-    const std::string sourceCode = removeLinesStartingWithHash(getSourceCode(filePath.path()));
-    TokenStore tokenStore;
-    Lexing::Lexer lexer(sourceCode, tokenStore);
-    lexer.getLexemes();
-    Parsing::Parser parser(tokenStore);
-    Parsing::Program program;
-    if (!parser.programParse(program).empty())
-        return false;
-    SymbolTable symbolTable;
-    VarTable varTable;
-    const auto [err, errors] = validateSemantics(program, symbolTable, varTable);
-    return err == StateCode::Done;
-}
-
-bool isCFile(const std::filesystem::directory_entry& entry)
-{
-    return entry.is_regular_file() && entry.path().extension() == ".c";
-}
 
 TEST(Chapter1, lexingValid)
 {
@@ -1036,7 +975,7 @@ TEST(Chapter18_Structures, validParsing)
 {
     const fs::path validPath = testsFolderPath / "chapter_18/valid";
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
-        if (!isCFile(path))
+        if (!isCorHFile(path))
             continue;
         EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
     }
@@ -1046,7 +985,7 @@ TEST(Chapter18_Structures, invalidParsing)
 {
     const fs::path validPath = testsFolderPath / "chapter_18/invalid_parse";
     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
-        if (!isCFile(path))
+        if (!isCorHFile(path))
             continue;
         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
     }
@@ -1075,9 +1014,23 @@ TEST(Chapter18_Structures, invalidTypes)
 TEST(Chapter18_Structures, validSemantics)
 {
     const fs::path invalidPath = testsFolderPath / "chapter_18/valid";
+    std::unordered_map<std::string, std::string> hFiles;
+    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+        if (!isHFile(path))
+            continue;
+        std::string codes = getSourceCode(path);
+        std::string strippedCodes = removeLinesStartingWithHashOrComment(codes);
+        hFiles[path.path().filename()] = strippedCodes;
+    }
     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!isCFile(path))
             continue;
+        if (path.path() == "/home/jason/src/CC/test/external/writing-a-c-compiler-tests/tests/chapter_18/valid/no_structure_parameters/libraries/array_of_structs.c") {
+            std::string codes = buildFileWithIncludes(path, hFiles);
+            EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+            continue;
+        }
+        std::string codes = buildFileWithIncludes(path, hFiles);
         EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
     }
 }
