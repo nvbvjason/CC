@@ -129,7 +129,8 @@ void GenerateIr::genSingleLocalInit(const std::string& name,
                                     i64& offset,
                                     const Parsing::SingleInitializer& singleInit)
 {
-    const i64 typeSize = getTypeSize(type);
+    using ExprKind = Parsing::Expr::Kind;
+    const i64 typeSize = singleInit.expr->kind == ExprKind::String ? 8 : getTypeSize(singleInit.expr->type->type);
     std::shared_ptr<Value> value = genInstAndConvert(*singleInit.expr);
     if (singleInit.expr->kind == Parsing::Expr::Kind::String) {
         const std::shared_ptr<ValueVar> var = std::make_shared<ValueVar>(makeTemporaryName(), Type::Pointer);
@@ -145,7 +146,7 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl& varDecl)
     const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
     const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
     const Type type = getArrayType(varDecl.type.get());
-    const i64 arraySize = Parsing::getArraySize(arrayType);
+    const i64 arraySize = Parsing::getArraySize(arrayType) * getTypeSize(type);
     const i64 alignment = Parsing::getArrayAlignment(arraySize, type);
     i64 offset = 0;
     const auto zeroConst = genZeroValueForType(type);
@@ -237,9 +238,6 @@ std::vector<std::unique_ptr<Initializer>> GenerateIr::genStaticArrayInit(
                 const auto zeroInit = dynCast<Parsing::ZeroInitializer>(stuff.get());
                 initializers.emplace_back(std::make_unique<ZeroInitializer>(zeroInit->size));
                 break;
-            }
-            case Parsing::Initializer::Kind::String: {
-                std::abort();
             }
             default:
                 std::abort();
@@ -988,7 +986,14 @@ std::unique_ptr<ExprResult> GenerateIr::genConstPlainOperand(const Parsing::Cons
 
 std::unique_ptr<ExprResult> GenerateIr::genStringPlainOperand(const Parsing::StringExpr& stringExpr)
 {
+    const auto it = m_constStrings.find(stringExpr.value);
+    if (it != m_constStrings.end()) {
+        auto valueVar = std::make_shared<ValueVar>(Identifier(it->second), Type::Pointer);
+        valueVar->referingTo = ReferingTo::Static;
+        return std::make_unique<PlainOperand>(valueVar);
+    }
     const Identifier iden = makeTemporaryName("string.");
+    m_constStrings.emplace_hint(it, stringExpr.value, iden.value);
     m_topLevels.emplace_back(std::make_unique<StaticConstant>(iden, stringExpr.value, false, true));
     auto valueVar = std::make_shared<ValueVar>(iden, Type::Pointer);
     valueVar->referingTo = ReferingTo::Static;

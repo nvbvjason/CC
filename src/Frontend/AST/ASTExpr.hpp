@@ -24,9 +24,9 @@ struct ConstExpr final : Expr {
     ConstExpr(const i64 location, T&& value, std::unique_ptr<TypeBase> varType) noexcept
         : Expr(location, Kind::Constant, std::move(varType)), value(std::forward<T>(value)) {}
 
-    explicit ConstExpr(ConstExpr&& constExpr) noexcept
+    ConstExpr(ConstExpr&& constExpr) noexcept
         : Expr(constExpr.location, Kind::Constant, std::move(constExpr.type)),
-          value(std::move(constExpr.value)) {}
+          value(constExpr.value) {}
 
     template<typename TargetType>
     TargetType getValue() const
@@ -62,7 +62,7 @@ struct StringExpr final : Expr {
     StringExpr(const i64 location, std::string&& value, std::unique_ptr<TypeBase> varType) noexcept
         : Expr(location, Kind::String, std::move(varType)), value(std::move(value)) {}
 
-    explicit StringExpr(StringExpr&& stringExpr) noexcept
+    StringExpr(StringExpr&& stringExpr) noexcept
         : Expr(stringExpr.location, Kind::String),
           value(stringExpr.value)
     {
@@ -85,7 +85,7 @@ struct VarExpr final : Expr {
     VarExpr(const i64 loc, std::string name) noexcept
         : Expr(loc, Kind::Var), name(std::move(name)) {}
 
-    explicit VarExpr(VarExpr&& varExpr) noexcept
+    VarExpr(VarExpr&& varExpr) noexcept
         : Expr(varExpr.location, Kind::Var),
           name(std::move(varExpr.name)),
           referingTo(varExpr.referingTo)
@@ -111,7 +111,7 @@ struct CastExpr final : Expr {
     CastExpr(const i64 loc, std::unique_ptr<TypeBase>&& type, std::unique_ptr<Expr>&& expr) noexcept
         : Expr(loc, Kind::Cast, std::move(type)), innerExpr(std::move(expr)) {}
 
-    explicit CastExpr(CastExpr&& castExpr) noexcept
+    CastExpr(CastExpr&& castExpr) noexcept
         : Expr(castExpr.location, Kind::Cast, std::move(castExpr.type)),
          innerExpr(std::move(castExpr.innerExpr)) {}
 
@@ -135,7 +135,7 @@ struct UnaryExpr final : Expr {
     UnaryExpr(const i64 loc, const Operator op, std::unique_ptr<Expr> expr)
         : Expr(loc, Kind::Unary), op(op), innerExpr(std::move(expr)) {}
 
-    explicit UnaryExpr(UnaryExpr&& unaryExpr) noexcept
+    UnaryExpr(UnaryExpr&& unaryExpr) noexcept
         : Expr(unaryExpr.location, Kind::Unary),
           op(unaryExpr.op),
           innerExpr(std::move(unaryExpr.innerExpr))
@@ -169,7 +169,7 @@ struct BinaryExpr final : Expr {
     BinaryExpr(const i64 loc, const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : Expr(loc, Kind::Binary), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
-    explicit BinaryExpr(BinaryExpr&& binaryExpr) noexcept
+    BinaryExpr(BinaryExpr&& binaryExpr) noexcept
         : Expr(binaryExpr.location, Kind::Binary),
           op(binaryExpr.op),
           lhs(std::move(binaryExpr.lhs)),
@@ -201,7 +201,7 @@ struct AssignmentExpr final : Expr {
     AssignmentExpr(const i64 loc, const Operator op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : Expr(loc, Kind::Assignment), op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
-    explicit AssignmentExpr(AssignmentExpr&& assignmentExpr) noexcept
+    AssignmentExpr(AssignmentExpr&& assignmentExpr) noexcept
         : Expr(assignmentExpr.location, Kind::Assignment),
           op(assignmentExpr.op),
           lhs(std::move(assignmentExpr.lhs)),
@@ -231,7 +231,7 @@ struct TernaryExpr final : Expr {
     : Expr(location, Kind::Ternary), condition(std::move(condition)),
       trueExpr(std::move(trueExpr)), falseExpr(std::move(falseExpr)) {}
 
-    explicit TernaryExpr(TernaryExpr&& ternaryExpr) noexcept
+    TernaryExpr(TernaryExpr&& ternaryExpr) noexcept
         : Expr(ternaryExpr.location, Kind::Ternary),
           condition(std::move(ternaryExpr.condition)),
           trueExpr(std::move(ternaryExpr.trueExpr)),
@@ -256,7 +256,7 @@ struct FuncCallExpr final : Expr {
     FuncCallExpr(const i64 loc, std::string identifier, std::vector<std::unique_ptr<Expr>> args)
         : Expr(loc, Kind::FunctionCall), name(std::move(identifier)), args(std::move(args)) {}
 
-    explicit FuncCallExpr(FuncCallExpr&& funcCallExpr) noexcept
+    FuncCallExpr(FuncCallExpr&& funcCallExpr) noexcept
         : Expr(funcCallExpr.location, Kind::FunctionCall),
           name(std::move(funcCallExpr.name)),
           args(std::move(funcCallExpr.args))
@@ -279,7 +279,7 @@ struct DereferenceExpr final : Expr {
     DereferenceExpr(const i64 loc, std::unique_ptr<Expr>&& reference)
         : Expr(loc, Kind::Dereference), reference(std::move(reference)) {}
 
-    explicit DereferenceExpr(DereferenceExpr&& dereferenceExpr) noexcept
+    DereferenceExpr(DereferenceExpr&& dereferenceExpr) noexcept
         : Expr(dereferenceExpr.location, Kind::Dereference),
           reference(std::move(dereferenceExpr.reference))
     {
@@ -301,7 +301,7 @@ struct AddrOffExpr final : Expr {
     AddrOffExpr(const i64 loc, std::unique_ptr<Expr>&& reference)
         : Expr(loc, Kind::AddrOf), reference(std::move(reference)) {}
 
-    explicit AddrOffExpr(AddrOffExpr&& addrOffExpr) noexcept
+    AddrOffExpr(AddrOffExpr&& addrOffExpr) noexcept
         : Expr(addrOffExpr.location, Kind::AddrOf),
           reference(std::move(addrOffExpr.reference))
     {
@@ -324,7 +324,7 @@ struct SubscriptExpr final : Expr {
     SubscriptExpr(const i64 loc, std::unique_ptr<Expr> re, std::unique_ptr<Expr> index)
         : Expr(loc, Kind::Subscript), referencing(std::move(re)), index(std::move(index)) {}
 
-    explicit SubscriptExpr(SubscriptExpr&& subscriptExpr) noexcept
+    SubscriptExpr(SubscriptExpr&& subscriptExpr) noexcept
         : Expr(subscriptExpr.location, Kind::Subscript),
           referencing(std::move(subscriptExpr.referencing)),
           index(std::move(subscriptExpr.index))
@@ -348,7 +348,7 @@ struct SizeOfExprExpr final : Expr {
         : Expr(loc, Kind::SizeOfExpr, std::make_unique<VarType>(Type::U64)),
           innerExpr(std::move(innerExpr)) {}
 
-    explicit SizeOfExprExpr(SizeOfExprExpr&& sizeOfExprExpr) noexcept
+    SizeOfExprExpr(SizeOfExprExpr&& sizeOfExprExpr) noexcept
         : Expr(sizeOfExprExpr.location, Kind::SizeOfExpr, std::make_unique<VarType>(Type::U64)),
           innerExpr(std::move(sizeOfExprExpr.innerExpr)) {}
 
@@ -367,7 +367,7 @@ struct SizeOfTypeExpr final : Expr {
         : Expr(loc, Kind::SizeOfType, std::make_unique<VarType>(Type::U64)),
           sizeType(std::move(sizeType)) {}
 
-    explicit SizeOfTypeExpr(SizeOfTypeExpr&& sizeOfTypeExpr) noexcept
+    SizeOfTypeExpr(SizeOfTypeExpr&& sizeOfTypeExpr) noexcept
         : Expr(sizeOfTypeExpr.location, Kind::SizeOfType, std::make_unique<VarType>(Type::U64)),
           sizeType(std::move(sizeOfTypeExpr.sizeType)) {}
 
@@ -386,10 +386,10 @@ struct DotExpr final : Expr {
     explicit DotExpr(const i64 loc, std::unique_ptr<Expr>&& structuredExpr, std::string identifier)
         : Expr(loc, Kind::Dot), structuredExpr(std::move(structuredExpr)), identifier(std::move(identifier)) {}
 
-    explicit DotExpr(DotExpr&& dotExpr) noexcept
+    DotExpr(DotExpr&& dotExpr) noexcept
         : Expr(dotExpr.location, Kind::Arrow),
           structuredExpr(std::move(dotExpr.structuredExpr)),
-          identifier(std::move(dotExpr.identifier))
+          identifier(dotExpr.identifier)
     {
         if (dotExpr.type)
             type = std::move(dotExpr.type);
@@ -410,10 +410,10 @@ struct ArrowExpr final : Expr {
     explicit ArrowExpr(const i64 loc, std::unique_ptr<Expr>&& pointerExpr, std::string identifier)
         : Expr(loc, Kind::Arrow), pointerExpr(std::move(pointerExpr)), identifier(std::move(identifier)) {}
 
-    explicit ArrowExpr(ArrowExpr&& arrowExpr) noexcept
+    ArrowExpr(ArrowExpr&& arrowExpr) noexcept
         : Expr(arrowExpr.location, Kind::Arrow),
           pointerExpr(std::move(arrowExpr.pointerExpr)),
-          identifier(std::move(arrowExpr.identifier))
+          identifier(arrowExpr.identifier)
     {
         if (arrowExpr.type)
             type = std::move(arrowExpr.type);

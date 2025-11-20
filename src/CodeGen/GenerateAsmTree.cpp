@@ -925,8 +925,7 @@ std::shared_ptr<Operand> GenerateAsmTree::getReturnRegister(const Ir::ReturnInst
 {
     if (Operators::getAsmType(returnInst.type) == AsmType::Double)
         return std::make_shared<RegisterOperand>(RegType::XMM0, Operators::getAsmType(returnInst.type));
-    else
-        return std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(returnInst.type));
+    return std::make_shared<RegisterOperand>(RegType::AX, Operators::getAsmType(returnInst.type));
 }
 
 void GenerateAsmTree::genReturn(const Ir::ReturnInst& returnInst)
@@ -1091,14 +1090,20 @@ std::shared_ptr<Operand> GenerateAsmTree::getZeroOperand(const AsmType type)
 std::shared_ptr<ImmOperand> GenerateAsmTree::getImmOperandFromValue(const Ir::ValueConst& valueConst)
 {
     switch (valueConst.type) {
-        case Type::Char:
-            return std::make_shared<ImmOperand>(std::get<char>(valueConst.value), AsmType::Byte);
-        case Type::I8:
-            return std::make_shared<ImmOperand>(std::get<i8>(valueConst.value), AsmType::Byte);
+        case Type::Char: {
+            const u64 value = std::get<char>(valueConst.value) & 0xFF;
+            return std::make_shared<ImmOperand>(value, AsmType::Byte);
+        }
+        case Type::I8: {
+            const u64 value = std::get<i8>(valueConst.value) & 0xFF;
+            return std::make_shared<ImmOperand>(value, AsmType::Byte);
+        }
         case Type::U8:
             return std::make_shared<ImmOperand>(std::get<u8>(valueConst.value), AsmType::Byte);
-        case Type::I32:
-            return std::make_shared<ImmOperand>(std::get<i32>(valueConst.value), AsmType::LongWord);
+        case Type::I32: {
+            const u64 value = std::get<i32>(valueConst.value) & 0xFFFFFFFF;
+            return std::make_shared<ImmOperand>(value, AsmType::LongWord);
+        }
         case Type::U32:
             return std::make_shared<ImmOperand>(std::get<u32>(valueConst.value), AsmType::LongWord);
         case Type::U64:

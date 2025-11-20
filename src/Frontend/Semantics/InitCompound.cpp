@@ -15,19 +15,38 @@ InitCompound::InitCompound(Parsing::VarDecl& varDecl, std::vector<Error>& errors
 }
 
 void InitCompound::initCharacterArray(const Parsing::SingleInitializer& singleInit,
-                                   const Parsing::ArrayType& arrayType) const
+                                      const Parsing::ArrayType& arrayType) const
 {
     if (singleInit.expr->kind != Parsing::Expr::Kind::String)
         return;
     const auto stringExpr = dynCast<Parsing::StringExpr>(singleInit.expr.get());
     const i64 diff = arrayType.size - static_cast<i64>(stringExpr->value.size());
     std::vector<std::unique_ptr<Parsing::Initializer>> initializers;
-    for (const char ch : stringExpr->value) {
+    i64 i = 0;
+    const std::string& value = stringExpr->value;
+    for (; i + 4 < stringExpr->value.size(); i += 4) {
+        i32 integer = 0;
+        integer += value[i];
+        integer += value[i + 1] << 8;
+        integer += value[i + 2] << 16;
+        integer += value[i + 3] << 24;
         auto constExpr = std::make_unique<Parsing::ConstExpr>(
-            ch, std::make_unique<Parsing::VarType>(Type::Char));
-        auto charInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
-        initializers.push_back(std::move(charInit));
+            integer, std::make_unique<Parsing::VarType>(Type::I32));
+        auto initI32 = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
+        initializers.push_back(std::move(initI32));
     }
+    for (; i < stringExpr->value.size(); ++i) {
+        auto constExpr = std::make_unique<Parsing::ConstExpr>(
+            value[i], std::make_unique<Parsing::VarType>(Type::Char));
+        auto initChar = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
+        initializers.push_back(std::move(initChar));
+    }
+    // for (const char ch : stringExpr->value) {
+    //     auto constExpr = std::make_unique<Parsing::ConstExpr>(
+    //         ch, std::make_unique<Parsing::VarType>(Type::Char));
+    //     auto charInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
+    //     initializers.push_back(std::move(charInit));
+    // }
     if (0 < diff) {
         auto zeroInit = std::make_unique<Parsing::ZeroInitializer>(diff);
         initializers.push_back(std::move(zeroInit));
@@ -48,6 +67,41 @@ void InitCompound::initArray()
     staticInitializer = getZeroInits(staticInitializer, emplacedPositions);
     auto newArrayInit = std::make_unique<Parsing::CompoundInitializer>(std::move(staticInitializer));
     varDecl.init = std::move(newArrayInit);
+}
+
+void InitCompound::initString(const Type innerArrayType, Parsing::Initializer* const init) const
+{
+    const auto stringInit = dynCast<Parsing::StringInitializer>(init);
+    if (innerArrayType != Type::Pointer && innerArrayType != Type::Char) {
+        errors.emplace_back("Wrong type for String init", stringInit->location);
+        return;
+    }
+    std::vector<std::unique_ptr<Parsing::Initializer>> stringInitializer;
+    i64 i = 0;
+    const std::string& value = stringInit->value;
+    for (; i + 4 < stringInit->value.size(); i += 4) {
+        i32 integer = 0;
+        integer += value[i];
+        integer += value[i + 1] << 8;
+        integer += value[i + 2] << 16;
+        integer += value[i + 3] << 24;
+        auto constExpr = std::make_unique<Parsing::ConstExpr>(
+            integer, std::make_unique<Parsing::VarType>(Type::I32));
+        auto singleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
+        stringInitializer.push_back(std::move(singleInit));
+    }
+    for (; i < stringInit->value.size(); ++i) {
+        auto constExpr = std::make_unique<Parsing::ConstExpr>(
+            value[i], std::make_unique<Parsing::VarType>(Type::Char));
+        auto singleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
+        stringInitializer.push_back(std::move(singleInit));
+    }
+    // for (const char ch : stringInit->value) {
+    //     auto constExpr = std::make_unique<Parsing::ConstExpr>(
+    //         ch, std::make_unique<Parsing::VarType>(Type::Char));
+    //     auto singleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
+    //     stringInitializer.push_back(std::move(singleInit));
+    // }
 }
 
 std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
@@ -79,18 +133,7 @@ std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::
                 break;
             }
             case Parsing::Initializer::Kind::String: {
-                const auto stringInit = dynCast<Parsing::StringInitializer>(init);
-                if (innerArrayType != Type::Pointer && innerArrayType != Type::Char) {
-                    errors.emplace_back("Wrong type for String init", stringInit->location);
-                    continue;
-                }
-                std::vector<std::unique_ptr<Parsing::Initializer>> stringInitializer;
-                for (const char ch : stringInit->value) {
-                    auto constExpr = std::make_unique<Parsing::ConstExpr>(
-                        ch, std::make_unique<Parsing::VarType>(Type::Char));
-                    auto singleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
-                    stringInitializer.push_back(std::move(singleInit));
-                }
+                initString(innerArrayType, init);
                 break;
             }
             default:

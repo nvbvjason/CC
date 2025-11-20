@@ -25,6 +25,8 @@ public:
     void initCharacterArray(const Parsing::SingleInitializer& singleInit,
                             const Parsing::ArrayType& arrayType) const;
     void initArray();
+    void initString(Type innerArrayType, Parsing::Initializer* init) const;
+
 private:
     void createInitsWithPositionsSingle(Type innerArrayType,
                                         std::vector<std::unique_ptr<Parsing::Initializer>>& staticInitializer,

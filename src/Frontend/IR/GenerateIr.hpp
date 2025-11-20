@@ -15,6 +15,7 @@ class GenerateIr {
     SymbolTable& m_symbolTable;
     std::unordered_set<std::string> m_writtenGlobals;
     std::vector<std::unique_ptr<TopLevel>> m_topLevels;
+    std::unordered_map<std::string, std::string> m_constStrings;
 public:
     explicit GenerateIr(SymbolTable& symbolTable)
         : m_symbolTable(symbolTable) {}
