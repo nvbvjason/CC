@@ -166,8 +166,9 @@ struct StructuredDecl final : Declaration {
     StructuredDecl(const i64 loc,
                    std::string identifier,
                    std::vector<std::unique_ptr<MemberDecl>>&& members,
-                   const Type type)
-        : Declaration(loc, Kind::StructuredDecl, StorageClass::None),
+                   const Type type,
+                   const StorageClass storageClass)
+        : Declaration(loc, Kind::StructuredDecl, storageClass),
             identifier(std::move(identifier)),
             members(std::move(members)),
             type(type) {}

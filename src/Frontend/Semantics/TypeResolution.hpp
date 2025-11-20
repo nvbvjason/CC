@@ -48,6 +48,7 @@ public:
         : varTable(varTable) {}
 
     std::vector<Error> validate(Parsing::Program& program);
+    void validateCompleteTypesFunc(const Parsing::FuncDecl& funDecl, const Parsing::FuncType& funcType);
 
     void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;

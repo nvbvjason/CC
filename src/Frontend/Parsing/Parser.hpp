@@ -100,7 +100,8 @@ public:
         : c_tokenStore(tokenStore) {}
     std::vector<Error> programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
-    [[nodiscard]] std::unique_ptr<Declaration> structuredDeclParse(std::unique_ptr<TypeBase>&& typeBase);
+    [[nodiscard]] std::unique_ptr<Declaration> structuredDeclParse(
+        std::unique_ptr<TypeBase>&& typeBase, Storage storage);
     [[nodiscard]] std::unique_ptr<MemberDecl> memberDeclParse();
     [[nodiscard]] std::unique_ptr<VarDecl> varDeclParse(const std::string& iden,
                                                         std::unique_ptr<TypeBase>&& type,

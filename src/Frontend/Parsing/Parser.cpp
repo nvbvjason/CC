@@ -27,9 +27,9 @@ std::unique_ptr<Declaration> Parser::declarationParse()
     auto [varType, storageClass] = specifierParse();
     if (varType == nullptr)
         return nullptr;
-    if (isStructuredDeclaration(varType))
-        return structuredDeclParse(std::move(varType));
     const Declaration::StorageClass storage = Operators::getStorageClass(storageClass);
+    if (isStructuredDeclaration(varType))
+        return structuredDeclParse(std::move(varType), storage);
     std::unique_ptr<Declarator> declarator = declaratorParse();
     if (declarator == nullptr)
         return nullptr;
@@ -42,7 +42,8 @@ std::unique_ptr<Declaration> Parser::declarationParse()
     return varDeclParse(iden, std::move(typeBase), storage);
 }
 
-std::unique_ptr<Declaration> Parser::structuredDeclParse(std::unique_ptr<TypeBase>&& typeBase)
+std::unique_ptr<Declaration> Parser::structuredDeclParse(
+    std::unique_ptr<TypeBase>&& typeBase, const Storage storage)
 {
     const i64 location = m_current - 2;
     std::vector<std::unique_ptr<MemberDecl>> memberDecls;
@@ -69,7 +70,7 @@ std::unique_ptr<Declaration> Parser::structuredDeclParse(std::unique_ptr<TypeBas
     }
     const auto structuredType = dynCast<StructuredType>(typeBase.get());
     return std::make_unique<StructuredDecl>(
-        location, structuredType->identifier, std::move(memberDecls), typeBase->type);
+        location, structuredType->identifier, std::move(memberDecls), typeBase->type, storage);
 }
 
 std::unique_ptr<MemberDecl> Parser::memberDeclParse()

@@ -118,4 +118,5 @@ inline bool duplicateIdentifierInMembers(const std::vector<std::unique_ptr<Parsi
     }
     return false;
 }
+bool isNewType(const SymbolTable::ReturnedStructuredEntry& prevEntry);
 } // Semantics

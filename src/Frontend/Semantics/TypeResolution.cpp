@@ -24,35 +24,41 @@ void TypeResolution::visit(Parsing::FuncDecl& funDecl)
         return;
     }
     const auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
-    for (const auto& paramTypeFunc : funcType->params) {
-        if (varTable.isInCompleteStructuredType(*paramTypeFunc)) {
-            addError("Incompatible parameter types in function declarations", funDecl.location);
-            return;
-        }
-    }
     std::vector<std::unique_ptr<Parsing::TypeBase>> paramsTypes;
     if (funcType->returnType->type == Type::Array) {
         addError("Function cannot return array", funDecl.location);
         return;
     }
-    if (varTable.isInCompleteStructuredType(*funcType->returnType))
-        addError("Incomplete return types", funDecl.location);
-
-    if (funDecl.body != nullptr)
-        m_definedFunctions.insert(funDecl.name);
     const auto type = dynCast<Parsing::FuncType>(funDecl.type.get());
-    FuncEntry funcEntry(type->params, type->returnType->type, funDecl.storage,
+    FuncEntry funcEntry(
+        type->params,
+        type->returnType->type,
+        funDecl.storage,
         funDecl.body != nullptr);
     m_functions.emplace_hint(it, funDecl.name, std::move(funcEntry));
 
     if (funDecl.body) {
+        m_definedFunctions.insert(funDecl.name);
+        validateCompleteTypesFunc(funDecl, *funcType);
         m_global = false;
         funDecl.body->accept(*this);
         m_global = true;
     }
 }
 
-bool TypeResolution::incompatibleFunctionDeclarations(const FuncEntry& funcEntry, const Parsing::FuncDecl& funDecl)
+void TypeResolution::validateCompleteTypesFunc(const Parsing::FuncDecl& funDecl,
+                                               const Parsing::FuncType& funcType)
+{
+    if (varTable.isInCompleteStructuredType(*funcType.returnType))
+        addError("Incomplete return types", funDecl.location);
+    for (const auto& paramTypeFunc : funcType.params)
+        if (varTable.isInCompleteStructuredType(*paramTypeFunc))
+            addError("Incompatible parameter types in function declarations", funDecl.location);
+}
+
+bool TypeResolution::incompatibleFunctionDeclarations(
+    const FuncEntry& funcEntry,
+    const Parsing::FuncDecl& funDecl)
 {
     if ((funcEntry.storage == Storage::Extern || funcEntry.storage == Storage::None) &&
         funDecl.storage == Storage::Static) {
@@ -67,7 +73,7 @@ bool TypeResolution::incompatibleFunctionDeclarations(const FuncEntry& funcEntry
     for (size_t i = 0; i < funDecl.params.size(); ++i) {
         const auto paramTypeEntry = funcEntry.paramTypes[i].get();
         const auto paramTypeFunc = funcType->params[i].get();
-        if (!Parsing::areEquivalentArrayConversion(*paramTypeEntry, *paramTypeFunc)) {
+        if (!Parsing::areEquivalentTypes(*paramTypeEntry, *paramTypeFunc)) {
             addError("Incompatible parameter types in function declarations", funDecl.location);
             return false;
         }
@@ -402,25 +408,26 @@ void TypeResolution::validateAndConvertFuncCallArgs(
     const std::vector<std::unique_ptr<Parsing::TypeBase>>& params)
 {
     for (size_t i = 0; i < funCallExpr.args.size(); ++i) {
-        const Parsing::Expr* const callExpr = funCallExpr.args[i].get();
-        const Parsing::TypeBase* const argTypeBase = params[i].get();
-        const Type typeInner = funCallExpr.args[i]->type->type;
+        const i64 location = funCallExpr.args[i]->location;
+        const Parsing::TypeBase* const callTypeBase = funCallExpr.args[i]->type.get();
+        const Parsing::TypeBase* const paramTypeBase = params[i].get();
+        const Type typeInner = callTypeBase->type;
         const Type castToType = params[i]->type;
         if (isStructuredType(typeInner) || isStructuredType(castToType)) {
-            if (!Parsing::areEquivalentTypes(*funCallExpr.args[i]->type, *params[i])) {
-                addError("Cannot convert structured types in funcall", callExpr->location);
+            if (!Parsing::areEquivalentTypes(*callTypeBase, *paramTypeBase)) {
+                addError("Cannot convert structured types in funcall", location);
             }
         }
         if (typeInner == Type::Pointer && castToType == Type::Pointer) {
-            if (!Parsing::areEquivalentTypes(*callExpr->type, *argTypeBase)
-                && !isVoidPointer(*callExpr->type) && !isVoidPointer(*argTypeBase))
-                addError("Function arg of of different type with param", callExpr->location);
+            if (!Parsing::areEquivalentTypes(*callTypeBase, *paramTypeBase)
+                && !isVoidPointer(*callTypeBase) && !isVoidPointer(*paramTypeBase))
+                addError("Function arg of of different type with param", location);
         }
         if (castToType != Type::Pointer && typeInner == Type::Pointer)
-            addError("Cannot cast pointer arg to non pointer", callExpr->location);
+            addError("Cannot cast pointer arg to non pointer", location);
         if (typeInner != castToType) {
             funCallExpr.args[i] = std::make_unique<Parsing::CastExpr>(
-                Parsing::deepCopy(*argTypeBase), std::move(funCallExpr.args[i]));
+                Parsing::deepCopy(*paramTypeBase), std::move(funCallExpr.args[i]));
         }
     }
 }
@@ -944,6 +951,8 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprExpr(Parsing::Si
         if (sizeOfExprExpr.innerExpr->type->type == Type::Void)
             addError("Cannot call sizeof on void expression", sizeOfExprExpr.location);
     }
+    if (varTable.isInCompleteStructuredType(*sizeOfExprExpr.innerExpr->type))
+        addError("Cannot call sizeof on incomplete type expr", sizeOfExprExpr.location);
     return std::make_unique<Parsing::SizeOfExprExpr>(std::move(sizeOfExprExpr));
 }
 
