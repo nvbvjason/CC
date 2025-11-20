@@ -66,7 +66,9 @@ i64 VarTable::getSize(const Parsing::TypeBase* type) const
     return getTypeSize(type->type);
 }
 
-void VarTable::addEntry(const Parsing::StructuredDecl& structuredDecl, std::vector<Error>& errors)
+void VarTable::addEntry(const std::string& uniqueName,
+                        const Parsing::StructuredDecl& structuredDecl,
+                        std::vector<Error>& errors)
 {
     i64 structSize = 0;
     i32 structuredAlignment = 1;
@@ -109,7 +111,7 @@ void VarTable::addEntry(const Parsing::StructuredDecl& structuredDecl, std::vect
         structSize = memberOffset + getSize(member->type.get());
     }
     structSize = roundUp(structSize, structuredAlignment);
-    entries.emplace(structuredDecl.identifier, StructuredEntry(
+    entries.emplace(uniqueName, StructuredEntry(
         std::move(members),
         std::move(memberMap),
         structSize,

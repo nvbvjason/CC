@@ -46,7 +46,9 @@ public:
     {
         return getMemberType(structuredName, memberName) != nullptr;
     }
-    void addEntry(const Parsing::StructuredDecl& structuredDecl, std::vector<Error>& errors);
+    void addEntry(const std::string& uniqueName,
+                  const Parsing::StructuredDecl& structuredDecl,
+                  std::vector<Error>& errors);
     [[nodiscard]] bool isInCompleteStructuredType(const Parsing::TypeBase& typeBase) const;
     [[nodiscard]] bool isPointerToInCompleteStructuredType(const Parsing::TypeBase& typeBase) const;
 

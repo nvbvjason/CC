@@ -53,7 +53,7 @@ void TypeResolution::validateCompleteTypesFunc(const Parsing::FuncDecl& funDecl,
         addError("Incomplete return types", funDecl.location);
     for (const auto& paramTypeFunc : funcType.params)
         if (varTable.isInCompleteStructuredType(*paramTypeFunc))
-            addError("Incompatible parameter types in function declarations", funDecl.location);
+            addError("Incomplete parameter types in function declarations", funDecl.location);
 }
 
 bool TypeResolution::incompatibleFunctionDeclarations(
@@ -73,7 +73,7 @@ bool TypeResolution::incompatibleFunctionDeclarations(
     for (size_t i = 0; i < funDecl.params.size(); ++i) {
         const auto paramTypeEntry = funcEntry.paramTypes[i].get();
         const auto paramTypeFunc = funcType->params[i].get();
-        if (!Parsing::areEquivalentTypes(*paramTypeEntry, *paramTypeFunc)) {
+        if (!Parsing::areEquivalentArrayConversion(*paramTypeEntry, *paramTypeFunc)) {
             addError("Incompatible parameter types in function declarations", funDecl.location);
             return false;
         }
@@ -981,7 +981,7 @@ const Parsing::TypeBase* TypeResolution::validateStructuredAccessors(
     const auto structType = dynCast<const Parsing::StructuredType>(structuredType);
     const auto entry = varTable.lookupEntry(structType->identifier);
     if (entry == nullptr) {
-        addError("Cannot call dot expression on non structured type", location);
+        addError("Cannot call structured accessor on non structured type", location);
         return nullptr;
     }
     return getTypeFromMembers(entry->memberMap, identifier);

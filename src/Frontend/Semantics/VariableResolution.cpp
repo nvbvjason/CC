@@ -51,9 +51,7 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
             addError("Cannot have duplicate identifiers in struct", structuredDecl.location);
             return;
         }
-        auto structuredType = std::make_unique<Parsing::StructuredType>(
-            structuredDecl.type, uniqueName, structuredDecl.location);
-        m_varTable.addEntry(structuredDecl, m_errors);
+        m_varTable.addEntry(uniqueName, structuredDecl, m_errors);
     }
 }
 
@@ -149,9 +147,9 @@ void VariableResolution::handleVarDeclOfStructuredType(Parsing::VarDecl& varDecl
         addError("Cannot declare with different structured type and same name", varDecl.location);
         return;
     }
-    if (!structuredEntry.isDefined()) {
+    if (!structuredEntry.contains()) {
         if (varDecl.storage != Storage::Extern)
-            addError("Cannot declare variable of structured type which is undefined", varDecl.location);
+            addError("Cannot declare variable of structured type which is declared", varDecl.location);
     }
     else
         varDecl.type = Parsing::deepCopy(*structuredEntry.typeBase);
@@ -348,8 +346,8 @@ bool isNewType(const SymbolTable::ReturnedStructuredEntry& prevEntry)
     if (prevEntry.typeBase == nullptr)
         return true;
     if (prevEntry.isFromCurrentScope())
-        return true;
-    return false;
+        return false;
+    return true;
 }
 
 std::string VariableResolution::makeTemporaryName(const std::string& name)
