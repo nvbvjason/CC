@@ -19,14 +19,14 @@ class TypeResolution final : public Parsing::ASTTraverser {
 
     struct FuncEntry {
         std::vector<std::unique_ptr<Parsing::TypeBase>> paramTypes;
-        Type returnType;
+        std::unique_ptr<Parsing::TypeBase> returnType;
         Parsing::Declaration::StorageClass storage;
         bool defined;
         FuncEntry(const std::vector<std::unique_ptr<Parsing::TypeBase>>& params,
-                  const Type returnType,
+                  std::unique_ptr<Parsing::TypeBase>&& returnType,
                   const Parsing::Declaration::StorageClass storage,
                   const bool defined)
-            : returnType(returnType), storage(storage), defined(defined)
+            : returnType(std::move(returnType)), storage(storage), defined(defined)
         {
             for (const auto& paramType : params)
                 paramTypes.emplace_back(std::move(Parsing::deepCopy(*paramType)));
@@ -52,6 +52,7 @@ public:
 
     void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
+    void visit(Parsing::StructuredDecl& structuredDecl) override;
     bool isIllegalVarDecl(const Parsing::VarDecl& varDecl);
     void visit(Parsing::DeclForInit& declForInit) override;
     void visit(Parsing::ExprForInit& exprForInit) override;

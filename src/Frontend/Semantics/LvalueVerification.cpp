@@ -53,4 +53,9 @@ void LvalueVerification::visit(const Parsing::AddrOffExpr& addrOffExpr)
     }
     ConstASTTraverser::visit(addrOffExpr);
 }
+
+void LvalueVerification::visit(const Parsing::DotExpr& dotExpr)
+{
+    ConstASTTraverser::visit(dotExpr);
+}
 } // Semantics

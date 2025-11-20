@@ -32,7 +32,7 @@ void TypeResolution::visit(Parsing::FuncDecl& funDecl)
     const auto type = dynCast<Parsing::FuncType>(funDecl.type.get());
     FuncEntry funcEntry(
         type->params,
-        type->returnType->type,
+        Parsing::deepCopy(*type->returnType),
         funDecl.storage,
         funDecl.body != nullptr);
     m_functions.emplace_hint(it, funDecl.name, std::move(funcEntry));
@@ -78,7 +78,7 @@ bool TypeResolution::incompatibleFunctionDeclarations(
             return false;
         }
     }
-    if (funcType->returnType->type != funcEntry.returnType) {
+    if (!Parsing::areEquivalentTypes(*funcType->returnType, *funcEntry.returnType)) {
         addError("Incompatible return types in function declarations", funDecl.location);
         return false;
     }
@@ -94,6 +94,11 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     if (!m_global && !m_globalStaticVars.contains(varDecl.name))
         m_definedFunctions.insert(varDecl.name);
     m_isConst = true;
+
+    if (varTable.isIncompleteTypeBase(*varDecl.type)) {
+        addError("Cannot define variable with incomplete type", varDecl.location);
+        return;
+    }
 
     if (varDecl.init) {
         if (varDecl.type->type == Type::Array)
@@ -127,6 +132,13 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         return;
     }
     assignTypeToArithmeticUnaryExpr(varDecl);
+}
+
+void TypeResolution::visit(Parsing::StructuredDecl& structuredDecl)
+{
+    for (const auto& member : structuredDecl.members)
+        if (varTable.isIncompleteTypeBase(*member->type))
+            addError("Incomplete type in structured declaration", structuredDecl.location);
 }
 
 void TypeResolution::verifyArrayInSingleInit(const Parsing::VarDecl& varDecl,

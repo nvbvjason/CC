@@ -139,3 +139,29 @@ i64 roundUp(const i64 structSize, const i32 memberAlignment)
     const i64 diff = structSize % memberAlignment;
     return structSize + memberAlignment - diff;
 }
+
+bool VarTable::isIncompleteTypeBase(const Parsing::TypeBase& typeBase) const
+{
+    const Parsing::TypeBase* travType = &typeBase;
+    if (isInCompleteStructuredType(*travType))
+        return true;
+    while (travType->type == Type::Array || travType->type == Type::Pointer) {
+        switch (travType->type) {
+            case Type::Array: {
+                const auto arrayType = dynCast<const Parsing::ArrayType>(travType);
+                if (isInCompleteStructuredType(*arrayType->elementType))
+                    return true;
+                travType = arrayType->elementType.get();
+                break;
+            }
+            case Type::Pointer: {
+                const auto pointerType = dynCast<const Parsing::PointerType>(travType);
+                travType = pointerType->referenced.get();
+                break;
+            }
+            default:
+                return false;
+        }
+    }
+    return false;
+}

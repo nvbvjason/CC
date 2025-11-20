@@ -56,6 +56,7 @@ public:
     [[nodiscard]] i64 getSize(const Parsing::TypeBase* type) const;
     [[nodiscard]] i64 getStructuredSize(const Parsing::TypeBase* type) const;
     [[nodiscard]] i32 getStructuredAlignment(const Parsing::TypeBase* type) const;
+    [[nodiscard]] bool isIncompleteTypeBase(const Parsing::TypeBase& typeBase) const;
 };
 
 i64 roundUp(i64 structSize, i32 memberAlignment);

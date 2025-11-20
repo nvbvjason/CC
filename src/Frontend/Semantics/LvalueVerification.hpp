@@ -16,6 +16,7 @@ public:
     void visit(const Parsing::UnaryExpr& unaryExpr) override;
     void visit(const Parsing::AssignmentExpr& assignmentExpr) override;
     void visit(const Parsing::AddrOffExpr& addrOffExpr) override;
+    void visit(const Parsing::DotExpr& dotExpr) override;
 };
 
 inline bool isNotAnLvalue(const Parsing::Expr::Kind kind)
