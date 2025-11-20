@@ -22,31 +22,7 @@ void InitCompound::initCharacterArray(const Parsing::SingleInitializer& singleIn
     const auto stringExpr = dynCast<Parsing::StringExpr>(singleInit.expr.get());
     const i64 diff = arrayType.size - static_cast<i64>(stringExpr->value.size());
     std::vector<std::unique_ptr<Parsing::Initializer>> initializers;
-    i64 i = 0;
-    const std::string& value = stringExpr->value;
-    for (; i + 4 < stringExpr->value.size(); i += 4) {
-        i32 integer = 0;
-        integer += value[i];
-        integer += value[i + 1] << 8;
-        integer += value[i + 2] << 16;
-        integer += value[i + 3] << 24;
-        auto constExpr = std::make_unique<Parsing::ConstExpr>(
-            integer, std::make_unique<Parsing::VarType>(Type::I32));
-        auto initI32 = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
-        initializers.push_back(std::move(initI32));
-    }
-    for (; i < stringExpr->value.size(); ++i) {
-        auto constExpr = std::make_unique<Parsing::ConstExpr>(
-            value[i], std::make_unique<Parsing::VarType>(Type::Char));
-        auto initChar = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
-        initializers.push_back(std::move(initChar));
-    }
-    // for (const char ch : stringExpr->value) {
-    //     auto constExpr = std::make_unique<Parsing::ConstExpr>(
-    //         ch, std::make_unique<Parsing::VarType>(Type::Char));
-    //     auto charInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
-    //     initializers.push_back(std::move(charInit));
-    // }
+    initStringWithI32(stringExpr->value, initializers);
     if (0 < diff) {
         auto zeroInit = std::make_unique<Parsing::ZeroInitializer>(diff);
         initializers.push_back(std::move(zeroInit));
@@ -77,31 +53,7 @@ void InitCompound::initString(const Type innerArrayType, Parsing::Initializer* c
         return;
     }
     std::vector<std::unique_ptr<Parsing::Initializer>> stringInitializer;
-    i64 i = 0;
-    const std::string& value = stringInit->value;
-    for (; i + 4 < stringInit->value.size(); i += 4) {
-        i32 integer = 0;
-        integer += value[i];
-        integer += value[i + 1] << 8;
-        integer += value[i + 2] << 16;
-        integer += value[i + 3] << 24;
-        auto constExpr = std::make_unique<Parsing::ConstExpr>(
-            integer, std::make_unique<Parsing::VarType>(Type::I32));
-        auto singleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
-        stringInitializer.push_back(std::move(singleInit));
-    }
-    for (; i < stringInit->value.size(); ++i) {
-        auto constExpr = std::make_unique<Parsing::ConstExpr>(
-            value[i], std::make_unique<Parsing::VarType>(Type::Char));
-        auto singleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
-        stringInitializer.push_back(std::move(singleInit));
-    }
-    // for (const char ch : stringInit->value) {
-    //     auto constExpr = std::make_unique<Parsing::ConstExpr>(
-    //         ch, std::make_unique<Parsing::VarType>(Type::Char));
-    //     auto singleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
-    //     stringInitializer.push_back(std::move(singleInit));
-    // }
+    initStringWithI32(stringInit->value, stringInitializer);
 }
 
 std::tuple<std::vector<std::unique_ptr<Parsing::Initializer>>, std::vector<std::vector<i64>>>
@@ -237,9 +189,9 @@ std::vector<std::unique_ptr<Parsing::Initializer>> InitCompound::getZeroInits(
         positionBefore = position;
         if (distance != 0)
             newInitializers.emplace_back(std::make_unique<Parsing::ZeroInitializer>(distance));
-        const auto sinleInit = dynCast<Parsing::SingleInitializer>(init);
+        const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
         newInitializers.emplace_back(std::make_unique<Parsing::SingleInitializer>(
-            std::move(sinleInit->expr)));
+            std::move(singleInit->expr)));
     }
     const i64 arrayLastPosition = std::accumulate(dimensions.begin(), dimensions.end(), i64{1}, std::multiplies<>{});
     const i64 positionLast = getPosition(positionBefore);
@@ -302,4 +254,26 @@ std::vector<i64> getDimensions(const Parsing::VarDecl& array)
     return dimensions;
 }
 
+void initStringWithI32(const std::string& value,
+                       std::vector<std::unique_ptr<Parsing::Initializer>>& stringInitializer)
+{
+    i64 i = 0;
+    for (; i + 4 < value.size(); i += 4) {
+        i32 integer = 0;
+        integer += value[i];
+        integer += value[i + 1] << 8;
+        integer += value[i + 2] << 16;
+        integer += value[i + 3] << 24;
+        auto constExpr = std::make_unique<Parsing::ConstExpr>(
+            integer, std::make_unique<Parsing::VarType>(Type::I32));
+        auto singleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
+        stringInitializer.push_back(std::move(singleInit));
+    }
+    for (; i < value.size(); ++i) {
+        auto constExpr = std::make_unique<Parsing::ConstExpr>(
+            value[i], std::make_unique<Parsing::VarType>(Type::Char));
+        auto singleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
+        stringInitializer.push_back(std::move(singleInit));
+    }
+}
 } // Semantics

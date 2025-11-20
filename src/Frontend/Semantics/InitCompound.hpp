@@ -49,6 +49,8 @@ private:
     [[nodiscard]] i64 getPosition(const std::vector<i64>& position) const;
 };
 
+void initStringWithI32(const std::string& value,
+                       std::vector<std::unique_ptr<Parsing::Initializer>>& stringInitializer);
 std::unique_ptr<Parsing::Initializer> emplaceNewSingleInit(
     Type innerArrayType, Parsing::SingleInitializer& singleInit);
 bool isZeroSingleInit(const Parsing::Initializer& init);
