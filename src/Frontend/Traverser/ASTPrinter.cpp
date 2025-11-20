@@ -444,6 +444,20 @@ void ASTPrinter::visit(const SizeOfTypeExpr& sizeOfTypeExpr)
     ConstASTTraverser::visit(sizeOfTypeExpr);
 }
 
+void ASTPrinter::visit(const DotExpr& dotExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("DotExpr");
+    ConstASTTraverser::visit(dotExpr);
+}
+
+void ASTPrinter::visit(const ArrowExpr& arrowExpr)
+{
+    IndentGuard guard(m_indentLevel);
+    addLine("arrowExpr");
+    ConstASTTraverser::visit(arrowExpr);
+}
+
 void ASTPrinter::addLine(const std::string& line)
 {
     oss << getIndent() << line << '\n';

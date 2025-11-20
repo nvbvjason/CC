@@ -31,7 +31,8 @@ inline bool isNotAnLvalue(const Parsing::Expr::Kind kind)
 inline bool isAllowedLValueExprKind(const Parsing::Expr::Kind kind)
 {
     using Kind = Parsing::Expr::Kind;
-    return kind == Kind::Var || kind == Kind::Dereference || kind == Kind::Subscript;
+    return kind == Kind::Var || kind == Kind::Dereference || kind == Kind::Subscript ||
+           kind == Kind::Dot || kind == Kind::Arrow;
 }
 
 } // Semantics

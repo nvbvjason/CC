@@ -1,6 +1,7 @@
 #include "VarTable.hpp"
 #include "TypeConversion.hpp"
 #include "ASTUtils.hpp"
+#include "DynCast.hpp"
 
 Parsing::TypeBase* VarTable::getMemberType(const std::string& structuredName, const std::string& memberName) const
 {
@@ -11,6 +12,14 @@ Parsing::TypeBase* VarTable::getMemberType(const std::string& structuredName, co
     if (itMember == it->second.memberMap.end())
         return nullptr;
     return itMember->second.type.get();
+}
+
+const StructuredEntry* const VarTable::lookupEntry(const std::string& iden) const
+{
+    const auto it = entries.find(iden);
+    if (it == entries.end())
+        return nullptr;
+    return &it->second;
 }
 
 i32 VarTable::getStructuredAlignment(const Parsing::TypeBase* const type) const
@@ -102,6 +111,22 @@ void VarTable::addEntry(const Parsing::StructuredDecl& structuredDecl, std::vect
         std::move(memberMap),
         structSize,
         structuredAlignment));
+}
+
+bool VarTable::isPointerToInCompleteStructuredType(const Parsing::TypeBase& typeBase) const
+{
+    if (typeBase.kind != Parsing::TypeBase::Kind::Pointer)
+        return false;
+    const auto pointerType = dynCast<const Parsing::PointerType>(&typeBase);
+    return isInCompleteStructuredType(*pointerType->referenced);
+}
+
+bool VarTable::isInCompleteStructuredType(const Parsing::TypeBase& typeBase) const
+{
+    if (!isStructuredTypeBase(typeBase))
+        return false;
+    const auto structuredType = dynCast<const Parsing::StructuredType>(&typeBase);
+    return isDefined(structuredType->identifier);
 }
 
 i64 roundUp(const i64 structSize, const i32 memberAlignment)

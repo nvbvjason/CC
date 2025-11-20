@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "VarTable.hpp"
+
 namespace Semantics {
 
 class TypeResolution final : public Parsing::ASTTraverser {
@@ -35,14 +37,16 @@ class TypeResolution final : public Parsing::ASTTraverser {
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
-
-    std::unordered_map<std::string, std::vector<std::unique_ptr<Parsing::MemberDecl>>*> m_structuredMembers;
+    const VarTable& varTable;
 
     std::vector<Error> m_errors;
     bool m_isConst = true;
     bool m_global = true;
     bool m_inArrayInit = false;
 public:
+    explicit TypeResolution(const VarTable& varTable)
+        : varTable(varTable) {}
+
     std::vector<Error> validate(Parsing::Program& program);
 
     void visit(Parsing::FuncDecl& funDecl) override;
@@ -171,6 +175,6 @@ bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExp
     Type leftType, Type rightType, Type commonType);
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
 Parsing::TypeBase* getTypeFromMembers(
-    const std::vector<std::unique_ptr<Parsing::MemberDecl>>& varDecl,
+    const std::unordered_map<std::string, MemberEntry>& memberMap,
     const std::string& identifier);
 } // Semantics

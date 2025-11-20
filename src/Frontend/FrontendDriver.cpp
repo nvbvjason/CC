@@ -80,7 +80,7 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(
     Semantics::VariableResolution variableResolution(symbolTable, varTable);
     if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
         return {StateCode::VariableResolution, errors};
-    Semantics::TypeResolution typeResolution;
+    Semantics::TypeResolution typeResolution(varTable);
     if (const std::vector<Error> errors = typeResolution.validate(program); !errors.empty())
         return {StateCode::TypeResolution, errors};
     Semantics::LvalueVerification lvalueVerification;

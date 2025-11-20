@@ -37,7 +37,6 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
         const std::string uniqueName = makeTemporaryName(structuredDecl.identifier);
         auto structuredType = std::make_unique<Parsing::StructuredType>(
             Type::Struct, uniqueName, structuredDecl.location);
-        structuredType->isComplete = true;
         structuredDecl.identifier = uniqueName;
         m_varTable.addEntry(structuredDecl, m_errors);
     }
@@ -155,8 +154,11 @@ void VariableResolution::validatePointerType(Parsing::VarDecl& varDecl)
         const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredType->identifier);
         if (structuredEntry.typeBase && structuredType->type != structuredEntry.typeBase->type)
             addError("Cannot use structured type with different type", varDecl.location);
-        if (!structuredEntry.isDefined())
+        if (!structuredEntry.isDefined()) {
             addError("Cannot use variable of structured type which is undefined", varDecl.location);
+            return;
+        }
+        varDecl.type = Parsing::deepCopy(*structuredEntry.typeBase);
     }
 }
 
@@ -226,7 +228,6 @@ void VariableResolution::visit(Parsing::StructuredType& structuredType)
     if (!entry.isDefined())
         addError("Cannot use undefined structured type", structuredType.location);
     structuredType.identifier = entry.name;
-    structuredType.isComplete = true;
 }
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)

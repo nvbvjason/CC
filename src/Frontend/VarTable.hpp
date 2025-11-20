@@ -2,13 +2,12 @@
 
 #include "ShortTypes.hpp"
 #include "ASTParser.hpp"
+#include "Error.hpp"
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "Error.hpp"
 
 struct MemberEntry {
     std::string name;
@@ -37,18 +36,19 @@ struct StructuredEntry {
 class VarTable {
     std::unordered_map<std::string, StructuredEntry> entries;
 public:
-    bool isDefined(const std::string& name) const { return entries.contains(name); }
-    Parsing::TypeBase* getMemberType(const std::string& structuredName, const std::string& memberName) const;
+    [[nodiscard]] bool isDefined(const std::string& name) const { return entries.contains(name); }
+    [[nodiscard]] Parsing::TypeBase* getMemberType(
+        const std::string& structuredName,
+        const std::string& memberName) const;
+    [[nodiscard]] const StructuredEntry* const lookupEntry(const std::string& iden) const;
 
-    void emplaceMove(const std::string& name, StructuredEntry&& entry)
-    {
-        entries.emplace(name, std::move(entry));
-    }
     bool hasMemberType(const std::string& structuredName, const std::string& memberName) const
     {
         return getMemberType(structuredName, memberName) != nullptr;
     }
     void addEntry(const Parsing::StructuredDecl& structuredDecl, std::vector<Error>& errors);
+    [[nodiscard]] bool isInCompleteStructuredType(const Parsing::TypeBase& typeBase) const;
+    [[nodiscard]] bool isPointerToInCompleteStructuredType(const Parsing::TypeBase& typeBase) const;
 
     [[nodiscard]] i32 getAlignment(const Parsing::TypeBase* type) const;
     [[nodiscard]] i64 getSize(const Parsing::TypeBase* type) const;

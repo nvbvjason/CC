@@ -123,10 +123,25 @@ void TypeResolution::verifyArrayInSingleInit(
 void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
 {
     const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+    const auto expr = singleInit->expr.get();
 
-    if (isStructuredType(varDecl.type->type) &&
-        !Parsing::areEquivalentTypes(*varDecl.type, *singleInit->expr->type)) {
-        addError("Cannot initialize structured type with different type", varDecl.location);
+    if (Parsing::areEquivalentTypes(*varDecl.type, *expr->type))
+        return;
+
+    if (isArithmeticTypeBase(*varDecl.type) && isArithmeticTypeBase(*expr->type))
+        return;
+
+    if (canConvertToNullPtr(*expr) && varDecl.type->type == Type::Pointer)
+        return;
+
+    if (expr->type->type == Type::Pointer && isVoidPointer(*varDecl.type)) {
+        singleInit->expr->type = std::make_unique<Parsing::PointerType>(
+            std::make_unique<Parsing::VarType>(Type::Void));
+        return;
+    }
+
+    if (varDecl.type->type == Type::Pointer && isVoidPointer(*singleInit->expr->type)) {
+        singleInit->expr->type = Parsing::deepCopy(*varDecl.type);
         return;
     }
 
@@ -135,30 +150,7 @@ void TypeResolution::handleSingleInit(Parsing::VarDecl& varDecl)
         return;
     }
 
-    if (hasError())
-        return;
-
-    if (!Parsing::areEquivalentTypes(*varDecl.type, *singleInit->expr->type)) {
-        if (isVoidPointer(*varDecl.type) && singleInit->expr->type->type == Type::Pointer) {
-            singleInit->expr->type = std::make_unique<Parsing::PointerType>(
-                std::make_unique<Parsing::VarType>(Type::Void));
-            return;
-        }
-        if (isVoidPointer(*singleInit->expr->type) && varDecl.type->type == Type::Pointer) {
-            singleInit->expr->type = std::make_unique<Parsing::PointerType>(
-                std::make_unique<Parsing::VarType>(Type::Void));
-            return;
-        }
-        if (varDecl.type->type == Type::Pointer) {
-            if (!canConvertToNullPtr(*singleInit->expr) && !isVoidPointer(*singleInit->expr->type)) {
-                addError("Cannot convert pointer init to pointer", varDecl.location);
-                return;
-            }
-            auto typeExpr = std::make_unique<Parsing::VarType>(Type::U64);
-            varDecl.init = std::make_unique<Parsing::SingleInitializer>(
-                std::make_unique<Parsing::ConstExpr>(0ul, std::move(typeExpr)));
-        }
-    }
+    addError("Faulty assignment", varDecl.location);
 }
 
 void TypeResolution::handleCompoundInitArray(
@@ -197,13 +189,8 @@ void TypeResolution::handelCompoundInit(const Parsing::VarDecl& varDecl)
         addError("Cannot have compound initializer on non array", varDecl.location);
         return;
     }
-    if (varDecl.type->type == Type::Array) {
+    if (varDecl.type->type == Type::Array)
         handleCompoundInitArray(varDecl, compoundInit);
-        return;
-    }
-    if (varDecl.type->type == Type::Struct) {
-
-    }
 }
 
 void TypeResolution::assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl)
@@ -591,7 +578,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleAddSubtractPtrToIntegerType
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
     if (isIntegerType(rightType)) {
-        if (Parsing::isInCompletePointerToStructuredType(*binaryExpr.lhs->type)) {
+        if (varTable.isPointerToInCompleteStructuredType(*binaryExpr.lhs->type)) {
             addError("Cannot do pointer arithmetic on incomplete types", binaryExpr.lhs->location);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
@@ -600,7 +587,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleAddSubtractPtrToIntegerType
         binaryExpr.type = Parsing::deepCopy(*binaryExpr.lhs->type);
     }
     else if (isIntegerType(leftType)) {
-        if (Parsing::isInCompletePointerToStructuredType(*binaryExpr.rhs->type)) {
+        if (varTable.isPointerToInCompleteStructuredType(*binaryExpr.rhs->type)) {
             addError("Cannot do pointer arithmetic on incomplete types", binaryExpr.rhs->location);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
@@ -627,7 +614,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handlePtrToPtrBinaryOpers(Parsing
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
-        if (Parsing::isInCompletePointerToStructuredType(*binaryExpr.lhs->type)) {
+        if (varTable.isPointerToInCompleteStructuredType(*binaryExpr.lhs->type)) {
             addError("Cannot do pointer arithmetic on incomplete types", binaryExpr.location);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
@@ -946,7 +933,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertDerefExpr(Parsing::Derefer
         return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
     }
     const auto referencedPtrType = dynCast<const Parsing::PointerType>(dereferenceExpr.reference->type.get());
-    if (Parsing::isInCompleteStructuredType(*referencedPtrType->referenced)) {
+    if (varTable.isInCompleteStructuredType(*referencedPtrType->referenced)) {
         addError("Cannot dereference incomplete type", dereferenceExpr.location);
         return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
     }
@@ -962,11 +949,11 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSubscriptExpr(Parsing::Sub
     if (hasError())
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
 
-    if (Parsing::isInCompletePointerToStructuredType(*subscriptExpr.referencing->type)) {
+    if (varTable.isPointerToInCompleteStructuredType(*subscriptExpr.referencing->type)) {
         addError("Cannot subscript incomplete pointer type", subscriptExpr.referencing->location);
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
     }
-    if (Parsing::isInCompleteStructuredType(*subscriptExpr.referencing->type)) {
+    if (varTable.isInCompleteStructuredType(*subscriptExpr.referencing->type)) {
         addError("Cannot subscript incomplete type", subscriptExpr.referencing->location);
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
     }
@@ -1041,12 +1028,12 @@ const Parsing::TypeBase* TypeResolution::validateStructuredAccessors(
         return nullptr;
     }
     const auto structType = dynCast<const Parsing::StructuredType>(structuredType);
-    const auto it = m_structuredMembers.find(structType->identifier);
-    if (it == m_structuredMembers.end()) {
+    const auto entry = varTable.lookupEntry(structType->identifier);
+    if (entry == nullptr) {
         addError("Cannot call dot expression on non structured type", location);
         return nullptr;
     }
-    return getTypeFromMembers(*it->second, identifier);
+    return getTypeFromMembers(entry->memberMap, identifier);
 }
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertDotExpr(Parsing::DotExpr& dotExpr)
@@ -1075,7 +1062,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertArrowExpr(Parsing::ArrowEx
     }
     const auto pointerType = dynCast<const Parsing::PointerType>(arrowExpr.pointerExpr->type.get());
     const Parsing::TypeBase* type = validateStructuredAccessors(
-        pointerType, arrowExpr.identifier, arrowExpr.location);
+        pointerType->referenced.get(), arrowExpr.identifier, arrowExpr.location);
     if (type == nullptr) {
         addError("Could not find member for " + arrowExpr.identifier, arrowExpr.location);
         return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
@@ -1085,13 +1072,13 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertArrowExpr(Parsing::ArrowEx
 }
 
 Parsing::TypeBase* getTypeFromMembers(
-    const std::vector<std::unique_ptr<Parsing::MemberDecl>>& varDecl,
+    const std::unordered_map<std::string, MemberEntry>& memberMap,
     const std::string& identifier)
 {
-    for (const auto& var : varDecl)
-        if (var->identifier == identifier)
-            return var->type.get();
-    return nullptr;
+    const auto it = memberMap.find(identifier);
+    if (it == memberMap.end())
+        return nullptr;
+    return it->second.type.get();
 }
 
 bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)

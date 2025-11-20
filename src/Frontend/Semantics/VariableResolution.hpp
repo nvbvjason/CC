@@ -6,11 +6,10 @@
 #include "Frontend/SymbolTable.hpp"
 #include "Error.hpp"
 #include "ASTUtils.hpp"
+#include "VarTable.hpp"
 
 #include <string>
 #include <unordered_set>
-
-#include "VarTable.hpp"
 
 namespace Semantics {
 

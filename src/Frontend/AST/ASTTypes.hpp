@@ -76,7 +76,6 @@ struct ArrayType final : TypeBase {
 struct StructuredType final : TypeBase {
     std::string identifier;
     const i64 location;
-    bool isComplete = false;
 
     explicit StructuredType(const Type type, std::string identifier, const i64 location)
         : TypeBase(type, Kind::Structured),

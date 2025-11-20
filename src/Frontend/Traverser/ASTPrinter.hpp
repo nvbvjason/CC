@@ -79,6 +79,8 @@ public:
     void visit(const SubscriptExpr& subscriptExpr) override;
     void visit(const SizeOfExprExpr& sizeOfExprExpr) override;
     void visit(const SizeOfTypeExpr& sizeOfTypeExpr) override;
+    void visit(const DotExpr& dotExpr) override;
+    void visit(const ArrowExpr& arrowExpr) override;
 
 private:
     void addLine(const std::string &line);
