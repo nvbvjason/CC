@@ -19,16 +19,24 @@ std::vector<Error> TypeResolution::validate(Parsing::Program& program)
 void TypeResolution::visit(Parsing::FuncDecl& funDecl)
 {
     const auto it = m_functions.find(funDecl.name);
-    if (it != m_functions.end() && !validFuncDecl(it->second, funDecl)) {
+    if (it != m_functions.end() && !incompatibleFunctionDeclarations(it->second, funDecl)) {
         addError("Function declaration does not exist", funDecl.location);
         return;
     }
     const auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
+    for (const auto& paramTypeFunc : funcType->params) {
+        if (varTable.isInCompleteStructuredType(*paramTypeFunc)) {
+            addError("Incompatible parameter types in function declarations", funDecl.location);
+            return;
+        }
+    }
     std::vector<std::unique_ptr<Parsing::TypeBase>> paramsTypes;
     if (funcType->returnType->type == Type::Array) {
         addError("Function cannot return array", funDecl.location);
         return;
     }
+    if (varTable.isInCompleteStructuredType(*funcType->returnType))
+        addError("Incomplete return types", funDecl.location);
 
     if (funDecl.body != nullptr)
         m_definedFunctions.insert(funDecl.name);
@@ -44,7 +52,7 @@ void TypeResolution::visit(Parsing::FuncDecl& funDecl)
     }
 }
 
-bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDecl& funDecl)
+bool TypeResolution::incompatibleFunctionDeclarations(const FuncEntry& funcEntry, const Parsing::FuncDecl& funDecl)
 {
     if ((funcEntry.storage == Storage::Extern || funcEntry.storage == Storage::None) &&
         funDecl.storage == Storage::Static) {
@@ -295,6 +303,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertArrayType(Parsing::Expr& e
             return addressOf;
         }
     }
+    if (genExpr->type && isStructuredType(genExpr->type->type)) {
+        if (varTable.isInCompleteStructuredType(*genExpr->type))
+            addError("Invalid use of undefined structured type", genExpr->location);
+    }
     return genExpr;
 }
 
@@ -465,14 +477,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertUnaryExpr(Parsing::UnaryEx
         return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
     }
     if (unaryExpr.innerExpr->type->type == Type::Array || unaryExpr.innerExpr->kind == Parsing::Expr::Kind::AddrOf) {
-        if (unaryExpr.op == Operator::PrefixDecrement)
+        if (isPrefixOp(unaryExpr.op))
             addError("Cannot apply prefix decrement", unaryExpr.location);
-        if (unaryExpr.op == Operator::PrefixIncrement)
-            addError("Cannot apply prefix increment", unaryExpr.location);
-        if (unaryExpr.op == Operator::PostFixDecrement)
+        if (Parsing::isPostfixOp(unaryExpr.op))
             addError("Cannot apply postfix decrement", unaryExpr.location);
-        if (unaryExpr.op == Operator::PostFixIncrement)
-            addError("Cannot apply postfix increment", unaryExpr.location);
     }
 
     if (unaryExpr.innerExpr->type->type == Type::Double) {
@@ -523,8 +531,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertBinaryExpr(Parsing::Binary
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
     const Type commonType = getCommonType(leftType, rightType);
-
-    if (commonType == Type::Double && isIllegalFloatBinaryOperator(binaryExpr.op)) {
+    if (commonType == Type::Double && isIllegalFloatingBinaryOperator(binaryExpr.op)) {
         addError("Cannot apply operator to double", binaryExpr.location);
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
@@ -703,7 +710,7 @@ bool TypeResolution::isLegalAssignExpr(const Parsing::AssignmentExpr& assignment
     }
     const Type commonType = getCommonType(leftType, rightType);
     const BinaryOp binaryOp = convertAssignOperation(assignmentExpr.op);
-    if (commonType == Type::Double && isIllegalFloatBinaryOperator(binaryOp)) {
+    if (commonType == Type::Double && isIllegalFloatingBinaryOperator(binaryOp)) {
         addError("Is double compound assign operator", assignmentExpr.location);
         return false;
     }
@@ -842,7 +849,10 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertTernaryExpr(Parsing::Terna
     if (commonType != falseType)
         ternaryExpr.falseExpr = std::make_unique<Parsing::CastExpr>(
             std::make_unique<Parsing::VarType>(commonType), std::move(ternaryExpr.falseExpr));
-    ternaryExpr.type = std::make_unique<Parsing::VarType>(commonType);
+    if (commonType == trueType)
+        ternaryExpr.type = Parsing::deepCopy(*ternaryExpr.falseExpr->type);
+    else
+        ternaryExpr.type = Parsing::deepCopy(*ternaryExpr.trueExpr->type);
     return std::make_unique<Parsing::TernaryExpr>(std::move(ternaryExpr));
 }
 
@@ -881,10 +891,6 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertDerefExpr(Parsing::Derefer
         return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
     }
     const auto referencedPtrType = dynCast<const Parsing::PointerType>(dereferenceExpr.reference->type.get());
-    if (varTable.isInCompleteStructuredType(*referencedPtrType->referenced)) {
-        addError("Cannot dereference incomplete type", dereferenceExpr.location);
-        return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
-    }
     dereferenceExpr.type = Parsing::deepCopy(*referencedPtrType->referenced);
     return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
 }
@@ -899,10 +905,6 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSubscriptExpr(Parsing::Sub
 
     if (varTable.isPointerToInCompleteStructuredType(*subscriptExpr.referencing->type)) {
         addError("Cannot subscript incomplete pointer type", subscriptExpr.referencing->location);
-        return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
-    }
-    if (varTable.isInCompleteStructuredType(*subscriptExpr.referencing->type)) {
-        addError("Cannot subscript incomplete type", subscriptExpr.referencing->location);
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
     }
     if (isVoidPointer(*subscriptExpr.referencing->type)) {
@@ -937,32 +939,24 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprExpr(Parsing::Si
 {
     sizeOfExprExpr.innerExpr = convert(*sizeOfExprExpr.innerExpr);
     if (sizeOfExprExpr.innerExpr && sizeOfExprExpr.innerExpr->type) {
-        if (isVoidArray(*sizeOfExprExpr.innerExpr->type)) {
+        if (isVoidArray(*sizeOfExprExpr.innerExpr->type))
             addError("Cannot call sizeof on void array expression", sizeOfExprExpr.location);
-            return std::make_unique<Parsing::SizeOfExprExpr>(std::move(sizeOfExprExpr));
-        }
-        if (sizeOfExprExpr.innerExpr->type->type == Type::Void) {
+        if (sizeOfExprExpr.innerExpr->type->type == Type::Void)
             addError("Cannot call sizeof on void expression", sizeOfExprExpr.location);
-            return std::make_unique<Parsing::SizeOfExprExpr>(std::move(sizeOfExprExpr));
-        }
     }
     return std::make_unique<Parsing::SizeOfExprExpr>(std::move(sizeOfExprExpr));
 }
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprType(Parsing::SizeOfTypeExpr& sizeOfTypeExpr)
 {
-    if (isVoidPointer(*sizeOfTypeExpr.sizeType)) {
+    if (isVoidPointer(*sizeOfTypeExpr.sizeType))
         addError("Cannot call sizeof on void pointer type", sizeOfTypeExpr.location);
-        return std::make_unique<Parsing::SizeOfTypeExpr>(std::move(sizeOfTypeExpr));
-    }
-    if (isVoidArray(*sizeOfTypeExpr.sizeType)) {
+    if (isVoidArray(*sizeOfTypeExpr.sizeType))
         addError("Cannot call sizeof on void array type", sizeOfTypeExpr.location);
-        return std::make_unique<Parsing::SizeOfTypeExpr>(std::move(sizeOfTypeExpr));
-    }
-    if (sizeOfTypeExpr.sizeType->type == Type::Void) {
+    if (sizeOfTypeExpr.sizeType->type == Type::Void)
         addError("Cannot call sizeof on void type", sizeOfTypeExpr.location);
-        return std::make_unique<Parsing::SizeOfTypeExpr>(std::move(sizeOfTypeExpr));
-    }
+    if (varTable.isInCompleteStructuredType(*sizeOfTypeExpr.sizeType))
+        addError("Cannot call sizeof on void type", sizeOfTypeExpr.location);
     return std::make_unique<Parsing::SizeOfTypeExpr>(std::move(sizeOfTypeExpr));
 }
 

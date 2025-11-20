@@ -40,7 +40,7 @@ public:
     [[nodiscard]] Parsing::TypeBase* getMemberType(
         const std::string& structuredName,
         const std::string& memberName) const;
-    [[nodiscard]] const StructuredEntry* const lookupEntry(const std::string& iden) const;
+    [[nodiscard]] const StructuredEntry* lookupEntry(const std::string& iden) const;
 
     bool hasMemberType(const std::string& structuredName, const std::string& memberName) const
     {

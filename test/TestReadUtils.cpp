@@ -113,18 +113,40 @@ bool isCorHFile(const std::filesystem::directory_entry& entry)
     return entry.is_regular_file() && entry.path().extension() == ".c" || entry.path().extension() == ".h";
 }
 
-void handlePreprocessDumb(const std::unordered_map<std::string, std::string>& hFiles,
-                          const std::string& line, std::string& result)
+std::string getIncludePath(const std::string& include)
 {
-    if (line.starts_with("#include")) {
-        for (const auto[name, contents] : hFiles) {
-            if (line.contains(name)) {
-                result += contents;
-                result += '\n';
-                return;
-            }
+    std::string result;
+    bool inPath = false;
+    for (const char ch : include) {
+        if (ch == '\"') {
+            inPath = !inPath;
+            continue;
         }
+        if (inPath)
+            result += ch;
     }
+    return result;
+}
+
+void handlePreprocessDumb(const std::unordered_map<std::string, std::string>& hFiles,
+                          std::filesystem::path filePath,
+                          const std::string& line,
+                          std::string& result)
+{
+    if (!line.starts_with("#include"))
+        return;
+    filePath = filePath.parent_path();
+    std::string includePath = getIncludePath(line);
+    while (includePath.starts_with("../")) {
+        includePath = includePath.substr(3);
+        filePath = filePath.parent_path();
+    }
+    includePath = filePath.string() + "/" + includePath;
+    const auto it = hFiles.find(includePath);
+    if (it == hFiles.end())
+        std::abort();
+    result += it->second;
+    result += '\n';
 }
 
 std::string buildFileWithIncludes(
@@ -136,10 +158,12 @@ std::string buildFileWithIncludes(
     std::string line;
     std::string result;
     while (std::getline(iss, line)) {
-        if (line.size() < 2)
+        if (line.size() < 2) {
+            result += line + '\n';
             continue;
+        }
         if (line[0] == '#') {
-            handlePreprocessDumb(hFiles, line, result);
+            handlePreprocessDumb(hFiles, path, line, result);
             continue;
         }
         if (line[0] == '\\' || line[1] == '\\')

@@ -14,8 +14,11 @@ bool CheckSemanticsWithInclude(const std::string& sourceCode);
 bool isCFile(const std::filesystem::directory_entry& entry);
 bool isHFile(const std::filesystem::directory_entry& entry);
 bool isCorHFile(const std::filesystem::directory_entry& entry);
+std::string getIncludePath(const std::string& include);
 void handlePreprocessDumb(const std::unordered_map<std::string, std::string>& hFiles,
-                          const std::string& line, std::string& result);
+                          std::filesystem::path path,
+                          const std::string& line,
+                          std::string& result);
 std::string buildFileWithIncludes(
     const std::filesystem::path& path,
     const std::unordered_map<std::string, std::string>& hFiles);

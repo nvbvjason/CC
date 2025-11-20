@@ -50,18 +50,6 @@ inline BinaryInst::Operation convertBinaryOperation(const Parsing::BinaryExpr::O
     }
 }
 
-inline bool isPostfixOp(const Parsing::UnaryExpr::Operator oper)
-{
-    return oper == Parsing::UnaryExpr::Operator::PostFixDecrement
-        || oper == Parsing::UnaryExpr::Operator::PostFixIncrement;
-}
-
-inline bool isPrefixOp(const Parsing::UnaryExpr::Operator oper)
-{
-    return oper == Parsing::UnaryExpr::Operator::PrefixDecrement
-        || oper == Parsing::UnaryExpr::Operator::PrefixIncrement;
-}
-
 inline BinaryInst::Operation getPostPrefixOperation(const Parsing::UnaryExpr::Operator oper)
 {
     using Operator = Parsing::UnaryExpr::Operator;

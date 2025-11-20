@@ -1020,18 +1020,13 @@ TEST(Chapter18_Structures, validSemantics)
             continue;
         std::string codes = getSourceCode(path);
         std::string strippedCodes = removeLinesStartingWithHashOrComment(codes);
-        hFiles[path.path().filename()] = strippedCodes;
+        hFiles[path.path()] = strippedCodes;
     }
     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
         if (!isCFile(path))
             continue;
-        if (path.path() == "/home/jason/src/CC/test/external/writing-a-c-compiler-tests/tests/chapter_18/valid/no_structure_parameters/libraries/array_of_structs.c") {
-            std::string codes = buildFileWithIncludes(path, hFiles);
-            EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
-            continue;
-        }
         std::string codes = buildFileWithIncludes(path, hFiles);
-        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+        EXPECT_TRUE(CheckSemanticsWithInclude(codes)) << path.path().string();
     }
 }
 

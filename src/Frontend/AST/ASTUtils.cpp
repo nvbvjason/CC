@@ -28,6 +28,24 @@ BinaryExpr::Operator convertAssignOperation(const AssignmentExpr::Operator assig
     }
 }
 
+bool isBinaryComparison(const BinaryExpr::Operator oper)
+{
+    using Operator = BinaryExpr::Operator;
+    return oper == Operator::Equal       || oper == Operator::NotEqual ||
+           oper == Operator::LessThan    || oper == Operator::LessOrEqual ||
+           oper == Operator::GreaterThan || oper == Operator::GreaterOrEqual;
+}
+
+bool isPostfixOp(const UnaryExpr::Operator oper)
+{
+    return oper == UnaryExpr::Operator::PostFixDecrement || oper == UnaryExpr::Operator::PostFixIncrement;
+}
+
+bool isPrefixOp(const UnaryExpr::Operator oper)
+{
+    return oper == UnaryExpr::Operator::PrefixDecrement || oper == UnaryExpr::Operator::PrefixIncrement;
+}
+
 std::unique_ptr<TypeBase> deepCopy(const TypeBase& typeBase)
 {
     assert(typeBase.type != Type::Invalid);
@@ -224,24 +242,6 @@ bool isZeroArithmeticType(const ConstExpr& constExpr)
     }
 }
 
-bool canConvertToNullPtr(const Expr& expr)
-{
-    if (expr.kind != Expr::Kind::Constant)
-        return false;
-    const auto constExpr = dynCast<const ConstExpr>(&expr);
-    if (!isIntegerType(constExpr->type->type))
-        return false;
-    return isZeroArithmeticType(*constExpr);
-}
-
-bool isBinaryComparison(const BinaryExpr::Operator oper)
-{
-    using Operator = BinaryExpr::Operator;
-    return oper == Operator::Equal       || oper == Operator::NotEqual ||
-           oper == Operator::LessThan    || oper == Operator::LessOrEqual ||
-           oper == Operator::GreaterThan || oper == Operator::GreaterOrEqual;
-}
-
 std::unique_ptr<Expr> convertToArithmeticType(const Expr& expr, const Type targetType)
 {
     const auto constExpr = dynCast<const ConstExpr>(&expr);
@@ -282,6 +282,16 @@ std::unique_ptr<Expr> convertToArithmeticType(const Expr& expr, const Type targe
         std::make_unique<VarType>(targetType));
 }
 
+bool canConvertToNullPtr(const Expr& expr)
+{
+    if (expr.kind != Expr::Kind::Constant)
+        return false;
+    const auto constExpr = dynCast<const ConstExpr>(&expr);
+    if (!isIntegerType(constExpr->type->type))
+        return false;
+    return isZeroArithmeticType(*constExpr);
+}
+
 std::unique_ptr<Expr> converOrAssign(const TypeBase& left,
                                      const TypeBase& right,
                                      std::unique_ptr<Expr>& expr,
@@ -312,6 +322,11 @@ std::unique_ptr<Expr> converOrAssign(const TypeBase& left,
 
     errors.emplace_back("Faulty assignment", expr->location);
     return std::move(expr);
+}
+
+bool isScalarType(const TypeBase& type)
+{
+    return isArithmetic(type.type) || type.type == Type::Pointer;
 }
 
 bool isVoidPointer(const TypeBase& type)
@@ -357,20 +372,6 @@ bool isPointerToVoidArray(const TypeBase& type)
     if (pointer->referenced->kind != TypeBase::Kind::Array)
         return false;
     return isVoidArray(*pointer->referenced);
-}
-
-bool isScalarType(const TypeBase& type)
-{
-    switch (type.type) {
-        case Type::Void:
-        case Type::Array:
-        case Type::Function:
-        case Type::Struct:
-        case Type::Union:
-            return false;
-        default:
-            return true;
-    }
 }
 
 const TypeBase* getArrayBaseType(const TypeBase& highestType)

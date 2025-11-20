@@ -14,7 +14,7 @@ Parsing::TypeBase* VarTable::getMemberType(const std::string& structuredName, co
     return itMember->second.type.get();
 }
 
-const StructuredEntry* const VarTable::lookupEntry(const std::string& iden) const
+const StructuredEntry* VarTable::lookupEntry(const std::string& iden) const
 {
     const auto it = entries.find(iden);
     if (it == entries.end())
@@ -129,7 +129,7 @@ bool VarTable::isInCompleteStructuredType(const Parsing::TypeBase& typeBase) con
     if (!isStructuredTypeBase(typeBase))
         return false;
     const auto structuredType = dynCast<const Parsing::StructuredType>(&typeBase);
-    return isDefined(structuredType->identifier);
+    return !isDefined(structuredType->identifier);
 }
 
 i64 roundUp(const i64 structSize, const i32 memberAlignment)

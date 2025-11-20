@@ -104,7 +104,7 @@ public:
     std::unique_ptr<Parsing::Expr> validateAndConvertPtrsInTernaryExpr(
         Parsing::TernaryExpr& ternaryExpr, Type trueType, Type falseType);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
-    [[nodiscard]] bool validFuncDecl(const FuncEntry& funcEntry, const Parsing::FuncDecl& funDecl);
+    [[nodiscard]] bool incompatibleFunctionDeclarations(const FuncEntry& funcEntry, const Parsing::FuncDecl& funDecl);
     void handelCompoundInit(const Parsing::VarDecl& varDecl);
     void verifyArrayInSingleInit(const Parsing::VarDecl& varDecl, const Parsing::SingleInitializer& singleInit);
     void handleCompoundInitArray(const Parsing::VarDecl& varDecl, const Parsing::CompoundInitializer* compoundInit);
@@ -134,7 +134,7 @@ inline bool isBinaryBitwise(const Parsing::BinaryExpr::Operator binOper)
            binOper == Operator::RightShift;
 }
 
-inline bool isIllegalFloatBinaryOperator(const Parsing::BinaryExpr::Operator oper)
+inline bool isIllegalFloatingBinaryOperator(const Parsing::BinaryExpr::Operator oper)
 {
     return isBinaryBitwise(oper) || oper == Parsing::BinaryExpr::Operator::Modulo;
 }

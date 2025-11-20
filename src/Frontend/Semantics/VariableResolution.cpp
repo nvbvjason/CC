@@ -38,16 +38,26 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
         auto structuredType = std::make_unique<Parsing::StructuredType>(
             Type::Struct, uniqueName, structuredDecl.location);
         structuredDecl.identifier = uniqueName;
+        m_symbolTable.addStructuredEntry(nameBefore,
+                                         structuredDecl.identifier,
+                                         Parsing::StructuredType(
+                                             structuredDecl.type,
+                                             structuredDecl.identifier,
+                                             structuredDecl.location
+                                         ),
+                                         !structuredDecl.members.empty());
         m_varTable.addEntry(structuredDecl, m_errors);
     }
-    m_symbolTable.addStructuredEntry(nameBefore,
+    else {
+        m_symbolTable.addStructuredEntry(nameBefore,
+                                 structuredDecl.identifier,
+                                 Parsing::StructuredType(
+                                     structuredDecl.type,
                                      structuredDecl.identifier,
-                                     Parsing::StructuredType(
-                                         structuredDecl.type,
-                                         structuredDecl.identifier,
-                                         structuredDecl.location
-                                     ),
-                                     !structuredDecl.members.empty());
+                                     structuredDecl.location
+                                 ),
+                                 !structuredDecl.members.empty());
+    }
 }
 
 void VariableResolution::visit(Parsing::FuncDecl& funDecl)
@@ -224,9 +234,8 @@ void VariableResolution::validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
 void VariableResolution::visit(Parsing::StructuredType& structuredType)
 {
     const auto entry = m_symbolTable.lookupStructuredEntry(structuredType.identifier);
-    if (!entry.isDefined())
-        addError("Cannot use undefined structured type", structuredType.location);
-    structuredType.identifier = entry.name;
+    if (entry.isDefined())
+        structuredType.identifier = entry.name;
 }
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
