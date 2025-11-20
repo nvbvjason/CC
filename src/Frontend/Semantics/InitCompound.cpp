@@ -120,6 +120,7 @@ void InitCompound::createInitsWithPositionsSingle(
         return;
     }
     const auto stringExpr = dynCast<Parsing::StringExpr>(singleInit.expr.get());
+    const std::string& stringValue = stringExpr->value;
     if (innerArrayType != Type::Pointer && !isCharacterType(innerArrayType)) {
         errors.emplace_back("Wrong type for String init", stringExpr->location);
         return;
@@ -131,18 +132,17 @@ void InitCompound::createInitsWithPositionsSingle(
     if (innerArrayType == Type::Pointer) {
         std::vector<i64> positionInCompound = position;
         emplacedPositions.emplace_back(positionInCompound);
-        std::string stringValue = stringExpr->value;
-        auto newStringExpr = std::make_unique<Parsing::StringExpr>(stringExpr->location,
-            std::move(stringValue));
+        std::string copy = stringValue;
+        auto newStringExpr = std::make_unique<Parsing::StringExpr>(stringExpr->location, std::move(copy));
         auto newSingleInit = std::make_unique<Parsing::SingleInitializer>(std::move(newStringExpr));
         staticInitializer.push_back(std::move(newSingleInit));
         return;
     }
-    for (i64 i = 0; i < stringExpr->value.size(); ++i) {
+    for (i64 i = 0; i < stringValue.size(); ++i) {
         std::vector<i64> positionInCompound = position;
         positionInCompound.emplace_back(i);
         emplacedPositions.emplace_back(positionInCompound);
-        const char ch = stringExpr->value[i];
+        const char ch = stringValue[i];
         auto constExpr = std::make_unique<Parsing::ConstExpr>(
             ch, std::make_unique<Parsing::VarType>(Type::Char));
         auto newSingleInit = std::make_unique<Parsing::SingleInitializer>(std::move(constExpr));
@@ -201,9 +201,7 @@ std::vector<std::unique_ptr<Parsing::Initializer>> InitCompound::getZeroInits(
     return newInitializers;
 }
 
-i64 InitCompound::getDistance(
-    const std::vector<i64>& positionBefore,
-    const std::vector<i64>& position) const
+i64 InitCompound::getDistance(const std::vector<i64>& positionBefore, const std::vector<i64>& position) const
 {
     const i64 before = getPosition(positionBefore);
     const i64 now = getPosition(position);
@@ -232,14 +230,7 @@ bool isZeroSingleInit(const Parsing::Initializer& init)
     if (singleInit->expr->kind != Parsing::Expr::Kind::Constant)
         return false;
     const auto constExpr = dynCast<const Parsing::ConstExpr>(singleInit->expr.get());
-    switch (constExpr->type->type) {
-        case Type::I32: return 0 == constExpr->getValue<i32>();
-        case Type::I64: return 0 == constExpr->getValue<i64>();
-        case Type::U32: return 0 == constExpr->getValue<u32>();
-        case Type::U64: return 0 == constExpr->getValue<u64>();
-        default:
-            return false;
-    }
+    return Parsing::isZeroArithmeticType(*constExpr);
 }
 
 std::vector<i64> getDimensions(const Parsing::VarDecl& array)

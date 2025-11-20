@@ -213,18 +213,15 @@ void assignTypeToArithmeticBinaryExpr(BinaryExpr& binaryExpr)
 
 bool isZeroArithmeticType(const ConstExpr& constExpr)
 {
-    const Type type  = constExpr.type->type;
-    if (type == Type::I32)
-        return 0 == std::get<i32>(constExpr.value);
-    if (type == Type::U32)
-        return 0 == std::get<u32>(constExpr.value);
-    if (type == Type::I64)
-        return 0 == std::get<i64>(constExpr.value);
-    if (type == Type::U64)
-        return 0 == std::get<u64>(constExpr.value);
-    if (type == Type::Double)
-        return 0.0 == std::get<double>(constExpr.value);
-    return false;
+    switch (constExpr.type->type) {
+        case Type::I32:     return 0 == std::get<i32>(constExpr.value);
+        case Type::U32:     return 0 == std::get<u32>(constExpr.value);
+        case Type::I64:     return 0 == std::get<i64>(constExpr.value);
+        case Type::U64:     return 0 == std::get<u64>(constExpr.value);
+        case Type::Double:  return 0 == std::get<double>(constExpr.value);
+        default:
+            return false;
+    }
 }
 
 bool canConvertToNullPtr(const Expr& expr)
@@ -252,28 +249,28 @@ std::unique_ptr<Expr> convertToArithmeticType(const Expr& expr, const Type targe
 
     switch (targetType) {
         case Type::I8:
-            convertedValue = getValueFromConst<i8>(*constExpr);
+            convertedValue = constExpr->getValue<i8>();
             break;
         case Type::U8:
-            convertedValue = getValueFromConst<u8>(*constExpr);
+            convertedValue = constExpr->getValue<u8>();
             break;
         case Type::I32:
-            convertedValue = getValueFromConst<i32>(*constExpr);
+            convertedValue = constExpr->getValue<i32>();
             break;
         case Type::U32:
-            convertedValue = getValueFromConst<u32>(*constExpr);
+            convertedValue = constExpr->getValue<u32>();
             break;
         case Type::I64:
-            convertedValue = getValueFromConst<i64>(*constExpr);
+            convertedValue = constExpr->getValue<i64>();
             break;
         case Type::U64:
-            convertedValue = getValueFromConst<u64>(*constExpr);
+            convertedValue = constExpr->getValue<u64>();
             break;
         case Type::Double:
-            convertedValue = getValueFromConst<double>(*constExpr);
+            convertedValue = constExpr->getValue<double>();
             break;
         case Type::Char:
-            convertedValue = getValueFromConst<char>(*constExpr);
+            convertedValue = constExpr->getValue<char>();
             break;
         default:
             std::abort();

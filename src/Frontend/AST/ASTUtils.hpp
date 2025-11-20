@@ -25,23 +25,6 @@ BinaryExpr::Operator convertAssignOperation(AssignmentExpr::Operator assignOpera
 
 [[nodiscard]] std::unique_ptr<TypeBase> convertArrayFirstDimToPtr(const TypeBase& typeBase);
 
-template<typename TargetType>
-TargetType getValueFromConst(const ConstExpr& constExpr)
-{
-    switch (constExpr.type->type) {
-        case Type::I8:      return std::get<i8>(constExpr.value);
-        case Type::U8:      return std::get<u8>(constExpr.value);
-        case Type::I32:     return std::get<i32>(constExpr.value);
-        case Type::U32:     return std::get<u32>(constExpr.value);
-        case Type::I64:     return std::get<i64>(constExpr.value);
-        case Type::U64:     return std::get<u64>(constExpr.value);
-        case Type::Double:  return std::get<double>(constExpr.value);
-        case Type::Char:    return std::get<char>(constExpr.value);
-        default:
-            std::abort();
-    }
-}
-
 std::unique_ptr<Expr> convertOrCastToType(std::unique_ptr<Expr>& expr, Type targetType);
 void assignTypeToArithmeticBinaryExpr(BinaryExpr& binaryExpr);
 bool isZeroArithmeticType(const ConstExpr& constExpr);
