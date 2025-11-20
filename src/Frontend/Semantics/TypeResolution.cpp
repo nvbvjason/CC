@@ -71,34 +71,6 @@ bool TypeResolution::validFuncDecl(const FuncEntry& funcEntry, const Parsing::Fu
     return true;
 }
 
-std::unique_ptr<Parsing::Expr> converOrAssign(const Parsing::TypeBase& left,
-                                              const Parsing::TypeBase& right,
-                                              std::unique_ptr<Parsing::Expr>& expr,
-                                              std::vector<Error>& errors)
-{
-    if (Parsing::areEquivalentTypes(left, right))
-        return std::move(expr);
-
-    if (isArithmeticTypeBase(left) && isArithmeticTypeBase(*expr->type))
-        return convertOrCastToType(expr, left.type);
-
-    if (canConvertToNullPtr(*expr) && left.type == Type::Pointer)
-        return convertOrCastToType(expr, Type::U64);
-
-    if (expr->type->type == Type::Pointer && isVoidPointer(left)) {
-        expr->type = std::make_unique<Parsing::PointerType>(std::make_unique<Parsing::VarType>(Type::Void));
-        return std::move(expr);
-    }
-
-    if (left.type == Type::Pointer && isVoidPointer(right)) {
-        expr->type = Parsing::deepCopy(left);
-        return std::move(expr);
-    }
-
-    errors.emplace_back("Faulty assignment", expr->location);
-    return std::move(expr);
-}
-
 void TypeResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (isIllegalVarDecl(varDecl))
@@ -557,18 +529,19 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertBinaryExpr(Parsing::Binary
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
     if (leftType == Type::Pointer || rightType == Type::Pointer)
-        return handleBinaryPtr(binaryExpr, leftType, rightType, commonType);
+        return handleBinaryPtr(binaryExpr, leftType, rightType);
     assignTypeToArithmeticBinaryExpr(binaryExpr);
     return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
 }
 
 bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr,
-        const Type leftType, const Type rightType, const Type commonType)
+        const Type leftType, const Type rightType)
 {
     if (Parsing::areEquivalentTypes(*binaryExpr.lhs->type, *binaryExpr.rhs->type))
         return true;
     if (canConvertToNullPtr(*binaryExpr.lhs) || canConvertToNullPtr(*binaryExpr.rhs))
         return true;
+    const Type commonType = getCommonType(leftType, rightType);
     if (commonType == Type::Pointer && (isIntegerType(leftType) || isIntegerType(rightType)) &&
             (binaryExpr.op == BinaryOp::Add || binaryExpr.op == BinaryOp::Subtract))
         return true;
@@ -643,8 +616,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handlePtrToPtrBinaryOpers(Parsing
 
 std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryExpr& binaryExpr,
                                                                const Type leftType,
-                                                               const Type rightType,
-                                                               const Type commonType)
+                                                               const Type rightType)
 {
     if (isUnallowedPtrBinaryOperation(binaryExpr.op)) {
         addError("Cannot apply operator to pointer", binaryExpr.location);
@@ -667,7 +639,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::handleBinaryPtr(Parsing::BinaryEx
     if (binaryExpr.op == BinaryOp::Add || binaryExpr.op == BinaryOp::Subtract)
         return handleAddSubtractPtrToIntegerTypes(binaryExpr, leftType, rightType);
 
-    if (!areValidNonArithmeticTypesInBinaryExpr(binaryExpr, leftType, rightType, commonType)) {
+    if (!areValidNonArithmeticTypesInBinaryExpr(binaryExpr, leftType, rightType)) {
         addError("Cannot apply operator to non-arithmetic types", binaryExpr.location);
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
@@ -695,77 +667,32 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertAssignExpr(Parsing::Assign
 
     if (hasError())
         return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
+    if (assignmentExpr.op == Oper::Assign) {
+        assignmentExpr.rhs = converOrAssign(
+            *assignmentExpr.lhs->type,
+            *assignmentExpr.rhs->type,
+            assignmentExpr.rhs,
+            m_errors);
+        assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
+        return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
+    }
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
-    if (isStructuredType(leftType)) {
-        if (!Parsing::areEquivalentTypes(*assignmentExpr.lhs->type, *assignmentExpr.rhs->type)) {
-            addError("Cannot assign other type to structured type", assignmentExpr.rhs->location);
-            return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
-        }
-    }
     if ((assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign) &&
         rightType == Type::Pointer) {
         addError("Cannot have pointer as right hand side of compound assign", assignmentExpr.rhs->location);
         return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
     }
-    if (assignmentExpr.op != Oper::Assign && isVoidPointer(*assignmentExpr.lhs->type)) {
+    if (isVoidPointer(*assignmentExpr.lhs->type)) {
         addError("Cannot compound assign to void ptr", assignmentExpr.lhs->location);
-        return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
-    }
-    if (leftType == Type::Array) {
-        addError("Cannot assign to array", assignmentExpr.location);
         return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
     }
     if (!isLegalAssignExpr(assignmentExpr))
         return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
-    if (leftType != rightType && assignmentExpr.op == Parsing::AssignmentExpr::Operator::Assign &&
-        leftType != Type::Pointer) {
-        if (!isCharacterType(leftType)) {
-            assignmentExpr.rhs = convertOrCastToType(assignmentExpr.rhs, leftType);
-        }
-        else {
-            assignmentExpr.rhs = std::make_unique<Parsing::CastExpr>(
-                std::make_unique<Parsing::VarType>(leftType), std::move(assignmentExpr.rhs));
-        }
-    }
     if (leftType == Type::Pointer && isIntegerType(rightType))
         assignmentExpr.rhs = convertOrCastToType(assignmentExpr.rhs, Type::I64);
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
     return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
-}
-
-std::unique_ptr<Parsing::Expr> TypeResolution::convertCastExpr(Parsing::CastExpr& castExpr)
-{
-    castExpr.innerExpr = convertArrayType(*castExpr.innerExpr);
-
-    if (hasError())
-        return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
-    const Type outerType = castExpr.type->type;
-    const Type innerType = castExpr.innerExpr->type->type;
-    if (isStructuredType(outerType))
-        addError("Cannot cast to structured type", castExpr.location);
-    if (isStructuredType(innerType))
-        addError("Cannot cast from structured type", castExpr.location);
-    if (Parsing::areEquivalentTypes(*castExpr.type, *castExpr.innerExpr->type))
-        return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
-    if (innerType == Type::Void)
-        addError("Cannot cast to void", castExpr.location);
-    if (isPointerToVoidArray(*castExpr.type))
-        addError("Cannot cast to pointer to void array", castExpr.location);
-    if (isArrayOfVoidPointer(*castExpr.type))
-        addError("Cannot cast to void pointer array", castExpr.location);
-    if (outerType == Type::Double && innerType == Type::Pointer)
-        addError("Cannot convert pointer to double", castExpr.location);
-    if (outerType == Type::Pointer && innerType == Type::Double)
-        addError("Cannot convert double to pointer", castExpr.location);
-    if (isArithmetic(outerType) && isArithmetic(innerType))
-        return convertOrCastToType(castExpr.innerExpr, outerType);
-    if (outerType == Type::Pointer && innerType == Type::Pointer) {
-        auto innerTypeCopy = Parsing::deepCopy(*castExpr.type);
-        castExpr.innerExpr->type = std::move(innerTypeCopy);
-        return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
-    }
-    return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
 }
 
 bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
@@ -822,6 +749,40 @@ bool TypeResolution::isLegalAssignExpr(Parsing::AssignmentExpr& assignmentExpr)
         }
     }
     return true;
+}
+
+std::unique_ptr<Parsing::Expr> TypeResolution::convertCastExpr(Parsing::CastExpr& castExpr)
+{
+    castExpr.innerExpr = convertArrayType(*castExpr.innerExpr);
+
+    if (hasError())
+        return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
+    const Type outerType = castExpr.type->type;
+    const Type innerType = castExpr.innerExpr->type->type;
+    if (isStructuredType(outerType))
+        addError("Cannot cast to structured type", castExpr.location);
+    if (isStructuredType(innerType))
+        addError("Cannot cast from structured type", castExpr.location);
+    if (Parsing::areEquivalentTypes(*castExpr.type, *castExpr.innerExpr->type))
+        return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
+    if (innerType == Type::Void)
+        addError("Cannot cast to void", castExpr.location);
+    if (isPointerToVoidArray(*castExpr.type))
+        addError("Cannot cast to pointer to void array", castExpr.location);
+    if (isArrayOfVoidPointer(*castExpr.type))
+        addError("Cannot cast to void pointer array", castExpr.location);
+    if (outerType == Type::Double && innerType == Type::Pointer)
+        addError("Cannot convert pointer to double", castExpr.location);
+    if (outerType == Type::Pointer && innerType == Type::Double)
+        addError("Cannot convert double to pointer", castExpr.location);
+    if (isArithmetic(outerType) && isArithmetic(innerType))
+        return convertOrCastToType(castExpr.innerExpr, outerType);
+    if (outerType == Type::Pointer && innerType == Type::Pointer) {
+        auto innerTypeCopy = Parsing::deepCopy(*castExpr.type);
+        castExpr.innerExpr->type = std::move(innerTypeCopy);
+        return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
+    }
+    return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
 }
 
 std::unique_ptr<Parsing::Expr> TypeResolution::validateAndConvertPtrsInTernaryExpr(

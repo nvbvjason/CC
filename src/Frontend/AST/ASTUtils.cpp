@@ -265,6 +265,38 @@ std::unique_ptr<Expr> convertToArithmeticType(const Expr& expr, const Type targe
         std::make_unique<VarType>(targetType));
 }
 
+std::unique_ptr<Expr> converOrAssign(const TypeBase& left,
+                                     const TypeBase& right,
+                                     std::unique_ptr<Expr>& expr,
+                                     std::vector<Error>& errors)
+{
+    if (left.type == Type::Void) {
+        errors.emplace_back("Cannot assign to void", expr->location);
+        return std::move(expr);
+    }
+    if (areEquivalentTypes(left, right))
+        return std::move(expr);
+
+    if (isArithmeticTypeBase(left) && isArithmeticTypeBase(*expr->type))
+        return convertOrCastToType(expr, left.type);
+
+    if (canConvertToNullPtr(*expr) && left.type == Type::Pointer)
+        return convertOrCastToType(expr, Type::U64);
+
+    if (expr->type->type == Type::Pointer && isVoidPointer(left)) {
+        expr->type = std::make_unique<Parsing::PointerType>(std::make_unique<Parsing::VarType>(Type::Void));
+        return std::move(expr);
+    }
+
+    if (left.type == Type::Pointer && isVoidPointer(right)) {
+        expr->type = Parsing::deepCopy(left);
+        return std::move(expr);
+    }
+
+    errors.emplace_back("Faulty assignment", expr->location);
+    return std::move(expr);
+}
+
 bool isVoidPointer(const TypeBase& type)
 {
     if (type.kind != TypeBase::Kind::Pointer)

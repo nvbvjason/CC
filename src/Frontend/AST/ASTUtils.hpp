@@ -2,6 +2,7 @@
 
 #include "ASTBase.hpp"
 #include "ASTExpr.hpp"
+#include "Frontend/Error.hpp"
 
 namespace Parsing {
 
@@ -46,6 +47,10 @@ bool canConvertToNullPtr(const Expr& expr);
 bool canConvertToPtr(const ConstExpr& constExpr);
 bool isBinaryComparison(BinaryExpr::Operator oper);
 std::unique_ptr<Expr> convertToArithmeticType(const Expr& expr, Type targetType);
+std::unique_ptr<Expr> converOrAssign(const TypeBase& left,
+                                     const TypeBase& right,
+                                     std::unique_ptr<Expr>& expr,
+                                     std::vector<Error>& errors);
 
 bool isVoidPointer(const TypeBase& type);
 bool isVoidArray(const TypeBase& type);
