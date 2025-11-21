@@ -271,7 +271,7 @@ void TypeResolution::initArrayWithCompound(const Parsing::ArrayType& arrayType,
     for (auto& partInit : compoundInit.initializers)
         walkInit(elemType, partInit.get(), newInit);
     const i64 notInitElems = arrayType.size - compoundInit.size();
-    const i64 lengthZero = notInitElems * getTypeOfSize(elemType);
+    const i64 lengthZero = notInitElems * varTable.getSize(elemType);
     if (lengthZero)
         emplaceZeroInit(newInit, lengthZero);
 }

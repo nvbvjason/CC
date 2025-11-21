@@ -442,20 +442,4 @@ i64 getArrayAlignment(const i64 size, const Type type)
         return 16;
     return getTypeSize(type);
 }
-
-i64 getTypeOfSize(const TypeBase* const typeBase)
-{
-    switch (typeBase->kind) {
-        case TypeBase::Kind::Pointer:
-            return 8;
-        case TypeBase::Kind::Array: {
-            const Type innerType = getArrayType(typeBase);
-            const i64 typeSize = getTypeSize(innerType);
-            const i64 arraySize = getArraySize(typeBase);
-            return typeSize * arraySize;
-        }
-        default:
-            return getTypeSize(typeBase->type);
-    }
-}
 } // Parsing

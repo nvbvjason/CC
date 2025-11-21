@@ -18,7 +18,7 @@
 static std::vector<Error> lex(TokenStore& tokenStore, const std::filesystem::path& inputFile);
 static std::vector<Error> parse(const TokenStore& tokenStore, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
-static Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable);
+static Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable, const VarTable& varTable);
 static std::string preProcess(const std::filesystem::path& file);
 static std::string getSourceCode(const std::filesystem::path& inputFile);
 
@@ -59,7 +59,7 @@ std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
         printParsingAst(program);
         return {std::nullopt, StateCode::Done};
     }
-    Ir::Program irProgram = ir(program, symbolTable);
+    Ir::Program irProgram = ir(program, symbolTable, varTable);
     return {std::move(irProgram), StateCode::Continue};
 }
 
@@ -115,10 +115,10 @@ std::vector<Error> parse(const TokenStore& tokenStore, Parsing::Program& program
     return parser.programParse(programNode);
 }
 
-Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable)
+Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable, const VarTable& varTable)
 {
     Ir::Program irProgram;
-    Ir::GenerateIr generateIr(symbolTable);
+    Ir::GenerateIr generateIr(symbolTable, varTable);
     generateIr.program(parsingProgram, irProgram);
     return irProgram;
 }

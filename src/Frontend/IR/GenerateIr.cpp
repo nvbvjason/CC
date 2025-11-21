@@ -1154,14 +1154,14 @@ std::unique_ptr<ExprResult> GenerateIr::genSizeOfExprInst(const Parsing::SizeOfE
             }
         }
     }
-    const i64 size = getTypeOfSize(sizeOfExprExpr.innerExpr->type.get());
+    const i64 size = m_varTable.getSize(sizeOfExprExpr.innerExpr->type.get());
     const auto valueSize = std::make_shared<ValueConst>(size);
     return std::make_unique<PlainOperand>(valueSize);
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genSizeOfTypeInst(const Parsing::SizeOfTypeExpr& sizeOfTypeExpr)
 {
-    const i64 size = getTypeOfSize(sizeOfTypeExpr.sizeType.get());
+    const i64 size = m_varTable.getSize(sizeOfTypeExpr.sizeType.get());
     const auto valueSize = std::make_shared<ValueConst>(size);
     return std::make_unique<PlainOperand>(valueSize);
 }

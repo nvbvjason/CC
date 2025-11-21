@@ -51,6 +51,5 @@ Type getArrayType(const TypeBase* type);
 const TypeBase* getArrayBaseType(const TypeBase& highestType);
 const TypeBase* getPointerBaseType(const TypeBase& highestType);
 i64 getArrayAlignment(i64 size, Type type);
-i64 getTypeOfSize(const TypeBase* typeBase);
 
 } // Parsing

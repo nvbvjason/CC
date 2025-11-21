@@ -6,6 +6,8 @@
 
 #include <unordered_set>
 
+#include "VarTable.hpp"
+
 namespace Ir {
 std::shared_ptr<Value> genZeroValueForType(Type type);
 
@@ -19,12 +21,10 @@ class GenerateIr {
     std::vector<std::unique_ptr<TopLevel>> m_topLevels;
     std::unordered_map<std::string, std::string> m_constStrings;
 
-    const std::shared_ptr<Value> zeroConst1 = genZeroValueForType(Type::U8);
-    const std::shared_ptr<Value> zeroConst4 = genZeroValueForType(Type::U32);
-    const std::shared_ptr<Value> zeroConst8 = genZeroValueForType(Type::U64);
+    const VarTable& m_varTable;
 public:
-    explicit GenerateIr(SymbolTable& symbolTable)
-        : m_symbolTable(symbolTable) {}
+    explicit GenerateIr(SymbolTable& symbolTable, const VarTable& varTable)
+        : m_symbolTable(symbolTable), m_varTable(varTable) {}
     void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
     std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
     std::unique_ptr<TopLevel> functionIr(const Parsing::FuncDecl& parsingFunction);
@@ -106,8 +106,8 @@ public:
     std::unique_ptr<ExprResult> genAddrOfInst(const Parsing::AddrOffExpr& addrOffExpr);
     std::unique_ptr<ExprResult> genSubscriptInst(const Parsing::SubscriptExpr& subscriptExpr);
     std::unique_ptr<ExprResult> genDereferenceInst(const Parsing::DereferenceExpr& dereferenceExpr);
-    static std::unique_ptr<ExprResult> genSizeOfExprInst(const Parsing::SizeOfExprExpr& sizeOfExprExpr);
-    static std::unique_ptr<ExprResult> genSizeOfTypeInst(const Parsing::SizeOfTypeExpr& sizeOfTypeExpr);
+    std::unique_ptr<ExprResult> genSizeOfExprInst(const Parsing::SizeOfExprExpr& sizeOfExprExpr);
+    std::unique_ptr<ExprResult> genSizeOfTypeInst(const Parsing::SizeOfTypeExpr& sizeOfTypeExpr);
     static std::unique_ptr<ExprResult> genVarInst(const Parsing::VarExpr& varExpr);
 
 private:
@@ -230,6 +230,10 @@ private:
     {
         m_insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden), type));
     }
+
+    const std::shared_ptr<Value> zeroConst1 = genZeroValueForType(Type::U8);
+    const std::shared_ptr<Value> zeroConst4 = genZeroValueForType(Type::U32);
+    const std::shared_ptr<Value> zeroConst8 = genZeroValueForType(Type::U64);
 };
 
 i64 getReferencedTypeSize(Parsing::TypeBase* typeBase);
