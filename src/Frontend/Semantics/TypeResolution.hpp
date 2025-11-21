@@ -52,7 +52,6 @@ public:
 
     void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
-    void visit(Parsing::StructuredDecl& structuredDecl) override;
     bool isIllegalVarDecl(const Parsing::VarDecl& varDecl);
     void visit(Parsing::DeclForInit& declForInit) override;
     void visit(Parsing::ExprForInit& exprForInit) override;

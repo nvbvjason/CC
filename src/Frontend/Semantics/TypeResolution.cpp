@@ -95,7 +95,8 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         m_definedFunctions.insert(varDecl.name);
     m_isConst = true;
 
-    if (varTable.isIncompleteTypeBase(*varDecl.type)) {
+    if (varDecl.storage != Parsing::Declaration::StorageClass::Extern
+        && varTable.isIncompleteTypeBase(*varDecl.type)) {
         addError("Cannot define variable with incomplete type", varDecl.location);
         return;
     }
@@ -132,13 +133,6 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         return;
     }
     assignTypeToArithmeticUnaryExpr(varDecl);
-}
-
-void TypeResolution::visit(Parsing::StructuredDecl& structuredDecl)
-{
-    for (const auto& member : structuredDecl.members)
-        if (varTable.isIncompleteTypeBase(*member->type))
-            addError("Incomplete type in structured declaration", structuredDecl.location);
 }
 
 void TypeResolution::verifyArrayInSingleInit(const Parsing::VarDecl& varDecl,
@@ -769,7 +763,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertCastExpr(Parsing::CastExpr
     const Type innerType = castExpr.innerExpr->type->type;
     if (isStructuredType(outerType))
         addError("Cannot cast to structured type", castExpr.location);
-    if (isStructuredType(innerType))
+    if (outerType != Type::Void && isStructuredType(innerType))
         addError("Cannot cast from structured type", castExpr.location);
     if (Parsing::areEquivalentTypes(*castExpr.type, *castExpr.innerExpr->type))
         return std::make_unique<Parsing::CastExpr>(std::move(castExpr));
@@ -957,6 +951,8 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSubscriptExpr(Parsing::Sub
 std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprExpr(Parsing::SizeOfExprExpr& sizeOfExprExpr)
 {
     sizeOfExprExpr.innerExpr = convert(*sizeOfExprExpr.innerExpr);
+    if (hasError())
+        return std::make_unique<Parsing::SizeOfExprExpr>(std::move(sizeOfExprExpr));
     if (sizeOfExprExpr.innerExpr && sizeOfExprExpr.innerExpr->type) {
         if (isVoidArray(*sizeOfExprExpr.innerExpr->type))
             addError("Cannot call sizeof on void array expression", sizeOfExprExpr.location);
@@ -970,8 +966,6 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprExpr(Parsing::Si
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertSizeOfExprType(Parsing::SizeOfTypeExpr& sizeOfTypeExpr)
 {
-    if (isVoidPointer(*sizeOfTypeExpr.sizeType))
-        addError("Cannot call sizeof on void pointer type", sizeOfTypeExpr.location);
     if (isVoidArray(*sizeOfTypeExpr.sizeType))
         addError("Cannot call sizeof on void array type", sizeOfTypeExpr.location);
     if (sizeOfTypeExpr.sizeType->type == Type::Void)
@@ -1001,7 +995,7 @@ const Parsing::TypeBase* TypeResolution::validateStructuredAccessors(
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertDotExpr(Parsing::DotExpr& dotExpr)
 {
-    dotExpr.structuredExpr = convert(*dotExpr.structuredExpr);
+    dotExpr.structuredExpr = convertArrayType(*dotExpr.structuredExpr);
     if (hasError())
         return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
     const Parsing::TypeBase* type = validateStructuredAccessors(
@@ -1016,7 +1010,7 @@ std::unique_ptr<Parsing::Expr> TypeResolution::convertDotExpr(Parsing::DotExpr& 
 
 std::unique_ptr<Parsing::Expr> TypeResolution::convertArrowExpr(Parsing::ArrowExpr& arrowExpr)
 {
-    arrowExpr.pointerExpr = convert(*arrowExpr.pointerExpr);
+    arrowExpr.pointerExpr = convertArrayType(*arrowExpr.pointerExpr);
     if (hasError())
         return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
     if (arrowExpr.pointerExpr->type->kind != Parsing::TypeBase::Kind::Pointer) {

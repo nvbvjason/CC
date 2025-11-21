@@ -95,19 +95,6 @@ inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl, bool global)
     return varDecl.storage == Storage::Extern;
 }
 
-inline bool isArrayOfUndefinedStructuredType(
-    const Parsing::VarDecl& varDecl,
-    const SymbolTable& symbolTable)
-{
-    if (varDecl.type->kind != Parsing::TypeBase::Kind::Array)
-        return false;
-    const Parsing::TypeBase* type = Parsing::getArrayBaseType(*varDecl.type);
-    if (!Parsing::isStructuredTypeBase(*type))
-        return false;
-    const auto structType = dynamic_cast<const Parsing::StructuredType*>(type);
-    return !symbolTable.lookupStructuredEntry(structType->identifier).isDefined();
-}
-
 inline bool duplicateIdentifierInMembers(const std::vector<std::unique_ptr<Parsing::MemberDecl>>& memberDecls)
 {
     std::unordered_set<std::string> identifiers;

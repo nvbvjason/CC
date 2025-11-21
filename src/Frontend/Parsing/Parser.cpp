@@ -879,15 +879,16 @@ std::unique_ptr<Expr> Parser::factorParse()
             return constantExpr;
         }
         case TokenType::Identifier: {
+            const i64 location = m_current;
             advance();
             if (!match(TokenType::OpenParen))
-                return std::make_unique<VarExpr>(m_current, lexeme.m_lexeme);
+                return std::make_unique<VarExpr>(location, lexeme.m_lexeme);
             const std::unique_ptr<std::vector<std::unique_ptr<Expr>>> arguments = argumentListParse();
             if (arguments == nullptr)
                 return nullptr;
             if (!match(TokenType::CloseParen))
                 return nullptr;
-            return std::make_unique<FuncCallExpr>(m_current, lexeme.m_lexeme, std::move(*arguments));
+            return std::make_unique<FuncCallExpr>(location, lexeme.m_lexeme, std::move(*arguments));
         }
         case TokenType::OpenParen: {
             if (advance().m_type == TokenType::EndOfFile)

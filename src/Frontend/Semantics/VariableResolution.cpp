@@ -17,7 +17,6 @@ std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
 
 void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
 {
-    ASTTraverser::visit(structuredDecl);
     const std::string nameBefore = structuredDecl.identifier;
     const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredDecl.identifier);
     if (structuredEntry.isFromCurrentScope() &&
@@ -42,8 +41,9 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
         const auto structuredType = dynCast<const Parsing::StructuredType>(structuredEntry.typeBase.get());
         uniqueName = structuredType->identifier;
     }
+    ASTTraverser::visit(structuredDecl);
     if (!structuredDecl.members.empty()) {
-        if (structuredEntry.isDefined()) {
+        if (structuredEntry.isDefined() && structuredEntry.isFromCurrentScope()) {
             addError("Cannot redefine struct in same scope", structuredDecl.location);
             return;
         }
@@ -57,13 +57,13 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
 
 void VariableResolution::visit(Parsing::FuncDecl& funDecl)
 {
-    funDecl.type->accept(*this);
     const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookupEntry(funDecl.name);
     validateFuncDecl(funDecl, m_symbolTable, prevEntry);
-    addFuncToSymbolTable(funDecl, prevEntry);
     const auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
     for (const auto& param : funcType->params)
         param->accept(*this);
+    funcType->returnType->accept(*this);
+    addFuncToSymbolTable(funDecl, prevEntry);
     if (funDecl.body) {
         FunctionGuard functionGuard(m_symbolTable, funDecl);
         ScopeGuard guard(m_symbolTable);
@@ -143,37 +143,14 @@ void VariableResolution::handleVarDeclOfStructuredType(Parsing::VarDecl& varDecl
 {
     const auto structuredType = dynCast<Parsing::StructuredType>(varDecl.type.get());
     const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredType->identifier);
-    if (structuredEntry.typeBase && structuredType->type != structuredEntry.typeBase->type) {
+    if (structuredEntry.typeBase && structuredType->type != structuredEntry.typeBase->type)
         addError("Cannot declare with different structured type and same name", varDecl.location);
-        return;
-    }
-    if (!structuredEntry.contains()) {
-        if (varDecl.storage != Storage::Extern)
-            addError("Cannot declare variable of structured type which is declared", varDecl.location);
-    }
-    else
-        varDecl.type = Parsing::deepCopy(*structuredEntry.typeBase);
-}
-
-void VariableResolution::validatePointerType(Parsing::VarDecl& varDecl)
-{
-    const Parsing::TypeBase* typeBase = Parsing::getPointerBaseType(*varDecl.type);
-    if (Parsing::isStructuredTypeBase(*typeBase)) {
-        const auto structuredType = dynCast<const Parsing::StructuredType>(typeBase);
-        const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredType->identifier);
-        if (structuredEntry.typeBase && structuredType->type != structuredEntry.typeBase->type)
-            addError("Cannot use structured type with different type", varDecl.location);
-        if (structuredEntry.typeBase)
-            varDecl.type = std::make_unique<Parsing::PointerType>(
-                Parsing::deepCopy(*structuredEntry.typeBase));
-    }
 }
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookupEntry(varDecl.name);
-    if (varDecl.type->kind == Parsing::TypeBase::Kind::Pointer)
-        validatePointerType(varDecl);
+    varDecl.type->accept(*this);
     if (isStructuredType(varDecl.type->type))
         handleVarDeclOfStructuredType(varDecl);
     validateVarDecl(varDecl, m_symbolTable, prevEntry);
@@ -185,8 +162,6 @@ void VariableResolution::validateVarDecl(const Parsing::VarDecl& varDecl,
                                          const SymbolTable& symbolTable,
                                          const SymbolTable::ReturnedEntry& prevEntry)
 {
-    if (isArrayOfUndefinedStructuredType(varDecl, symbolTable))
-        addError("Is Array of Undefined Structured Type", varDecl.location);
     if (isVoidArray(*varDecl.type))
         addError("Cannot void array", varDecl.location);
     if (isPointerToVoidArray(*varDecl.type))
@@ -232,6 +207,8 @@ void VariableResolution::validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
 void VariableResolution::visit(Parsing::StructuredType& structuredType)
 {
     const auto entry = m_symbolTable.lookupStructuredEntry(structuredType.identifier);
+    if (!entry.contains())
+        addError("Use of undeclared struct type", structuredType.location);
     if (entry.typeBase) {
         const auto returnedType = dynCast<const Parsing::StructuredType>(entry.typeBase.get());
         structuredType.identifier = returnedType->identifier;

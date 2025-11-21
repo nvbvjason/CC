@@ -56,6 +56,10 @@ void LvalueVerification::visit(const Parsing::AddrOffExpr& addrOffExpr)
 
 void LvalueVerification::visit(const Parsing::DotExpr& dotExpr)
 {
+    // if (isNotAnLvalue(dotExpr.structuredExpr->kind)) {
+    //     m_errors.emplace_back("DotExpr of operation on non lvalue ", dotExpr.structuredExpr->location);
+    //     return;
+    // }
     ConstASTTraverser::visit(dotExpr);
 }
 } // Semantics

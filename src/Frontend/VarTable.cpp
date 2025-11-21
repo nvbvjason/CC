@@ -79,21 +79,9 @@ void VarTable::addEntry(const std::string& uniqueName,
             errors.emplace_back("Cannot have void type as structured member", member->location);
             return;
         }
-        if (isStructuredTypeBase(*member->type)) {
-            const auto structuredType = dynCast<const Parsing::StructuredType>(member->type.get());
-            if (!isDefined(structuredType->identifier))  {
-                errors.emplace_back("Cannot have undefined type as structured member", member->location);
-                return;
-            }
-        }
-        if (member->type->kind == Parsing::TypeBase::Kind::Array) {
-            const Parsing::TypeBase* innerType = Parsing::getArrayBaseType(*member->type);
-            if (isStructuredTypeBase(*innerType) && !isDefined(member->identifier)) {
-                errors.emplace_back
-                ("Cannot have undefined type as structured member in array",
-                    member->location);
-                return;
-            }
+        if (isIncompleteTypeBase(*member->type)) {
+            errors.emplace_back("Cannot use incomplete type in structured definition", member->location);
+            return;
         }
         const i32 memberAlignment = getAlignment(member->type.get());
         const i64 memberOffset = structuredDecl.isUnion() ? 0 : roundUp(structSize, memberAlignment);
