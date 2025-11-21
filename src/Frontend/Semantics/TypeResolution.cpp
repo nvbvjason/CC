@@ -1,6 +1,5 @@
 #include "TypeResolution.hpp"
 #include "ASTIr.hpp"
-#include "TypeConversion.hpp"
 #include "ASTUtils.hpp"
 #include "AstToIrOperators.hpp"
 
@@ -110,6 +109,19 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         addError("Is illegal non const variable initilization", varDecl.location);
 }
 
+bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)
+{
+    if (varDecl.storage == Storage::Extern && varDecl.init != nullptr) {
+        addError("Initiated extern variable", varDecl.location);
+        return true;
+    }
+    if (varDecl.storage == Storage::Static && m_definedFunctions.contains(varDecl.name)) {
+        addError("Static variable with same name as defined function", varDecl.location);
+        return true;
+    }
+    return false;
+}
+
 void TypeResolution::visit(Parsing::DeclForInit& declForInit)
 {
     if (hasStorageClassSpecifier(declForInit))
@@ -197,19 +209,6 @@ void TypeResolution::visit(Parsing::SwitchStmt& switchStmt)
             addError("Switch condition must have scalar type", switchStmt.location);
     }
     switchStmt.body->accept(*this);
-}
-
-bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)
-{
-    if (varDecl.storage == Storage::Extern && varDecl.init != nullptr) {
-        addError("Initiated extern variable", varDecl.location);
-        return true;
-    }
-    if (varDecl.storage == Storage::Static && m_definedFunctions.contains(varDecl.name)) {
-        addError("Static variable with same name as defined function", varDecl.location);
-        return true;
-    }
-    return false;
 }
 
 void TypeResolution::initDecl(Parsing::VarDecl& varDecl)

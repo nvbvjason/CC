@@ -7,6 +7,8 @@
 #include <unordered_set>
 
 namespace Ir {
+std::shared_ptr<Value> genZeroValueForType(Type type);
+
 class GenerateIr {
     using Storage = Parsing::Declaration::StorageClass;
 
@@ -16,6 +18,10 @@ class GenerateIr {
     std::unordered_set<std::string> m_writtenGlobals;
     std::vector<std::unique_ptr<TopLevel>> m_topLevels;
     std::unordered_map<std::string, std::string> m_constStrings;
+
+    const std::shared_ptr<Value> zeroConst1 = genZeroValueForType(Type::U8);
+    const std::shared_ptr<Value> zeroConst4 = genZeroValueForType(Type::U32);
+    const std::shared_ptr<Value> zeroConst8 = genZeroValueForType(Type::U64);
 public:
     explicit GenerateIr(SymbolTable& symbolTable)
         : m_symbolTable(symbolTable) {}
@@ -37,8 +43,7 @@ public:
                           i64 arraySize,
                           i64 alignment,
                           i64 lengthZeroInit,
-                          i64& offset,
-                          const std::shared_ptr<Value>& zeroConst);
+                          i64& offset);
     void genSingleLocalInit(const std::string& name,
                             Type type,
                             i64 arraySize,

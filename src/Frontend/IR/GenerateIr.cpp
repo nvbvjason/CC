@@ -16,7 +16,6 @@ static Identifier makeTemporaryName(Value& value);
 static Identifier makeTemporaryName(const std::string& name);
 static std::string generateCaseLabelName(std::string before);
 static std::shared_ptr<Value> genConstValue(const Parsing::ConstExpr& constExpr);
-static std::shared_ptr<Value> genZeroValueForType(Type type);
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
 {
@@ -105,22 +104,6 @@ void GenerateIr::genSingleDeclaration(const Parsing::VarDecl& varDecl)
     emplaceCopy(temporary, var, varDecl.type->type);
 }
 
-void GenerateIr::genZeroLocalInit(const std::string& name,
-                                  const Type type,
-                                  const i64 arraySize,
-                                  const i64 alignment,
-                                  const i64 lengthZeroInit,
-                                  i64& offset,
-                                  const std::shared_ptr<Value>& zeroConst)
-{
-    const i64 typeSize = getTypeSize(type);
-    for (size_t i = 0; i < lengthZeroInit; i += typeSize) {
-        emplaceCopyToOffset(
-            zeroConst, Identifier(name), offset, arraySize, alignment, type);
-        offset += typeSize;
-    }
-}
-
 void GenerateIr::genSingleLocalInit(const std::string& name,
                                     const Type type,
                                     const i64 arraySize,
@@ -163,13 +146,37 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl& varDecl)
                                  arraySize,
                                  alignment,
                                  zeroInit->size,
-                                 offset,
-                                 zeroConst);
+                                 offset);
                 break;
             }
             default:
                 std::abort();
         }
+    }
+}
+
+void GenerateIr::genZeroLocalInit(const std::string& name,
+                                  const Type type,
+                                  const i64 arraySize,
+                                  const i64 alignment,
+                                  const i64 lengthZeroInit,
+                                  i64& offset)
+{
+    size_t i = 0;
+    for (; i + 8 <= lengthZeroInit; i += 8) {
+        emplaceCopyToOffset(
+            zeroConst8, Identifier(name), offset, arraySize, alignment, type);
+        offset += 8;
+    }
+    for (; i + 4 <= lengthZeroInit; i += 4) {
+        emplaceCopyToOffset(
+            zeroConst4, Identifier(name), offset, arraySize, alignment, type);
+        offset += 4;
+    }
+    for (; i < lengthZeroInit; ++i) {
+        emplaceCopyToOffset(
+    zeroConst1, Identifier(name), offset, arraySize, alignment, type);
+        ++offset;
     }
 }
 
@@ -264,23 +271,6 @@ std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl&
         return genInstAndConvert(*singleInit->expr);
     }
     return genZeroValueForType(varDecl.type->type);
-}
-
-std::shared_ptr<Value> genZeroValueForType(const Type type)
-{
-    switch (type) {
-        case Type::Char:    return std::make_shared<ValueConst>(static_cast<char>(0));
-        case Type::I8:      return std::make_shared<ValueConst>(static_cast<i8>(0));
-        case Type::U8:      return std::make_shared<ValueConst>(static_cast<u8>(0));
-        case Type::I32:     return std::make_shared<ValueConst>(0);
-        case Type::U32:     return std::make_shared<ValueConst>(0u);
-        case Type::I64:     return std::make_shared<ValueConst>(static_cast<i64>(0l));
-        case Type::U64:     return std::make_shared<ValueConst>(static_cast<u64>(0ul));
-        case Type::Pointer: return std::make_shared<ValueConst>(static_cast<u64>(0ul));
-        case Type::Double:  return std::make_shared<ValueConst>(0.0);
-        default:
-            abort();
-    }
 }
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FuncDecl& parsingFunction)
@@ -1212,5 +1202,22 @@ std::shared_ptr<ValueConst> getInrDecScale(const Parsing::UnaryExpr& unaryExpr, 
     if (type == Type::Double)
         return std::make_shared<ValueConst>(1.0);
     return std::make_shared<ValueConst>(1);
+}
+
+std::shared_ptr<Value> genZeroValueForType(const Type type)
+{
+    switch (type) {
+        case Type::Char:    return std::make_shared<ValueConst>(static_cast<char>(0));
+        case Type::I8:      return std::make_shared<ValueConst>(static_cast<i8>(0));
+        case Type::U8:      return std::make_shared<ValueConst>(static_cast<u8>(0));
+        case Type::I32:     return std::make_shared<ValueConst>(0);
+        case Type::U32:     return std::make_shared<ValueConst>(0u);
+        case Type::I64:     return std::make_shared<ValueConst>(static_cast<i64>(0l));
+        case Type::U64:     return std::make_shared<ValueConst>(static_cast<u64>(0ul));
+        case Type::Pointer: return std::make_shared<ValueConst>(static_cast<u64>(0ul));
+        case Type::Double:  return std::make_shared<ValueConst>(0.0);
+        default:
+            abort();
+    }
 }
 } // IR
