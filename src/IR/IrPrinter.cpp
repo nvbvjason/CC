@@ -220,6 +220,15 @@ void IrPrinter::print(const CopyToOffsetInst& inst)
             to_string(inst.type));
 }
 
+void IrPrinter::print(const CopyFromOffsetInst& inst)
+{
+    addLine("CopyFromOffsetInst: " +
+        print(inst.src) + " -> " +
+        print(*inst.dst) + " offset " +
+        std::to_string(inst.offset) + ", " +
+        to_string(inst.type));
+}
+
 void IrPrinter::print(const JumpInst& inst)
 {
     addLine("Jump: " + print(inst.target));

@@ -31,6 +31,7 @@ instruction = Return(val?)
             | Store(val src, val dst)
             | AddPtr(val ptr, val index, int scale, val dst)
             | CopyToOffset(val src, identifier dst, int offset)
+            | CopyFromOffset(identifier src, int offset, val dst)
             | Jump(identifier target)
             | JumpIfZero(val condition, identifier target)
             | JumpIfNotZero(val condition, identifier target)
@@ -142,7 +143,7 @@ struct Instruction {
         SignExtend, Truncate, ZeroExtend,
         DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble,
         Unary, Binary, Copy, GetAddress, Load, Store,
-        AddPtr, CopyToOffset,
+        AddPtr, CopyToOffset, CopyFromOffset,
         Jump, JumpIfZero, JumpIfNotZero, Label,
         FunCall, Allocate
     };
@@ -359,15 +360,36 @@ struct CopyToOffsetInst final : Instruction {
     CopyToOffsetInst(std::shared_ptr<Value> src,
                      Identifier iden,
                      const i64 offset,
-                     const i64 sizeArray,
+                     const i64 size,
                      const i64 alignment,
                      const Type t)
         : Instruction(Kind::CopyToOffset, t), src(std::move(src)),
-          iden(std::move(iden)), offset(offset), size(sizeArray), alignment(alignment) {}
+          iden(std::move(iden)), offset(offset), size(size), alignment(alignment) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyToOffset; }
 
     CopyToOffsetInst() = delete;
+};
+
+struct CopyFromOffsetInst final : Instruction {
+    const Identifier src;
+    std::shared_ptr<Value> dst;
+    const i64 offset;
+    const i64 size;
+    const i64 alignment;
+
+    CopyFromOffsetInst(Identifier iden,
+                       std::shared_ptr<Value> dst,
+                       const i64 offset,
+                       const i64 size,
+                       const i64 alignment,
+                       const Type t)
+    : Instruction(Kind::CopyFromOffset, t), src(std::move(iden)),
+            dst(std::move(dst)), offset(offset), size(size), alignment(alignment) {}
+
+    static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyFromOffset; }
+
+    CopyFromOffsetInst() = delete;
 };
 
 struct JumpInst final : Instruction {

@@ -50,6 +50,7 @@ private:
     void print(const StoreInst& inst);
     void print(const AddPtrInst& inst);
     void print(const CopyToOffsetInst& inst);
+    void print(const CopyFromOffsetInst& inst);
     void print(const JumpInst& inst);
     void print(const JumpIfZeroInst& inst);
     void print(const JumpIfNotZeroInst& inst);
