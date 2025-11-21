@@ -18,7 +18,6 @@ class TypeResolution final : public Parsing::ASTTraverser {
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
-    using Storage = Parsing::Declaration::StorageClass;
     const VarTable& varTable;
     TypeResolutionExpr m_resolveExpr;
 
@@ -33,17 +32,12 @@ public:
         : varTable(varTable), m_resolveExpr(m_errors, varTable, m_functions) {}
 
     std::vector<Error> validate(Parsing::Program& program);
-    void validateCompleteTypesFunc(const Parsing::FuncDecl& funDecl, const Parsing::FuncType& funcType);
-
 
     void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
     bool isIllegalVarDecl(const Parsing::VarDecl& varDecl);
     void visit(Parsing::DeclForInit& declForInit) override;
     void visit(Parsing::ExprForInit& exprForInit) override;
-
-    void visit(Parsing::SingleInitializer& singleInitializer) override;
-    void visit(Parsing::CompoundInitializer& compoundInitializer) override;
 
     void initDecl(Parsing::VarDecl& varDecl);
     void initArrayWithCompound(const Parsing::TypeBase* type,
@@ -66,18 +60,18 @@ public:
     void visit(Parsing::ForStmt& forStmt) override;
     void visit(Parsing::SwitchStmt& switchStmt) override;
 
+    void validateCompleteTypesFunc(const Parsing::FuncDecl& funDecl, const Parsing::FuncType& funcType);
     [[nodiscard]] bool incompatibleFunctionDeclarations(
         const FuncEntry& funcEntry,
         const Parsing::FuncDecl& funDecl);
-    static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 private:
     void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }
     [[nodiscard]] bool hasError() const { return !m_errors.empty(); }
 };
 
-inline bool TypeResolution::hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
+inline bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)
 {
-    return declForInit.decl->storage != Storage::None;
+    return declForInit.decl->storage != Parsing::Declaration::StorageClass::None;
 }
 
 inline bool illegalNonConstInitialization(const Parsing::VarDecl& varDecl,

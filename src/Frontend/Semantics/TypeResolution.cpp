@@ -4,6 +4,10 @@
 #include "ASTUtils.hpp"
 #include "AstToIrOperators.hpp"
 
+namespace {
+using Storage = Parsing::Declaration::StorageClass;
+}
+
 namespace Semantics {
 std::vector<Error> TypeResolution::validate(Parsing::Program& program)
 {
@@ -104,17 +108,6 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         return;
     if (illegalNonConstInitialization(varDecl, m_isConst, m_global))
         addError("Is illegal non const variable initilization", varDecl.location);
-}
-
-void TypeResolution::visit(Parsing::SingleInitializer& singleInitializer)
-{
-    singleInitializer.expr = m_resolveExpr.convertArrayType(*singleInitializer.expr);
-}
-
-void TypeResolution::visit(Parsing::CompoundInitializer& compoundInitializer)
-{
-    for (const auto& initializer : compoundInitializer.initializers)
-        initializer->accept(*this);
 }
 
 void TypeResolution::visit(Parsing::DeclForInit& declForInit)
