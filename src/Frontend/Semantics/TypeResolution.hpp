@@ -13,6 +13,8 @@
 
 namespace Semantics {
 
+
+
 class TypeResolution final : public Parsing::ASTTraverser {
     std::unordered_map<std::string, FuncEntry> m_functions;
     std::unordered_set<std::string> m_definedFunctions;
@@ -24,9 +26,7 @@ class TypeResolution final : public Parsing::ASTTraverser {
     i64 location = 0;
 
     std::vector<Error> m_errors;
-    bool m_isConst = true;
     bool m_global = true;
-    bool m_inArrayInit = false;
 public:
     explicit TypeResolution(const VarTable& varTable)
         : varTable(varTable), m_resolveExpr(m_errors, varTable, m_functions) {}
@@ -40,13 +40,15 @@ public:
     void visit(Parsing::ExprForInit& exprForInit) override;
 
     void initDecl(Parsing::VarDecl& varDecl);
-    void initArrayWithCompound(const Parsing::TypeBase* type,
-                               Parsing::Initializer* init,
-                               std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
     void walkInit(const Parsing::TypeBase* type,
                   Parsing::Initializer* init,
                   std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
-
+    void initArrayWithCompound(const Parsing::ArrayType& type,
+                               Parsing::CompoundInitializer& compoundInit,
+                               std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
+    void initArrayWithSingle(const Parsing::ArrayType& type,
+                             Parsing::SingleInitializer& compoundInit,
+                             std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
     void initVarWithSingle(const Parsing::TypeBase* type,
                            Parsing::Initializer* init,
                            std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);

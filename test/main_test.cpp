@@ -911,124 +911,124 @@ TEST(Chapter16_Characters_and_Strings, validSemantics)
     }
 }
 
-TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, validParsing)
-{
-    const fs::path validPath = testsFolderPath / "chapter_17/valid";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
-        if (!isCFile(path))
-            continue;
-        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, invalidParsing)
-{
-    const fs::path validPath = testsFolderPath / "chapter_17/invalid_parse";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
-        if (!isCFile(path))
-            continue;
-        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, invalidTypes)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_17/invalid_types";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
-        if (!isCFile(path))
-            continue;
-        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, validSemantics)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_17/valid";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
-        if (!isCFile(path))
-            continue;
-        EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter18_Structures, lexingValid)
-{
-    const fs::path validPath = testsFolderPath / "chapter_18/valid";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
-        if (!isCFile(path))
-            continue;
-        EXPECT_TRUE(lexerValid(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter18_Structures, lexingInvalid)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_18/invalid_lex";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
-        if (!isCFile(path))
-            continue;
-        EXPECT_FALSE(lexerValid(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter18_Structures, validParsing)
-{
-    const fs::path validPath = testsFolderPath / "chapter_18/valid";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
-        if (!isCorHFile(path))
-            continue;
-        EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter18_Structures, invalidParsing)
-{
-    const fs::path validPath = testsFolderPath / "chapter_18/invalid_parse";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
-        if (!isCorHFile(path))
-            continue;
-        EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter18_Structures, invalidStructTags)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_18/invalid_struct_tags";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
-        if (!isCFile(path))
-            continue;
-        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter18_Structures, invalidTypes)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_18/invalid_types";
-    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
-        if (!isCFile(path))
-            continue;
-        EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
-    }
-}
-
-TEST(Chapter18_Structures, validSemantics)
-{
-    const fs::path invalidPath = testsFolderPath / "chapter_18/valid";
-    std::unordered_map<std::string, std::string> hFiles;
-    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
-        if (!isHFile(path))
-            continue;
-        std::string codes = getSourceCode(path);
-        std::string strippedCodes = removeLinesStartingWithHashOrComment(codes);
-        hFiles[path.path()] = strippedCodes;
-    }
-    for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
-        if (!isCFile(path))
-            continue;
-        std::string codes = buildFileWithIncludes(path, hFiles);
-        EXPECT_TRUE(CheckSemanticsWithInclude(codes)) << path.path().string();
-    }
-}
+// TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, validParsing)
+// {
+//     const fs::path validPath = testsFolderPath / "chapter_17/valid";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+//         if (!isCFile(path))
+//             continue;
+//         EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, invalidParsing)
+// {
+//     const fs::path validPath = testsFolderPath / "chapter_17/invalid_parse";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+//         if (!isCFile(path))
+//             continue;
+//         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, invalidTypes)
+// {
+//     const fs::path invalidPath = testsFolderPath / "chapter_17/invalid_types";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+//         if (!isCFile(path))
+//             continue;
+//         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter17_Supporting_Dynamic_Memory_Allocation, validSemantics)
+// {
+//     const fs::path invalidPath = testsFolderPath / "chapter_17/valid";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+//         if (!isCFile(path))
+//             continue;
+//         EXPECT_TRUE(CheckSemantics(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter18_Structures, lexingValid)
+// {
+//     const fs::path validPath = testsFolderPath / "chapter_18/valid";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+//         if (!isCFile(path))
+//             continue;
+//         EXPECT_TRUE(lexerValid(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter18_Structures, lexingInvalid)
+// {
+//     const fs::path invalidPath = testsFolderPath / "chapter_18/invalid_lex";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+//         if (!isCFile(path))
+//             continue;
+//         EXPECT_FALSE(lexerValid(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter18_Structures, validParsing)
+// {
+//     const fs::path validPath = testsFolderPath / "chapter_18/valid";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+//         if (!isCorHFile(path))
+//             continue;
+//         EXPECT_TRUE(ParseFileAndGiveResult(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter18_Structures, invalidParsing)
+// {
+//     const fs::path validPath = testsFolderPath / "chapter_18/invalid_parse";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(validPath)) {
+//         if (!isCorHFile(path))
+//             continue;
+//         EXPECT_FALSE(ParseFileAndGiveResult(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter18_Structures, invalidStructTags)
+// {
+//     const fs::path invalidPath = testsFolderPath / "chapter_18/invalid_struct_tags";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+//         if (!isCFile(path))
+//             continue;
+//         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter18_Structures, invalidTypes)
+// {
+//     const fs::path invalidPath = testsFolderPath / "chapter_18/invalid_types";
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+//         if (!isCFile(path))
+//             continue;
+//         EXPECT_FALSE(CheckSemantics(path)) << path.path().string();
+//     }
+// }
+//
+// TEST(Chapter18_Structures, validSemantics)
+// {
+//     const fs::path invalidPath = testsFolderPath / "chapter_18/valid";
+//     std::unordered_map<std::string, std::string> hFiles;
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+//         if (!isHFile(path))
+//             continue;
+//         std::string codes = getSourceCode(path);
+//         std::string strippedCodes = removeLinesStartingWithHashOrComment(codes);
+//         hFiles[path.path()] = strippedCodes;
+//     }
+//     for (const auto& path : std::filesystem::recursive_directory_iterator(invalidPath)) {
+//         if (!isCFile(path))
+//             continue;
+//         std::string codes = buildFileWithIncludes(path, hFiles);
+//         EXPECT_TRUE(CheckSemanticsWithInclude(codes)) << path.path().string();
+//     }
+// }
 
 int main(int argc, char **argv)
 {

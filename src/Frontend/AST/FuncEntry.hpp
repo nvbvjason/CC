@@ -1,10 +1,6 @@
 #pragma once
 
-#include "ASTBase.hpp"
 #include "ASTUtils.hpp"
-
-#include <memory>
-#include <vector>
 
 namespace Semantics {
 

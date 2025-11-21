@@ -2,6 +2,7 @@
 #include "ASTIr.hpp"
 #include "ASTUtils.hpp"
 #include "AstToIrOperators.hpp"
+#include "TypeConversion.hpp"
 
 namespace {
 using Storage = Parsing::Declaration::StorageClass;
@@ -92,7 +93,7 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
         m_globalStaticVars.insert(varDecl.name);
     if (!m_global && !m_globalStaticVars.contains(varDecl.name))
         m_definedFunctions.insert(varDecl.name);
-    m_isConst = true;
+    m_resolveExpr.m_isConst = true;
 
     if (varDecl.storage != Parsing::Declaration::StorageClass::Extern
         && varTable.isIncompleteTypeBase(*varDecl.type)) {
@@ -105,7 +106,7 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
 
     if (hasError())
         return;
-    if (illegalNonConstInitialization(varDecl, m_isConst, m_global))
+    if (illegalNonConstInitialization(varDecl, m_resolveExpr.m_isConst, m_global))
         addError("Is illegal non const variable initilization", varDecl.location);
 }
 
@@ -218,6 +219,8 @@ void TypeResolution::initDecl(Parsing::VarDecl& varDecl)
     const auto init = varDecl.init.get();
     std::vector<std::unique_ptr<Parsing::Initializer>> newInits;
     walkInit(type, init, newInits);
+    if (hasError())
+        return;
     if (newInits.empty())
         return;
     if (newInits.size() == 1) {
@@ -237,33 +240,67 @@ void TypeResolution::walkInit(const Parsing::TypeBase* type,
     using InitKind = Parsing::Initializer::Kind;
 
     if (type->kind == TypeKind::Array && init->kind == InitKind::Compound) {
-        initArrayWithCompound(type, init, newInit);
+        const auto arrayType = dynCast<const Parsing::ArrayType>(type);
+        const auto compoundInit = dynCast<Parsing::CompoundInitializer>(init);
+        initArrayWithCompound(*arrayType, *compoundInit, newInit);
         return;
     }
-    if (init->kind == InitKind::Single) {
+    if (type->kind == TypeKind::Array && init->kind == InitKind::Single) {
+        const auto arrayType = dynCast<const Parsing::ArrayType>(type);
+        const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
+        initArrayWithSingle(*arrayType, *singleInit, newInit);
+        return;
+    }
+    if ((type->kind == TypeKind::Pointer || type->kind == TypeKind::Var)
+        && init->kind == InitKind::Single) {
         initVarWithSingle(type, init, newInit);
         return;
     }
     addError("Faulty initializer", location);
 }
 
-void TypeResolution::initArrayWithCompound(const Parsing::TypeBase* type,
-                                           Parsing::Initializer* init,
+void TypeResolution::initArrayWithCompound(const Parsing::ArrayType& arrayType,
+                                           Parsing::CompoundInitializer& compoundInit,
                                            std::vector<std::unique_ptr<Parsing::Initializer>>& newInit)
 {
-    const auto arrayType = dynCast<const Parsing::ArrayType>(type);
-    const auto compoundInit = dynCast<const Parsing::CompoundInitializer>(init);
-    if (arrayType->size < compoundInit->size()) {
+    if (arrayType.size < compoundInit.size()) {
         addError("Cannot initialize array with longer compound", location);
         return;
     }
-    const auto elemType = arrayType->elementType.get();
-    for (auto& partInit : compoundInit->initializers)
+    const auto elemType = arrayType.elementType.get();
+    for (auto& partInit : compoundInit.initializers)
         walkInit(elemType, partInit.get(), newInit);
-    const i64 notInitElems = arrayType->size - compoundInit->size();
+    const i64 notInitElems = arrayType.size - compoundInit.size();
     const i64 lengthZero = notInitElems * getTypeOfSize(elemType);
     if (lengthZero)
         emplaceZeroInit(newInit, lengthZero);
+}
+
+void TypeResolution::initArrayWithSingle(const Parsing::ArrayType& arrayType,
+                                         Parsing::SingleInitializer& singleInit,
+                                         std::vector<std::unique_ptr<Parsing::Initializer>>& newInit)
+{
+    if (!isCharacterType(arrayType.elementType->type)) {
+        addError("Single initializer must be of type Char for array", location);
+        return;
+    }
+    if (singleInit.expr->kind != Parsing::Expr::Kind::String) {
+        addError("Char array single init must be string expression", location);
+        return;
+    }
+    const auto stringExpr = dynCast<const Parsing::StringExpr>(singleInit.expr.get());
+    if (arrayType.size < stringExpr->value.size()) {
+        addError("Cannot initialize array with longer string", location);
+        return;
+    }
+    for (const char ch : stringExpr->value) {
+        auto constExpr = std::make_unique<Parsing::ConstExpr>(
+            static_cast<i8>(ch), std::make_unique<Parsing::VarType>(Type::I8));
+        newInit.emplace_back(std::make_unique<Parsing::SingleInitializer>(std::move(constExpr)));
+    }
+    const i64 diff = arrayType.size - stringExpr->value.size();
+    if (diff)
+        emplaceZeroInit(newInit, diff);
 }
 
 void TypeResolution::initVarWithSingle(
@@ -273,6 +310,8 @@ void TypeResolution::initVarWithSingle(
 {
     const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
     auto exprConverted = m_resolveExpr.convertArrayType(*singleInit->expr);
+    if (hasError())
+        return;
     auto expr = Parsing::converOrAssign(
         *type, *exprConverted->type, exprConverted, m_errors);
     newInit.emplace_back(std::make_unique<Parsing::SingleInitializer>(std::move(expr)));
@@ -281,9 +320,9 @@ void TypeResolution::initVarWithSingle(
 void emplaceZeroInit(std::vector<std::unique_ptr<Parsing::Initializer>>& newInit, i64 lengthZero)
 {
     if (!newInit.empty()) {
-        auto& back = newInit.back();
+        const auto& back = newInit.back();
         if (back->kind == Parsing::Initializer::Kind::Zero) {
-            auto zeroInit = dynCast<Parsing::ZeroInitializer>(back.get());
+            const auto zeroInit = dynCast<Parsing::ZeroInitializer>(back.get());
             lengthZero += zeroInit->size;
             newInit.pop_back();
         }
