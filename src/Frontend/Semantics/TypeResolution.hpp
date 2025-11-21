@@ -22,7 +22,7 @@ class TypeResolution final : public Parsing::ASTTraverser {
     const VarTable& varTable;
     TypeResolutionExpr m_resolveExpr;
 
-    i64 location;
+    i64 location = 0;
 
     std::vector<Error> m_errors;
     bool m_isConst = true;
@@ -66,11 +66,9 @@ public:
     void visit(Parsing::ForStmt& forStmt) override;
     void visit(Parsing::SwitchStmt& switchStmt) override;
 
-    static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
-    [[nodiscard]] bool incompatibleFunctionDeclarations(const FuncEntry& funcEntry, const Parsing::FuncDecl& funDecl);
-    void handelCompoundInit(const Parsing::VarDecl& varDecl);
-    void verifyArrayInSingleInit(const Parsing::VarDecl& varDecl, const Parsing::SingleInitializer& singleInit);
-    void handleCompoundInitArray(const Parsing::VarDecl& varDecl, const Parsing::CompoundInitializer* compoundInit);
+    [[nodiscard]] bool incompatibleFunctionDeclarations(
+        const FuncEntry& funcEntry,
+        const Parsing::FuncDecl& funDecl);
     static bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit);
 private:
     void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }
