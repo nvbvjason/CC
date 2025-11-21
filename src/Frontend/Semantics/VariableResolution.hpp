@@ -47,8 +47,7 @@ public:
 
     void visit(Parsing::CompoundStmt& compoundStmt) override;
     void visit(Parsing::ForStmt& forStmt) override;
-    void handleVarDeclOfStructuredType(Parsing::VarDecl& varDecl);
-    void validatePointerType(Parsing::VarDecl& varDecl);
+    void handleVarDeclOfStructuredType(const Parsing::VarDecl& varDecl);
 
     void visit(Parsing::VarExpr& varExpr) override;
     void visit(Parsing::FuncCallExpr& funcCallExpr) override;
@@ -87,7 +86,7 @@ inline bool hasInternalLinkageVar(const Parsing::VarDecl& varDecl)
     using Storage = Parsing::Declaration::StorageClass;
     return varDecl.storage == Storage::Static;
 }
-inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl, bool global)
+inline bool hasExternalLinkageVar(const Parsing::VarDecl& varDecl, const bool global)
 {
     using Storage = Parsing::Declaration::StorageClass;
     if (global && varDecl.storage != Storage::Static)

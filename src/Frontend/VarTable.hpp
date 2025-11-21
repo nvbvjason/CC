@@ -26,17 +26,23 @@ struct StructuredEntry {
     std::unordered_map<std::string, MemberEntry> memberMap;
     const i64 size;
     const i32 alignment;
+    const Type type;
     StructuredEntry(std::vector<MemberEntry>&& members,
                     std::unordered_map<std::string, MemberEntry>&& memberMap,
                     const i64 size,
-                    const i32 alignment)
-        : members(std::move(members)), memberMap(std::move(memberMap)), size(size), alignment(alignment) {}
+                    const i32 alignment,
+                    const Type type)
+        : members(std::move(members)),
+          memberMap(std::move(memberMap)),
+          size(size),
+          alignment(alignment),
+          type(type) {}
 };
 
 class VarTable {
     std::unordered_map<std::string, StructuredEntry> entries;
 public:
-    [[nodiscard]] bool isDefined(const std::string& name) const { return entries.contains(name); }
+    [[nodiscard]] bool isDefined(const Parsing::StructuredType& type) const;
     [[nodiscard]] Parsing::TypeBase* getMemberType(
         const std::string& structuredName,
         const std::string& memberName) const;

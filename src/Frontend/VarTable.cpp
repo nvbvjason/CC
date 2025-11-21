@@ -3,6 +3,14 @@
 #include "ASTUtils.hpp"
 #include "DynCast.hpp"
 
+bool VarTable::isDefined(const Parsing::StructuredType& type) const
+{
+    const auto it = entries.find(type.identifier);
+    if (it == entries.end())
+        return false;
+    return it->second.type == type.type;;
+}
+
 Parsing::TypeBase* VarTable::getMemberType(const std::string& structuredName, const std::string& memberName) const
 {
     const auto it = entries.find(structuredName);
@@ -103,7 +111,8 @@ void VarTable::addEntry(const std::string& uniqueName,
         std::move(members),
         std::move(memberMap),
         structSize,
-        structuredAlignment));
+        structuredAlignment,
+        structuredDecl.type));
 }
 
 bool VarTable::isPointerToInCompleteStructuredType(const Parsing::TypeBase& typeBase) const
@@ -119,7 +128,7 @@ bool VarTable::isInCompleteStructuredType(const Parsing::TypeBase& typeBase) con
     if (!isStructuredTypeBase(typeBase))
         return false;
     const auto structuredType = dynCast<const Parsing::StructuredType>(&typeBase);
-    return !isDefined(structuredType->identifier);
+    return !isDefined(*structuredType);
 }
 
 i64 roundUp(const i64 structSize, const i32 memberAlignment)

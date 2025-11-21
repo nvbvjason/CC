@@ -139,7 +139,7 @@ void VariableResolution::visit(Parsing::ForStmt& forStmt)
     ASTTraverser::visit(forStmt);
 }
 
-void VariableResolution::handleVarDeclOfStructuredType(Parsing::VarDecl& varDecl)
+void VariableResolution::handleVarDeclOfStructuredType(const Parsing::VarDecl& varDecl)
 {
     const auto structuredType = dynCast<Parsing::StructuredType>(varDecl.type.get());
     const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredType->identifier);
@@ -209,6 +209,8 @@ void VariableResolution::visit(Parsing::StructuredType& structuredType)
     const auto entry = m_symbolTable.lookupStructuredEntry(structuredType.identifier);
     if (!entry.contains())
         addError("Use of undeclared struct type", structuredType.location);
+    if (entry.typeBase && structuredType.type != entry.typeBase->type)
+        addError("Union and struct conflict type", structuredType.location);
     if (entry.typeBase) {
         const auto returnedType = dynCast<const Parsing::StructuredType>(entry.typeBase.get());
         structuredType.identifier = returnedType->identifier;
