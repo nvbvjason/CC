@@ -17,7 +17,6 @@ static Identifier makeTemporaryName(const std::string& name);
 static std::string generateCaseLabelName(std::string before);
 static std::shared_ptr<Value> genConstValue(const Parsing::ConstExpr& constExpr);
 static std::shared_ptr<Value> genZeroValueForType(Type type);
-static i64 getTypeOfSize(Parsing::TypeBase* typeBase);
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
 {
@@ -115,7 +114,7 @@ void GenerateIr::genZeroLocalInit(const std::string& name,
                                   const std::shared_ptr<Value>& zeroConst)
 {
     const i64 typeSize = getTypeSize(type);
-    for (size_t i = 0; i < lengthZeroInit; ++i) {
+    for (size_t i = 0; i < lengthZeroInit; i += typeSize) {
         emplaceCopyToOffset(
             zeroConst, Identifier(name), offset, arraySize, alignment, type);
         offset += typeSize;
@@ -221,7 +220,8 @@ std::vector<std::unique_ptr<Initializer>> GenerateIr::genStaticArrayInit(
 {
     std::vector<std::unique_ptr<Initializer>> initializers;
     if (!defined) {
-        const i64 size = Parsing::getArraySize(varDecl.type.get());
+        const Type innerArrayType = getArrayType(varDecl.type.get());
+        const i64 size = Parsing::getArraySize(varDecl.type.get()) * getTypeSize(innerArrayType);
         initializers.emplace_back(std::make_unique<ZeroInitializer>(size));
         return initializers;
     }
@@ -1085,18 +1085,6 @@ std::unique_ptr<ExprResult> GenerateIr::genAddrOfInst(const Parsing::AddrOffExpr
         }
     }
     std::unreachable();
-}
-
-i64 getTypeOfSize(Parsing::TypeBase* typeBase)
-{
-    switch (typeBase->kind) {
-        case Parsing::TypeBase::Kind::Pointer:
-            return 8;
-        case Parsing::TypeBase::Kind::Array:
-            return Parsing::getArraySize(typeBase) * getTypeSize(getArrayType(typeBase));
-        default:
-            return getTypeSize(typeBase->type);
-    }
 }
 
 i64 getReferencedTypeSize(Parsing::TypeBase* typeBase)

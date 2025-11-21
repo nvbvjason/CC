@@ -89,7 +89,7 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(
     Semantics::ValidateReturn validateReturn;
     if (std::vector<Error> errors = validateReturn.programValidate(program); !errors.empty())
         return {StateCode::ValidateReturn, errors};
-    Semantics::Labeling loopLabeling;
+    Semantics::Labeling loopLabeling(varTable);
     if (const std::vector<Error> errors = loopLabeling.programValidate(program); !errors.empty())
         return {StateCode::LoopLabeling, errors};
     return {StateCode::Done, {}};

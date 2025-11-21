@@ -5,6 +5,7 @@ add_library(AST STATIC
         ASTBase.hpp
         ASTUtils.cpp
         ASTUtils.hpp
+        FuncEntry.hpp
 )
 
 target_include_directories(AST PUBLIC

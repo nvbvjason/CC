@@ -163,9 +163,7 @@ void asmStaticArray(std::string& result, const ArrayVariable& array)
         switch (init->kind) {
             case Initializer::Kind::Zero: {
                 const auto zero = dynCast<const ZeroInitializer>(init.get());
-                result += asmFormatInstruction(
-                    ".zero",
-                    std::to_string(zero->size * Operators::getSizeAsmType(array.type)));
+                result += asmFormatInstruction(".zero", std::to_string(zero->size));
                 break;
             }
             case Initializer::Kind::Value: {

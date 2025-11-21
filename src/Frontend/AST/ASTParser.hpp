@@ -492,6 +492,8 @@ struct CompoundInitializer final : Initializer {
     explicit CompoundInitializer(std::vector<std::unique_ptr<Initializer>>&& initializers)
         : Initializer(Kind::Compound), initializers(std::move(initializers)) {}
 
+    [[nodiscard]] size_t size() const { return initializers.size(); }
+
     static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Compound; }
 };
 

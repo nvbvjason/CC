@@ -3,14 +3,11 @@
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
 #include "ASTUtils.hpp"
-#include "AstToIrOperators.hpp"
-#include "InitCompound.hpp"
+#include "TypeConversion.hpp"
 
 #include <cassert>
 #include <numeric>
 #include <ranges>
-
-#include "TypeConversion.hpp"
 
 namespace Semantics {
 std::vector<Error> Labeling::programValidate(Parsing::Program& program)
@@ -34,25 +31,6 @@ void Labeling::visit(Parsing::FuncDecl& funDecl)
     for (auto& gotoStmt : m_goto)
         if (!m_labels.contains(gotoStmt->identifier))
             emplaceError("Did not find goto label ", gotoStmt->location);
-}
-
-void Labeling::visit(Parsing::VarDecl& varDecl)
-{
-    if (!varDecl.init)
-        return;
-    if (varDecl.type->type == Type::Array) {
-        if (varDecl.init->kind == Parsing::Initializer::Kind::Compound) {
-            InitCompound initArray(varDecl, errors);
-            initArray.initArray();
-            return;
-        }
-        const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
-        auto singleInitializer = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
-        if (isCharacterType(arrayType->elementType->type)) {
-            InitCompound initArray(varDecl, errors);
-            initArray.initCharacterArray(*singleInitializer, *arrayType);
-        }
-    }
 }
 
 void Labeling::visit(Parsing::CaseStmt& caseStmt)

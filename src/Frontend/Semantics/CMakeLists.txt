@@ -4,8 +4,8 @@ add_library(Semantics STATIC
         LvalueVerification.cpp
         Labeling.cpp
         TypeResolution.cpp
-        InitCompound.cpp
-        InitCompound.hpp
+        TypeResolutionExpr.cpp
+        TypeResolutionExpr.hpp
 )
 
 target_include_directories(Semantics PUBLIC

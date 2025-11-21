@@ -2,42 +2,27 @@
 
 #include "ASTParser.hpp"
 #include "ASTTraverser.hpp"
-#include "TypeConversion.hpp"
-#include "ASTUtils.hpp"
+#include "FuncEntry.hpp"
 #include "Error.hpp"
+#include "VarTable.hpp"
+#include "TypeResolutionExpr.hpp"
 
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "VarTable.hpp"
-
 namespace Semantics {
 
 class TypeResolution final : public Parsing::ASTTraverser {
-    static constexpr auto s_boolType = Type::I32;
-
-    struct FuncEntry {
-        std::vector<std::unique_ptr<Parsing::TypeBase>> paramTypes;
-        std::unique_ptr<Parsing::TypeBase> returnType;
-        Parsing::Declaration::StorageClass storage;
-        bool defined;
-        FuncEntry(const std::vector<std::unique_ptr<Parsing::TypeBase>>& params,
-                  std::unique_ptr<Parsing::TypeBase>&& returnType,
-                  const Parsing::Declaration::StorageClass storage,
-                  const bool defined)
-            : returnType(std::move(returnType)), storage(storage), defined(defined)
-        {
-            for (const auto& paramType : params)
-                paramTypes.emplace_back(std::move(Parsing::deepCopy(*paramType)));
-        }
-    };
-    using Storage = Parsing::Declaration::StorageClass;
     std::unordered_map<std::string, FuncEntry> m_functions;
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
+    using Storage = Parsing::Declaration::StorageClass;
     const VarTable& varTable;
+    TypeResolutionExpr m_resolveExpr;
+
+    i64 location;
 
     std::vector<Error> m_errors;
     bool m_isConst = true;
@@ -45,10 +30,11 @@ class TypeResolution final : public Parsing::ASTTraverser {
     bool m_inArrayInit = false;
 public:
     explicit TypeResolution(const VarTable& varTable)
-        : varTable(varTable) {}
+        : varTable(varTable), m_resolveExpr(m_errors, varTable, m_functions) {}
 
     std::vector<Error> validate(Parsing::Program& program);
     void validateCompleteTypesFunc(const Parsing::FuncDecl& funDecl, const Parsing::FuncType& funcType);
+
 
     void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
@@ -59,6 +45,18 @@ public:
     void visit(Parsing::SingleInitializer& singleInitializer) override;
     void visit(Parsing::CompoundInitializer& compoundInitializer) override;
 
+    void initDecl(Parsing::VarDecl& varDecl);
+    void initArrayWithCompound(const Parsing::TypeBase* type,
+                               Parsing::Initializer* init,
+                               std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
+    void walkInit(const Parsing::TypeBase* type,
+                  Parsing::Initializer* init,
+                  std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
+
+    void initVarWithSingle(const Parsing::TypeBase* type,
+                           Parsing::Initializer* init,
+                           std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
+
     void visit(Parsing::ReturnStmt& stmt) override;
     void visit(Parsing::ExprStmt& stmt) override;
     void visit(Parsing::IfStmt& ifStmt) override;
@@ -68,42 +66,6 @@ public:
     void visit(Parsing::ForStmt& forStmt) override;
     void visit(Parsing::SwitchStmt& switchStmt) override;
 
-    std::unique_ptr<Parsing::Expr> convertArrayType(Parsing::Expr& expr);
-    std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
-
-    static std::unique_ptr<Parsing::Expr> convertConstExpr(Parsing::ConstExpr& constExpr);
-    std::unique_ptr<Parsing::Expr> convertStringExpr(Parsing::StringExpr& stringExpr) const;
-    std::unique_ptr<Parsing::Expr> convertVarExpr(Parsing::VarExpr& varExpr);
-    std::unique_ptr<Parsing::Expr> convertCastExpr(Parsing::CastExpr& castExpr);
-    std::unique_ptr<Parsing::Expr> convertUnaryExpr(Parsing::UnaryExpr& unaryExpr);
-    std::unique_ptr<Parsing::Expr> convertBinaryExpr(Parsing::BinaryExpr& binaryExpr);
-    std::unique_ptr<Parsing::Expr> handleAddSubtractPtrToIntegerTypes(Parsing::BinaryExpr& binaryExpr,
-                                                                    Type leftType, Type rightType);
-    std::unique_ptr<Parsing::Expr> handlePtrToPtrBinaryOpers(Parsing::BinaryExpr& binaryExpr);
-    std::unique_ptr<Parsing::Expr> handleBinaryPtr(Parsing::BinaryExpr& binaryExpr,
-                                                   Type leftType, Type rightType);
-    std::unique_ptr<Parsing::Expr> converSimpleAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
-    std::unique_ptr<Parsing::Expr> convertAssignExpr(Parsing::AssignmentExpr& assignmentExpr);
-    std::unique_ptr<Parsing::Expr> convertTernaryExpr(Parsing::TernaryExpr& ternaryExpr);
-    std::unique_ptr<Parsing::Expr> convertFuncCallExpr(Parsing::FuncCallExpr& funCallExpr);
-    void validateAndConvertFuncCallArgs(
-        Parsing::FuncCallExpr& funCallExpr,
-        const std::vector<std::unique_ptr<Parsing::TypeBase>>& params);
-    std::unique_ptr<Parsing::Expr> convertDerefExpr(Parsing::DereferenceExpr& dereferenceExpr);
-    std::unique_ptr<Parsing::Expr> convertAddrOfExpr(Parsing::AddrOffExpr& addrOffExpr);
-    std::unique_ptr<Parsing::Expr> convertSubscriptExpr(Parsing::SubscriptExpr& subscriptExpr);
-    std::unique_ptr<Parsing::Expr> convertSizeOfExprExpr(Parsing::SizeOfExprExpr& sizeOfExprExpr);
-    std::unique_ptr<Parsing::Expr> convertSizeOfExprType(Parsing::SizeOfTypeExpr& sizeOfTypeExpr);
-    const Parsing::TypeBase* validateStructuredAccessors(
-        const Parsing::TypeBase* structuredType,
-        const std::string& identifier,
-        i64 location);
-    std::unique_ptr<Parsing::Expr> convertDotExpr(Parsing::DotExpr& dotExpr);
-    std::unique_ptr<Parsing::Expr> convertArrowExpr(Parsing::ArrowExpr& arrowExpr);
-
-    bool isLegalAssignExpr(const Parsing::AssignmentExpr& assignmentExpr);
-    std::unique_ptr<Parsing::Expr> validateAndConvertPtrsInTernaryExpr(
-        Parsing::TernaryExpr& ternaryExpr, Type trueType, Type falseType);
     static void assignTypeToArithmeticUnaryExpr(Parsing::VarDecl& varDecl);
     [[nodiscard]] bool incompatibleFunctionDeclarations(const FuncEntry& funcEntry, const Parsing::FuncDecl& funDecl);
     void handelCompoundInit(const Parsing::VarDecl& varDecl);
@@ -127,44 +89,6 @@ inline bool illegalNonConstInitialization(const Parsing::VarDecl& varDecl,
     return !isConst && (global || varDecl.storage ==  Parsing::Declaration::StorageClass::Static);
 }
 
-inline bool isBinaryBitwise(const Parsing::BinaryExpr::Operator binOper)
-{
-    using Operator = Parsing::BinaryExpr::Operator;
-    return binOper == Operator::BitwiseAnd || binOper == Operator::BitwiseOr ||
-           binOper == Operator::BitwiseXor || binOper == Operator::LeftShift ||
-           binOper == Operator::RightShift;
-}
-
-inline bool isIllegalFloatingBinaryOperator(const Parsing::BinaryExpr::Operator oper)
-{
-    return isBinaryBitwise(oper) || oper == Parsing::BinaryExpr::Operator::Modulo;
-}
-
-inline bool isIllegalUnaryPointerOperator(const Parsing::UnaryExpr::Operator oper)
-{
-    using Operator = Parsing::UnaryExpr::Operator;
-    return oper == Operator::Complement || oper == Operator::Negate;
-}
-
-inline bool isIllegalPtrBinaryOperation(const Parsing::BinaryExpr::Operator oper)
-{
-    using Oper = Parsing::BinaryExpr::Operator;
-    return oper == Oper::Modulo || oper == Oper::Multiply ||
-           oper == Oper::Divide ||
-           oper == Oper::BitwiseOr || oper == Oper::BitwiseXor;
-}
-
-inline bool isUnallowedComparisonBetweenPtrAndInteger(const Parsing::BinaryExpr::Operator oper)
-{
-    using Oper = Parsing::BinaryExpr::Operator;
-    return oper == Oper::GreaterThan || oper == Oper::GreaterOrEqual ||
-           oper == Oper::LessThan || oper == Oper::LessOrEqual;
-}
-
-bool areValidNonArithmeticTypesInBinaryExpr(const Parsing::BinaryExpr& binaryExpr,
-    Type leftType, Type rightType, Type commonType);
-bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);
-Parsing::TypeBase* getTypeFromMembers(
-    const std::unordered_map<std::string, MemberEntry>& memberMap,
-    const std::string& identifier);
+void emplaceZeroInit(std::vector<std::unique_ptr<Parsing::Initializer>>& newInit, i64 lengthZero);
+bool isZeroSingleInit(const Parsing::Initializer& init);
 } // Semantics

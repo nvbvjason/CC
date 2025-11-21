@@ -5,7 +5,6 @@
 #include "ASTParser.hpp"
 #include "Frontend/SymbolTable.hpp"
 #include "Error.hpp"
-#include "ASTUtils.hpp"
 #include "VarTable.hpp"
 
 #include <string>
