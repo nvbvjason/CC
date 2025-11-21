@@ -43,11 +43,11 @@ public:
     void walkInit(const Parsing::TypeBase* type,
                   Parsing::Initializer* init,
                   std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
-    void initArrayWithCompound(const Parsing::ArrayType& type,
-                               Parsing::CompoundInitializer& compoundInit,
+    void initArrayWithCompound(const Parsing::ArrayType& arrayType,
+                               const Parsing::CompoundInitializer& compoundInit,
                                std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
     void initArrayWithSingle(const Parsing::ArrayType& type,
-                             Parsing::SingleInitializer& compoundInit,
+                             const Parsing::SingleInitializer& compoundInit,
                              std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
     void initVarWithSingle(const Parsing::TypeBase* type,
                            Parsing::Initializer* init,

@@ -260,7 +260,7 @@ void TypeResolution::walkInit(const Parsing::TypeBase* type,
 }
 
 void TypeResolution::initArrayWithCompound(const Parsing::ArrayType& arrayType,
-                                           Parsing::CompoundInitializer& compoundInit,
+                                           const Parsing::CompoundInitializer& compoundInit,
                                            std::vector<std::unique_ptr<Parsing::Initializer>>& newInit)
 {
     if (arrayType.size < compoundInit.size()) {
@@ -277,7 +277,7 @@ void TypeResolution::initArrayWithCompound(const Parsing::ArrayType& arrayType,
 }
 
 void TypeResolution::initArrayWithSingle(const Parsing::ArrayType& arrayType,
-                                         Parsing::SingleInitializer& singleInit,
+                                         const Parsing::SingleInitializer& singleInit,
                                          std::vector<std::unique_ptr<Parsing::Initializer>>& newInit)
 {
     if (!isCharacterType(arrayType.elementType->type)) {
@@ -289,16 +289,28 @@ void TypeResolution::initArrayWithSingle(const Parsing::ArrayType& arrayType,
         return;
     }
     const auto stringExpr = dynCast<const Parsing::StringExpr>(singleInit.expr.get());
-    if (arrayType.size < stringExpr->value.size()) {
+    const std::string& str = stringExpr->value;
+    if (arrayType.size < str.size()) {
         addError("Cannot initialize array with longer string", location);
         return;
     }
-    for (const char ch : stringExpr->value) {
+    i64 i = 0;
+    for (; i + 4 < str.size(); i += 4) {
+        i32 value = 0;
+        value += str[i];
+        value += str[i + 1] << 8;
+        value += str[i + 2] << 16;
+        value += str[i + 3] << 24;
+        auto constExprI32 = std::make_unique<Parsing::ConstExpr>(
+            value, std::make_unique<Parsing::VarType>(Type::I32));
+        newInit.emplace_back(std::make_unique<Parsing::SingleInitializer>(std::move(constExprI32)));
+    }
+    for (;i < str.size(); ++i) {
         auto constExpr = std::make_unique<Parsing::ConstExpr>(
-            static_cast<i8>(ch), std::make_unique<Parsing::VarType>(Type::I8));
+            static_cast<i8>(str[i]), std::make_unique<Parsing::VarType>(Type::I8));
         newInit.emplace_back(std::make_unique<Parsing::SingleInitializer>(std::move(constExpr)));
     }
-    const i64 diff = arrayType.size - stringExpr->value.size();
+    const i64 diff = arrayType.size - str.size();
     if (diff)
         emplaceZeroInit(newInit, diff);
 }
