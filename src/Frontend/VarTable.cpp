@@ -69,8 +69,13 @@ i64 VarTable::getSize(const Parsing::TypeBase* type) const
         return getStructuredSize(type);
     if (type->kind == Parsing::TypeBase::Kind::Pointer)
         return 8;
-    if (type->kind == Parsing::TypeBase::Kind::Array)
-        return Parsing::getArraySize(type);
+    if (type->kind == Parsing::TypeBase::Kind::Array) {
+        const i64 arrayLength = Parsing::getArrayLength(type);
+        const Type innerType = Parsing::getArrayType(type);
+        const i64 typeSize = getTypeSize(innerType);
+        const i64 size = arrayLength * typeSize;
+        return size;
+    }
     return getTypeSize(type->type);
 }
 

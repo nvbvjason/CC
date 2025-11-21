@@ -13,8 +13,6 @@
 
 namespace Semantics {
 
-
-
 class TypeResolution final : public Parsing::ASTTraverser {
     std::unordered_map<std::string, FuncEntry> m_functions;
     std::unordered_set<std::string> m_definedFunctions;

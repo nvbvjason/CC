@@ -49,7 +49,7 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
 
 void GenerateIr::allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl)
 {
-    const i64 size = Parsing::getArraySize(varDecl.type.get());
+    const i64 size = Parsing::getArrayLength(varDecl.type.get());
     const Type type = getArrayType(varDecl.type.get());
     emplaceAllocate(size, varDecl.name, type);
 }
@@ -128,7 +128,7 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl& varDecl)
     const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
     const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
     const Type type = getArrayType(varDecl.type.get());
-    const i64 arraySize = Parsing::getArraySize(arrayType) * getTypeSize(type);
+    const i64 arraySize = Parsing::getArrayLength(arrayType) * getTypeSize(type);
     const i64 alignment = Parsing::getArrayAlignment(arraySize, type);
     i64 offset = 0;
     const auto zeroConst = genZeroValueForType(type);
@@ -228,7 +228,7 @@ std::vector<std::unique_ptr<Initializer>> GenerateIr::genStaticArrayInit(
     std::vector<std::unique_ptr<Initializer>> initializers;
     if (!defined) {
         const Type innerArrayType = getArrayType(varDecl.type.get());
-        const i64 size = Parsing::getArraySize(varDecl.type.get()) * getTypeSize(innerArrayType);
+        const i64 size = Parsing::getArrayLength(varDecl.type.get()) * getTypeSize(innerArrayType);
         initializers.emplace_back(std::make_unique<ZeroInitializer>(size));
         return initializers;
     }
@@ -780,7 +780,7 @@ std::unique_ptr<ExprResult> GenerateIr::genVarInst(const Parsing::VarExpr& varEx
     auto var = std::make_shared<ValueVar>(iden, varExpr.type->type);
     var->referingTo = varExpr.referingTo;
     if (var->type == Type::Array) {
-        var->size = Parsing::getArraySize(varExpr.type.get());
+        var->size = Parsing::getArrayLength(varExpr.type.get());
         var->type = Type::Pointer;
     }
     return std::make_unique<PlainOperand>(var);

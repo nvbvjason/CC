@@ -418,7 +418,7 @@ std::unique_ptr<Expr> convertOrCastToType(std::unique_ptr<Expr>& expr, const Typ
     return convertToArithmeticType(*expr, targetType);
 }
 
-i64 getArraySize(const TypeBase* const type)
+i64 getArrayLength(const TypeBase* const type)
 {
     i64 result = 1;
     const TypeBase* itType = dynCast<const ArrayType>(type);
