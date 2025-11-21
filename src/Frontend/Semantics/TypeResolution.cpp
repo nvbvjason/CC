@@ -238,7 +238,12 @@ void TypeResolution::walkInit(const Parsing::TypeBase* type,
 {
     using TypeKind = Parsing::TypeBase::Kind;
     using InitKind = Parsing::Initializer::Kind;
-
+    if (type->kind == TypeKind::Structured && init->kind == InitKind::Compound) {
+        const auto structuredType = dynCast<const Parsing::StructuredType>(type);
+        const auto compoundInit = dynCast<Parsing::CompoundInitializer>(init);
+        initStructuredWithCompound(*structuredType, *compoundInit, newInit);
+        return;
+    }
     if (type->kind == TypeKind::Array && init->kind == InitKind::Compound) {
         const auto arrayType = dynCast<const Parsing::ArrayType>(type);
         const auto compoundInit = dynCast<Parsing::CompoundInitializer>(init);
@@ -251,12 +256,39 @@ void TypeResolution::walkInit(const Parsing::TypeBase* type,
         initArrayWithSingle(*arrayType, *singleInit, newInit);
         return;
     }
-    if ((type->kind == TypeKind::Pointer || type->kind == TypeKind::Var)
-        && init->kind == InitKind::Single) {
-        initVarWithSingle(type, init, newInit);
+    if (init->kind == InitKind::Single) {
+        const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
+        initVarWithSingle(type, *singleInit, newInit);
         return;
     }
     addError("Faulty initializer", location);
+}
+
+void TypeResolution::initStructuredWithCompound(
+    const Parsing::StructuredType& structuredType,
+    const Parsing::CompoundInitializer& compoundInit,
+    std::vector<std::unique_ptr<Parsing::Initializer>>& newInit)
+{
+    if (structuredType.type == Type::Union && compoundInit.size() != 1) {
+        addError("Cannot initialize union with size other than one", location);
+        return;
+    }
+    const auto entry = varTable.lookupEntry(structuredType.identifier);
+    if (entry->members.size() < compoundInit.size()) {
+        addError("Cannot have compound init longer than structured type", structuredType.location);
+        return;
+    }
+    i64 i = 0;
+    for (; i < compoundInit.size(); ++i) {
+        const MemberEntry& member = entry->members[i];
+        const auto init = compoundInit.initializers[i].get();
+        walkInit(member.type.get(), init, newInit);
+    }
+    for (; i < entry->members.size(); ++i) {
+        const MemberEntry& member = entry->members[i];
+        const i64 typeSize = varTable.getSize(member.type.get());
+        emplaceZeroInit(newInit, typeSize);
+    }
 }
 
 void TypeResolution::initArrayWithCompound(const Parsing::ArrayType& arrayType,
@@ -273,8 +305,7 @@ void TypeResolution::initArrayWithCompound(const Parsing::ArrayType& arrayType,
     const i64 notInitElems = arrayType.size - compoundInit.size();
     const i64 typeSize = varTable.getSize(elemType);
     const i64 lengthZero = notInitElems * typeSize;
-    if (lengthZero)
-        emplaceZeroInit(newInit, lengthZero);
+    emplaceZeroInit(newInit, lengthZero);
 }
 
 void TypeResolution::initArrayWithSingle(const Parsing::ArrayType& arrayType,
@@ -312,17 +343,15 @@ void TypeResolution::initArrayWithSingle(const Parsing::ArrayType& arrayType,
         newInit.emplace_back(std::make_unique<Parsing::SingleInitializer>(std::move(constExpr)));
     }
     const i64 diff = arrayType.size - str.size();
-    if (diff)
-        emplaceZeroInit(newInit, diff);
+    emplaceZeroInit(newInit, diff);
 }
 
 void TypeResolution::initVarWithSingle(
     const Parsing::TypeBase* type,
-    Parsing::Initializer* init,
+    const Parsing::SingleInitializer& singleInit,
     std::vector<std::unique_ptr<Parsing::Initializer>>& newInit)
 {
-    const auto singleInit = dynCast<Parsing::SingleInitializer>(init);
-    auto exprConverted = m_resolveExpr.convertArrayType(*singleInit->expr);
+    auto exprConverted = m_resolveExpr.convertArrayType(*singleInit.expr);
     if (hasError())
         return;
     auto expr = Parsing::converOrAssign(
@@ -332,6 +361,8 @@ void TypeResolution::initVarWithSingle(
 
 void emplaceZeroInit(std::vector<std::unique_ptr<Parsing::Initializer>>& newInit, i64 lengthZero)
 {
+    if (lengthZero == 0)
+        return;
     if (!newInit.empty()) {
         const auto& back = newInit.back();
         if (back->kind == Parsing::Initializer::Kind::Zero) {

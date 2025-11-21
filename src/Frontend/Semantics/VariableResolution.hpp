@@ -3,7 +3,7 @@
 #include "ASTTraverser.hpp"
 #include "ShortTypes.hpp"
 #include "ASTParser.hpp"
-#include "Frontend/SymbolTable.hpp"
+#include "SymbolTable.hpp"
 #include "Error.hpp"
 #include "VarTable.hpp"
 

@@ -41,14 +41,17 @@ public:
     void walkInit(const Parsing::TypeBase* type,
                   Parsing::Initializer* init,
                   std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
+    void initStructuredWithCompound(const Parsing::StructuredType& structuredType,
+                                    const Parsing::CompoundInitializer& compoundInit,
+                                    std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
     void initArrayWithCompound(const Parsing::ArrayType& arrayType,
                                const Parsing::CompoundInitializer& compoundInit,
                                std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
     void initArrayWithSingle(const Parsing::ArrayType& type,
-                             const Parsing::SingleInitializer& compoundInit,
+                             const Parsing::SingleInitializer& singleInit,
                              std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
     void initVarWithSingle(const Parsing::TypeBase* type,
-                           Parsing::Initializer* init,
+                           const Parsing::SingleInitializer& singleInit,
                            std::vector<std::unique_ptr<Parsing::Initializer>>& newInit);
 
     void visit(Parsing::ReturnStmt& stmt) override;

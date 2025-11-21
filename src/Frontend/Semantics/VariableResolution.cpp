@@ -151,6 +151,8 @@ void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
     const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookupEntry(varDecl.name);
     varDecl.type->accept(*this);
+    if (varDecl.type->type == Type::Array && m_varTable.isIncompleteTypeBase(*varDecl.type))
+        addError("Cannot declare array with incomplete type", varDecl.location);
     if (isStructuredType(varDecl.type->type))
         handleVarDeclOfStructuredType(varDecl);
     validateVarDecl(varDecl, m_symbolTable, prevEntry);

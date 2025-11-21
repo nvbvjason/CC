@@ -387,7 +387,7 @@ struct DotExpr final : Expr {
         : Expr(loc, Kind::Dot), structuredExpr(std::move(structuredExpr)), identifier(std::move(identifier)) {}
 
     DotExpr(DotExpr&& dotExpr) noexcept
-        : Expr(dotExpr.location, Kind::Arrow),
+        : Expr(dotExpr.location, Kind::Dot),
           structuredExpr(std::move(dotExpr.structuredExpr)),
           identifier(dotExpr.identifier)
     {

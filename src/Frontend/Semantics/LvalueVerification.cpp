@@ -28,6 +28,18 @@ void LvalueVerification::visit(const Parsing::UnaryExpr& unaryExpr)
 
 void LvalueVerification::visit(const Parsing::AssignmentExpr& assignmentExpr)
 {
+    if (assignmentExpr.lhs->kind == Parsing::Expr::Kind::Dot) {
+        const auto dotExpr = dynCast<Parsing::DotExpr>(assignmentExpr.lhs.get());
+        auto travExpr = dotExpr->structuredExpr.get();
+        while (travExpr->kind == Parsing::Expr::Kind::Dot) {
+            auto dotLocal = dynCast<Parsing::DotExpr>(travExpr);
+            travExpr = dotLocal->structuredExpr.get();
+        }
+        if (!isAllowedLValueExprKind(travExpr->kind)) {
+            m_errors.emplace_back("DotExpr of operation on non lvalue ", dotExpr->structuredExpr->location);
+            return;
+        }
+    }
     if (!isAllowedLValueExprKind(assignmentExpr.lhs->kind))
         m_errors.emplace_back("Assignment onto non LValue type ", assignmentExpr.lhs->location);
     ConstASTTraverser::visit(assignmentExpr);
@@ -52,14 +64,5 @@ void LvalueVerification::visit(const Parsing::AddrOffExpr& addrOffExpr)
         }
     }
     ConstASTTraverser::visit(addrOffExpr);
-}
-
-void LvalueVerification::visit(const Parsing::DotExpr& dotExpr)
-{
-    // if (isNotAnLvalue(dotExpr.structuredExpr->kind)) {
-    //     m_errors.emplace_back("DotExpr of operation on non lvalue ", dotExpr.structuredExpr->location);
-    //     return;
-    // }
-    ConstASTTraverser::visit(dotExpr);
 }
 } // Semantics
