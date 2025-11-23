@@ -128,6 +128,7 @@ private:
             case Type::I64:      return i64Type;
             case Type::U64:      return u64Type;
             case Type::Pointer:  return pointerType;
+            case Type::Array:    return pointerType;
             case Type::Double:   return doubleType;
             case Type::Void:     return voidType;
             default:

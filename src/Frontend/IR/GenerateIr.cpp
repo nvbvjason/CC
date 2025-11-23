@@ -742,8 +742,6 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryBasicInst(const Parsing::UnaryEx
 
 std::unique_ptr<ExprResult> GenerateIr::genUnaryPostfixInst(const Parsing::UnaryExpr& unaryExpr)
 {
-    assert(unaryExpr.type->kind == Parsing::TypeBase::Kind::Var);
-
     auto originalForReturn = std::make_shared<ValueVar>(makeTemporaryName(), convert(*unaryExpr.type));
     const auto tempNew = std::make_shared<ValueVar>(makeTemporaryName(), convert(*unaryExpr.type));
     const auto oper = getPostPrefixOperation(unaryExpr.op);
@@ -775,8 +773,6 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPostfixInst(const Parsing::Unary
 
 std::unique_ptr<ExprResult> GenerateIr::genUnaryPrefixInst(const Parsing::UnaryExpr& unaryExpr)
 {
-    assert(unaryExpr.type->kind == Parsing::TypeBase::Kind::Var);
-
     const IrType type = convert(*unaryExpr.type);
     const std::shared_ptr<ValueConst> scale = getInrDecScale(unaryExpr, unaryExpr.type->type);
     const auto temp = std::make_shared<ValueVar>(Identifier(makeTemporaryName()), type);

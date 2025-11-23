@@ -364,6 +364,8 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
 std::string asmRegister(const AsmType& type, const Operand::RegKind reg)
 {
     using Type = Operand::RegKind;
+    using AsmKind = AsmType::Kind;
+
     if (reg == Type::BP)
         return "%rbp";
     switch (reg) {
@@ -399,11 +401,12 @@ std::string asmRegister(const AsmType& type, const Operand::RegKind reg)
 
     const auto& names = it->second;
     switch (type.kind) {
-        case AsmType::Kind::Byte:     return names[0];
-        case AsmType::Kind::Word:     return names[1];
-        case AsmType::Kind::LongWord: return names[2];
-        case AsmType::Kind::QuadWord: return names[3];
-        default: return "invalid_size";
+        case AsmKind::Byte:         return names[0];
+        case AsmKind::Word:         return names[1];
+        case AsmKind::LongWord:     return names[2];
+        case AsmKind::QuadWord:     return names[3];
+        default:
+            return "invalid_size";
     }
 }
 
