@@ -7,6 +7,8 @@
 #include <gtest/gtest.h>
 #include <utility>
 
+#include "CodeGen/Operators.hpp"
+
 namespace {
 using AsmType = CodeGen::AsmType;
 using CondCode = CodeGen::BinaryInst::CondCode;
@@ -31,11 +33,11 @@ TEST(AssemblyTests, addType)
             : expected(std::move(expected)), type(type) {}
     };
     const std::vector<TestDataAddType> tests = {
-        {"addb", asmByte},
-        {"addl", asmLongWord},
-        {"addq", asmQuadWord},
-        {"addsd",asmDouble},
-        {"add not set addType", AsmType::Word},
+        {"addb", CodeGen::asmByte},
+        {"addl", CodeGen::asmLongWord},
+        {"addq", CodeGen::asmQuadWord},
+        {"addsd",CodeGen::asmDouble},
+        {"add not set addType", CodeGen::asmWord},
     };
     const std::string start = "add";
     for (const TestDataAddType& test : tests) {
@@ -96,53 +98,53 @@ TEST(AssemblyTests, asmRegister)
         {"%xmm15", CodeGen::asmDouble, RegKind::XMM15},
 
         {"%al", CodeGen::asmByte, RegKind::AX},
-        {"%ax", CodeGen::AsmType::Word, RegKind::AX},
+        {"%ax", CodeGen::asmWord, RegKind::AX},
         {"%eax", CodeGen::asmLongWord, RegKind::AX},
         {"%rax", CodeGen::asmQuadWord, RegKind::AX},
 
         {"%cl", CodeGen::asmByte, RegKind::CX},
-        {"%cx", CodeGen::AsmType::Word, RegKind::CX},
+        {"%cx", CodeGen::asmWord, RegKind::CX},
         {"%ecx", CodeGen::asmLongWord, RegKind::CX},
         {"%rcx", CodeGen::asmQuadWord, RegKind::CX},
 
         {"%dl", CodeGen::asmByte, RegKind::DX},
-        {"%dx", CodeGen::AsmType::Word, RegKind::DX},
+        {"%dx", CodeGen::asmWord, RegKind::DX},
         {"%edx", CodeGen::asmLongWord, RegKind::DX},
         {"%rdx", CodeGen::asmQuadWord, RegKind::DX},
 
         {"%dil", CodeGen::asmByte, RegKind::DI},
-        {"%di", CodeGen::AsmType::Word, RegKind::DI},
+        {"%di", CodeGen::asmWord, RegKind::DI},
         {"%edi", CodeGen::asmLongWord, RegKind::DI},
         {"%rdi", CodeGen::asmQuadWord, RegKind::DI},
 
         {"%sil", CodeGen::asmByte, RegKind::SI},
-        {"%si", CodeGen::AsmType::Word, RegKind::SI},
+        {"%si", CodeGen::asmWord, RegKind::SI},
         {"%esi", CodeGen::asmLongWord, RegKind::SI},
         {"%rsi", CodeGen::asmQuadWord, RegKind::SI},
         {"invalid_size", CodeGen::asmDouble, RegKind::SI},
 
         {"%r8b", CodeGen::asmByte, RegKind::R8},
-        {"%r8w", CodeGen::AsmType::Word, RegKind::R8},
+        {"%r8w", CodeGen::asmWord, RegKind::R8},
         {"%r8d", CodeGen::asmLongWord, RegKind::R8},
         {"%r8", CodeGen::asmQuadWord, RegKind::R8},
 
         {"%r9b", CodeGen::asmByte, RegKind::R9},
-        {"%r9w", CodeGen::AsmType::Word, RegKind::R9},
+        {"%r9w", CodeGen::asmWord, RegKind::R9},
         {"%r9d", CodeGen::asmLongWord, RegKind::R9},
         {"%r9", CodeGen::asmQuadWord, RegKind::R9},
 
         {"%r10b", CodeGen::asmByte, RegKind::R10},
-        {"%r10w", CodeGen::AsmType::Word, RegKind::R10},
+        {"%r10w", CodeGen::asmWord, RegKind::R10},
         {"%r10d", CodeGen::asmLongWord, RegKind::R10},
         {"%r10", CodeGen::asmQuadWord, RegKind::R10},
 
         {"%r11b", CodeGen::asmByte, RegKind::R11},
-        {"%r11w", CodeGen::AsmType::Word, RegKind::R11},
+        {"%r11w", CodeGen::asmWord, RegKind::R11},
         {"%r11d", CodeGen::asmLongWord, RegKind::R11},
         {"%r11", CodeGen::asmQuadWord, RegKind::R11},
 
         {"%rsp", CodeGen::asmByte, RegKind::SP},
-        {"%rsp", CodeGen::AsmType::Word, RegKind::SP},
+        {"%rsp", CodeGen::asmWord, RegKind::SP},
         {"%rsp", CodeGen::asmLongWord, RegKind::SP},
         {"%rsp", CodeGen::asmQuadWord, RegKind::SP},
     };

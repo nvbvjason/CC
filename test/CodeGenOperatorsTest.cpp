@@ -19,7 +19,7 @@ TEST(CodeGenOperatorsTest, unaryOperator)
         {IrOper::Negate, AsmOper::Neg}
     };
     for (const TestcaseUnary& testcase : testcases) {
-        EXPECT_EQ(CodeGen::Operators::unaryOperator(testcase.irOper), testcase.asmOper);
+        EXPECT_EQ(CodeGen::unaryOperator(testcase.irOper), testcase.asmOper);
     }
 }
 
@@ -42,7 +42,7 @@ TEST(CodeGenOperatorsTest, binaryOperator)
             {IrOper::BitwiseXor, AsmOper::BitwiseXor},
     };
     for (const TestcaseBinary& testcase : testcases) {
-        EXPECT_EQ(CodeGen::Operators::binaryOperator(testcase.irOper), testcase.asmOper);
+        EXPECT_EQ(CodeGen::binaryOperator(testcase.irOper), testcase.asmOper);
     }
 }
 
@@ -64,7 +64,7 @@ TEST(CodeGenOperatorsTest, shiftOperators)
                     {IrOper::RightShift, AsmOper::RightShiftUnsigned, false},
             };
     for (const TestcaseCond& testcase : testcases) {
-        EXPECT_EQ(CodeGen::Operators::getShiftOperator(testcase.irOper, testcase.isSigned), testcase.asmOper);
+        EXPECT_EQ(CodeGen::getShiftOperator(testcase.irOper, testcase.isSigned), testcase.asmOper);
     }
 }
 
@@ -95,7 +95,7 @@ TEST(CodeGenOperatorsTest, condCode)
                 {IrOper::GreaterOrEqual, BinCond::AE, false},
         };
     for (const TestcaseCond& testcase : testcases) {
-        EXPECT_EQ(CodeGen::Operators::condCode(testcase.irOper, testcase.isSigned), testcase.cond);
+        EXPECT_EQ(CodeGen::condCode(testcase.irOper, testcase.isSigned), testcase.cond);
     }
 }
 
@@ -109,14 +109,14 @@ TEST(CodeGenOperatorsTest, getAsmType)
             : type(type), asmType(asmType) {  }
     };
     const std::vector<TestcaseAsmType> testcases{
-                {Type::I32, asmLongWord},
-                {Type::U32, asmLongWord},
-                {Type::I64, asmQuadWord},
-                {Type::U64, asmQuadWord},
-                {Type::Pointer, asmQuadWord},
-                {Type::Double, asmDouble},
+                {Type::I32,     CodeGen::asmLongWord},
+                {Type::U32,     CodeGen::asmLongWord},
+                {Type::I64,     CodeGen::asmQuadWord},
+                {Type::U64,     CodeGen::asmQuadWord},
+                {Type::Pointer, CodeGen::asmQuadWord},
+                {Type::Double,  CodeGen::asmDouble},
             };
     for (const TestcaseAsmType& testcase : testcases) {
-        EXPECT_EQ(CodeGen::Operators::getAsmType(testcase.type), testcase.asmType);
+        EXPECT_EQ(CodeGen::getAsmType(testcase.type), testcase.asmType);
     }
 }

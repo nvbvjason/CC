@@ -1,5 +1,7 @@
 #include "CodeGenInstructionFactory.hpp"
 
+#include "CodeGen/Operators.hpp"
+
 namespace CodeGen {
 
 std::unique_ptr<Inst> CodeGenInstructionFactory::create(

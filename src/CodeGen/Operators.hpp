@@ -115,8 +115,10 @@ inline AsmType getAsmType(const Type type)
         case Type::U8:      return asmByte;
         case Type::Char:    return asmByte;
         case Type::I32:     return asmLongWord;
+        case Type::U32:     return asmLongWord;
         case Type::I64:     return asmQuadWord;
         case Type::U64:     return asmQuadWord;
+        case Type::Pointer: return asmQuadWord;
         case Type::Double:  return asmDouble;
         default:
             std::abort();
