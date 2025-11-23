@@ -21,7 +21,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertArrayType(Parsing::Exp
         }
     }
     if (genExpr->type && isStructuredType(genExpr->type->type)) {
-        if (varTable.isInCompleteStructuredType(*genExpr->type))
+        if (typeTable.isInCompleteStructuredType(*genExpr->type))
             addError("Invalid use of undefined structured type", genExpr->location);
     }
     return genExpr;
@@ -280,7 +280,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::handleAddSubtractPtrToInteger
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
     if (isIntegerType(rightType)) {
-        if (varTable.isPointerToInCompleteStructuredType(*binaryExpr.lhs->type)) {
+        if (typeTable.isPointerToInCompleteStructuredType(*binaryExpr.lhs->type)) {
             addError("Cannot do pointer arithmetic on incomplete types", binaryExpr.lhs->location);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
@@ -289,7 +289,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::handleAddSubtractPtrToInteger
         binaryExpr.type = Parsing::deepCopy(*binaryExpr.lhs->type);
     }
     else if (isIntegerType(leftType)) {
-        if (varTable.isPointerToInCompleteStructuredType(*binaryExpr.rhs->type)) {
+        if (typeTable.isPointerToInCompleteStructuredType(*binaryExpr.rhs->type)) {
             addError("Cannot do pointer arithmetic on incomplete types", binaryExpr.rhs->location);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
@@ -316,7 +316,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::handlePtrToPtrBinaryOpers(Par
             binaryExpr.type = std::make_unique<Parsing::VarType>(Type::I32);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
-        if (varTable.isPointerToInCompleteStructuredType(*binaryExpr.lhs->type)) {
+        if (typeTable.isPointerToInCompleteStructuredType(*binaryExpr.lhs->type)) {
             addError("Cannot do pointer arithmetic on incomplete types", binaryExpr.location);
             return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
         }
@@ -615,7 +615,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertSubscriptExpr(Parsing:
     if (hasError())
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
 
-    if (varTable.isPointerToInCompleteStructuredType(*subscriptExpr.referencing->type)) {
+    if (typeTable.isPointerToInCompleteStructuredType(*subscriptExpr.referencing->type)) {
         addError("Cannot subscript incomplete pointer type", subscriptExpr.referencing->location);
         return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
     }
@@ -658,7 +658,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertSizeOfExprExpr(Parsing
         if (sizeOfExprExpr.innerExpr->type->type == Type::Void)
             addError("Cannot call sizeof on void expression", sizeOfExprExpr.location);
     }
-    if (varTable.isInCompleteStructuredType(*sizeOfExprExpr.innerExpr->type))
+    if (typeTable.isInCompleteStructuredType(*sizeOfExprExpr.innerExpr->type))
         addError("Cannot call sizeof on incomplete type expr", sizeOfExprExpr.location);
     return std::make_unique<Parsing::SizeOfExprExpr>(std::move(sizeOfExprExpr));
 }
@@ -670,7 +670,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertSizeOfExprType(
         addError("Cannot call sizeof on void array type", sizeOfTypeExpr.location);
     if (sizeOfTypeExpr.sizeType->type == Type::Void)
         addError("Cannot call sizeof on void type", sizeOfTypeExpr.location);
-    if (varTable.isInCompleteStructuredType(*sizeOfTypeExpr.sizeType))
+    if (typeTable.isInCompleteStructuredType(*sizeOfTypeExpr.sizeType))
         addError("Cannot call sizeof on void type", sizeOfTypeExpr.location);
     return std::make_unique<Parsing::SizeOfTypeExpr>(std::move(sizeOfTypeExpr));
 }
@@ -685,7 +685,7 @@ const Parsing::TypeBase* TypeResolutionExpr::validateStructuredAccessors(
         return nullptr;
     }
     const auto structType = dynCast<const Parsing::StructuredType>(structuredType);
-    const auto entry = varTable.lookupEntry(structType->identifier);
+    const auto entry = typeTable.getEntry(structType->identifier);
     if (entry == nullptr) {
         addError("Cannot call structured accessor on non structured type", location);
         return nullptr;
@@ -699,9 +699,9 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertDotExpr(Parsing::DotEx
     if (hasError())
         return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
     const Parsing::TypeBase* type = validateStructuredAccessors(
-        dotExpr.structuredExpr->type.get(), dotExpr.identifier, dotExpr.location);
+        dotExpr.structuredExpr->type.get(), dotExpr.member, dotExpr.location);
     if (type == nullptr) {
-        addError("Could not find member for " + dotExpr.identifier, dotExpr.location);
+        addError("Could not find member for " + dotExpr.member, dotExpr.location);
         return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
     }
     dotExpr.type = Parsing::deepCopy(*type);

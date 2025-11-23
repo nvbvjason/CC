@@ -9,8 +9,8 @@ add_library(Frontend
         FrontendDriver.cpp
         SymbolTable.cpp
         Error.hpp
-        VarTable.cpp
-        VarTable.hpp
+        TypeTable.cpp
+        TypeTable.hpp
 )
 
 # Link subdirectory libraries

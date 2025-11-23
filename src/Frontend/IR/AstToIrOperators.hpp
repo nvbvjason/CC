@@ -3,6 +3,8 @@
 #include "ASTExpr.hpp"
 #include "ASTIr.hpp"
 #include "DynCast.hpp"
+#include "IrType.hpp"
+#include "CodeGen/AsmAST.hpp"
 
 namespace Ir {
 inline UnaryInst::Operation convertUnaryOperation(const Parsing::UnaryExpr::Operator unaryOperation)
@@ -91,4 +93,21 @@ inline bool isBitShift(const Parsing::AssignmentExpr::Operator oper)
     return oper == Oper::LeftShiftAssign || oper == Oper::RightShiftAssign;
 }
 
+inline IrType convertType(const Type type)
+{
+    switch (type) {
+        case Type::I8:       return i8Type;
+        case Type::U8:       return u8Type;
+        case Type::Char:     return charType;
+        case Type::I32:      return i32Type;
+        case Type::U32:      return u32Type;
+        case Type::U64:      return i64Type;
+        case Type::I64:      return u64Type;
+        case Type::Pointer:  return pointerType;
+        case Type::Double:   return voidType;
+        case Type::Void:     return voidType;
+        default:
+            std::abort();
+    }
+}
 } // Ir

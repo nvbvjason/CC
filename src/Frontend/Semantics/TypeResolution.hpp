@@ -4,7 +4,7 @@
 #include "ASTTraverser.hpp"
 #include "FuncEntry.hpp"
 #include "Error.hpp"
-#include "VarTable.hpp"
+#include "TypeTable.hpp"
 #include "TypeResolutionExpr.hpp"
 
 #include <string>
@@ -18,7 +18,7 @@ class TypeResolution final : public Parsing::ASTTraverser {
     std::unordered_set<std::string> m_definedFunctions;
     std::unordered_set<std::string> m_localExternVars;
     std::unordered_set<std::string> m_globalStaticVars;
-    const VarTable& varTable;
+    const TypeTable& typeTable;
     TypeResolutionExpr m_resolveExpr;
 
     i64 location = 0;
@@ -26,8 +26,8 @@ class TypeResolution final : public Parsing::ASTTraverser {
     std::vector<Error> m_errors;
     bool m_global = true;
 public:
-    explicit TypeResolution(const VarTable& varTable)
-        : varTable(varTable), m_resolveExpr(m_errors, varTable, m_functions) {}
+    explicit TypeResolution(const TypeTable& varTable)
+        : typeTable(varTable), m_resolveExpr(m_errors, varTable, m_functions) {}
 
     std::vector<Error> validate(Parsing::Program& program);
 
@@ -68,7 +68,7 @@ public:
         const FuncEntry& funcEntry,
         const Parsing::FuncDecl& funDecl);
 private:
-    void addError(const std::string& error, const i64 location) { m_errors.emplace_back(error, location); }
+    void addError(const std::string& error, const i64 loc) { m_errors.emplace_back(error, loc); }
     [[nodiscard]] bool hasError() const { return !m_errors.empty(); }
 };
 

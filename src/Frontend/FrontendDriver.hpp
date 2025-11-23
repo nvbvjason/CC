@@ -6,7 +6,7 @@
 #include "Error.hpp"
 #include "SymbolTable.hpp"
 #include "TokenStore.hpp"
-#include "VarTable.hpp"
+#include "TypeTable.hpp"
 
 #include <filesystem>
 #include <string>
@@ -27,6 +27,6 @@ public:
 std::pair<StateCode, std::vector<Error>> validateSemantics(
     Parsing::Program& program,
     SymbolTable& symbolTable,
-    VarTable& varTable);
+    TypeTable& typeTable);
 void reportErrors(const std::vector<Error>& errors, const TokenStore& tokenStore);
 void reportError(const Error& error, const TokenStore& tokenStore);

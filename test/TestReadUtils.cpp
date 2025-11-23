@@ -78,7 +78,7 @@ bool CheckSemantics(const std::filesystem::directory_entry& filePath)
     if (!parser.programParse(program).empty())
         return false;
     SymbolTable symbolTable;
-    VarTable varTable;
+    TypeTable varTable;
     const auto [err, errors] = validateSemantics(program, symbolTable, varTable);
     return err == StateCode::Done;
 }
@@ -93,7 +93,7 @@ bool CheckSemanticsWithInclude(const std::string& sourceCode)
     if (!parser.programParse(program).empty())
         return false;
     SymbolTable symbolTable;
-    VarTable varTable;
+    TypeTable varTable;
     const auto [err, errors] = validateSemantics(program, symbolTable, varTable);
     return err == StateCode::Done;
 }

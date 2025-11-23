@@ -311,7 +311,7 @@ std::unique_ptr<Expr> converOrAssign(const TypeBase& left,
         return convertOrCastToType(expr, Type::U64);
 
     if (expr->type->type == Type::Pointer && isVoidPointer(left)) {
-        expr->type = std::make_unique<Parsing::PointerType>(std::make_unique<Parsing::VarType>(Type::Void));
+        expr->type = std::make_unique<Parsing::PointerType>(std::make_unique<VarType>(Type::Void));
         return std::move(expr);
     }
 

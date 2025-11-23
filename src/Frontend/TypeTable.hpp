@@ -39,14 +39,14 @@ struct StructuredEntry {
           type(type) {}
 };
 
-class VarTable {
+class TypeTable {
     std::unordered_map<std::string, StructuredEntry> entries;
 public:
     [[nodiscard]] bool isDefined(const Parsing::StructuredType& type) const;
     [[nodiscard]] Parsing::TypeBase* getMemberType(
         const std::string& structuredName,
         const std::string& memberName) const;
-    [[nodiscard]] const StructuredEntry* lookupEntry(const std::string& iden) const;
+    [[nodiscard]] const StructuredEntry* getEntry(const std::string& iden) const;
 
     bool hasMemberType(const std::string& structuredName, const std::string& memberName) const
     {
@@ -55,6 +55,7 @@ public:
     void addEntry(const std::string& uniqueName,
                   const Parsing::StructuredDecl& structuredDecl,
                   std::vector<Error>& errors);
+    [[nodiscard]] i64 getOffset(const std::string& structuredName, const std::string& memberName) const;
     [[nodiscard]] bool isInCompleteStructuredType(const Parsing::TypeBase& typeBase) const;
     [[nodiscard]] bool isPointerToInCompleteStructuredType(const Parsing::TypeBase& typeBase) const;
 

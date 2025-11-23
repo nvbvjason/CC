@@ -1,9 +1,9 @@
-#include "VarTable.hpp"
+#include "TypeTable.hpp"
 #include "TypeConversion.hpp"
 #include "ASTUtils.hpp"
 #include "DynCast.hpp"
 
-bool VarTable::isDefined(const Parsing::StructuredType& type) const
+bool TypeTable::isDefined(const Parsing::StructuredType& type) const
 {
     const auto it = entries.find(type.identifier);
     if (it == entries.end())
@@ -11,7 +11,7 @@ bool VarTable::isDefined(const Parsing::StructuredType& type) const
     return it->second.type == type.type;;
 }
 
-Parsing::TypeBase* VarTable::getMemberType(const std::string& structuredName, const std::string& memberName) const
+Parsing::TypeBase* TypeTable::getMemberType(const std::string& structuredName, const std::string& memberName) const
 {
     const auto it = entries.find(structuredName);
     if (it == entries.end())
@@ -22,7 +22,7 @@ Parsing::TypeBase* VarTable::getMemberType(const std::string& structuredName, co
     return itMember->second.type.get();
 }
 
-const StructuredEntry* VarTable::lookupEntry(const std::string& iden) const
+const StructuredEntry* TypeTable::getEntry(const std::string& iden) const
 {
     const auto it = entries.find(iden);
     if (it == entries.end())
@@ -30,7 +30,7 @@ const StructuredEntry* VarTable::lookupEntry(const std::string& iden) const
     return &it->second;
 }
 
-i32 VarTable::getStructuredAlignment(const Parsing::TypeBase* const type) const
+i32 TypeTable::getStructuredAlignment(const Parsing::TypeBase* const type) const
 {
     const auto structuredType = dynamic_cast<const Parsing::StructuredType*>(type);
     const auto it = entries.find(structuredType->identifier);
@@ -39,7 +39,7 @@ i32 VarTable::getStructuredAlignment(const Parsing::TypeBase* const type) const
     return it->second.alignment;
 }
 
-i32 VarTable::getAlignment(const Parsing::TypeBase* const type) const
+i32 TypeTable::getAlignment(const Parsing::TypeBase* const type) const
 {
     if (isStructuredTypeBase(*type))
         return getStructuredAlignment(type);
@@ -54,7 +54,7 @@ i32 VarTable::getAlignment(const Parsing::TypeBase* const type) const
     return getTypeSize(type->type);
 }
 
-i64 VarTable::getStructuredSize(const Parsing::TypeBase* type) const
+i64 TypeTable::getStructuredSize(const Parsing::TypeBase* type) const
 {
     const auto structuredType = dynamic_cast<const Parsing::StructuredType*>(type);
     const auto it = entries.find(structuredType->identifier);
@@ -63,7 +63,7 @@ i64 VarTable::getStructuredSize(const Parsing::TypeBase* type) const
     return it->second.size;
 }
 
-i64 VarTable::getSize(const Parsing::TypeBase* type) const
+i64 TypeTable::getSize(const Parsing::TypeBase* type) const
 {
     if (isStructuredTypeBase(*type))
         return getStructuredSize(type);
@@ -79,7 +79,7 @@ i64 VarTable::getSize(const Parsing::TypeBase* type) const
     return getTypeSize(type->type);
 }
 
-void VarTable::addEntry(const std::string& uniqueName,
+void TypeTable::addEntry(const std::string& uniqueName,
                         const Parsing::StructuredDecl& structuredDecl,
                         std::vector<Error>& errors)
 {
@@ -120,7 +120,18 @@ void VarTable::addEntry(const std::string& uniqueName,
         structuredDecl.type));
 }
 
-bool VarTable::isPointerToInCompleteStructuredType(const Parsing::TypeBase& typeBase) const
+i64 TypeTable::getOffset(const std::string& structuredName, const std::string& memberName) const
+{
+    const auto it = entries.find(structuredName);
+    if (it == entries.end())
+        std::abort();
+    const auto memberIt = it->second.memberMap.find(memberName);
+    if (memberIt == it->second.memberMap.end())
+        std::abort();
+    return memberIt->second.offset;
+}
+
+bool TypeTable::isPointerToInCompleteStructuredType(const Parsing::TypeBase& typeBase) const
 {
     if (typeBase.kind != Parsing::TypeBase::Kind::Pointer)
         return false;
@@ -128,7 +139,7 @@ bool VarTable::isPointerToInCompleteStructuredType(const Parsing::TypeBase& type
     return isInCompleteStructuredType(*pointerType->referenced);
 }
 
-bool VarTable::isInCompleteStructuredType(const Parsing::TypeBase& typeBase) const
+bool TypeTable::isInCompleteStructuredType(const Parsing::TypeBase& typeBase) const
 {
     if (!isStructuredTypeBase(typeBase))
         return false;
@@ -142,7 +153,7 @@ i64 roundUp(const i64 structSize, const i32 memberAlignment)
     return structSize + memberAlignment - diff;
 }
 
-bool VarTable::isIncompleteTypeBase(const Parsing::TypeBase& typeBase) const
+bool TypeTable::isIncompleteTypeBase(const Parsing::TypeBase& typeBase) const
 {
     const Parsing::TypeBase* travType = &typeBase;
     if (isInCompleteStructuredType(*travType))

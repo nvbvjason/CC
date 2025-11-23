@@ -18,7 +18,10 @@
 static std::vector<Error> lex(TokenStore& tokenStore, const std::filesystem::path& inputFile);
 static std::vector<Error> parse(const TokenStore& tokenStore, Parsing::Program& programNode);
 static void printParsingAst(const Parsing::Program& program);
-static Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable, const VarTable& varTable);
+static Ir::Program ir(
+    const Parsing::Program& parsingProgram,
+    SymbolTable& symbolTable,
+    const TypeTable& typeTable);
 static std::string preProcess(const std::filesystem::path& file);
 static std::string getSourceCode(const std::filesystem::path& inputFile);
 
@@ -47,8 +50,9 @@ std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
         return {std::nullopt, StateCode::Done};
     }
     SymbolTable symbolTable;
-    VarTable varTable;
-    if (const auto [err, errors] = validateSemantics(program, symbolTable, varTable);
+    TypeTable typeTable;
+    if (const auto [err, errors] =
+                validateSemantics(program, symbolTable, typeTable);
         err != StateCode::Done) {
         reportErrors(errors, m_tokenStore);
         return {std::nullopt, err};
@@ -59,7 +63,7 @@ std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
         printParsingAst(program);
         return {std::nullopt, StateCode::Done};
     }
-    Ir::Program irProgram = ir(program, symbolTable, varTable);
+    Ir::Program irProgram = ir(program, symbolTable, typeTable);
     return {std::move(irProgram), StateCode::Continue};
 }
 
@@ -75,12 +79,12 @@ std::string getSourceCode(const std::filesystem::path& inputFile)
 std::pair<StateCode, std::vector<Error>> validateSemantics(
     Parsing::Program& program,
     SymbolTable& symbolTable,
-    VarTable& varTable)
+    TypeTable& typeTable)
 {
-    Semantics::VariableResolution variableResolution(symbolTable, varTable);
+    Semantics::VariableResolution variableResolution(symbolTable, typeTable);
     if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
         return {StateCode::VariableResolution, errors};
-    Semantics::TypeResolution typeResolution(varTable);
+    Semantics::TypeResolution typeResolution(typeTable);
     if (const std::vector<Error> errors = typeResolution.validate(program); !errors.empty())
         return {StateCode::TypeResolution, errors};
     Semantics::LvalueVerification lvalueVerification;
@@ -89,7 +93,7 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(
     Semantics::ValidateReturn validateReturn;
     if (std::vector<Error> errors = validateReturn.programValidate(program); !errors.empty())
         return {StateCode::ValidateReturn, errors};
-    Semantics::Labeling loopLabeling(varTable);
+    Semantics::Labeling loopLabeling;
     if (const std::vector<Error> errors = loopLabeling.programValidate(program); !errors.empty())
         return {StateCode::LoopLabeling, errors};
     return {StateCode::Done, {}};
@@ -115,10 +119,10 @@ std::vector<Error> parse(const TokenStore& tokenStore, Parsing::Program& program
     return parser.programParse(programNode);
 }
 
-Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable, const VarTable& varTable)
+Ir::Program ir(const Parsing::Program& parsingProgram, SymbolTable& symbolTable, const TypeTable& typeTable)
 {
     Ir::Program irProgram;
-    Ir::GenerateIr generateIr(symbolTable, varTable);
+    Ir::GenerateIr generateIr(symbolTable, typeTable);
     generateIr.program(parsingProgram, irProgram);
     return irProgram;
 }

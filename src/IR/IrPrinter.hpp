@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ASTIr.hpp"
+#include "IrType.hpp"
 
 #include <sstream>
 #include <string>
@@ -64,6 +65,6 @@ private:
 
 std::string to_string(UnaryInst::Operation op);
 std::string to_string(BinaryInst::Operation op);
-std::string to_string(Type type);
+std::string to_string(IrType type);
 
 } // namespace Ir

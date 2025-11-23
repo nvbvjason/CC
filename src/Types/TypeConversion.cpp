@@ -1,6 +1,7 @@
 #include "TypeConversion.hpp"
 
 #include <cassert>
+#include <cstdlib>
 #include <utility>
 
 Type getCommonType(const Type t1, const Type t2)
@@ -38,8 +39,8 @@ bool isSigned(const Type t)
         case Type::U32:
         case Type::U8:
             return false;
-        default: ;
-        std::unreachable();
+        default:
+            std::abort();
     }
 }
 

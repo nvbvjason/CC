@@ -1,14 +1,14 @@
 #pragma once
 
-#include <memory>
-
 #include "ASTIr.hpp"
+
+#include <utility>
 
 namespace Ir {
 
 struct ExprResult {
     enum class Kind : u8 {
-        PlainOperand, DereferencedPointer,
+        PlainOperand, DereferencedPointer, SubObject
     };
     const Kind kind;
 
@@ -19,7 +19,7 @@ protected:
 };
 
 struct PlainOperand : ExprResult {
-    std::shared_ptr<Value> value;
+    const std::shared_ptr<Value> value;
 
     explicit PlainOperand(std::shared_ptr<Value> value)
         : ExprResult(Kind::PlainOperand), value(std::move(value)) {}
@@ -30,14 +30,26 @@ struct PlainOperand : ExprResult {
 };
 
 struct DereferencedPointer : ExprResult {
-    std::shared_ptr<Value> ptr;
-    Type referredToType;
+    const std::shared_ptr<Value> ptr;
+    const Type referredToType;
     DereferencedPointer(std::shared_ptr<Value> p, const Type rt)
         : ExprResult(Kind::DereferencedPointer), ptr(std::move(p)), referredToType(rt) {}
 
     static bool classOf(const ExprResult* expr) { return expr->kind == Kind::DereferencedPointer; }
 
     DereferencedPointer() = delete;
+};
+
+struct SubObject : ExprResult {
+    const Identifier base;
+    const i64 offset;
+
+    SubObject(Identifier base, const i64 offset)
+        : ExprResult(Kind::SubObject), base(std::move(base)), offset(offset) {}
+
+    static bool classOf(const ExprResult* expr) { return expr->kind == Kind::SubObject; }
+
+    SubObject() = delete;
 };
 
 } // Ir

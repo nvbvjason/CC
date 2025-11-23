@@ -56,9 +56,23 @@ namespace CodeGen {
 
 struct InstVisitor;
 
-enum class AsmType : u8 {
-    Byte, Word, LongWord, QuadWord, Double
+struct AsmType final {
+    enum class Kind : u8 {
+        Byte, Word, LongWord, QuadWord, Double, ByteArray
+    };
+    const Kind kind;
+    const i64 size;
+
+    constexpr explicit AsmType(const Kind kind, const i64 size)
+        : kind(kind), size(size) {}
+
+    AsmType() = delete;
 };
+
+inline bool operator==(const AsmType& lhs, const AsmType& rhs)
+{
+    return lhs.size == rhs.size && lhs.kind == rhs.kind;
+}
 
 struct Identifier {
     std::string value;
@@ -469,7 +483,7 @@ struct SetCCInst final : Inst {
     std::shared_ptr<Operand> operand;
     const CondCode condition;
     explicit SetCCInst(const CondCode condition, std::shared_ptr<Operand> operand)
-        : Inst(Kind::SetCC), condition(condition), operand(std::move(operand)) {}
+        : Inst(Kind::SetCC), operand(std::move(operand)), condition(condition) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::SetCC; }
@@ -616,8 +630,8 @@ struct StringVariable final : TopLevel {
     const bool global;
     const bool nullTerminated;
 
-    StringVariable(std::string name, const std::string& value, const bool global, const bool nullTerminated)
-        : TopLevel(Kind::StaticString), name(std::move(name)), value(value),
+    StringVariable(std::string name, std::string value, const bool global, const bool nullTerminated)
+        : TopLevel(Kind::StaticString), name(std::move(name)), value(std::move(value)),
                                          global(global), nullTerminated(nullTerminated) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticString; }

@@ -34,7 +34,7 @@ std::unique_ptr<Inst> CodeGenInstructionFactory::create(
 std::unique_ptr<Inst> CodeGenInstructionFactory::create(
     const Inst::Kind kind, const OperKind src, const OperKind dst)
 {
-    return create(kind, src, dst, AsmType::LongWord);
+    return create(kind, src, dst, asmLongWord);
 }
 
 std::unique_ptr<Inst> CodeGenInstructionFactory::createBinary(

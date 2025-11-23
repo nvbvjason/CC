@@ -2,7 +2,7 @@
 
 #include "ASTBase.hpp"
 #include "FuncEntry.hpp"
-#include "VarTable.hpp"
+#include "TypeTable.hpp"
 
 namespace Semantics {
 
@@ -12,12 +12,12 @@ class TypeResolutionExpr {
     const std::unordered_map<std::string, FuncEntry>& m_functions;
 
     std::vector<Error>& m_errors;
-    const VarTable& varTable;
+    const TypeTable& typeTable;
 public:
     explicit TypeResolutionExpr(std::vector<Error>& errors,
-                                const VarTable& varTable,
+                                const TypeTable& varTable,
                                 const std::unordered_map<std::string, FuncEntry>& m_functions)
-        : m_errors(errors), varTable(varTable), m_functions(m_functions) {}
+        : m_errors(errors), typeTable(varTable), m_functions(m_functions) {}
 
     TypeResolutionExpr() = delete;
 

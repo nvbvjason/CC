@@ -270,22 +270,24 @@ void IrPrinter::print(const AllocateInst& inst)
 
 std::string IrPrinter::print(const ValueVar& val)
 {
-    if (val.type == Type::I32)
+    if (val.type == i32Type)
         return "Var(" + print(val.value) + ") i32";
     return "Var(" + print(val.value) + ") i64";
 }
 
 std::string IrPrinter::print(const ValueConst& val)
 {
-    switch (val.type) {
-        case Type::I8:           return "Const(" + std::to_string(std::get<i8>(val.value)) + ") I8";
-        case Type::U8:           return "Const(" + std::to_string(std::get<u8>(val.value)) + ") U8";
-        case Type::Char:         return "Const(" + std::to_string(std::get<char>(val.value)) + ") Char";
-        case Type::I32:          return "Const(" + std::to_string(std::get<i32>(val.value)) + ") i32";
-        case Type::I64:          return "Const(" + std::to_string(std::get<i64>(val.value)) + ") i64";
-        case Type::U32:          return "Const(" + std::to_string(std::get<u32>(val.value)) + ") u32";
-        case Type::U64:          return "Const(" + std::to_string(std::get<u64>(val.value)) + ") u64";
-        case Type::Double:       return "Const(" + std::to_string(std::get<double>(val.value)) + ") double";
+    using IrKind = IrType::Kind;
+
+    switch (val.type.kind) {
+        case IrKind::I8:         return "Const(" + std::to_string(std::get<i8>(val.value)) + ") I8";
+        case IrKind::U8:         return "Const(" + std::to_string(std::get<u8>(val.value)) + ") U8";
+        case IrKind::Char:       return "Const(" + std::to_string(std::get<char>(val.value)) + ") Char";
+        case IrKind::I32:        return "Const(" + std::to_string(std::get<i32>(val.value)) + ") i32";
+        case IrKind::I64:        return "Const(" + std::to_string(std::get<i64>(val.value)) + ") i64";
+        case IrKind::U32:        return "Const(" + std::to_string(std::get<u32>(val.value)) + ") u32";
+        case IrKind::U64:        return "Const(" + std::to_string(std::get<u64>(val.value)) + ") u64";
+        case IrKind::Double:     return "Const(" + std::to_string(std::get<double>(val.value)) + ") double";
         default:
             std::abort();
     }
@@ -328,21 +330,21 @@ std::string to_string(const BinaryInst::Operation op)
     return "UnknownBinaryOp";
 }
 
-std::string to_string(const Type type)
+std::string to_string(const IrType type)
 {
-    switch (type) {
-        case Type::Char:     return "char";
-        case Type::U8:       return "u8";
-        case Type::I8:       return "i8";
-        case Type::I32:      return "i32";
-        case Type::I64:      return "i64";
-        case Type::U32:      return "u32";
-        case Type::U64:      return "u64";
-        case Type::Double:   return "double";
-        case Type::Pointer:  return "pointer";
-        case Type::Array:    return "array";
-        case Type::String:   return "string";
-        case Type::Void:     return "void";
+    using IrKind = IrType::Kind;
+    switch (type.kind) {
+        case IrKind::Char:        return "char";
+        case IrKind::U8:          return "u8";
+        case IrKind::I8:          return "i8";
+        case IrKind::I32:         return "i32";
+        case IrKind::I64:         return "i64";
+        case IrKind::U32:         return "u32";
+        case IrKind::U64:         return "u64";
+        case IrKind::Double:      return "double";
+        case IrKind::Pointer:     return "pointer";
+        case IrKind::ByteArray:   return "(bytearray " + std::to_string(type.size) + ")";
+        case IrKind::Void:        return "void";
         default:
             std::unreachable();
     }

@@ -2,17 +2,15 @@
 
 #include "AsmAST.hpp"
 #include "ASTIr.hpp"
-#include "Frontend/AST/ASTBase.hpp"
+#include "IrType.hpp"
 
-namespace CodeGen::Operators {
+namespace CodeGen {
 
 UnaryInst::Operator unaryOperator(Ir::UnaryInst::Operation type);
 BinaryInst::Operator binaryOperator(Ir::BinaryInst::Operation type);
 BinaryInst::Operator getShiftOperator(Ir::BinaryInst::Operation type, bool isSigned);
 BinaryInst::CondCode condCode(Ir::BinaryInst::Operation oper, bool isSigned);
-AsmType getAsmType(const Parsing::TypeBase& type);
-AsmType getAsmType(Type type);
-i64 getSizeAsmType(AsmType type);
+AsmType getAsmType(Ir::IrType type);
 
 inline UnaryInst::Operator unaryOperator(const Ir::UnaryInst::Operation type)
 {
@@ -91,40 +89,37 @@ inline BinaryInst::CondCode condCode(const Ir::BinaryInst::Operation oper, const
     }
 }
 
-inline AsmType getAsmType(const Parsing::TypeBase& typeBase)
+constexpr auto asmByte =     AsmType(AsmType::Kind::Byte, 1);
+constexpr auto asmWord =     AsmType(AsmType::Kind::Word, 2);
+constexpr auto asmLongWord = AsmType(AsmType::Kind::LongWord, 4);
+constexpr auto asmQuadWord = AsmType(AsmType::Kind::QuadWord, 8);
+constexpr auto asmDouble =   AsmType(AsmType::Kind::Double, 4);
+
+inline AsmType getAsmType(const Ir::IrType type)
 {
-    if (typeBase.type == Type::I32 || typeBase.type == Type::U32)
-        return AsmType::LongWord;
-    if (typeBase.type == Type::I64 || typeBase.type == Type::U64 || typeBase.type == Type::Pointer)
-        return AsmType::QuadWord;
-    if (typeBase.type == Type::Double)
-        return AsmType::Double;
+    if (type == Ir::i8Type || type == Ir::u8Type || type == Ir::charType)
+        return asmByte;
+    if (type == Ir::i32Type || type == Ir::u32Type)
+        return asmLongWord;
+    if (type == Ir::i64Type || type == Ir::u64Type || type == Ir::pointerType)
+        return asmQuadWord;
+    if (type == Ir::doubleType)
+        return asmDouble;
     std::abort();
 }
 
 inline AsmType getAsmType(const Type type)
 {
-    if (type == Type::I8 || type == Type::U8 || type == Type::Char)
-        return AsmType::Byte;
-    if (type == Type::I32 || type == Type::U32)
-        return AsmType::LongWord;
-    if (type == Type::I64 || type == Type::U64 || type == Type::Pointer)
-        return AsmType::QuadWord;
-    if (type == Type::Double)
-        return AsmType::Double;
-    std::abort();
-}
-
-inline i64 getSizeAsmType(const AsmType type)
-{
     switch (type) {
-        case AsmType::Byte:     return 1;
-        case AsmType::Word:     return 2;
-        case AsmType::LongWord: return 4;
-        case AsmType::QuadWord: return 8;
-        case AsmType::Double:   return 8;
+        case Type::I8:      return asmByte;
+        case Type::U8:      return asmByte;
+        case Type::Char:    return asmByte;
+        case Type::I32:     return asmLongWord;
+        case Type::I64:     return asmQuadWord;
+        case Type::U64:     return asmQuadWord;
+        case Type::Double:  return asmDouble;
+        default:
+            std::abort();
     }
-    std::abort();
 }
-
-} // CodeGen::Operators
+} // CodeGen

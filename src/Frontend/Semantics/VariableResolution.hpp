@@ -5,7 +5,7 @@
 #include "ASTParser.hpp"
 #include "SymbolTable.hpp"
 #include "Error.hpp"
-#include "VarTable.hpp"
+#include "TypeTable.hpp"
 
 #include <string>
 #include <unordered_set>
@@ -31,11 +31,11 @@ class VariableResolution : public Parsing::ASTTraverser {
         ~FunctionGuard() { table.clearArgs(); }
     };
     SymbolTable& m_symbolTable;
-    VarTable& m_varTable;
+    TypeTable& m_varTable;
     i32 m_nameCounter = 0;
     std::vector<Error> m_errors;
 public:
-    explicit VariableResolution(SymbolTable& symbolTable, VarTable& varTable)
+    explicit VariableResolution(SymbolTable& symbolTable, TypeTable& varTable)
         : m_symbolTable(symbolTable), m_varTable(varTable) {}
     std::vector<Error> resolve(Parsing::Program& program);
     void visit(Parsing::FuncDecl& funDecl) override;

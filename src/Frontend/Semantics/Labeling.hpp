@@ -10,8 +10,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "VarTable.hpp"
-
 namespace Semantics {
 
 template<typename TargetType>
@@ -45,12 +43,7 @@ class Labeling : public Parsing::ASTTraverser {
     std::string breakLabel;
     std::string continueLabel;
     std::string switchLabel;
-
-    const VarTable& varTable;
 public:
-    explicit Labeling(const VarTable& varTable)
-        : varTable(varTable) {}
-
     std::vector<Error> programValidate(Parsing::Program& program);
 
     void visit(Parsing::FuncDecl& funDecl) override;

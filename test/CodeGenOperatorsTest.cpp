@@ -109,12 +109,12 @@ TEST(CodeGenOperatorsTest, getAsmType)
             : type(type), asmType(asmType) {  }
     };
     const std::vector<TestcaseAsmType> testcases{
-                {Type::I32, AsmType::LongWord},
-                {Type::U32, AsmType::LongWord},
-                {Type::I64, AsmType::QuadWord},
-                {Type::U64, AsmType::QuadWord},
-                {Type::Pointer, AsmType::QuadWord},
-                {Type::Double, AsmType::Double},
+                {Type::I32, asmLongWord},
+                {Type::U32, asmLongWord},
+                {Type::I64, asmQuadWord},
+                {Type::U64, asmQuadWord},
+                {Type::Pointer, asmQuadWord},
+                {Type::Double, asmDouble},
             };
     for (const TestcaseAsmType& testcase : testcases) {
         EXPECT_EQ(CodeGen::Operators::getAsmType(testcase.type), testcase.asmType);

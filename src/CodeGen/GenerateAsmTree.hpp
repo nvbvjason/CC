@@ -210,7 +210,7 @@ private:
 std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
 std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray);
 std::unique_ptr<TopLevel> genStaticString(const Ir::StaticConstant& staticConstant);
-u64 getSingleInitValue(Type type, const Ir::ValueConst* value);
+u64 getSingleInitValue(Ir::IrType::Kind type, const Ir::ValueConst* value);
 i64 getStackPadding(size_t numArgs);
 
 std::string makeTemporaryPseudoName();

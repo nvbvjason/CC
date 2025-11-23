@@ -49,10 +49,10 @@ void TypeResolution::visit(Parsing::FuncDecl& funDecl)
 void TypeResolution::validateCompleteTypesFunc(const Parsing::FuncDecl& funDecl,
                                                const Parsing::FuncType& funcType)
 {
-    if (varTable.isInCompleteStructuredType(*funcType.returnType))
+    if (typeTable.isInCompleteStructuredType(*funcType.returnType))
         addError("Incomplete return types", funDecl.location);
     for (const auto& paramTypeFunc : funcType.params)
-        if (varTable.isInCompleteStructuredType(*paramTypeFunc))
+        if (typeTable.isInCompleteStructuredType(*paramTypeFunc))
             addError("Incomplete parameter types in function declarations", funDecl.location);
 }
 
@@ -96,7 +96,7 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     m_resolveExpr.m_isConst = true;
 
     if (varDecl.storage != Parsing::Declaration::StorageClass::Extern
-        && varTable.isIncompleteTypeBase(*varDecl.type)) {
+        && typeTable.isIncompleteTypeBase(*varDecl.type)) {
         addError("Cannot define variable with incomplete type", varDecl.location);
         return;
     }
@@ -273,7 +273,7 @@ void TypeResolution::initStructuredWithCompound(
         addError("Cannot initialize union with size other than one", location);
         return;
     }
-    const auto entry = varTable.lookupEntry(structuredType.identifier);
+    const auto entry = typeTable.getEntry(structuredType.identifier);
     if (entry->members.size() < compoundInit.size()) {
         addError("Cannot have compound init longer than structured type", structuredType.location);
         return;
@@ -286,7 +286,7 @@ void TypeResolution::initStructuredWithCompound(
     }
     for (; i < entry->members.size(); ++i) {
         const MemberEntry& member = entry->members[i];
-        const i64 typeSize = varTable.getSize(member.type.get());
+        const i64 typeSize = typeTable.getSize(member.type.get());
         emplaceZeroInit(newInit, typeSize);
     }
 }
@@ -303,7 +303,7 @@ void TypeResolution::initArrayWithCompound(const Parsing::ArrayType& arrayType,
     for (auto& partInit : compoundInit.initializers)
         walkInit(elemType, partInit.get(), newInit);
     const i64 notInitElems = arrayType.size - compoundInit.size();
-    const i64 typeSize = varTable.getSize(elemType);
+    const i64 typeSize = typeTable.getSize(elemType);
     const i64 lengthZero = notInitElems * typeSize;
     emplaceZeroInit(newInit, lengthZero);
 }

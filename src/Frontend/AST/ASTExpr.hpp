@@ -381,15 +381,15 @@ struct SizeOfTypeExpr final : Expr {
 
 struct DotExpr final : Expr {
     std::unique_ptr<Expr> structuredExpr;
-    const std::string identifier;
+    const std::string member;
 
     explicit DotExpr(const i64 loc, std::unique_ptr<Expr>&& structuredExpr, std::string identifier)
-        : Expr(loc, Kind::Dot), structuredExpr(std::move(structuredExpr)), identifier(std::move(identifier)) {}
+        : Expr(loc, Kind::Dot), structuredExpr(std::move(structuredExpr)), member(std::move(identifier)) {}
 
     DotExpr(DotExpr&& dotExpr) noexcept
         : Expr(dotExpr.location, Kind::Dot),
           structuredExpr(std::move(dotExpr.structuredExpr)),
-          identifier(dotExpr.identifier)
+          member(dotExpr.member)
     {
         if (dotExpr.type)
             type = std::move(dotExpr.type);

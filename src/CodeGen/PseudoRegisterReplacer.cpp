@@ -40,7 +40,7 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
                     Operand::RegKind::BP, m_stackPtr, operand->type);
                 return;
             }
-            m_stackPtr -= 1 * Operators::getSizeAsmType(asmType);
+            m_stackPtr -= 1 * asmType.size;
             fitTo8Alignment();
             m_pseudoMap[identifier] = m_stackPtr;
         }
@@ -107,7 +107,7 @@ void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 
 void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
 {
-    const i64 pseudoSize = pushPseudoInst.size * Operators::getSizeAsmType(pushPseudoInst.type);
+    const i64 pseudoSize = pushPseudoInst.size * pushPseudoInst.type.size;
     m_stackPtr -= pseudoSize;
     if (pseudoSize < 16)
         fitTo8Alignment();
