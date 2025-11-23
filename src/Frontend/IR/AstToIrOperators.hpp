@@ -96,15 +96,15 @@ inline bool isBitShift(const Parsing::AssignmentExpr::Operator oper)
 inline IrType convertType(const Type type)
 {
     switch (type) {
+        case Type::Char:     return charType;
         case Type::I8:       return i8Type;
         case Type::U8:       return u8Type;
-        case Type::Char:     return charType;
         case Type::I32:      return i32Type;
         case Type::U32:      return u32Type;
-        case Type::U64:      return i64Type;
-        case Type::I64:      return u64Type;
+        case Type::I64:      return i64Type;
+        case Type::U64:      return u64Type;
         case Type::Pointer:  return pointerType;
-        case Type::Double:   return voidType;
+        case Type::Double:   return doubleType;
         case Type::Void:     return voidType;
         default:
             std::abort();

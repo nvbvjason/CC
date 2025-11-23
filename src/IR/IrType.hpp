@@ -32,15 +32,15 @@ inline bool isSigned(const IrType type)
            type.kind == IrType::Kind::I64;
 }
 
-constexpr auto i8Type = IrType(IrType::Kind::I8, 1);
-constexpr auto u8Type = IrType(IrType::Kind::U8, 1);
-constexpr auto charType = IrType(IrType::Kind::Char, 1);
-constexpr auto i32Type = IrType(IrType::Kind::I32, 4);
-constexpr auto u32Type = IrType(IrType::Kind::U32, 4);
-constexpr auto i64Type = IrType(IrType::Kind::I64, 8);
-constexpr auto u64Type = IrType(IrType::Kind::U64, 8);
-constexpr auto pointerType = IrType(IrType::Kind::Pointer, 8);
-constexpr auto doubleType = IrType(IrType::Kind::Double ,8);
-constexpr auto voidType = IrType(IrType::Kind::Void, 0);
+constexpr auto i8Type       = IrType(IrType::Kind::I8, 1);
+constexpr auto u8Type       = IrType(IrType::Kind::U8, 1);
+constexpr auto charType     = IrType(IrType::Kind::Char, 1);
+constexpr auto i32Type      = IrType(IrType::Kind::I32, 4);
+constexpr auto u32Type      = IrType(IrType::Kind::U32, 4);
+constexpr auto i64Type      = IrType(IrType::Kind::I64, 8);
+constexpr auto u64Type      = IrType(IrType::Kind::U64, 8);
+constexpr auto pointerType  = IrType(IrType::Kind::Pointer, 8);
+constexpr auto doubleType   = IrType(IrType::Kind::Double ,8);
+constexpr auto voidType     = IrType(IrType::Kind::Void, 0);
 
 } // Ir

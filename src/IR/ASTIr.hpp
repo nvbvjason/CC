@@ -86,21 +86,21 @@ struct ValueVar final : Value {
 struct ValueConst final : Value {
     std::variant<char, i8, u8, i32, i64, u32, u64, double> value;
     explicit ValueConst(const u8 v)
-        : Value(IrType(IrType::Kind::U8, 1), Kind::Constant), value(v) {}
+        : Value(u8Type, Kind::Constant), value(v) {}
     explicit ValueConst(const i8 v)
-        : Value(IrType(IrType::Kind::I8, 1), Kind::Constant), value(v) {}
+        : Value(i8Type, Kind::Constant), value(v) {}
     explicit ValueConst(const char ch)
-        : Value(IrType(IrType::Kind::Char, 1), Kind::Constant), value(ch) {}
+        : Value(charType, Kind::Constant), value(ch) {}
     explicit ValueConst(const i32 v)
-        : Value(IrType(IrType::Kind::I32, 4) ,Kind::Constant), value(v) {}
-    explicit ValueConst(const i64 v)
-        : Value(IrType(IrType::Kind::I64, 4) ,Kind::Constant), value(v) {}
+        : Value(i32Type,Kind::Constant), value(v) {}
     explicit ValueConst(const u32 v)
-        : Value(IrType(IrType::Kind::U32, 4) ,Kind::Constant), value(v) {}
+        : Value(u32Type ,Kind::Constant), value(v) {}
+    explicit ValueConst(const i64 v)
+        : Value(i64Type,Kind::Constant), value(v) {}
     explicit ValueConst(const u64 v)
-        : Value(IrType(IrType::Kind::U64, 8) ,Kind::Constant), value(v) {}
+        : Value(u64Type, Kind::Constant), value(v) {}
     explicit ValueConst(const double v)
-        : Value(IrType(IrType::Kind::Double, 8) ,Kind::Constant), value(v) {}
+        : Value(doubleType, Kind::Constant), value(v) {}
 
     static bool classOf(const Value* value) { return value->kind == Kind::Constant; }
 
@@ -175,8 +175,10 @@ struct ReturnInst final : Instruction {
 struct SignExtendInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    SignExtendInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const IrType t)
-        : Instruction(Kind::SignExtend, t), src(std::move(src)), dst(std::move(dst)) {}
+    SignExtendInst(const std::shared_ptr<Value>& src,
+                   const std::shared_ptr<Value>& dst,
+                   const IrType t)
+        : Instruction(Kind::SignExtend, t), src(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::SignExtend; }
 
@@ -186,8 +188,10 @@ struct SignExtendInst final : Instruction {
 struct TruncateInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    TruncateInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const IrType t)
-        : Instruction(Kind::Truncate, t), src(std::move(src)), dst(std::move(dst)) {}
+    TruncateInst(const std::shared_ptr<Value>& src,
+                 const std::shared_ptr<Value>& dst,
+                 const IrType t)
+        : Instruction(Kind::Truncate, t), src(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::Truncate; }
 
@@ -197,8 +201,10 @@ struct TruncateInst final : Instruction {
 struct ZeroExtendInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    ZeroExtendInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const IrType t)
-        : Instruction(Kind::ZeroExtend, t), src(std::move(src)), dst(std::move(dst)) {}
+    ZeroExtendInst(const std::shared_ptr<Value>& src,
+                   const std::shared_ptr<Value>& dst,
+                   const IrType t)
+        : Instruction(Kind::ZeroExtend, t), src(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::ZeroExtend; }
 
@@ -208,8 +214,10 @@ struct ZeroExtendInst final : Instruction {
 struct DoubleToIntInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    DoubleToIntInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const IrType t)
-        : Instruction(Kind::DoubleToInt, t), src(std::move(src)), dst(std::move(dst)) {}
+    DoubleToIntInst(const std::shared_ptr<Value>& src,
+                    const std::shared_ptr<Value>& dst,
+                    const IrType t)
+        : Instruction(Kind::DoubleToInt, t), src(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::DoubleToInt; }
 
@@ -219,8 +227,10 @@ struct DoubleToIntInst final : Instruction {
 struct DoubleToUIntInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    DoubleToUIntInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const IrType t)
-        : Instruction(Kind::DoubleToUInt, t), src(std::move(src)), dst(std::move(dst)) {}
+    DoubleToUIntInst(const std::shared_ptr<Value>& src,
+                     const std::shared_ptr<Value>& dst,
+                     const IrType t)
+        : Instruction(Kind::DoubleToUInt, t), src(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::DoubleToUInt; }
 
@@ -230,8 +240,10 @@ struct DoubleToUIntInst final : Instruction {
 struct IntToDoubleInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    IntToDoubleInst(std::shared_ptr<Value> src, std::shared_ptr<Value> dst, const IrType t)
-        : Instruction(Kind::IntToDouble, t), src(std::move(src)), dst(std::move(dst)) {}
+    IntToDoubleInst(const std::shared_ptr<Value>& src,
+                    const std::shared_ptr<Value>& dst,
+                    const IrType t)
+        : Instruction(Kind::IntToDouble, t), src(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::IntToDouble; }
 
@@ -241,7 +253,9 @@ struct IntToDoubleInst final : Instruction {
 struct UIntToDoubleInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    UIntToDoubleInst(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType t)
+    UIntToDoubleInst(const std::shared_ptr<Value>& src,
+                     const std::shared_ptr<Value>& dst,
+                     const IrType t)
         : Instruction(Kind::UIntToDouble, t), src(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::UIntToDouble; }
@@ -305,7 +319,9 @@ struct CopyInst final : Instruction {
 struct GetAddressInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> dst;
-    GetAddressInst(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType t)
+    GetAddressInst(const std::shared_ptr<Value>& src,
+                   const std::shared_ptr<Value>& dst,
+                   const IrType t)
         : Instruction(Kind::GetAddress, t), src(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::GetAddress; }
@@ -316,7 +332,9 @@ struct GetAddressInst final : Instruction {
 struct LoadInst final : Instruction {
     std::shared_ptr<Value> ptr;
     std::shared_ptr<Value> dst;
-    LoadInst(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType t)
+    LoadInst(const std::shared_ptr<Value>& src,
+             const std::shared_ptr<Value>& dst,
+             const IrType t)
         : Instruction(Kind::Load, t), ptr(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::Load; }
@@ -327,7 +345,9 @@ struct LoadInst final : Instruction {
 struct StoreInst final : Instruction {
     std::shared_ptr<Value> src;
     std::shared_ptr<Value> ptr;
-    StoreInst(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType t)
+    StoreInst(const std::shared_ptr<Value>& src,
+              const std::shared_ptr<Value>& dst,
+              const IrType t)
         : Instruction(Kind::Store, t), src(src), ptr(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::Store; }
@@ -407,9 +427,9 @@ struct JumpInst final : Instruction {
 struct JumpIfZeroInst final : Instruction {
     std::shared_ptr<Value> condition;
     Identifier target;
-    JumpIfZeroInst(std::shared_ptr<Value> condition, Identifier target)
+    JumpIfZeroInst(const std::shared_ptr<Value>& condition, Identifier target)
         : Instruction(Kind::JumpIfZero, condition->type),
-            condition(std::move(condition)),
+            condition(condition),
             target(std::move(target)) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::JumpIfZero; }
@@ -420,9 +440,9 @@ struct JumpIfZeroInst final : Instruction {
 struct JumpIfNotZeroInst final : Instruction {
     std::shared_ptr<Value> condition;
     Identifier target;
-    JumpIfNotZeroInst(std::shared_ptr<Value> condition, Identifier target)
+    JumpIfNotZeroInst(const std::shared_ptr<Value>& condition, Identifier target)
         : Instruction(Kind::JumpIfNotZero, condition->type),
-            condition(std::move(condition)),
+            condition(condition),
             target(std::move(target)) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::JumpIfNotZero; }
@@ -493,7 +513,7 @@ protected:
 struct Function final : TopLevel {
     std::string name;
     std::vector<Identifier> args;
-    std::vector<Type> argTypes;
+    std::vector<IrType> argTypes;
     std::vector<std::unique_ptr<Instruction>> insts;
     const bool isGlobal;
     Function(std::string identifier, const bool isGlobal)

@@ -120,16 +120,16 @@ private:
     [[nodiscard]] IrType convert(const Parsing::TypeBase& typeBase) const
     {
         switch (typeBase.type) {
-            case Type::I8:       return IrType(IrType::Kind::I8, 1);
-            case Type::U8:       return IrType(IrType::Kind::U8, 1);
-            case Type::Char:     return IrType(IrType::Kind::Char, 1);
-            case Type::I32:      return IrType(IrType::Kind::I32, 4);
-            case Type::U32:      return IrType(IrType::Kind::U32, 4);
-            case Type::Pointer:  return IrType(IrType::Kind::Pointer, 8);
-            case Type::U64:      return IrType(IrType::Kind::I64, 8);
-            case Type::I64:      return IrType(IrType::Kind::U64, 8);
-            case Type::Double:   return IrType(IrType::Kind::Double, 8);
-            case Type::Void:     return IrType(IrType::Kind::Void, 0);
+            case Type::Char:     return charType;
+            case Type::I8:       return i8Type;
+            case Type::U8:       return u8Type;
+            case Type::I32:      return i32Type;
+            case Type::U32:      return u32Type;
+            case Type::I64:      return i64Type;
+            case Type::U64:      return u64Type;
+            case Type::Pointer:  return pointerType;
+            case Type::Double:   return doubleType;
+            case Type::Void:     return voidType;
             default:
                 return IrType(typeTable.getSize(&typeBase));
         }

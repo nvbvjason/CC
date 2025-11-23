@@ -93,7 +93,7 @@ constexpr auto asmByte =     AsmType(AsmType::Kind::Byte, 1);
 constexpr auto asmWord =     AsmType(AsmType::Kind::Word, 2);
 constexpr auto asmLongWord = AsmType(AsmType::Kind::LongWord, 4);
 constexpr auto asmQuadWord = AsmType(AsmType::Kind::QuadWord, 8);
-constexpr auto asmDouble =   AsmType(AsmType::Kind::Double, 4);
+constexpr auto asmDouble =   AsmType(AsmType::Kind::Double, 8);
 
 inline AsmType getAsmType(const Ir::IrType type)
 {

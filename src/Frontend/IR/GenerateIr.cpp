@@ -115,7 +115,7 @@ void GenerateIr::genSingleLocalInit(const std::string& name,
     const i64 typeSize = singleInit.expr->kind == ExprKind::String ? 8 : getTypeSize(singleInit.expr->type->type);
     std::shared_ptr<Value> value = genInstAndConvert(*singleInit.expr);
     if (singleInit.expr->kind == Parsing::Expr::Kind::String) {
-        const std::shared_ptr<ValueVar> var = std::make_shared<ValueVar>(
+        const auto var = std::make_shared<ValueVar>(
             makeTemporaryName(), convertType(Type::Pointer));
         emplaceGetAddress(value, var, convertType(Type::Pointer));
         value = var;
@@ -164,19 +164,20 @@ void GenerateIr::genZeroLocalInit(const std::string& name,
                                   i64& offset)
 {
     size_t i = 0;
+    const IrType irType = convertType(type);
     for (; i + 8 <= lengthZeroInit; i += 8) {
         emplaceCopyToOffset(
-            zeroConst8, Identifier(name), offset, arraySize, alignment, convertType(type));
+            zeroConst8, Identifier(name), offset, arraySize, alignment, irType);
         offset += 8;
     }
     for (; i + 4 <= lengthZeroInit; i += 4) {
         emplaceCopyToOffset(
-            zeroConst4, Identifier(name), offset, arraySize, alignment, convertType(type));
+            zeroConst4, Identifier(name), offset, arraySize, alignment, irType);
         offset += 4;
     }
     for (; i < lengthZeroInit; ++i) {
         emplaceCopyToOffset(
-    zeroConst1, Identifier(name), offset, arraySize, alignment, convertType(type));
+    zeroConst1, Identifier(name), offset, arraySize, alignment, irType);
         ++offset;
     }
 }
@@ -287,7 +288,8 @@ std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FuncDecl& parsin
     const auto funcType = dynCast<const Parsing::FuncType>(parsingFunction.type.get());
     for (size_t i = 0; i < parsingFunction.params.size(); ++i) {
         functionTacky->args.emplace_back(Identifier(parsingFunction.params[i]));
-        functionTacky->argTypes.emplace_back(funcType->params[i]->type);
+        const IrType irType = convert(*funcType->params[i]);
+        functionTacky->argTypes.emplace_back(irType);
     }
     genBlock(*parsingFunction.body);
     functionTacky->insts = std::move(m_insts);
@@ -765,6 +767,8 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPostfixInst(const Parsing::Unary
             emplaceStore(tempNew, derefOriginal->ptr, type);
             return std::make_unique<PlainOperand>(originalForReturn);
         }
+        case ExprResult::Kind::SubObject:
+            std::abort();
     }
     return std::make_unique<PlainOperand>(originalForReturn);
 }

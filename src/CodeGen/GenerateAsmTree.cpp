@@ -72,18 +72,18 @@ std::vector<bool> GenerateAsmTree::genFunctionPushIntoRegs(const Ir::Function& f
     i32 regIntIndex = 0;
     i32 regDoubleInex = 0;
     for (size_t i = 0; i < function.args.size(); ++i) {
-        // const AsmType type = getAsmType(function.argTypes[i]);
-        // std::shared_ptr<RegisterOperand> src;
-        // if (type != asmDouble && regIntIndex < intRegs.size())
-        //     src = std::make_shared<RegisterOperand>(intRegs[regIntIndex++], type);
-        // else if (type == asmDouble && regDoubleInex < doubleRegs.size())
-        //     src = std::make_shared<RegisterOperand>(doubleRegs[regDoubleInex++], type);
-        // else
-        //     continue;
-        // auto arg = std::make_shared<Ir::ValueVar>(function.args[i], function.argTypes[i]);
-        // std::shared_ptr<Operand> dst = genOperand(arg);
-        // emplaceMove(src, dst, type);
-        // pushedIntoRegs[i] = true;
+        const AsmType type = getAsmType(function.argTypes[i]);
+        std::shared_ptr<RegisterOperand> src;
+        if (type != asmDouble && regIntIndex < intRegs.size())
+            src = std::make_shared<RegisterOperand>(intRegs[regIntIndex++], type);
+        else if (type == asmDouble && regDoubleInex < doubleRegs.size())
+            src = std::make_shared<RegisterOperand>(doubleRegs[regDoubleInex++], type);
+        else
+            continue;
+        auto arg = std::make_shared<Ir::ValueVar>(function.args[i], function.argTypes[i]);
+        std::shared_ptr<Operand> dst = genOperand(arg);
+        emplaceMove(src, dst, type);
+        pushedIntoRegs[i] = true;
     }
     return pushedIntoRegs;
 }
@@ -92,15 +92,15 @@ void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std
 {
     i32 stackPtr = 2;
     for (size_t i = 0; i < function.args.size(); ++i) {
-        // if (pushedIntoRegs[i])
-        //     continue;
-        // constexpr i32 stackAlignment = 8;
-        // auto stack = std::make_shared<MemoryOperand>(
-        //     RegType::BP, stackAlignment * stackPtr++,
-        //     getAsmType(function.argTypes[i]));
-        // auto arg = std::make_shared<Ir::ValueVar>(function.args[i], Ir::convertType(function.argTypes[i]));
-        // std::shared_ptr<Operand> dst = genOperand(arg);
-        // emplaceMove(stack, dst, getAsmType(function.argTypes[i]));
+        if (pushedIntoRegs[i])
+            continue;
+        constexpr i32 stackAlignment = 8;
+        auto stack = std::make_shared<MemoryOperand>(
+            RegType::BP, stackAlignment * stackPtr++,
+            getAsmType(function.argTypes[i]));
+        auto arg = std::make_shared<Ir::ValueVar>(function.args[i], function.argTypes[i]);
+        std::shared_ptr<Operand> dst = genOperand(arg);
+        emplaceMove(stack, dst, getAsmType(function.argTypes[i]));
     }
 }
 
