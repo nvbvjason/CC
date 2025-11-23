@@ -928,8 +928,8 @@ void GenerateIr::genCompoundAssignWithoutDeref(
     std::shared_ptr<Value>& rhs,
     const std::shared_ptr<Value>& lhs)
 {
-    auto temp = std::make_shared<ValueVar>(makeTemporaryName(*lhs), lhs->type);
-    emplaceCopy(lhs, temp, lhs->type);
+    auto compoundResult = std::make_shared<ValueVar>(makeTemporaryName(*lhs), lhs->type);
+    emplaceCopy(lhs, compoundResult, lhs->type);
     const BinaryInst::Operation operation = convertBinaryOperation(assignmentExpr.op);
     const Type leftType = assignmentExpr.lhs->type->type;
     const Type rightType = assignmentExpr.rhs->type->type;
@@ -937,7 +937,7 @@ void GenerateIr::genCompoundAssignWithoutDeref(
     if (commonType == Type::Pointer) {
         if (rightType == Type::Pointer && operation == BinaryInst::Operation::Subtract) {
             const i64 scale = getReferencedTypeSize(assignmentExpr.lhs->type.get());
-            binaryPtrSubInst(temp, rhs, lhs, scale);
+            binaryPtrSubInst(compoundResult, rhs, lhs, scale);
             return;
         }
         if (operation == BinaryInst::Operation::Subtract) {
@@ -946,23 +946,23 @@ void GenerateIr::genCompoundAssignWithoutDeref(
             rhs = dst;
         }
         const i64 scale = getReferencedTypeSize(assignmentExpr.lhs->type.get());
-        emplaceAddPtr(temp, rhs, lhs, scale);
+        emplaceAddPtr(compoundResult, rhs, lhs, scale);
         return;
     }
     const IrType irLeftType = convertType(leftType);
     const IrType irRightType = convertType(rightType);
     const IrType irCommonType = convertType(commonType);
     if (commonType != leftType && !isBitShift(assignmentExpr.op))
-        temp = castValue(temp, irCommonType, irLeftType);
+        compoundResult = castValue(compoundResult, irCommonType, irLeftType);
     if (commonType != rightType && !isBitShift(assignmentExpr.op))
         rhs = castValue(rhs, irCommonType, irRightType);
     if (irCommonType != lhs->type && !isBitShift(assignmentExpr.op)) {
-        emplaceBinary(operation, temp, rhs, temp, irCommonType);
-        temp = castValue(temp, lhs->type, irCommonType);
-        emplaceCopy(temp, lhs, lhs->type);
+        emplaceBinary(operation, compoundResult, rhs, compoundResult, irCommonType);
+        compoundResult = castValue(compoundResult, lhs->type, irCommonType);
+        emplaceCopy(compoundResult, lhs, lhs->type);
     }
     else
-        emplaceBinary(operation, temp, rhs, lhs, lhs->type);
+        emplaceBinary(operation, compoundResult, rhs, lhs, lhs->type);
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentExpr& assignmentExpr)
@@ -972,11 +972,10 @@ std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentE
     switch (lhs->kind) {
         case ExprResult::Kind::PlainOperand: {
             const auto plainLhs = dynCast<const PlainOperand>(lhs.get());
-            if (assignmentExpr.op != Parsing::AssignmentExpr::Operator::Assign) {
+            if (assignmentExpr.op != Parsing::AssignmentExpr::Operator::Assign)
                 genCompoundAssignWithoutDeref(assignmentExpr, rhs, plainLhs->value);
-                return std::make_unique<PlainOperand>(plainLhs->value);
-            }
-            emplaceCopy(rhs, plainLhs->value, convert(*assignmentExpr.type));
+            else
+                emplaceCopy(rhs, plainLhs->value, convert(*assignmentExpr.type));
             return std::make_unique<PlainOperand>(plainLhs->value);
         }
         case ExprResult::Kind::DereferencedPointer: {

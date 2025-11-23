@@ -501,14 +501,20 @@ void GenerateAsmTree::genDoubleToInt(const Ir::DoubleToIntInst& doubleToInt)
 
 void GenerateAsmTree::genDoubleToUInt(const Ir::DoubleToUIntInst& doubleToUInt)
 {
-    if (doubleToUInt.type == Ir::i8Type)
-        genDoubleToUIntByte(doubleToUInt);
-    if (doubleToUInt.type == Ir::u32Type)
-        genDoubleToUIntLong(doubleToUInt);
-    if (doubleToUInt.type == Ir::u64Type)
-        genDoubleToUIntQuad(doubleToUInt);
+    switch (doubleToUInt.type.kind) {
+        case Ir::IrType::Kind::U8:
+            genDoubleToUIntByte(doubleToUInt);
+            break;
+        case Ir::IrType::Kind::U32:
+            genDoubleToUIntLong(doubleToUInt);
+            break;
+        case Ir::IrType::Kind::U64:
+            genDoubleToUIntQuad(doubleToUInt);
+            break;
+        default:
+            std::abort();
+    }
 }
-
 void GenerateAsmTree::genDoubleToUIntByte(const Ir::DoubleToUIntInst& doubleToUInt)
 {
     const std::shared_ptr<Operand> src = genOperand(doubleToUInt.src);
@@ -570,12 +576,19 @@ void GenerateAsmTree::genIntToDouble(const Ir::IntToDoubleInst& intToDouble)
 
 void GenerateAsmTree::genUIntToDouble(const Ir::UIntToDoubleInst& uintToDouble)
 {
-    if (uintToDouble.src->type == Ir::u8Type)
-        genUIntToDoubleByte(uintToDouble);
-    if (uintToDouble.src->type == Ir::u32Type)
-        genUIntToDoubleLong(uintToDouble);
-    if (uintToDouble.src->type == Ir::u64Type)
-        genUIntToDoubleQuad(uintToDouble);
+    switch (uintToDouble.src->type.kind) {
+        case Ir::IrType::Kind::U8:
+            genUIntToDoubleByte(uintToDouble);
+            break;
+        case Ir::IrType::Kind::U32:
+            genUIntToDoubleLong(uintToDouble);
+            break;
+        case Ir::IrType::Kind::U64:
+            genUIntToDoubleQuad(uintToDouble);
+            break;
+        default:
+            std::abort();
+    }
 }
 
 void GenerateAsmTree::genUIntToDoubleByte(const Ir::UIntToDoubleInst& uintToDouble)
@@ -672,8 +685,7 @@ void GenerateAsmTree::genBinary(const Ir::BinaryInst& irBinary)
             genBinaryCond(irBinary);
             break;
         default:
-            assert("Unsupported binary operation");
-            std::unreachable();
+            std::abort();
     }
 }
 
