@@ -224,7 +224,7 @@ std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& v
     if (varDecl.init->kind == Parsing::Initializer::Kind::Compound)
         return genCompoundInit(varDecl);
 
-    const std::shared_ptr<Value> value = genStaticVariableInit(varDecl, defined);
+    const std::shared_ptr<Value> value = genStaticVariableInit(varDecl);
     auto variable = std::make_unique<StaticVariable>(
         varDecl.name, value, convert(*varDecl.type), varDecl.storage != Storage::Static);
     return variable;
@@ -287,17 +287,14 @@ std::unique_ptr<TopLevel> GenerateIr::genStaticInit(const Parsing::VarDecl& varD
         auto initializers = genStaticCompoundInit(varDecl);
         return std::make_unique<StaticArray>(varDecl.name, std::move(initializers), false);
     }
-    std::shared_ptr<Value> value = genStaticVariableInit(varDecl, defined);
+    std::shared_ptr<Value> value = genStaticVariableInit(varDecl);
     return std::make_unique<StaticVariable>(varDecl.name, value, convert(*varDecl.type), false);
 }
 
-std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl& varDecl, const bool defined)
+std::shared_ptr<Value> GenerateIr::genStaticVariableInit(const Parsing::VarDecl& varDecl)
 {
-    if (defined) {
-        const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
-        return genInstAndConvert(*singleInit->expr);
-    }
-    return genZeroValueForType(varDecl.type->type);
+    const auto singleInit = dynCast<Parsing::SingleInitializer>(varDecl.init.get());
+    return genInstAndConvert(*singleInit->expr);
 }
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FuncDecl& parsingFunction)

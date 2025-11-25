@@ -37,7 +37,7 @@ public:
     std::unique_ptr<TopLevel> genCompoundInit(const Parsing::VarDecl& varDecl);
     std::unique_ptr<TopLevel> genStaticInit(const Parsing::VarDecl& varDecl, bool defined);
     std::vector<std::unique_ptr<Initializer>> genStaticCompoundInit(const Parsing::VarDecl& varDecl);
-    std::shared_ptr<Value> genStaticVariableInit(const Parsing::VarDecl& varDecl, bool defined);
+    std::shared_ptr<Value> genStaticVariableInit(const Parsing::VarDecl& varDecl);
 
     void genBlock(const Parsing::Block& block);
     void genBlockItem(const Parsing::BlockItem& blockItem);
