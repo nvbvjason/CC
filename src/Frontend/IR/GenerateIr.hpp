@@ -120,6 +120,13 @@ private:
     void allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl);
     void directlyPushConstant32Bit(const Parsing::VarDecl& varDecl, const std::shared_ptr<Value>& value);
 
+    const std::shared_ptr<Value> zeroConst1 = genZeroValueForType(Type::U8);
+    const std::shared_ptr<Value> zeroConst4 = genZeroValueForType(Type::U32);
+    const std::shared_ptr<Value> zeroConst8 = genZeroValueForType(Type::U64);
+
+    [[nodiscard]] i64 getPointerReferenceTypeSize(const Parsing::TypeBase* typeBase) const;
+    std::shared_ptr<ValueConst> getInrDecScale(const Parsing::UnaryExpr& unaryExpr, Type type) const;
+
     [[nodiscard]] IrType convert(const Parsing::TypeBase& typeBase) const
     {
         switch (typeBase.type) {
@@ -278,12 +285,5 @@ private:
     {
         m_insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden), type));
     }
-
-    const std::shared_ptr<Value> zeroConst1 = genZeroValueForType(Type::U8);
-    const std::shared_ptr<Value> zeroConst4 = genZeroValueForType(Type::U32);
-    const std::shared_ptr<Value> zeroConst8 = genZeroValueForType(Type::U64);
 };
-
-i64 getReferencedTypeSize(Parsing::TypeBase* typeBase);
-std::shared_ptr<ValueConst> getInrDecScale(const Parsing::UnaryExpr& unaryExpr, Type type);
 } // IR

@@ -16,6 +16,7 @@ static Identifier makeTemporaryName(Value& value);
 static Identifier makeTemporaryName(const std::string& name);
 static std::string generateCaseLabelName(std::string before);
 static std::shared_ptr<Value> genConstValue(const Parsing::ConstExpr& constExpr);
+static Type getSubscriptDereferenceType(Parsing::TypeBase* typeBase);
 
 void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyProgram)
 {
@@ -923,7 +924,7 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrSubInst(const Parsing::Binar
     const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
     const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
     auto dst = std::make_shared<ValueVar>(makeTemporaryName(), lhs->type);
-    const i64 scale = getReferencedTypeSize(binaryExpr.lhs->type.get());
+    const i64 scale = getPointerReferenceTypeSize(binaryExpr.lhs->type.get());
     binaryPtrSubInst(lhs, rhs, dst, scale);
     return std::make_unique<PlainOperand>(dst);
 }
@@ -937,7 +938,7 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryPtrAddInst(const Parsing::Binar
         emplaceUnary(UnaryInst::Operation::Negate, index, dst, pointerType);
         index = dst;
     }
-    const i64 scale = getReferencedTypeSize(binaryExpr.lhs->type.get());
+    const i64 scale = getPointerReferenceTypeSize(binaryExpr.lhs->type.get());
     auto result = std::make_shared<ValueVar>(makeTemporaryName(), pointerType);
     emplaceAddPtr(ptr, index, result, scale);
     return std::make_unique<PlainOperand>(result);
@@ -956,7 +957,7 @@ void GenerateIr::genCompoundAssignWithoutDeref(
     const Type commonType = getCommonType(leftType, rightType);
     if (commonType == Type::Pointer) {
         if (rightType == Type::Pointer && operation == BinaryInst::Operation::Subtract) {
-            const i64 scale = getReferencedTypeSize(assignmentExpr.lhs->type.get());
+            const i64 scale = getPointerReferenceTypeSize(assignmentExpr.lhs->type.get());
             binaryPtrSubInst(compoundResult, rhs, lhs, scale);
             return;
         }
@@ -965,7 +966,7 @@ void GenerateIr::genCompoundAssignWithoutDeref(
             emplaceUnary(UnaryInst::Operation::Negate, rhs, dst, pointerType);
             rhs = dst;
         }
-        const i64 scale = getReferencedTypeSize(assignmentExpr.lhs->type.get());
+        const i64 scale = getPointerReferenceTypeSize(assignmentExpr.lhs->type.get());
         emplaceAddPtr(compoundResult, rhs, lhs, scale);
         return;
     }
@@ -1143,52 +1144,10 @@ std::unique_ptr<ExprResult> GenerateIr::genAddrOfInst(const Parsing::AddrOffExpr
     std::unreachable();
 }
 
-i64 getReferencedTypeSize(Parsing::TypeBase* typeBase)
+i64 GenerateIr::getPointerReferenceTypeSize(const Parsing::TypeBase* typeBase) const
 {
-    std::vector<i64> scales;
-    while (typeBase->kind != Parsing::TypeBase::Kind::Var) {
-        switch (typeBase->kind) {
-            case Parsing::TypeBase::Kind::Pointer: {
-                const auto ptrType = dynCast<const Parsing::PointerType>(typeBase);
-                typeBase = ptrType->referenced.get();
-                if (typeBase->type == Type::Pointer) {
-                    i64 scale = 8;
-                    for (const i64 i : scales)
-                        scale *= i;
-                    return scale;
-                }
-                break;
-            }
-            case Parsing::TypeBase::Kind::Array: {
-                const auto arrayType = dynCast<Parsing::ArrayType>(typeBase);
-                scales.emplace_back(arrayType->size);
-                typeBase = arrayType->elementType.get();
-                break;
-            }
-            default:
-                std::abort();
-        }
-    }
-    i64 scale = getTypeSize(typeBase->type);
-    for (const i64 i : scales)
-        scale *= i;
-    return scale;
-}
-
-Type getSubscriptDereferenceType(Parsing::TypeBase* typeBase)
-{
-    switch (typeBase->kind) {
-        case Parsing::TypeBase::Kind::Pointer: {
-            const auto ptrType = dynCast<Parsing::PointerType>(typeBase);
-            return ptrType->referenced->type;
-        }
-        case Parsing::TypeBase::Kind::Array: {
-            const auto arrayType = dynCast<Parsing::ArrayType>(typeBase);
-            return arrayType->elementType->type;
-        }
-        default:
-            std::abort();
-    }
+    const auto pointerTypeParsing = dynCast<const Parsing::PointerType>(typeBase);
+    return typeTable.getSize(pointerTypeParsing->referenced.get());
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genSubscriptInst(const Parsing::SubscriptExpr& subscriptExpr)
@@ -1196,7 +1155,7 @@ std::unique_ptr<ExprResult> GenerateIr::genSubscriptInst(const Parsing::Subscrip
     const std::shared_ptr<Value> ptr = genInstAndConvert(*subscriptExpr.referencing);
     const std::shared_ptr<Value> index = genInstAndConvert(*subscriptExpr.index);
     Parsing::TypeBase* referencedType = subscriptExpr.referencing->type.get();
-    const i64 scale = getReferencedTypeSize(referencedType);
+    const i64 scale = getPointerReferenceTypeSize(referencedType);
     auto result = std::make_shared<ValueVar>(makeTemporaryName(), pointerType);
     emplaceAddPtr(ptr, index, result, scale);
     return std::make_unique<DereferencedPointer>(
@@ -1274,6 +1233,18 @@ std::unique_ptr<ExprResult> GenerateIr::genArrowExprInst(const Parsing::ArrowExp
     return std::make_unique<DereferencedPointer>(dstPtr, arrowExpr.type->type);
 }
 
+std::shared_ptr<ValueConst> GenerateIr::getInrDecScale(
+    const Parsing::UnaryExpr& unaryExpr, const Type type) const
+{
+    if (type == Type::Pointer) {
+        const i64 size = getPointerReferenceTypeSize(unaryExpr.innerExpr->type.get());
+        return std::make_shared<ValueConst>(size);
+    }
+    if (type == Type::Double)
+        return std::make_shared<ValueConst>(1.0);
+    return std::make_shared<ValueConst>(1);
+}
+
 Identifier makeTemporaryName()
 {
     return makeTemporaryName("");
@@ -1303,15 +1274,6 @@ static std::string generateCaseLabelName(std::string before)
     return before;
 }
 
-std::shared_ptr<ValueConst> getInrDecScale(const Parsing::UnaryExpr& unaryExpr, const Type type)
-{
-    if (type == Type::Pointer)
-        return std::make_shared<ValueConst>(getReferencedTypeSize(unaryExpr.innerExpr->type.get()));
-    if (type == Type::Double)
-        return std::make_shared<ValueConst>(1.0);
-    return std::make_shared<ValueConst>(1);
-}
-
 std::shared_ptr<Value> genZeroValueForType(const Type type)
 {
     switch (type) {
@@ -1326,6 +1288,22 @@ std::shared_ptr<Value> genZeroValueForType(const Type type)
         case Type::Double:  return std::make_shared<ValueConst>(0.0);
         default:
             abort();
+    }
+}
+
+Type getSubscriptDereferenceType(Parsing::TypeBase* typeBase)
+{
+    switch (typeBase->kind) {
+        case Parsing::TypeBase::Kind::Pointer: {
+            const auto ptrType = dynCast<Parsing::PointerType>(typeBase);
+            return ptrType->referenced->type;
+        }
+        case Parsing::TypeBase::Kind::Array: {
+            const auto arrayType = dynCast<Parsing::ArrayType>(typeBase);
+            return arrayType->elementType->type;
+        }
+        default:
+            std::abort();
     }
 }
 } // IR
