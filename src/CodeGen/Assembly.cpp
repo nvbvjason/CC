@@ -29,8 +29,8 @@ std::string asmProgram(const Program& program)
                 asmFunction(result, *function);
                 break;
             }
-            case TopLevel::Kind::StaticArray: {
-                const auto array = dynCast<const ArrayVariable>(topLevel.get());
+            case TopLevel::Kind::StaticCompound: {
+                const auto array = dynCast<const CompoundVariable>(topLevel.get());
                 asmStaticArray(result, *array);
                 break;
             }
@@ -148,7 +148,7 @@ void asmStaticConstant(std::string& result, const ConstVariable& variable)
     result += '\n';
 }
 
-void asmStaticArray(std::string& result, const ArrayVariable& array)
+void asmStaticArray(std::string& result, const CompoundVariable& array)
 {
     if (array.isGlobal)
         result += asmFormatInstruction(".globl", array.name.value);

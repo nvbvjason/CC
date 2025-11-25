@@ -552,7 +552,7 @@ struct ReturnInst final : Inst {
 
 struct TopLevel {
     enum class Kind : u8 {
-        Function, StaticVariable, StaticConstant, StaticArray, StaticString
+        Function, StaticVariable, StaticConstant, StaticCompound, StaticString
     };
     const Kind kind;
 
@@ -605,23 +605,23 @@ struct ConstVariable final : TopLevel {
     ConstVariable() = delete;
 };
 
-struct ArrayVariable final : TopLevel {
+struct CompoundVariable final : TopLevel {
     Identifier name;
     i32 alignment;
     std::vector<std::unique_ptr<Initializer>> initializers;
     const bool isGlobal;
 
-    ArrayVariable(Identifier name,
+    CompoundVariable(Identifier name,
                   const i32 alignment,
                   std::vector<std::unique_ptr<Initializer>>&& initializers,
                   const bool local)
-        : TopLevel(Kind::StaticArray), name(std::move(name)), alignment(alignment),
+        : TopLevel(Kind::StaticCompound), name(std::move(name)), alignment(alignment),
                                          initializers(std::move(initializers)),
                                          isGlobal(local) {}
 
-    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticArray; }
+    static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticCompound; }
 
-    ArrayVariable() = delete;
+    CompoundVariable() = delete;
 };
 
 struct StringVariable final : TopLevel {

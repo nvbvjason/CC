@@ -25,6 +25,12 @@ public:
     void add(const Function& function);
     void add(const StaticVariable& staticVariable);
     void add(const ConstVariable& constVariable);
+    void add(const CompoundVariable& compoundVariable);
+
+    void add(const Initializer& init);
+    void add(const ValueInitializer& init);
+    void add(const ZeroInitializer& init);
+
     void add(const Inst& inst);
     void add(const MoveInst& move);
     void add(const MoveSXInst& moveSX);

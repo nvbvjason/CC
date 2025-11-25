@@ -162,7 +162,7 @@ std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray)
             }
         }
     }
-    return std::make_unique<ArrayVariable>(
+    return std::make_unique<CompoundVariable>(
         Identifier(staticArray.name), 16, std::move(initializers), staticArray.global);
 }
 

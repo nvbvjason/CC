@@ -30,16 +30,16 @@ const StructuredEntry* TypeTable::getEntry(const std::string& iden) const
     return &it->second;
 }
 
-i32 TypeTable::getStructuredAlignment(const Parsing::TypeBase* const type) const
+i64 TypeTable::getStructuredAlignment(const Parsing::TypeBase* const type) const
 {
-    const auto structuredType = dynamic_cast<const Parsing::StructuredType*>(type);
+    const auto structuredType = dynCast<const Parsing::StructuredType>(type);
     const auto it = entries.find(structuredType->identifier);
     if (it == entries.end())
         std::abort();
     return it->second.alignment;
 }
 
-i32 TypeTable::getAlignment(const Parsing::TypeBase* const type) const
+i64 TypeTable::getAlignment(const Parsing::TypeBase* const type) const
 {
     if (isStructuredTypeBase(*type))
         return getStructuredAlignment(type);
@@ -87,7 +87,7 @@ void TypeTable::addEntry(const std::string& uniqueName,
                         std::vector<Error>& errors)
 {
     i64 structSize = 0;
-    i32 structuredAlignment = 1;
+    i64 structuredAlignment = 1;
     std::vector<MemberEntry> members;
     std::unordered_map<std::string, MemberEntry> memberMap;
     for (const auto& member : structuredDecl.members) {
@@ -99,7 +99,7 @@ void TypeTable::addEntry(const std::string& uniqueName,
             errors.emplace_back("Cannot use incomplete type in structured definition", member->location);
             return;
         }
-        const i32 memberAlignment = getAlignment(member->type.get());
+        const i64 memberAlignment = getAlignment(member->type.get());
         const i64 memberOffset = structuredDecl.isUnion() ? 0 : roundUp(structSize, memberAlignment);
         members.emplace_back(
             member->identifier,
@@ -150,7 +150,7 @@ bool TypeTable::isInCompleteStructuredType(const Parsing::TypeBase& typeBase) co
     return !isDefined(*structuredType);
 }
 
-i64 roundUp(const i64 structSize, const i32 memberAlignment)
+i64 roundUp(const i64 structSize, const i64 memberAlignment)
 {
     const i64 diff = (structSize + memberAlignment) % memberAlignment;
     return structSize + diff;

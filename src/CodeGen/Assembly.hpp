@@ -13,7 +13,7 @@ void asmStaticVariableLong(std::string& result, const StaticVariable& variable);
 void asmStaticVariableQuad(std::string& result, const StaticVariable& variable);
 void asmStaticVariableDouble(std::string& result, const StaticVariable& variable);
 void asmStaticConstant(std::string& result, const ConstVariable& variable);
-void asmStaticArray(std::string& result, const ArrayVariable& array);
+void asmStaticArray(std::string& result, const CompoundVariable& array);
 void asmStaticString(std::string& result, const StringVariable& variable);
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction);
 std::string asmOperand(const std::shared_ptr<Operand>& operand);

@@ -1,10 +1,9 @@
 #include "AsmPrinter.hpp"
 #include "Assembly.hpp"
 #include "ASTIr.hpp"
+#include "DynCast.hpp"
 
 #include <iomanip>
-
-#include "DynCast.hpp"
 
 namespace CodeGen {
 std::string AsmPrinter::printProgram(const Program &program)
@@ -19,18 +18,56 @@ void AsmPrinter::add(const TopLevel& topLevel)
 {
     using Type = TopLevel::Kind;
     switch (topLevel.kind) {
-        case Type::Function:
-            add(*dynCast<const Function>(&topLevel));
+        case Type::Function: {
+            const auto functionTop = dynCast<const Function>(&topLevel);
+            add(*functionTop);
             break;
-        case Type::StaticVariable:
-            add(*dynCast<const StaticVariable>(&topLevel));
+        }
+        case Type::StaticVariable: {
+            const auto variableTop = dynCast<const StaticVariable>(&topLevel);
+            add(*variableTop);
             break;
-        case Type::StaticConstant:
-            add(*dynCast<const ConstVariable>(&topLevel));
+        }
+        case Type::StaticConstant: {
+            const auto constantTop = dynCast<const ConstVariable>(&topLevel);
+            add(*constantTop);
             break;
+        }
+        case Type::StaticCompound: {
+            const auto arrayTop = dynCast<const CompoundVariable>(&topLevel);
+            add(*arrayTop);
+            break;
+        }
         default:
-            addLine("Unknown Instruction");
+            addLine("Unknown Toplevel");
     }
+    addLine("");
+}
+
+void AsmPrinter::add(const Initializer& init)
+{
+    switch (init.kind) {
+        case Initializer::Kind::Value: {
+            const auto valueInit = dynCast<const ValueInitializer>(&init);
+            add(*valueInit);
+            break;
+        }
+        case Initializer::Kind::Zero: {
+            const auto zeroInit = dynCast<const ZeroInitializer>(&init);
+            add(*zeroInit);
+            break;
+        }
+    }
+}
+
+void AsmPrinter::add(const ValueInitializer& init)
+{
+    addLine(std::to_string(init.init) + " " + to_string(init.asmType));
+}
+
+void AsmPrinter::add(const ZeroInitializer& init)
+{
+    addLine("Zero: " + std::to_string(init.size));
 }
 
 void AsmPrinter::add(const StaticVariable& staticVariable)
@@ -46,7 +83,17 @@ void AsmPrinter::add(const StaticVariable& staticVariable)
 void AsmPrinter::add(const ConstVariable& constVariable)
 {
     addLine(constVariable.name.value + " " + std::to_string(constVariable.staticInit) + " " +
-            std::to_string(constVariable.alignment));
+        std::to_string(constVariable.alignment));
+}
+
+void AsmPrinter::add(const CompoundVariable& compoundVariable)
+{
+    IndentGuard indent(m_indentLevel);
+    addLine(compoundVariable.name.value);
+    addLine("Alignment: " + std::to_string(compoundVariable.alignment));
+    IndentGuard indentBody(m_indentLevel);
+    for (const auto& init : compoundVariable.initializers)
+        add(*init);
 }
 
 void AsmPrinter::add(const Function& function)

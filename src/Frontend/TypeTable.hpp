@@ -14,11 +14,11 @@ struct MemberEntry {
     std::string name;
     std::unique_ptr<Parsing::TypeBase> type;
     const i64 offset;
-    const i32 size;
+    const i64 size;
     MemberEntry(std::string name,
                 std::unique_ptr<Parsing::TypeBase> type,
                 const i64 offset,
-                const i32 size)
+                const i64 size)
         : name(std::move(name)), type(std::move(type)), offset(offset), size(size) {}
 };
 
@@ -26,12 +26,12 @@ struct StructuredEntry {
     std::vector<MemberEntry> members;
     std::unordered_map<std::string, MemberEntry> memberMap;
     const i64 size;
-    const i32 alignment;
+    const i64 alignment;
     const Type type;
     StructuredEntry(std::vector<MemberEntry>&& members,
                     std::unordered_map<std::string, MemberEntry>&& memberMap,
                     const i64 size,
-                    const i32 alignment,
+                    const i64 alignment,
                     const Type type)
         : members(std::move(members)),
           memberMap(std::move(memberMap)),
@@ -60,11 +60,11 @@ public:
     [[nodiscard]] bool isInCompleteStructuredType(const Parsing::TypeBase& typeBase) const;
     [[nodiscard]] bool isPointerToInCompleteStructuredType(const Parsing::TypeBase& typeBase) const;
 
-    [[nodiscard]] i32 getAlignment(const Parsing::TypeBase* type) const;
+    [[nodiscard]] i64 getAlignment(const Parsing::TypeBase* type) const;
     [[nodiscard]] i64 getSize(const Parsing::TypeBase* type) const;
     [[nodiscard]] i64 getStructuredSize(const Parsing::TypeBase* type) const;
-    [[nodiscard]] i32 getStructuredAlignment(const Parsing::TypeBase* type) const;
+    [[nodiscard]] i64 getStructuredAlignment(const Parsing::TypeBase* type) const;
     [[nodiscard]] bool isIncompleteTypeBase(const Parsing::TypeBase& typeBase) const;
 };
 
-i64 roundUp(i64 structSize, i32 memberAlignment);
+i64 roundUp(i64 structSize, i64 memberAlignment);
