@@ -60,6 +60,7 @@ private:
     void print(const AllocateInst& inst);
 
     void addLine(const std::string &line);
+    void addLine(const std::string& prefix, const std::string& message);
     std::string getIndent() const;
 };
 

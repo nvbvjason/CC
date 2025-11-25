@@ -1,4 +1,7 @@
 #include "IrPrinter.hpp"
+
+#include <iomanip>
+
 #include "DynCast.hpp"
 
 #include <sstream>
@@ -98,6 +101,7 @@ void IrPrinter::print(const Function& function)
             args += print(arg) + ", ";
         addLine("args: " + args);
     }
+    IndentGuard guardBody(m_indentLevel);
     for (const auto& inst : function.insts)
         print(*inst);
 }
@@ -122,50 +126,50 @@ std::string IrPrinter::print(const Identifier& identifier)
 void IrPrinter::print(const ReturnInst& inst)
 {
     if (inst.returnValue)
-        addLine("Return: " + print(*inst.returnValue));
+        addLine("Return", print(*inst.returnValue));
     else
-        addLine("Return:");
+        addLine("Return");
     addLine("");
 }
 
 void IrPrinter::print(const SignExtendInst& inst)
 {
-    addLine("SignExtend: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("SignExtend", print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const ZeroExtendInst& inst)
 {
-    addLine("ZeroExtend: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("ZeroExtend", print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const TruncateInst& inst)
 {
-    addLine("Truncate: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("Truncate", print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const DoubleToIntInst& inst)
 {
-    addLine("DoubleToInt: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("DoubleToInt", print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const DoubleToUIntInst& inst)
 {
-    addLine("DoubleToUInt: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("DoubleToUInt",  print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const IntToDoubleInst& inst)
 {
-    addLine("IntToDouble: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("IntToDouble", print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const UIntToDoubleInst& inst)
 {
-    addLine("UIntToDouble: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("UIntToDouble", print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const UnaryInst& inst)
 {
-    addLine(to_string(inst.operation) + " " +
+    addLine(to_string(inst.operation),
             print(*inst.src) + " -> " +
             print(*inst.dst) + ", " +
             to_string(inst.type));
@@ -173,36 +177,36 @@ void IrPrinter::print(const UnaryInst& inst)
 
 void IrPrinter::print(const BinaryInst& inst)
 {
-    addLine(print(*inst.lhs) + " " +
-            to_string(inst.operation) + " " +
-            print(*inst.rhs) + " -> " +
-            print(*inst.dst) + ", " +
-            to_string(inst.type));
+    addLine(to_string(inst.operation),
+             print(*inst.lhs) + " " +
+             print(*inst.rhs) + " -> " +
+             print(*inst.dst) + ", " +
+             to_string(inst.type));
 }
 
 void IrPrinter::print(const CopyInst& inst)
 {
-    addLine("Copy: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("Copy", print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const GetAddressInst& inst)
 {
-    addLine("GetAddress: " + print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("GetAddress", print(*inst.src) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const LoadInst& inst)
 {
-    addLine("Load: " + print(*inst.ptr) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
+    addLine("Load", print(*inst.ptr) + " -> " + print(*inst.dst) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const StoreInst& inst)
 {
-    addLine("Store: " + print(*inst.src) + " -> " + print(*inst.ptr) + ", " + to_string(inst.type));
+    addLine("Store", print(*inst.src) + " -> " + print(*inst.ptr) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const AddPtrInst& inst)
 {
-    addLine("AddPtrInst: " +
+    addLine("AddPtr",
             print(*inst.ptr) + " + " +
             print(*inst.index) + " * " +
             std::to_string(inst.scale) + " -> " +
@@ -212,7 +216,7 @@ void IrPrinter::print(const AddPtrInst& inst)
 
 void IrPrinter::print(const CopyToOffsetInst& inst)
 {
-    addLine("CopyToOffsetInst: " +
+    addLine("CopyToOffset",
             print(*inst.src) + " -> " +
             print(inst.iden) + " offset " +
             std::to_string(inst.offset) + ", " +
@@ -221,7 +225,7 @@ void IrPrinter::print(const CopyToOffsetInst& inst)
 
 void IrPrinter::print(const CopyFromOffsetInst& inst)
 {
-    addLine("CopyFromOffsetInst: " +
+    addLine("CopyFromOffset",
         print(inst.src) + " -> " +
         print(*inst.dst) + " offset " +
         std::to_string(inst.offset) + ", " +
@@ -230,22 +234,22 @@ void IrPrinter::print(const CopyFromOffsetInst& inst)
 
 void IrPrinter::print(const JumpInst& inst)
 {
-    addLine("Jump: " + print(inst.target));
+    addLine("Jump", print(inst.target));
 }
 
 void IrPrinter::print(const JumpIfZeroInst& inst)
 {
-    addLine("JumpIfZero: " + print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
+    addLine("JumpIfZero", print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const JumpIfNotZeroInst& inst)
 {
-    addLine("JumpIfNotZero: " + print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
+    addLine("JumpIfNotZero", print(*inst.condition) + ", " + print(inst.target) + ", " + to_string(inst.type));
 }
 
 void IrPrinter::print(const LabelInst& inst)
 {
-    addLine("Label: " +print(inst.target));
+    addLine("Label", print(inst.target));
 }
 
 void IrPrinter::print(const FunCallInst &inst)
@@ -264,7 +268,7 @@ void IrPrinter::print(const FunCallInst &inst)
 
 void IrPrinter::print(const AllocateInst& inst)
 {
-    addLine("Allocate:" + print(inst.iden) + ", " + std::to_string(inst.size));
+    addLine("Allocate", print(inst.iden) + ", " + std::to_string(inst.size));
 }
 
 std::string IrPrinter::print(const ValueVar& val)
@@ -384,6 +388,18 @@ void IrPrinter::print(const Instruction& instruction) {
 void IrPrinter::addLine(const std::string& line)
 {
     m_oss << getIndent() << line << '\n';
+}
+
+void IrPrinter::addLine(const std::string& prefix, const std::string& message)
+{
+    constexpr i32 mnemonicWidth = 18;
+    constexpr i32 operandsWidth = 50;
+    std::ostringstream oss;
+    oss << getIndent();
+    oss << std::left << std::setw(mnemonicWidth) << prefix
+        << std::setw(operandsWidth) << message;
+    oss << "\n";
+    m_oss << oss.str();
 }
 
 std::string IrPrinter::getIndent() const

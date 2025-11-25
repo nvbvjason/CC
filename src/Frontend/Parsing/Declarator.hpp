@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ASTBase.hpp"
-#include "CodeGen/AsmAST.hpp"
 
 namespace Parsing {
 
@@ -31,7 +30,7 @@ struct AbstractPointer : AbstractDeclarator {
 
 struct AbstractArrayDeclarator : AbstractDeclarator {
     std::unique_ptr<AbstractDeclarator> abstractDeclarator;
-    i64 size;
+    const i64 size;
 
     explicit AbstractArrayDeclarator(std::unique_ptr<AbstractDeclarator>&& abstractDeclarator, const i64 size)
         : AbstractDeclarator(Kind::Array), abstractDeclarator(std::move(abstractDeclarator)), size(size) {}
@@ -83,7 +82,7 @@ struct PointerDeclarator : Declarator {
 
 struct ArrayDeclarator : Declarator {
     std::unique_ptr<Declarator> declarator;
-    i64 size;
+    const i64 size;
 
     explicit ArrayDeclarator(std::unique_ptr<Declarator>&& declarator, const i64 size)
         : Declarator(Kind::Array), declarator(std::move(declarator)), size(size) {}

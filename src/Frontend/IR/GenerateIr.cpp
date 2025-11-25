@@ -841,8 +841,6 @@ std::unique_ptr<ExprResult> GenerateIr::genBinaryInst(const Parsing::BinaryExpr&
 
 std::unique_ptr<ExprResult> GenerateIr::genBinarySimpleInst(const Parsing::BinaryExpr& binaryExpr)
 {
-
-
     const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
     const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
 
@@ -1041,22 +1039,6 @@ std::unique_ptr<ExprResult> GenerateIr::genStringPlainOperand(const Parsing::Str
     auto valueVar = std::make_shared<ValueVar>(iden, pointerType);
     valueVar->referingTo = ReferingTo::Static;
     return std::make_unique<PlainOperand>(valueVar);
-}
-
-std::shared_ptr<Value> genConstValue(const Parsing::ConstExpr& constExpr)
-{
-    switch (constExpr.type->type) {
-        case Type::I8:          return std::make_shared<ValueConst>(std::get<i8>(constExpr.value));
-        case Type::U8:          return std::make_shared<ValueConst>(std::get<u8>(constExpr.value));
-        case Type::Char:        return std::make_shared<ValueConst>(std::get<char>(constExpr.value));
-        case Type::I32:         return std::make_shared<ValueConst>(std::get<i32>(constExpr.value));
-        case Type::U32:         return std::make_shared<ValueConst>(std::get<u32>(constExpr.value));
-        case Type::I64:         return std::make_shared<ValueConst>(std::get<i64>(constExpr.value));
-        case Type::U64:         return std::make_shared<ValueConst>(std::get<u64>(constExpr.value));
-        case Type::Double:      return std::make_shared<ValueConst>(std::get<double>(constExpr.value));
-        default:
-            std::abort();
-    }
 }
 
 std::unique_ptr<ExprResult> GenerateIr::genTernaryInst(const Parsing::TernaryExpr& ternaryExpr)
@@ -1302,6 +1284,22 @@ Type getSubscriptDereferenceType(Parsing::TypeBase* typeBase)
             const auto arrayType = dynCast<Parsing::ArrayType>(typeBase);
             return arrayType->elementType->type;
         }
+        default:
+            std::abort();
+    }
+}
+
+std::shared_ptr<Value> genConstValue(const Parsing::ConstExpr& constExpr)
+{
+    switch (constExpr.type->type) {
+        case Type::I8:          return std::make_shared<ValueConst>(std::get<i8>(constExpr.value));
+        case Type::U8:          return std::make_shared<ValueConst>(std::get<u8>(constExpr.value));
+        case Type::Char:        return std::make_shared<ValueConst>(std::get<char>(constExpr.value));
+        case Type::I32:         return std::make_shared<ValueConst>(std::get<i32>(constExpr.value));
+        case Type::U32:         return std::make_shared<ValueConst>(std::get<u32>(constExpr.value));
+        case Type::I64:         return std::make_shared<ValueConst>(std::get<i64>(constExpr.value));
+        case Type::U64:         return std::make_shared<ValueConst>(std::get<u64>(constExpr.value));
+        case Type::Double:      return std::make_shared<ValueConst>(std::get<double>(constExpr.value));
         default:
             std::abort();
     }
