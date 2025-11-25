@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 struct MemberEntry {
@@ -14,11 +15,11 @@ struct MemberEntry {
     std::unique_ptr<Parsing::TypeBase> type;
     const i64 offset;
     const i32 size;
-    MemberEntry(const std::string& name,
+    MemberEntry(std::string name,
                 std::unique_ptr<Parsing::TypeBase> type,
                 const i64 offset,
                 const i32 size)
-        : name(name), type(std::move(type)), offset(offset), size(size) {}
+        : name(std::move(name)), type(std::move(type)), offset(offset), size(size) {}
 };
 
 struct StructuredEntry {
@@ -40,8 +41,8 @@ struct StructuredEntry {
 };
 
 class TypeTable {
-    std::unordered_map<std::string, StructuredEntry> entries;
 public:
+    std::unordered_map<std::string, StructuredEntry> entries;
     [[nodiscard]] bool isDefined(const Parsing::StructuredType& type) const;
     [[nodiscard]] Parsing::TypeBase* getMemberType(
         const std::string& structuredName,

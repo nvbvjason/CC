@@ -47,9 +47,12 @@ i32 TypeTable::getAlignment(const Parsing::TypeBase* const type) const
         return 8;
     if (type->kind == Parsing::TypeBase::Kind::Array) {
         const Parsing::TypeBase* innerType = Parsing::getArrayBaseType(*type);
-        if (isStructuredType(innerType->type))
-            return getStructuredAlignment(innerType);
-        return getTypeSize(innerType->type);
+        const i64 innerSize = getSize(innerType);
+        const i64 arrayLength = Parsing::getArrayLength(type);
+        const i64 length = arrayLength * innerSize;
+        if (16 < length)
+            return 16;
+        return getSize(innerType);
     }
     return getTypeSize(type->type);
 }
@@ -149,8 +152,8 @@ bool TypeTable::isInCompleteStructuredType(const Parsing::TypeBase& typeBase) co
 
 i64 roundUp(const i64 structSize, const i32 memberAlignment)
 {
-    const i64 diff = structSize % memberAlignment;
-    return structSize + memberAlignment - diff;
+    const i64 diff = (structSize + memberAlignment) % memberAlignment;
+    return structSize + diff;
 }
 
 bool TypeTable::isIncompleteTypeBase(const Parsing::TypeBase& typeBase) const

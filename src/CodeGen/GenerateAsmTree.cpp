@@ -277,6 +277,11 @@ void GenerateAsmTree::genInst(const std::unique_ptr<Ir::Instruction>& inst)
             genCopyToOffSet(*irCopyToOffset);
             break;
         }
+        case Kind::CopyFromOffset: {
+            const auto irCopyFromOffset = dynCast<const Ir::CopyFromOffsetInst>(inst.get());
+            genCopyFromOffset(*irCopyFromOffset);
+            break;
+        }
         case Kind::Allocate: {
             const auto allocate = dynCast<const Ir::AllocateInst>(inst.get());
             genAllocate(*allocate);
@@ -359,11 +364,55 @@ void GenerateAsmTree::genJumpIfNotZeroInteger(const Ir::JumpIfNotZeroInst& jumpI
     emplaceJmpCC(Inst::CondCode::NE, target);
 }
 
+void GenerateAsmTree::genMove(
+    i64 offset,
+    i64 size,
+    const AsmType type,
+    const Ir::ValueVar& srcValue,
+    const Ir::ValueVar& dstValue)
+{
+    const auto src = std::make_shared<PseudoMemOperand>(
+        Identifier(srcValue.value.value),
+        offset,
+        size,
+        0,
+        srcValue.referingTo == ReferingTo::Local,
+        type);
+    const auto dst = std::make_shared<PseudoMemOperand>(
+        Identifier(dstValue.value.value),
+        offset,
+        size,
+        0,
+        dstValue.referingTo == ReferingTo::Local,
+        type);
+    emplaceMove(src, dst, src->type);
+}
+
+void GenerateAsmTree::genCopyByteArray(const Ir::ValueVar& src, const Ir::ValueVar& dst, const i64 size)
+{
+    i64 i = 0;
+    for (; i + 8 <= size; i += 8)
+        genMove(i, 8, asmQuadWord, src, dst);
+    for (; i + 4 <= size; i += 4)
+        genMove(i, 4, asmLongWord, src, dst);
+    for (; i + 2 <= size; i += 2)
+        genMove(i, 2, asmWord, src, dst);
+    for (; i < size; ++i)
+        genMove(i, 1, asmByte, src, dst);
+}
+
 void GenerateAsmTree::genCopy(const Ir::CopyInst& copy)
 {
-    const std::shared_ptr<Operand> src = genOperand(copy.src);
-    const std::shared_ptr<Operand> dst = genOperand(copy.dst);
-    emplaceMove(src, dst, src->type);
+    if (copy.type.kind != Ir::IrType::Kind::ByteArray) {
+        const std::shared_ptr<Operand> src = genOperand(copy.src);
+        const std::shared_ptr<Operand> dst = genOperand(copy.dst);
+        emplaceMove(src, dst, src->type);
+        return;
+    }
+    const AsmType type = getAsmType(copy.type);
+    const auto src = dynCast<const Ir::ValueVar>(copy.src.get());
+    const auto dst = dynCast<const Ir::ValueVar>(copy.dst.get());
+    genCopyByteArray(*src, *dst, type.size);
 }
 
 void GenerateAsmTree::genGetAddress(const Ir::GetAddressInst& getAddress)
@@ -381,6 +430,13 @@ void GenerateAsmTree::genLoad(const Ir::LoadInst& load)
     const auto memory = std::make_shared<MemoryOperand>(RegType::DX, 0, asmQuadWord);
 
     emplaceMove(ptr, rax, asmQuadWord);
+    if (load.type.kind == Ir::IrType::Kind::ByteArray) {
+        const auto asmType = getAsmType(load.type);
+        const auto src = dynCast<const Ir::ValueVar>(load.ptr.get());
+        const auto dstValue = dynCast<const Ir::ValueVar>(load.dst.get());
+        genCopyByteArray(*src, *dstValue, asmType.size);
+        return;
+    }
     emplaceMove(memory, dst, dst->type);
 }
 
@@ -929,6 +985,22 @@ void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
     emplaceMove(src, pseudoMem, srcType);
 }
 
+void GenerateAsmTree::genCopyFromOffset(const Ir::CopyFromOffsetInst& copyFromOffset)
+{
+    if (copyFromOffset.type.kind != Ir::IrType::Kind::ByteArray) {
+        const auto dst = genOperand(copyFromOffset.dst);
+        const auto src = std::make_shared<PseudoMemOperand>(
+                Identifier(copyFromOffset.src.value),
+                copyFromOffset.offset,
+                dst->type.size,
+                1,
+                true,
+                dst->type);
+        emplaceMove(src, dst, dst->type);
+        return;
+    }
+}
+
 void GenerateAsmTree::genAllocate(const Ir::AllocateInst& allocate)
 {
     emplacePushPseudo(allocate.size, getAsmType(allocate.type), allocate.iden.value);
@@ -966,12 +1038,12 @@ void GenerateAsmTree::deAllocateStack(const Ir::FunCallInst& funcCall, const i64
 
 void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
 {
-    const i32 stackPadding = getStackPadding(funcCall.args.size());
-    if (0 < stackPadding)
-        emplaceBinary(
-            std::make_shared<ImmOperand>(8, asmLongWord),
-            std::make_shared<RegisterOperand>(RegType::SP, asmQuadWord),
-            BinaryInst::Operator::Sub, asmQuadWord);
+    const i64 stackPadding = getStackPadding(funcCall.args.size());
+    if (0 < stackPadding) {
+        const auto left = std::make_shared<ImmOperand>(8, asmLongWord);
+        const auto right = std::make_shared<RegisterOperand>(RegType::SP, asmQuadWord);
+        emplaceBinary(left, right, BinaryInst::Operator::Sub, asmQuadWord);
+    }
     genFunCallPushArgs(funcCall);
     emplaceCall(Identifier(funcCall.funName.value));
     deAllocateStack(funcCall, stackPadding);
@@ -1080,12 +1152,12 @@ std::shared_ptr<Operand> GenerateAsmTree::genDoubleLocalConst(double value, i32 
 {
     const auto it = m_constantDoubles.find(value);
     if (it != m_constantDoubles.end())
-        return std::make_shared<DataOperand>(Identifier(it->second), asmDouble, true);
+        return std::make_shared<DataOperand>(asmDouble, 0, Identifier(it->second), true);
     Identifier constLabel(makeTemporaryPseudoName());
     m_toplevel.emplace_back(std::make_unique<ConstVariable>(
         Identifier(constLabel), alignment, value, true));
     m_constantDoubles.emplace_hint(it, value, constLabel.value);
-    return std::make_shared<DataOperand>(constLabel, asmDouble, true);
+    return std::make_shared<DataOperand>(asmDouble, 0, constLabel, true);
 }
 
 std::shared_ptr<Operand> GenerateAsmTree::getZeroOperand(const AsmType type)

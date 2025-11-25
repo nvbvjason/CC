@@ -153,10 +153,11 @@ struct MemoryOperand final : Operand {
 
 struct DataOperand final : Operand {
     Identifier identifier;
+    i64 offset;
     bool local;
 
-    DataOperand(Identifier iden, const AsmType asmType, const bool local)
-        : Operand(Kind::Data, asmType), identifier(std::move(iden)), local(local) {}
+    DataOperand(const AsmType asmType, const i64 offset, Identifier iden, const bool local)
+        : Operand(Kind::Data, asmType), identifier(std::move(iden)), offset(offset), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Data; }
 

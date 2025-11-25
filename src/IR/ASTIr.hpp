@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -161,6 +162,7 @@ protected:
 
 struct ReturnInst final : Instruction {
     std::shared_ptr<Value> returnValue = nullptr;
+    const i64 structReturnType = 0;
 
     explicit ReturnInst(const IrType t)
         : Instruction(Kind::Return, t) {}
@@ -515,6 +517,9 @@ struct Function final : TopLevel {
     std::vector<Identifier> args;
     std::vector<IrType> argTypes;
     std::vector<std::unique_ptr<Instruction>> insts;
+    const std::vector<i64> functions;
+    const i64 returnType = 0;
+
     const bool isGlobal;
     Function(std::string identifier, const bool isGlobal)
         : TopLevel(Kind::Function), name(std::move(identifier)), isGlobal(isGlobal) {}
@@ -578,9 +583,19 @@ struct StaticConstant final : TopLevel {
     StaticConstant() = delete;
 };
 
+struct IrStruct final {
+    const std::vector<IrType> types;
+    const std::vector<i64> offsets;
+
+    IrStruct(std::vector<IrType>&& types, std::vector<i64>&& offsets)
+        : types(std::move(types)), offsets(std::move(offsets)) {}
+};
+
 struct Program {
     std::vector<std::unique_ptr<TopLevel>> topLevels;
     std::vector<std::unique_ptr<Value>> values;
+    std::unordered_map<std::string, IrStruct> structs;
+
     Program() = default;
 
     Program(Program&&) = default;

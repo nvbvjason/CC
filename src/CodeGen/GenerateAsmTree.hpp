@@ -90,8 +90,17 @@ public:
     void genStore(const Ir::StoreInst& store);
     void genLabel(const Ir::LabelInst& irLabel);
     void genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset);
+    void genCopyFromOffset(const Ir::CopyFromOffsetInst& copyFromOffset);
     void genAllocate(const Ir::AllocateInst& allocate);
-    std::shared_ptr<Operand> getReturnRegister(const Ir::ReturnInst& returnInst);
+    static std::shared_ptr<Operand> getReturnRegister(const Ir::ReturnInst& returnInst);
+
+    void genMove(
+        i64 offset,
+        i64 size,
+        AsmType type,
+        const Ir::ValueVar& srcValue,
+                const Ir::ValueVar& dstValue);
+    void genCopyByteArray(const Ir::ValueVar& src, const Ir::ValueVar& dst, i64 size);
 
     void genFunCall(const Ir::FunCallInst& funcCall);
     std::vector<bool> genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall);

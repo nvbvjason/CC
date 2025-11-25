@@ -22,14 +22,14 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
     if (operand && (operand->kind == Operand::Kind::PseudoMem || operand->kind == Operand::Kind::Pseudo)) {
         const auto [referingTo, asmType, isLocal, identifier, offset] = getPseudoValues(operand);
         if (referingTo == ReferingTo::Extern || referingTo == ReferingTo::Static) {
-            operand = std::make_shared<DataOperand>(Identifier(identifier), asmType, !isLocal);
+            operand = std::make_shared<DataOperand>(asmType, 0, Identifier(identifier), !isLocal);
             return;
         }
         if (!m_pseudoMap.contains(identifier)) {
             if (operand->kind == Operand::Kind::PseudoMem) {
                 const auto pseudoMem = dynCast<PseudoMemOperand>(operand.get());
                 i64 arraySize = pseudoMem->size;
-                if (arraySize % pseudoMem->alignment != 0) {
+                if (arraySize != 0 && arraySize % pseudoMem->alignment != 0) {
                     arraySize -= arraySize % pseudoMem->alignment;
                     arraySize += pseudoMem->alignment;
                 }

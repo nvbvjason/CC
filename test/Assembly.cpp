@@ -227,8 +227,8 @@ TEST(AssemblyTests, asmOperand)
 
     const std::vector<TestDataOperand> tests = {
         {"invalid pseudo", make_shared<PseudoOperand>(Iden(""), ReferingTo::Local, CodeGen::asmLongWord, true)},
-        {"(%rip)", make_shared<DataOperand>(Iden(""), CodeGen::asmLongWord, true)},
-        {".L(%rip)", make_shared<DataOperand>(Iden(""), CodeGen::asmDouble, true)},
+        {"(%rip)", make_shared<DataOperand>(CodeGen::asmLongWord, 0, Iden(""), true)},
+        {".L(%rip)", make_shared<DataOperand>(CodeGen::asmDouble, 0, Iden(""), true)},
         {"$0", make_shared<ImmOperand>(0l, CodeGen::asmQuadWord)},
         {"%rax", make_shared<RegisterOperand>(RegKind::AX, CodeGen::asmQuadWord)},
         {"10(%rcx)", make_shared<MemoryOperand>(RegKind::CX, 10, CodeGen::asmQuadWord)},

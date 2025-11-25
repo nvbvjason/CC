@@ -105,6 +105,8 @@ inline AsmType getAsmType(const Ir::IrType type)
         return asmQuadWord;
     if (type == Ir::doubleType)
         return asmDouble;
+    if (type.kind == Ir::IrType::Kind::ByteArray)
+        return AsmType(AsmType::Kind::ByteArray, type.size);
     std::abort();
 }
 

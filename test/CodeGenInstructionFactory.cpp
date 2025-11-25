@@ -60,7 +60,7 @@ std::unique_ptr<Operand> CodeGenInstructionFactory::createOperand(const OperKind
         case OperKind::Memory:
             return std::make_unique<MemoryOperand>(RegType::R8, 0, asmType);
         case OperKind::Data:
-            return std::make_unique<DataOperand>(Identifier("x"), asmType, false);
+            return std::make_unique<DataOperand>(asmType, 0, Identifier("x"), false);
     }
     std::abort();
 }

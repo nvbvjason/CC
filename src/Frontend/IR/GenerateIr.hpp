@@ -19,6 +19,8 @@ class GenerateIr {
     SymbolTable& m_symbolTable;
     std::unordered_set<std::string> m_writtenGlobals;
     std::vector<std::unique_ptr<TopLevel>> m_topLevels;
+    std::unordered_map<std::string, IrStruct> m_irStructs;
+
     std::unordered_map<std::string, std::string> m_constStrings;
 
     const TypeTable& typeTable;
@@ -27,6 +29,7 @@ public:
         : m_symbolTable(symbolTable), typeTable(varTable) {}
     void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
     std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
+    std::unique_ptr<TopLevel> structuredDecl(const Parsing::StructuredDecl& structuredDecl);
     std::unique_ptr<TopLevel> functionIr(const Parsing::FuncDecl& parsingFunction);
 
     std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl);
@@ -39,7 +42,6 @@ public:
     void genBlockItem(const Parsing::BlockItem& blockItem);
     void genSingleDeclaration(const Parsing::VarDecl& varDecl);
     void genZeroLocalInit(const std::string& name,
-                          Type type,
                           i64 arraySize,
                           i64 alignment,
                           i64 lengthZeroInit,

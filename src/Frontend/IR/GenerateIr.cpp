@@ -26,6 +26,7 @@ void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyP
         m_topLevels.emplace_back(std::move(topLevel));
     }
     tackyProgram.topLevels = std::move(m_topLevels);
+    tackyProgram.structs = std::move(m_irStructs);
 }
 
 std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& decl)
@@ -42,9 +43,26 @@ std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& dec
             const auto varDecl = dynCast<const Parsing::VarDecl>(&decl);
             return staticVariableIr(*varDecl);
         }
+        case Kind::StructuredDecl: {
+            const auto structured = dynCast<const Parsing::StructuredDecl>(&decl);
+            return structuredDecl(*structured);
+        }
         default:
             std::abort();
     }
+}
+
+std::unique_ptr<TopLevel> GenerateIr::structuredDecl(const Parsing::StructuredDecl& structuredDecl)
+{
+    std::vector<IrType> types;
+    std::vector<i64> offsets;
+    for (const auto& member : structuredDecl.members) {
+        types.push_back(convert(*member->type));
+        offsets.push_back(0);
+    }
+    IrStruct structured(std::move(types), std::move(offsets));
+    m_irStructs.emplace(structuredDecl.identifier, structured);
+    return nullptr;
 }
 
 void GenerateIr::allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl)
@@ -127,24 +145,21 @@ void GenerateIr::genSingleLocalInit(const std::string& name,
 void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl& varDecl)
 {
     const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
-    const auto arrayType = dynCast<Parsing::ArrayType>(varDecl.type.get());
-    const Type type = getArrayType(varDecl.type.get());
-    const i64 arraySize = Parsing::getArrayLength(arrayType) * getTypeSize(type);
-    const i64 alignment = Parsing::getArrayAlignment(arraySize, type);
+    const i64 declSize = typeTable.getSize(varDecl.type.get());
+    const i64 alignment = typeTable.getAlignment(varDecl.type.get());
     i64 offset = 0;
-    const auto zeroConst = genZeroValueForType(type);
     for (const auto& init : compoundInit->initializers) {
         switch (init->kind) {
             case Parsing::Initializer::Kind::Single: {
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(init.get());
-                genSingleLocalInit(varDecl.name, type, arraySize, alignment, offset, *singleInit);
+                const Type type = singleInit->expr->type->type;
+                genSingleLocalInit(varDecl.name, type, declSize, alignment, offset, *singleInit);
                 break;
             }
             case Parsing::Initializer::Kind::Zero: {
                 const auto zeroInit = dynCast<Parsing::ZeroInitializer>(init.get());
                 genZeroLocalInit(varDecl.name,
-                                 type,
-                                 arraySize,
+                                 declSize,
                                  alignment,
                                  zeroInit->size,
                                  offset);
@@ -157,27 +172,25 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl& varDecl)
 }
 
 void GenerateIr::genZeroLocalInit(const std::string& name,
-                                  const Type type,
                                   const i64 arraySize,
                                   const i64 alignment,
                                   const i64 lengthZeroInit,
                                   i64& offset)
 {
     size_t i = 0;
-    const IrType irType = convertType(type);
     for (; i + 8 <= lengthZeroInit; i += 8) {
         emplaceCopyToOffset(
-            zeroConst8, Identifier(name), offset, arraySize, alignment, irType);
+            zeroConst8, Identifier(name), offset, arraySize, alignment, u8Type);
         offset += 8;
     }
     for (; i + 4 <= lengthZeroInit; i += 4) {
         emplaceCopyToOffset(
-            zeroConst4, Identifier(name), offset, arraySize, alignment, irType);
+            zeroConst4, Identifier(name), offset, arraySize, alignment, u8Type);
         offset += 4;
     }
     for (; i < lengthZeroInit; ++i) {
         emplaceCopyToOffset(
-    zeroConst1, Identifier(name), offset, arraySize, alignment, irType);
+    zeroConst1, Identifier(name), offset, arraySize, alignment, u8Type);
         ++offset;
     }
 }
