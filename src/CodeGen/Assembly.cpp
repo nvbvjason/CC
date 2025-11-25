@@ -158,7 +158,6 @@ void asmStaticArray(std::string& result, const ArrayVariable& array)
         result += asmFormatInstruction(".data");
     result += asmFormatInstruction(".align", std::to_string(array.alignment));
     result += asmFormatLabel(array.name.value);
-    const std::string typeName = '.' + getTypeName(array.type);
     for (const auto& init : array.initializers) {
         switch (init->kind) {
             case Initializer::Kind::Zero: {
@@ -168,6 +167,7 @@ void asmStaticArray(std::string& result, const ArrayVariable& array)
             }
             case Initializer::Kind::Value: {
                 const auto value = dynCast<ValueInitializer>(init.get());
+                const std::string typeName = '.' + getTypeName(value->asmType);
                 result += asmFormatInstruction(typeName, std::to_string(value->init));
                 break;
             }

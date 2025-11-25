@@ -53,7 +53,6 @@ void IrPrinter::print(const StaticArray& staticArray)
 {
     IndentGuard guard(m_indentLevel);
     addLine("StaticArray: " + staticArray.name);
-    addLine("Type: " + to_string(staticArray.type));
     IndentGuard guardInits(m_indentLevel);
     if (staticArray.global)
         addLine("is Global");
@@ -375,6 +374,7 @@ void IrPrinter::print(const Instruction& instruction) {
         case Kind::Label:           print(*dynCast<const LabelInst>(&instruction)); break;
         case Kind::FunCall:         print(*dynCast<const FunCallInst>(&instruction)); break;
         case Kind::Allocate:        print(*dynCast<const AllocateInst>(&instruction)); break;
+        case Kind::CopyFromOffset:  print(*dynCast<const CopyFromOffsetInst>(&instruction)); break;
         default:
             m_oss << "Unknown Instruction\n";
             break;

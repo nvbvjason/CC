@@ -549,16 +549,13 @@ struct StaticVariable final : TopLevel {
 struct StaticArray final : TopLevel {
     const std::string name;
     const std::vector<std::unique_ptr<Initializer>> initializers;
-    const IrType type;
     const bool global;
     StaticArray(std::string identifier,
                 std::vector<std::unique_ptr<Initializer>>&& initializers,
-                const IrType ty,
                 const bool isGlobal)
         : TopLevel(Kind::StaticArray),
           name(std::move(identifier)),
           initializers(std::move(initializers)),
-          type(ty),
           global(isGlobal) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticArray; }

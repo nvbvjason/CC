@@ -2,7 +2,6 @@
 #include "AsmAST.hpp"
 #include "DynCast.hpp"
 #include "FixUpInstructions.hpp"
-#include "PseudoRegisterReplacer.hpp"
 #include "Operators.hpp"
 #include "Types/TypeConversion.hpp"
 
@@ -153,7 +152,7 @@ std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray)
                 const auto value = dynCast<Ir::ValueInitializer>(init.get());
                 const auto constValue = dynCast<Ir::ValueConst>(value->value.get());
                 initializers.emplace_back(std::make_unique<ValueInitializer>(
-                    getSingleInitValue(constValue->type.kind, constValue)));
+                    getSingleInitValue(constValue->type.kind, constValue), getAsmType(constValue->type)));
                 break;
             }
             case Ir::Initializer::Kind::Zero: {
@@ -164,8 +163,7 @@ std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray)
         }
     }
     return std::make_unique<ArrayVariable>(
-        Identifier(staticArray.name), 16, std::move(initializers),
-        staticArray.global, getAsmType(staticArray.type));
+        Identifier(staticArray.name), 16, std::move(initializers), staticArray.global);
 }
 
 void GenerateAsmTree::genInst(const std::unique_ptr<Ir::Instruction>& inst)

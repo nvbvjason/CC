@@ -230,9 +230,10 @@ struct ZeroInitializer final : Initializer {
 
 struct ValueInitializer final : Initializer {
     const u64 init;
+    const AsmType asmType;
 
-    explicit ValueInitializer(const u64 init)
-        : Initializer(Kind::Value), init(init) {}
+    explicit ValueInitializer(const u64 init, const AsmType asmType)
+        : Initializer(Kind::Value), init(init), asmType(asmType) {}
 
     static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Value; }
 
@@ -609,16 +610,14 @@ struct ArrayVariable final : TopLevel {
     i32 alignment;
     std::vector<std::unique_ptr<Initializer>> initializers;
     const bool isGlobal;
-    const AsmType type;
 
     ArrayVariable(Identifier name,
                   const i32 alignment,
                   std::vector<std::unique_ptr<Initializer>>&& initializers,
-                  const bool local,
-                  const AsmType type)
+                  const bool local)
         : TopLevel(Kind::StaticArray), name(std::move(name)), alignment(alignment),
                                          initializers(std::move(initializers)),
-                                         isGlobal(local), type(type) {}
+                                         isGlobal(local) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticArray; }
 

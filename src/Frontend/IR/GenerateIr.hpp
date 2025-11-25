@@ -33,9 +33,10 @@ public:
     std::unique_ptr<TopLevel> functionIr(const Parsing::FuncDecl& parsingFunction);
 
     std::unique_ptr<TopLevel> staticVariableIr(const Parsing::VarDecl& varDecl);
-    std::unique_ptr<TopLevel> genStaticArray(const Parsing::VarDecl& varDecl, bool defined);
+    std::unique_ptr<TopLevel> genStaticWithoutInit(const Parsing::VarDecl& varDecl) const;
+    std::unique_ptr<TopLevel> genCompoundInit(const Parsing::VarDecl& varDecl);
     std::unique_ptr<TopLevel> genStaticInit(const Parsing::VarDecl& varDecl, bool defined);
-    std::vector<std::unique_ptr<Initializer>> genStaticArrayInit(const Parsing::VarDecl& varDecl, bool defined);
+    std::vector<std::unique_ptr<Initializer>> genStaticCompoundInit(const Parsing::VarDecl& varDecl);
     std::shared_ptr<Value> genStaticVariableInit(const Parsing::VarDecl& varDecl, bool defined);
 
     void genBlock(const Parsing::Block& block);
