@@ -177,8 +177,9 @@ void IrPrinter::print(const UnaryInst& inst)
 
 void IrPrinter::print(const BinaryInst& inst)
 {
-    addLine(to_string(inst.operation),
+    addLine("Binary",
              print(*inst.lhs) + " " +
+            to_string(inst.operation) + " " +
              print(*inst.rhs) + " -> " +
              print(*inst.dst) + ", " +
              to_string(inst.type));
@@ -311,26 +312,27 @@ std::string to_string(const BinaryInst::Operation op)
 {
     using Operation = BinaryInst::Operation;
     switch (op) {
-        case Operation::Add:            return "Add";
-        case Operation::Subtract:       return "Subtract";
-        case Operation::Multiply:       return "Multiply";
-        case Operation::Divide:         return "Divide";
-        case Operation::Remainder:      return "Remainder";
-        case Operation::BitwiseAnd:     return "BitwiseAnd";
-        case Operation::BitwiseOr:      return "BitwiseOr";
-        case Operation::BitwiseXor:     return "BitwiseXor";
-        case Operation::LeftShift:      return "LeftShift";
-        case Operation::RightShift:     return "RightShift";
-        case Operation::And:            return "And";
-        case Operation::Or:             return "Or";
-        case Operation::Equal:          return "Equal";
-        case Operation::NotEqual:       return "NotEqual";
-        case Operation::LessThan:       return "LessThan";
-        case Operation::LessOrEqual:    return "LessOrEqual";
-        case Operation::GreaterThan:    return "GreaterThan";
-        case Operation::GreaterOrEqual: return "GreaterOrEqual";
+        case Operation::Add:            return "+";
+        case Operation::Subtract:       return "-";
+        case Operation::Multiply:       return "*";
+        case Operation::Divide:         return "/";
+        case Operation::Remainder:      return "%";
+        case Operation::BitwiseAnd:     return "&";
+        case Operation::BitwiseOr:      return "|";
+        case Operation::BitwiseXor:     return "^";
+        case Operation::LeftShift:      return "<<";
+        case Operation::RightShift:     return ">>";
+        case Operation::And:            return "&&";
+        case Operation::Or:             return "||";
+        case Operation::Equal:          return "==";
+        case Operation::NotEqual:       return "!=";
+        case Operation::LessThan:       return "<";
+        case Operation::LessOrEqual:    return "<=";
+        case Operation::GreaterThan:    return ">";
+        case Operation::GreaterOrEqual: return ">=";
+            default:
+                return "UnknownBinaryOp";
     }
-    return "UnknownBinaryOp";
 }
 
 std::string to_string(const IrType type)

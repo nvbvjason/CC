@@ -159,38 +159,38 @@ void AsmPrinter::add(const Inst& inst)
 
 void AsmPrinter::add(const MoveInst& move)
 {
-    addLine("MoveInst: ", to_string(*move.src) + " " + to_string(*move.dst));
+    addLine("Move", to_string(*move.src) + " " + to_string(*move.dst));
 }
 
 void AsmPrinter::add(const MoveSXInst& moveSX)
 {
-    addLine("MoveSXInst: ",
+    addLine("MoveSX",
         to_string(*moveSX.src) + " " +
         to_string(*moveSX.dst));
 }
 
 void AsmPrinter::add(const MoveZeroExtendInst& moveZeroExtend)
 {
-    addLine("MoveZeroExtendInst: ",
+    addLine("MoveZeroExtend",
             to_string(*moveZeroExtend.src) + " " +
             to_string(*moveZeroExtend.dst));
 }
 
 void AsmPrinter::add(const LeaInst& lea)
 {
-    addLine("LeaInst: ", to_string(*lea.src) + " " + to_string(*lea.dst));
+    addLine("Lea ", to_string(*lea.src) + " " + to_string(*lea.dst));
 }
 
 void AsmPrinter::add(const UnaryInst& unary)
 {
-    addLine("Unary: ",
+    addLine("Unary",
             to_string(unary.oper) + " " +
             to_string(*unary.destination));
 }
 
 void AsmPrinter::add(const BinaryInst& binary)
 {
-    addLine("Binary: ",
+    addLine("Binary",
             to_string(*binary.lhs) + " " +
             to_string(binary.oper) + " " +
             to_string(*binary.rhs));
@@ -198,19 +198,19 @@ void AsmPrinter::add(const BinaryInst& binary)
 
 void AsmPrinter::add(const CmpInst& cmp)
 {
-    addLine("Cmp: ",
+    addLine("Cmp",
             to_string(*cmp.lhs) + " " +
             to_string(*cmp.rhs));
 }
 
 void AsmPrinter::add(const IdivInst& idiv)
 {
-    addLine("Idiv: ", to_string(*idiv.operand));
+    addLine("Idiv", to_string(*idiv.operand));
 }
 
 void AsmPrinter::add(const DivInst& div)
 {
-    addLine("Div: ", to_string(*div.operand));
+    addLine("Div", to_string(*div.operand));
 }
 
 void AsmPrinter::add(const CdqInst& cpq)
@@ -220,42 +220,43 @@ void AsmPrinter::add(const CdqInst& cpq)
 
 void AsmPrinter::add(const JmpInst& jmp)
 {
-    addLine("Jmp: ", to_string(jmp.target));
+    addLine("Jmp", to_string(jmp.target));
 }
 
 void AsmPrinter::add(const JmpCCInst& jmpCC)
 {
-    addLine("JmpCC: ",
+    addLine("JmpCC",
             to_string(jmpCC.target) + " " +
             to_string(jmpCC.condition));
 }
 
 void AsmPrinter::add(const SetCCInst& setCC)
 {
-    addLine("SetCC: ",
+    addLine("SetCC",
             to_string(*setCC.operand) + " " +
             to_string(setCC.condition));
 }
 
 void AsmPrinter::add(const LabelInst& label)
 {
-    addLine("Label: ",
+    addLine("Label",
             to_string(label.target));
 }
 
 void AsmPrinter::add(const PushInst& push)
 {
-    addLine("Push: ",  to_string(*push.operand));
+    addLine("Push",  to_string(*push.operand));
 }
 
 void AsmPrinter::add(const CallInst& call)
 {
-    addLine("Call: ", to_string(call.funName));
+    addLine("Call", to_string(call.funName));
 }
 
 void AsmPrinter::add(const ReturnInst& returnInst)
 {
-    addLine("Return: \n");
+    addLine("Return");
+    addLine("");
 }
 
 void AsmPrinter::add(const Cvtsi2sdInst& cvtsi2sd)
@@ -430,7 +431,7 @@ std::string to_string(const AsmType type)
 void AsmPrinter::addLine(const std::string& name,
                          const std::string& operands)
 {
-    constexpr i32 mnemonicWidth = 14;
+    constexpr i32 mnemonicWidth = 12;
     constexpr i32 operandsWidth = 50;
     std::ostringstream oss;
     oss << getIndent();

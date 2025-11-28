@@ -42,10 +42,11 @@ struct DereferencedPointer : ExprResult {
 
 struct SubObject : ExprResult {
     const Identifier base;
+    const ReferingTo referingTo;
     const i64 offset;
 
-    SubObject(Identifier base, const i64 offset)
-        : ExprResult(Kind::SubObject), base(std::move(base)), offset(offset) {}
+    SubObject(Identifier base, const ReferingTo referingTo, const i64 offset)
+        : ExprResult(Kind::SubObject), base(std::move(base)), referingTo(referingTo), offset(offset) {}
 
     static bool classOf(const ExprResult* expr) { return expr->kind == Kind::SubObject; }
 
