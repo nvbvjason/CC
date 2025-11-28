@@ -139,7 +139,7 @@ void GenerateIr::genSingleLocalInit(const std::string& name,
         emplaceGetAddress(value, var, convertType(Type::Pointer));
         value = var;
     }
-    emplaceCopyToOffset(value, Identifier(name), offset, arraySize, alignment, convertType(type));
+    emplaceCopyToOffset(value, Identifier(name), ReferingTo::Local, offset, arraySize, alignment, convertType(type));
     offset += typeSize;
 }
 
@@ -181,17 +181,17 @@ void GenerateIr::genZeroLocalInit(const std::string& name,
     size_t i = 0;
     for (; i + 8 <= lengthZeroInit; i += 8) {
         emplaceCopyToOffset(
-            zeroConst8, Identifier(name), offset, arraySize, alignment, u8Type);
+            zeroConst8, Identifier(name), ReferingTo::Local, offset, arraySize, alignment, u8Type);
         offset += 8;
     }
     for (; i + 4 <= lengthZeroInit; i += 4) {
         emplaceCopyToOffset(
-            zeroConst4, Identifier(name), offset, arraySize, alignment, u8Type);
+            zeroConst4, Identifier(name), ReferingTo::Local, offset, arraySize, alignment, u8Type);
         offset += 4;
     }
     for (; i < lengthZeroInit; ++i) {
         emplaceCopyToOffset(
-    zeroConst1, Identifier(name), offset, arraySize, alignment, u8Type);
+    zeroConst1, Identifier(name), ReferingTo::Local, offset, arraySize, alignment, u8Type);
         ++offset;
     }
 }
@@ -695,9 +695,9 @@ std::shared_ptr<Value> GenerateIr::genInstAndConvert(const Parsing::Expr& parsin
         }
         case ExprResult::Kind::SubObject: {
             const auto subObject = dynCast<const SubObject>(result.get());
-            std::shared_ptr<Value> dst = std::make_shared<ValueVar>(
+            auto dst = std::make_shared<ValueVar>(
                 makeTemporaryName(subObject->base.value), convert(*parsingExpr.type));
-            emplaceCopyFromOffset(subObject->base, dst, subObject->offset, dst->type);
+            emplaceCopyFromOffset(subObject->base, subObject->referingTo, dst, subObject->offset, dst->type);
             return dst;
         }
     }
@@ -1012,7 +1012,7 @@ std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentE
         }
         case ExprResult::Kind::SubObject: {
             const auto subObj = dynCast<const SubObject>(lhs.get());
-            emplaceCopyToOffset(rhs ,subObj->base, subObj->offset, 0, 0, rhs->type);
+            emplaceCopyToOffset(rhs ,subObj->base, subObj->referingTo, subObj->offset, 0, 0, rhs->type);
             return std::make_unique<PlainOperand>(rhs);
         }
     }

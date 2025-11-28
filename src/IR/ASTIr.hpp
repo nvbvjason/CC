@@ -381,18 +381,20 @@ struct AddPtrInst final : Instruction {
 struct CopyToOffsetInst final : Instruction {
     std::shared_ptr<Value> src;
     const Identifier iden;
+    const ReferingTo referingTo;
     const i64 offset;
     const i64 size;
     const i64 alignment;
 
     CopyToOffsetInst(const std::shared_ptr<Value>& src,
                      Identifier iden,
+                     const ReferingTo referingTo,
                      const i64 offset,
                      const i64 size,
                      const i64 alignment,
                      const IrType t)
         : Instruction(Kind::CopyToOffset, t), src(src),
-          iden(std::move(iden)), offset(offset), size(size), alignment(alignment) {}
+          iden(std::move(iden)), referingTo(referingTo), offset(offset), size(size), alignment(alignment) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyToOffset; }
 
@@ -401,14 +403,16 @@ struct CopyToOffsetInst final : Instruction {
 
 struct CopyFromOffsetInst final : Instruction {
     const Identifier src;
+    const ReferingTo referingTo;
     std::shared_ptr<Value> dst;
     const i64 offset;
 
     CopyFromOffsetInst(Identifier iden,
+                       const ReferingTo referingTo,
                        const std::shared_ptr<Value>& dst,
                        const i64 offset,
                        const IrType t)
-    : Instruction(Kind::CopyFromOffset, t), src(std::move(iden)),
+    : Instruction(Kind::CopyFromOffset, t), src(std::move(iden)), referingTo(referingTo),
             dst(dst), offset(offset) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyFromOffset; }

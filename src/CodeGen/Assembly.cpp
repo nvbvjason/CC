@@ -346,9 +346,14 @@ std::string asmOperand(const std::shared_ptr<Operand>& operand)
         }
         case Operand::Kind::Data: {
             const auto dataOperand = dynCast<DataOperand>(operand.get());
+            std::string prefix;
+            if (dataOperand->offset == 0)
+                prefix = "(%rip)";
+            else
+                prefix = "+" + std::to_string(dataOperand->offset) + "(%rip)";
             if (dataOperand->local && dataOperand->type == asmDouble)
-                return createLabel(dataOperand->identifier.value) + "(%rip)";
-            return dataOperand->identifier.value + "(%rip)";
+                return createLabel(dataOperand->identifier.value) + prefix;
+            return dataOperand->identifier.value + prefix;
         }
         case Operand::Kind::Indexed: {
             const auto indexedOperand = dynCast<IndexedOperand>(operand.get());

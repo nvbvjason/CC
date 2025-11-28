@@ -238,19 +238,22 @@ private:
     }
     void emplaceCopyToOffset(const std::shared_ptr<Value>& src,
                              const Identifier& iden,
+                             const ReferingTo referingTo,
                              const i64 offset,
                              const i64 arraySize,
                              const i64 alignment,
                              const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<CopyToOffsetInst>(src, iden, offset, arraySize, alignment, type));
+        m_insts.emplace_back(std::make_unique<CopyToOffsetInst>(
+            src, iden, referingTo, offset, arraySize, alignment, type));
     }
     void emplaceCopyFromOffset(const Identifier& iden,
+                               const ReferingTo referingTo,
                                const std::shared_ptr<Value>& dst,
                                const i64 offset,
                                const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<CopyFromOffsetInst>(iden, dst, offset, type));
+        m_insts.emplace_back(std::make_unique<CopyFromOffsetInst>(iden, referingTo, dst, offset, type));
     }
     void emplaceJump(const Identifier& iden)
     {

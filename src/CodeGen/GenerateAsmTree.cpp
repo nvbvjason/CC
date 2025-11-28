@@ -972,6 +972,8 @@ void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
     }
     if (copyToOffset.src->kind == Ir::Value::Kind::Constant)
         referingToLocal = true;
+    if (copyToOffset.referingTo != ReferingTo::Local)
+        referingToLocal = false;
     const auto pseudoMem = std::make_shared<PseudoMemOperand>(
             Identifier(copyToOffset.iden.value),
             copyToOffset.offset,
@@ -980,6 +982,7 @@ void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
             referingToLocal,
             srcType);
 
+    pseudoMem->referingTo = copyToOffset.referingTo;
     emplaceMove(src, pseudoMem, srcType);
 }
 
@@ -992,8 +995,9 @@ void GenerateAsmTree::genCopyFromOffset(const Ir::CopyFromOffsetInst& copyFromOf
                 copyFromOffset.offset,
                 dst->type.size,
                 1,
-                true,
+                copyFromOffset.referingTo == ReferingTo::Local,
                 dst->type);
+        src->referingTo = copyFromOffset.referingTo;
         emplaceMove(src, dst, dst->type);
         return;
     }
