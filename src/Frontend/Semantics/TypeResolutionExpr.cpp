@@ -181,18 +181,17 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertUnaryExpr(Parsing::Una
     if (hasError())
         return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
 
-    if (isStructuredType(unaryExpr.innerExpr->type->type)) {
+    if (isStructuredType(unaryExpr.innerExpr->type->type))
         addError("Cannot apply unary operation to structure type", unaryExpr.innerExpr->location);
-        return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
-    }
-    if (unaryExpr.innerExpr->type->type == Type::Void) {
+    if (unaryExpr.innerExpr->type->type == Type::Void)
         addError("Cannot apply unary operation to void", unaryExpr.innerExpr->location);
-        return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
-    }
-    if (isVoidPointer(*unaryExpr.innerExpr->type)) {
+    if (isVoidPointer(*unaryExpr.innerExpr->type))
         addError("Cannot apply unary operation to void pointer", unaryExpr.innerExpr->location);
-        return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
-    }
+    if (unaryExpr.innerExpr->type->type == Type::Double && unaryExpr.op == Operator::Complement)
+        addError("Cannot complement double", unaryExpr.location);
+    if (unaryExpr.innerExpr->type->type == Type::Pointer && isIllegalUnaryPointerOperator(unaryExpr.op))
+        addError("Cannot apply operator to pointer", unaryExpr.location);
+
     if (unaryExpr.innerExpr->type->type == Type::Array || unaryExpr.innerExpr->kind == Parsing::Expr::Kind::AddrOf) {
         if (isPrefixOp(unaryExpr.op))
             addError("Cannot apply prefix decrement", unaryExpr.location);
@@ -200,18 +199,6 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertUnaryExpr(Parsing::Una
             addError("Cannot apply postfix decrement", unaryExpr.location);
     }
 
-    if (unaryExpr.innerExpr->type->type == Type::Double) {
-        if (unaryExpr.op == Operator::Complement) {
-            addError("Cannot complement double", unaryExpr.location);
-            return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
-        }
-    }
-    if (unaryExpr.innerExpr->type->type == Type::Pointer) {
-        if (isIllegalUnaryPointerOperator(unaryExpr.op)) {
-            addError("Cannot apply operator to pointer", unaryExpr.location);
-            return std::make_unique<Parsing::UnaryExpr>(std::move(unaryExpr));
-        }
-    }
     if (unaryExpr.op == Operator::Not)
         unaryExpr.type = std::make_unique<Parsing::VarType>(s_boolType);
     else
@@ -429,7 +416,7 @@ bool TypeResolutionExpr::isLegalAssignExpr(const Parsing::AssignmentExpr& assign
     const Type commonType = getCommonType(leftType, rightType);
     const BinaryOp binaryOp = convertAssignOperation(assignmentExpr.op);
     if (commonType == Type::Double && isIllegalFloatingBinaryOperator(binaryOp)) {
-        addError("Is double compound assign operator", assignmentExpr.location);
+        addError("Cannot compound double with this operator", assignmentExpr.location);
         return false;
     }
     if (leftType == Type::Pointer) {
@@ -437,8 +424,8 @@ bool TypeResolutionExpr::isLegalAssignExpr(const Parsing::AssignmentExpr& assign
             addError("Is illegal pointer assign operator", assignmentExpr.location);
             return false;
         }
-        if ((assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign) &&
-                 isIntegerType(rightType)) {
+        if ((assignmentExpr.op == Oper::PlusAssign || assignmentExpr.op == Oper::MinusAssign)
+            && isIntegerType(rightType)) {
             return true;
         }
         addError("Cannot convert one type to pointer", assignmentExpr.location);
@@ -509,10 +496,9 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::validateAndConvertPtrsInTerna
         ternaryExpr.type = std::move(Parsing::deepCopy(*ternaryExpr.trueExpr->type));
         return std::make_unique<Parsing::TernaryExpr>(std::move(ternaryExpr));
     }
-    if (!areValidNonArithmeticTypesInTernaryExpr(ternaryExpr)) {
+    if (!areValidNonArithmeticTypesInTernaryExpr(ternaryExpr))
         addError("Are not valid non arithmetic types in ternary", ternaryExpr.location);
-        return std::make_unique<Parsing::TernaryExpr>(std::move(ternaryExpr));
-    }
+
     if (trueType != Type::Pointer) {
         ternaryExpr.trueExpr = std::make_unique<Parsing::CastExpr>(
             std::move(Parsing::deepCopy(*ternaryExpr.falseExpr->type)), std::move(ternaryExpr.trueExpr));
@@ -583,10 +569,8 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertAddrOfExpr(Parsing::Ad
 
     if (hasError())
         return std::make_unique<Parsing::AddrOffExpr>(std::move(addrOffExpr));
-    if (addrOffExpr.reference->kind == Parsing::Expr::Kind::AddrOf) {
+    if (addrOffExpr.reference->kind == Parsing::Expr::Kind::AddrOf)
         addError("Cannot have address-of of address-of operation", addrOffExpr.location);
-        return std::make_unique<Parsing::AddrOffExpr>(std::move(addrOffExpr));
-    }
     addrOffExpr.type = std::make_unique<Parsing::PointerType>(
         Parsing::deepCopy(*addrOffExpr.reference->type));
     return std::make_unique<Parsing::AddrOffExpr>(std::move(addrOffExpr));
@@ -596,8 +580,6 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertDerefExpr(Parsing::Der
 {
     dereferenceExpr.reference = convertArrayType(*dereferenceExpr.reference);
 
-    if (hasError())
-        return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
     if (dereferenceExpr.reference->type->type != Type::Pointer) {
         addError("Cannot dereference non pointer", dereferenceExpr.location);
         return std::make_unique<Parsing::DereferenceExpr>(std::move(dereferenceExpr));
@@ -611,9 +593,6 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertSubscriptExpr(Parsing:
 {
     subscriptExpr.referencing = convertArrayType(*subscriptExpr.referencing);
     subscriptExpr.index = convertArrayType(*subscriptExpr.index);
-
-    if (hasError())
-        return std::make_unique<Parsing::SubscriptExpr>(std::move(subscriptExpr));
 
     if (typeTable.isPointerToInCompleteStructuredType(*subscriptExpr.referencing->type)) {
         addError("Cannot subscript incomplete pointer type", subscriptExpr.referencing->location);
@@ -696,23 +675,18 @@ const Parsing::TypeBase* TypeResolutionExpr::validateStructuredAccessors(
 std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertDotExpr(Parsing::DotExpr& dotExpr)
 {
     dotExpr.structuredExpr = convertArrayType(*dotExpr.structuredExpr);
-    if (hasError())
-        return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
     const Parsing::TypeBase* type = validateStructuredAccessors(
         dotExpr.structuredExpr->type.get(), dotExpr.member, dotExpr.location);
-    if (type == nullptr) {
+    if (type == nullptr)
         addError("Could not find member for " + dotExpr.member, dotExpr.location);
-        return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
-    }
-    dotExpr.type = Parsing::deepCopy(*type);
+    else
+        dotExpr.type = Parsing::deepCopy(*type);
     return std::make_unique<Parsing::DotExpr>(std::move(dotExpr));
 }
 
 std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertArrowExpr(Parsing::ArrowExpr& arrowExpr)
 {
     arrowExpr.pointerExpr = convertArrayType(*arrowExpr.pointerExpr);
-    if (hasError())
-        return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
     if (arrowExpr.pointerExpr->type->kind != Parsing::TypeBase::Kind::Pointer) {
         addError("Arrow prefix must be on pointer", arrowExpr.pointerExpr->location);
         return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
@@ -720,11 +694,10 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertArrowExpr(Parsing::Arr
     const auto pointerType = dynCast<const Parsing::PointerType>(arrowExpr.pointerExpr->type.get());
     const Parsing::TypeBase* type = validateStructuredAccessors(
         pointerType->referenced.get(), arrowExpr.identifier, arrowExpr.location);
-    if (type == nullptr) {
+    if (type == nullptr)
         addError("Could not find member for " + arrowExpr.identifier, arrowExpr.location);
-        return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
-    }
-    arrowExpr.type = Parsing::deepCopy(*type);
+    else
+        arrowExpr.type = Parsing::deepCopy(*type);
     return std::make_unique<Parsing::ArrowExpr>(std::move(arrowExpr));
 }
 

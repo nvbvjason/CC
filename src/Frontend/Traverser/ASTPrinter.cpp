@@ -447,14 +447,20 @@ void ASTPrinter::visit(const SizeOfTypeExpr& sizeOfTypeExpr)
 void ASTPrinter::visit(const DotExpr& dotExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("DotExpr");
+    if (dotExpr.type)
+        addLine("DotExpr " + varTypeToString(dotExpr.type->type));
+    else
+        addLine("DotExpr");
     ConstASTTraverser::visit(dotExpr);
 }
 
 void ASTPrinter::visit(const ArrowExpr& arrowExpr)
 {
     IndentGuard guard(m_indentLevel);
-    addLine("arrowExpr");
+    if (arrowExpr.type)
+        addLine("arrowExpr " + varTypeToString(arrowExpr.type->type));
+    else
+        addLine("arrowExpr");
     ConstASTTraverser::visit(arrowExpr);
 }
 

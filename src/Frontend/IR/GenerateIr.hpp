@@ -146,145 +146,145 @@ private:
         }
     }
 
-    void emplaceReturn()
+    void emitReturn()
     {
         m_insts.emplace_back(std::make_unique<ReturnInst>(voidType));
     }
-    void emplaceReturn(const std::shared_ptr<Value>& src, const IrType type)
+    void emitReturn(const std::shared_ptr<Value>& src, const IrType type)
     {
         m_insts.emplace_back(std::make_unique<ReturnInst>(src, type));
     }
-    void emplaceSignExtend(const std::shared_ptr<Value>& src,
-                           const std::shared_ptr<Value>& dst,
-                           const IrType type)
+    void emitSignExtend(const std::shared_ptr<Value>& src,
+                        const std::shared_ptr<Value>& dst,
+                        const IrType type)
     {
         m_insts.emplace_back(std::make_unique<SignExtendInst>(src, dst, type));
     }
-    void emplaceTruncate(const std::shared_ptr<Value>& src,
-                         const std::shared_ptr<Value>& dst,
-                         const IrType type)
-    {
-        m_insts.emplace_back(std::make_unique<TruncateInst>(src, dst, type));
-    }
-    void emplaceZeroExtend(const std::shared_ptr<Value>& src,
-                           const std::shared_ptr<Value>& dst,
-                           const IrType type)
-    {
-        m_insts.emplace_back(std::make_unique<ZeroExtendInst>(src, dst, type));
-    }
-    void emplaceDoubleToInt(const std::shared_ptr<Value>& src,
-                            const std::shared_ptr<Value>& dst,
-                            const IrType type)
-    {
-        m_insts.emplace_back(std::make_unique<DoubleToIntInst>(src, dst, type));
-    }
-    void emplaceDoubleToUInt(const std::shared_ptr<Value>& src,
-                             const std::shared_ptr<Value>& dst,
-                             const IrType type)
-    {
-        m_insts.emplace_back(std::make_unique<DoubleToUIntInst>(src, dst, type));
-    }
-    void emplaceIntToDouble(const std::shared_ptr<Value>& src,
-                            const std::shared_ptr<Value>& dst,
-                            const IrType type)
-    {
-        m_insts.emplace_back(std::make_unique<IntToDoubleInst>(src, dst, type));
-    }
-    void emplaceUIntToDouble(const std::shared_ptr<Value>& src,
-                             const std::shared_ptr<Value>& dst,
-                             const IrType type)
-    {
-        m_insts.emplace_back(std::make_unique<UIntToDoubleInst>(src, dst, type));
-    }
-    void emplaceUnary(const UnaryInst::Operation oper,
-                      const std::shared_ptr<Value>& src,
+    void emitTruncate(const std::shared_ptr<Value>& src,
                       const std::shared_ptr<Value>& dst,
                       const IrType type)
     {
+        m_insts.emplace_back(std::make_unique<TruncateInst>(src, dst, type));
+    }
+    void emitZeroExtend(const std::shared_ptr<Value>& src,
+                        const std::shared_ptr<Value>& dst,
+                        const IrType type)
+    {
+        m_insts.emplace_back(std::make_unique<ZeroExtendInst>(src, dst, type));
+    }
+    void emitDoubleToInt(const std::shared_ptr<Value>& src,
+                         const std::shared_ptr<Value>& dst,
+                         const IrType type)
+    {
+        m_insts.emplace_back(std::make_unique<DoubleToIntInst>(src, dst, type));
+    }
+    void emitDoubleToUInt(const std::shared_ptr<Value>& src,
+                          const std::shared_ptr<Value>& dst,
+                          const IrType type)
+    {
+        m_insts.emplace_back(std::make_unique<DoubleToUIntInst>(src, dst, type));
+    }
+    void emitIntToDouble(const std::shared_ptr<Value>& src,
+                         const std::shared_ptr<Value>& dst,
+                         const IrType type)
+    {
+        m_insts.emplace_back(std::make_unique<IntToDoubleInst>(src, dst, type));
+    }
+    void emitUIntToDouble(const std::shared_ptr<Value>& src,
+                          const std::shared_ptr<Value>& dst,
+                          const IrType type)
+    {
+        m_insts.emplace_back(std::make_unique<UIntToDoubleInst>(src, dst, type));
+    }
+    void emitUnary(const UnaryInst::Operation oper,
+                   const std::shared_ptr<Value>& src,
+                   const std::shared_ptr<Value>& dst,
+                   const IrType type)
+    {
         m_insts.emplace_back(std::make_unique<UnaryInst>(oper, src, dst, type));
     }
-    void emplaceBinary(const BinaryInst::Operation oper,
-                       const std::shared_ptr<Value>& lhs,
-                       const std::shared_ptr<Value>& rhs,
-                       const std::shared_ptr<Value>& dst,
-                       const IrType type)
+    void emitBinary(const BinaryInst::Operation oper,
+                    const std::shared_ptr<Value>& lhs,
+                    const std::shared_ptr<Value>& rhs,
+                    const std::shared_ptr<Value>& dst,
+                    const IrType type)
     {
         m_insts.emplace_back(std::make_unique<BinaryInst>(oper, lhs, rhs, dst, type));
     }
-    void emplaceCopy(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType type)
+    void emitCopy(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType type)
     {
         m_insts.emplace_back(std::make_unique<CopyInst>(src, dst, type));
     }
-    void emplaceGetAddress(const std::shared_ptr<Value>& src,
-                           const std::shared_ptr<Value>& dst,
-                           const IrType type)
+    void emitGetAddress(const std::shared_ptr<Value>& src,
+                        const std::shared_ptr<Value>& dst,
+                        const IrType type)
     {
         m_insts.emplace_back(std::make_unique<GetAddressInst>(src, dst, type));
     }
-    void emplaceLoad(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType type)
+    void emitLoad(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType type)
     {
         m_insts.emplace_back(std::make_unique<LoadInst>(src, dst, type));
     }
-    void emplaceStore(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType type)
+    void emitStore(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType type)
     {
         m_insts.emplace_back(std::make_unique<StoreInst>(src, dst, type));
     }
-    void emplaceAddPtr(const std::shared_ptr<Value>& ptr,
-                       const std::shared_ptr<Value>& index,
-                       const std::shared_ptr<Value>& dst,
-                       const i64 scale)
+    void emitAddPtr(const std::shared_ptr<Value>& ptr,
+                    const std::shared_ptr<Value>& index,
+                    const std::shared_ptr<Value>& dst,
+                    const i64 scale)
     {
         m_insts.emplace_back(std::make_unique<AddPtrInst>(ptr, index, dst, scale));
     }
-    void emplaceCopyToOffset(const std::shared_ptr<Value>& src,
-                             const Identifier& iden,
-                             const ReferingTo referingTo,
-                             const i64 offset,
-                             const i64 arraySize,
-                             const i64 alignment,
-                             const IrType type)
+    void emitCopyToOffset(const std::shared_ptr<Value>& src,
+                          const Identifier& iden,
+                          const ReferingTo referingTo,
+                          const i64 offset,
+                          const i64 arraySize,
+                          const i64 alignment,
+                          const IrType type)
     {
         m_insts.emplace_back(std::make_unique<CopyToOffsetInst>(
             src, iden, referingTo, offset, arraySize, alignment, type));
     }
-    void emplaceCopyFromOffset(const Identifier& iden,
-                               const ReferingTo referingTo,
-                               const std::shared_ptr<Value>& dst,
-                               const i64 offset,
-                               const IrType type)
+    void emitCopyFromOffset(const Identifier& iden,
+                            const ReferingTo referingTo,
+                            const std::shared_ptr<Value>& dst,
+                            const i64 offset,
+                            const IrType type)
     {
         m_insts.emplace_back(std::make_unique<CopyFromOffsetInst>(iden, referingTo, dst, offset, type));
     }
-    void emplaceJump(const Identifier& iden)
+    void emitJump(const Identifier& iden)
     {
         m_insts.emplace_back(std::make_unique<JumpInst>(iden));
     }
-    void emplaceJumpIfZero(const std::shared_ptr<Value>& src, const Identifier& iden)
+    void emitJumpIfZero(const std::shared_ptr<Value>& src, const Identifier& iden)
     {
         m_insts.emplace_back(std::make_unique<JumpIfZeroInst>(src, iden));
     }
-    void emplaceJumpIfNotZero(const std::shared_ptr<Value>& src, const Identifier& iden)
+    void emitJumpIfNotZero(const std::shared_ptr<Value>& src, const Identifier& iden)
     {
         m_insts.emplace_back(std::make_unique<JumpIfNotZeroInst>(src, iden));
     }
-    void emplaceLabel(const Identifier& iden)
+    void emitLabel(const Identifier& iden)
     {
         m_insts.emplace_back(std::make_unique<LabelInst>(iden));
     }
-    void emplaceFunCall(const Identifier& iden,
-                    std::vector<std::shared_ptr<Value>>&& src,
-                    const IrType type)
+    void emitFunCall(const Identifier& iden,
+                     std::vector<std::shared_ptr<Value>>&& src,
+                     const IrType type)
     {
         m_insts.emplace_back(std::make_unique<FunCallInst>(iden, std::move(src), type));
     }
-    void emplaceFunCall(const Identifier& iden,
-                        std::vector<std::shared_ptr<Value>>&& src,
-                        const std::shared_ptr<Value>& dst,
-                        const IrType type)
+    void emitFunCall(const Identifier& iden,
+                     std::vector<std::shared_ptr<Value>>&& src,
+                     const std::shared_ptr<Value>& dst,
+                     const IrType type)
     {
         m_insts.emplace_back(std::make_unique<FunCallInst>(iden, std::move(src), dst, type));
     }
-    void emplaceAllocate(const i64 size, const std::string& iden, const IrType type)
+    void emitAllocate(const i64 size, const std::string& iden, const IrType type)
     {
         m_insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden), type));
     }
