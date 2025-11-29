@@ -53,6 +53,13 @@ public:
     {
         return getMemberType(structuredName, memberName) != nullptr;
     }
+
+    static void emplaceMember(
+        i64 structuredAlignment,
+        i64 memberOffset,
+        std::vector<MemberEntry>& members,
+        std::unordered_map<std::string, MemberEntry>& memberMap,
+        const std::unique_ptr<Parsing::MemberDecl>& member);
     void addEntry(const std::string& uniqueName,
                   const Parsing::StructuredDecl& structuredDecl,
                   std::vector<Error>& errors);

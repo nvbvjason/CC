@@ -3,6 +3,47 @@
 #include "ASTUtils.hpp"
 #include "DynCast.hpp"
 
+void TypeTable::addEntry(const std::string& uniqueName,
+                         const Parsing::StructuredDecl& structuredDecl,
+                         std::vector<Error>& errors)
+{
+    i64 structSize = 0;
+    i64 structuredAlignment = 1;
+    std::vector<MemberEntry> members;
+    std::unordered_map<std::string, MemberEntry> memberMap;
+    for (const auto& member : structuredDecl.members) {
+        if (member->type->type == Type::Void) {
+            errors.emplace_back("Cannot have void type as structured member", member->location);
+            return;
+        }
+        if (isIncompleteTypeBase(*member->type)) {
+            errors.emplace_back("Cannot use incomplete type in structured definition", member->location);
+            return;
+        }
+        const i64 memberAlignment = getAlignment(member->type.get());
+        const i64 memberOffset = structuredDecl.isUnion() ? 0 : roundUp(structSize, memberAlignment);
+        emplaceMember(structuredAlignment, memberOffset, members, memberMap, member);
+        structuredAlignment = std::max(structuredAlignment, memberAlignment);
+        structSize = memberOffset + getSize(member->type.get());
+    }
+    structSize = roundUp(structSize, structuredAlignment);
+    entries.emplace(uniqueName, StructuredEntry(
+        std::move(members),
+        std::move(memberMap),
+        structSize,
+        structuredAlignment,
+        structuredDecl.type));
+}
+
+i64 roundUp(const i64 structSize, const i64 memberAlignment)
+{
+    const i64 mod = structSize % memberAlignment;
+    if (mod == 0)
+        return structSize;
+    const i64 diff = memberAlignment - mod;
+    return structSize + diff;
+}
+
 bool TypeTable::isDefined(const Parsing::StructuredType& type) const
 {
     const auto it = entries.find(type.identifier);
@@ -82,47 +123,6 @@ i64 TypeTable::getSize(const Parsing::TypeBase* type) const
     return getTypeSize(type->type);
 }
 
-void TypeTable::addEntry(const std::string& uniqueName,
-                        const Parsing::StructuredDecl& structuredDecl,
-                        std::vector<Error>& errors)
-{
-    i64 structSize = 0;
-    i64 structuredAlignment = 1;
-    std::vector<MemberEntry> members;
-    std::unordered_map<std::string, MemberEntry> memberMap;
-    for (const auto& member : structuredDecl.members) {
-        if (member->type->type == Type::Void) {
-            errors.emplace_back("Cannot have void type as structured member", member->location);
-            return;
-        }
-        if (isIncompleteTypeBase(*member->type)) {
-            errors.emplace_back("Cannot use incomplete type in structured definition", member->location);
-            return;
-        }
-        const i64 memberAlignment = getAlignment(member->type.get());
-        const i64 memberOffset = structuredDecl.isUnion() ? 0 : roundUp(structSize, memberAlignment);
-        members.emplace_back(
-            member->identifier,
-            Parsing::deepCopy(*member->type),
-            memberOffset,
-            structuredAlignment);
-        memberMap.emplace(member->identifier, MemberEntry(
-            member->identifier,
-            Parsing::deepCopy(*member->type),
-            memberOffset,
-            structuredAlignment));
-        structuredAlignment = std::max(structuredAlignment, memberAlignment);
-        structSize = memberOffset + getSize(member->type.get());
-    }
-    structSize = roundUp(structSize, structuredAlignment);
-    entries.emplace(uniqueName, StructuredEntry(
-        std::move(members),
-        std::move(memberMap),
-        structSize,
-        structuredAlignment,
-        structuredDecl.type));
-}
-
 i64 TypeTable::getOffset(const std::string& structuredName, const std::string& memberName) const
 {
     const auto it = entries.find(structuredName);
@@ -150,12 +150,6 @@ bool TypeTable::isInCompleteStructuredType(const Parsing::TypeBase& typeBase) co
     return !isDefined(*structuredType);
 }
 
-i64 roundUp(const i64 structSize, const i64 memberAlignment)
-{
-    const i64 diff = (structSize + memberAlignment) % memberAlignment;
-    return structSize + diff;
-}
-
 bool TypeTable::isIncompleteTypeBase(const Parsing::TypeBase& typeBase) const
 {
     const Parsing::TypeBase* travType = &typeBase;
@@ -180,4 +174,23 @@ bool TypeTable::isIncompleteTypeBase(const Parsing::TypeBase& typeBase) const
         }
     }
     return false;
+}
+
+void TypeTable::emplaceMember(
+    i64 structuredAlignment,
+    const i64 memberOffset,
+    std::vector<MemberEntry>& members,
+    std::unordered_map<std::string, MemberEntry>& memberMap,
+    const std::unique_ptr<Parsing::MemberDecl>& member)
+{
+    members.emplace_back(
+        member->identifier,
+        Parsing::deepCopy(*member->type),
+        memberOffset,
+        structuredAlignment);
+    memberMap.emplace(member->identifier, MemberEntry(
+                          member->identifier,
+                          Parsing::deepCopy(*member->type),
+                          memberOffset,
+                          structuredAlignment));
 }
