@@ -464,13 +464,13 @@ void GenerateIr::genIfBasicStmt(const Parsing::IfStmt& ifStmt)
 void GenerateIr::genIfElseStmt(const Parsing::IfStmt& ifStmt)
 {
     const std::shared_ptr<Value> condition = genInstAndConvert(*ifStmt.condition);
-    const Identifier elseStmtLabel = makeTemporaryName();
+    const Identifier elseLabelIden = makeTemporaryName();
     const Identifier endLabelIden = makeTemporaryName();
 
-    emitJumpIfZero(condition, elseStmtLabel);
+    emitJumpIfZero(condition, elseLabelIden);
     genStmt(*ifStmt.thenStmt);
     emitJump(endLabelIden);
-    emitLabel(elseStmtLabel);
+    emitLabel(elseLabelIden);
     genStmt(*ifStmt.elseStmt);
     emitLabel(endLabelIden);
 }
@@ -844,7 +844,7 @@ std::unique_ptr<ExprResult> GenerateIr::genBinarySimpleInst(const Parsing::Binar
     const std::shared_ptr<Value> lhs = genInstAndConvert(*binaryExpr.lhs);
     const std::shared_ptr<Value> rhs = genInstAndConvert(*binaryExpr.rhs);
 
-    auto dst = std::make_shared<ValueVar>(makeTemporaryName(), convert(*binaryExpr.type));
+    const auto dst = std::make_shared<ValueVar>(makeTemporaryName(), convert(*binaryExpr.type));
     const BinaryInst::Operation operation = convertBinaryOperation(binaryExpr.op);
     emitBinary(operation, lhs, rhs, dst, convert(*binaryExpr.type));
     return std::make_unique<PlainOperand>(dst);
@@ -1152,13 +1152,12 @@ std::unique_ptr<ExprResult> GenerateIr::genDereferenceInst(const Parsing::Derefe
 
 std::unique_ptr<ExprResult> GenerateIr::genSizeOfExprInst(const Parsing::SizeOfExprExpr& sizeOfExprExpr) const
 {
-    if (sizeOfExprExpr.innerExpr->kind == Parsing::Expr::Kind::Constant) {
-        if (sizeOfExprExpr.innerExpr->type->kind == Parsing::TypeBase::Kind::Var) {
-            const auto varType = dynCast<const Parsing::VarType>(sizeOfExprExpr.innerExpr->type.get());
-            if (varType->type == Type::Char) {
-                const auto valueSize = std::make_shared<ValueConst>(4l);
-                return std::make_unique<PlainOperand>(valueSize);
-            }
+    if (sizeOfExprExpr.innerExpr->kind == Parsing::Expr::Kind::Constant
+        && sizeOfExprExpr.innerExpr->type->kind == Parsing::TypeBase::Kind::Var) {
+        const auto varType = dynCast<const Parsing::VarType>(sizeOfExprExpr.innerExpr->type.get());
+        if (varType->type == Type::Char) {
+            const auto valueSize = std::make_shared<ValueConst>(4l);
+            return std::make_unique<PlainOperand>(valueSize);
         }
     }
     const i64 size = typeTable.getSize(sizeOfExprExpr.innerExpr->type.get());
@@ -1209,7 +1208,7 @@ std::unique_ptr<ExprResult> GenerateIr::genArrowExprInst(const Parsing::ArrowExp
     const auto structuredType = dynCast<const Parsing::StructuredType>(pointerTypeRef->referenced.get());
     const auto entry = typeTable.getEntry(structuredType->identifier);
     const i64 memberOffset = entry->memberMap.find(arrowExpr.identifier)->second.offset;
-    const auto dstPtr = std::make_shared<ValueVar>(makeTemporaryName(), convert(*arrowExpr.type));
+    const auto dstPtr = std::make_shared<ValueVar>(makeTemporaryName(), result->type);
     const auto index = std::make_shared<ValueConst>(memberOffset);
     emitAddPtr(result, index, dstPtr, 1l);
     return std::make_unique<DereferencedPointer>(dstPtr, arrowExpr.type->type);

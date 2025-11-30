@@ -154,8 +154,6 @@ private:
                   const std::shared_ptr<Operand>& dst,
                   const AsmType type)
     {
-        if (type.kind == AsmType::Kind::ByteArray)
-            std::abort();
         insts.emplace_back(std::make_unique<MoveInst>(src, dst, type));
     }
     void emitMoveZeroExtend(const std::shared_ptr<Operand>& src,
