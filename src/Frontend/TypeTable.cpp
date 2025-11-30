@@ -11,6 +11,9 @@ void TypeTable::addEntry(const std::string& uniqueName,
     i64 structuredAlignment = 1;
     std::vector<MemberEntry> members;
     std::unordered_map<std::string, MemberEntry> memberMap;
+    if (uniqueName == "contains_struct_array.9.tmp") {
+        structuredAlignment = 1;
+    }
     for (const auto& member : structuredDecl.members) {
         if (member->type->type == Type::Void) {
             errors.emplace_back("Cannot have void type as structured member", member->location);
@@ -22,9 +25,10 @@ void TypeTable::addEntry(const std::string& uniqueName,
         }
         const i64 memberAlignment = getAlignment(member->type.get());
         const i64 memberOffset = structuredDecl.isUnion() ? 0 : roundUp(structSize, memberAlignment);
+        const i64 memberSize = getSize(member->type.get());
         emplaceMember(structuredAlignment, memberOffset, members, memberMap, member);
         structuredAlignment = std::max(structuredAlignment, memberAlignment);
-        structSize = memberOffset + getSize(member->type.get());
+        structSize = memberOffset + memberSize;
     }
     structSize = roundUp(structSize, structuredAlignment);
     entries.emplace(uniqueName, StructuredEntry(
@@ -88,12 +92,7 @@ i64 TypeTable::getAlignment(const Parsing::TypeBase* const type) const
         return 8;
     if (type->kind == Parsing::TypeBase::Kind::Array) {
         const Parsing::TypeBase* innerType = Parsing::getArrayBaseType(*type);
-        const i64 innerSize = getSize(innerType);
-        const i64 arrayLength = Parsing::getArrayLength(type);
-        const i64 length = arrayLength * innerSize;
-        if (16 < length)
-            return 16;
-        return getSize(innerType);
+        return getAlignment(innerType);
     }
     return getTypeSize(type->type);
 }

@@ -147,7 +147,14 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl& varDecl)
 {
     const auto compoundInit = dynCast<Parsing::CompoundInitializer>(varDecl.init.get());
     const i64 declSize = typeTable.getSize(varDecl.type.get());
-    const i64 alignment = typeTable.getAlignment(varDecl.type.get());
+    i64 alignment = typeTable.getAlignment(varDecl.type.get());
+    if (varDecl.type->kind == Parsing::TypeBase::Kind::Array) {
+        const Parsing::TypeBase* innerType = Parsing::getArrayBaseType(*varDecl.type);
+        const i64 innerSize = typeTable.getSize(innerType);
+        const i64 length = declSize * innerSize;
+        if (16 < length)
+            alignment = 16;
+    }
     i64 offset = 0;
     for (const auto& init : compoundInit->initializers) {
         switch (init->kind) {
