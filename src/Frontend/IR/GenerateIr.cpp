@@ -1122,6 +1122,7 @@ std::unique_ptr<ExprResult> GenerateIr::genAddrOfInst(const Parsing::AddrOffExpr
         case ExprResult::Kind::SubObject: {
             const auto subObject = dynCast<const SubObject>(inner.get());
             const auto src = std::make_shared<ValueVar>(subObject->base, pointerType);
+            src->referingTo = subObject->referingTo;
             const auto dstPtr = std::make_shared<ValueVar>(makeTemporaryName(), pointerType);
             const auto dst = std::make_shared<ValueVar>(makeTemporaryName(), pointerType);
             const auto constOne = std::make_shared<ValueConst>(1l);

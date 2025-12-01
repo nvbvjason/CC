@@ -11,9 +11,6 @@ void TypeTable::addEntry(const std::string& uniqueName,
     i64 structuredAlignment = 1;
     std::vector<MemberEntry> members;
     std::unordered_map<std::string, MemberEntry> memberMap;
-    if (uniqueName == "contains_struct_array.9.tmp") {
-        structuredAlignment = 1;
-    }
     for (const auto& member : structuredDecl.members) {
         if (member->type->type == Type::Void) {
             errors.emplace_back("Cannot have void type as structured member", member->location);
