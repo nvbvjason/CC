@@ -1154,12 +1154,13 @@ std::shared_ptr<Operand> GenerateAsmTree::genDoubleLocalConst(double value, i32 
 {
     const auto it = m_constantDoubles.find(value);
     if (it != m_constantDoubles.end())
-        return std::make_shared<DataOperand>(asmDouble, 0, Identifier(it->second), true);
+        return std::make_shared<DataOperand>(
+            asmDouble, 0, Identifier(it->second), true, true);
     Identifier constLabel(makeTemporaryPseudoName());
     m_toplevel.emplace_back(std::make_unique<ConstVariable>(
         Identifier(constLabel), alignment, value, true));
     m_constantDoubles.emplace_hint(it, value, constLabel.value);
-    return std::make_shared<DataOperand>(asmDouble, 0, constLabel, true);
+    return std::make_shared<DataOperand>(asmDouble, 0, constLabel, true, true);
 }
 
 std::shared_ptr<Operand> GenerateAsmTree::getZeroOperand(const AsmType type)
@@ -1168,7 +1169,7 @@ std::shared_ptr<Operand> GenerateAsmTree::getZeroOperand(const AsmType type)
 
     switch (type.kind) {
         case AsmKind::Byte:       return std::make_shared<ImmOperand>(0, asmByte);
-        case AsmKind::LongWord:       return std::make_shared<ImmOperand>(0, asmLongWord);
+        case AsmKind::LongWord:   return std::make_shared<ImmOperand>(0, asmLongWord);
         case AsmKind::QuadWord:   return std::make_shared<ImmOperand>(0, asmQuadWord);
         case AsmKind::Double:     return genDoubleLocalConst(0.0, 8);
         default:

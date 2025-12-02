@@ -155,9 +155,22 @@ struct DataOperand final : Operand {
     Identifier identifier;
     i64 offset;
     bool local;
+    const bool isRoData = false;
 
     DataOperand(const AsmType asmType, const i64 offset, Identifier iden, const bool local)
         : Operand(Kind::Data, asmType), identifier(std::move(iden)), offset(offset), local(local) {}
+
+    DataOperand(
+        const AsmType asmType,
+        const i64 offset,
+        Identifier iden,
+        const bool local,
+        const bool isRoData)
+    : Operand(Kind::Data, asmType),
+        identifier(std::move(iden)),
+        offset(offset),
+        local(local),
+        isRoData(isRoData) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Data; }
 

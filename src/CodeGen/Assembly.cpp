@@ -324,43 +324,57 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
     }
 }
 
+std::string asmIndexedOperand(const std::shared_ptr<Operand>& operand)
+{
+    const auto indexedOperand = dynCast<IndexedOperand>(operand.get());
+    return "(" + asmRegister(indexedOperand->type, indexedOperand->regKind) + ", " +
+           asmRegister(indexedOperand->type, indexedOperand->indexRegKind) + ", " +
+           std::to_string(indexedOperand->scale) + ")";
+}
+
+std::string asmDataOperand(const std::shared_ptr<Operand>& operand)
+{
+    const auto dataOperand = dynCast<DataOperand>(operand.get());
+    std::string prefix;
+    if (dataOperand->offset == 0)
+        prefix = "(%rip)";
+    else
+        prefix = "+" + std::to_string(dataOperand->offset) + "(%rip)";
+    if (dataOperand->isRoData)
+        return createLabel(dataOperand->identifier.value) + prefix;
+    return dataOperand->identifier.value + prefix;
+}
+
+std::string asmMemoryOperand(const std::shared_ptr<Operand>& operand)
+{
+    const auto moveOperand = dynCast<const MemoryOperand>(operand.get());
+    if (moveOperand->value != 0)
+        return std::to_string(moveOperand->value) + "(" +
+               asmRegister(moveOperand->type, moveOperand->regKind) + ")";
+    return "(" + asmRegister(moveOperand->type, moveOperand->regKind) + ")";
+}
+
+std::string asmImmOperand(const std::shared_ptr<Operand>& operand)
+{
+    const auto immOperand = dynCast<ImmOperand>(operand.get());
+    return "$" + std::to_string(immOperand->value);
+}
+
+std::string asmRegisterOperand(const std::shared_ptr<Operand>& operand)
+{
+    const auto registerOperand = dynCast<RegisterOperand>(operand.get());
+    return asmRegister(registerOperand->type, registerOperand->regKind);
+}
+
 std::string asmOperand(const std::shared_ptr<Operand>& operand)
 {
     switch (operand->kind) {
-        case Operand::Kind::Register: {
-            const auto registerOperand = dynCast<RegisterOperand>(operand.get());
-            return asmRegister(registerOperand->type, registerOperand->regKind);
-        }
-        case Operand::Kind::Pseudo:
-            return "invalid pseudo";
-        case Operand::Kind::Imm: {
-            const auto immOperand = dynCast<ImmOperand>(operand.get());
-            return "$" + std::to_string(immOperand->value);
-        }
-        case Operand::Kind::Memory: {
-            const auto moveOperand = dynCast<const MemoryOperand>(operand.get());
-            if (moveOperand->value != 0)
-                return std::to_string(moveOperand->value) + "(" +
-                            asmRegister(moveOperand->type, moveOperand->regKind) + ")";
-            return "(" + asmRegister(moveOperand->type, moveOperand->regKind) + ")";
-        }
-        case Operand::Kind::Data: {
-            const auto dataOperand = dynCast<DataOperand>(operand.get());
-            std::string prefix;
-            if (dataOperand->offset == 0)
-                prefix = "(%rip)";
-            else
-                prefix = "+" + std::to_string(dataOperand->offset) + "(%rip)";
-            if (dataOperand->local && dataOperand->type == asmDouble)
-                return createLabel(dataOperand->identifier.value) + prefix;
-            return dataOperand->identifier.value + prefix;
-        }
-        case Operand::Kind::Indexed: {
-            const auto indexedOperand = dynCast<IndexedOperand>(operand.get());
-            return "(" + asmRegister(indexedOperand->type, indexedOperand->regKind) + ", " +
-                         asmRegister(indexedOperand->type, indexedOperand->indexRegKind) + ", " +
-                            std::to_string(indexedOperand->scale) + ")";
-        }
+        case Operand::Kind::Register:       return asmRegisterOperand(operand);
+        case Operand::Kind::Imm:            return asmImmOperand(operand);
+        case Operand::Kind::Memory:         return asmMemoryOperand(operand);
+        case Operand::Kind::Data:           return asmDataOperand(operand);
+        case Operand::Kind::Indexed:        return asmIndexedOperand(operand);
+        case Operand::Kind::Pseudo:         return "invalid pseudo";
         default:
             return "not set asmOperand";
     }
@@ -374,16 +388,16 @@ std::string asmRegister(const AsmType& type, const Operand::RegKind reg)
     if (reg == Type::BP)
         return "%rbp";
     switch (reg) {
-        case Type::XMM0: return "%xmm0";
-        case Type::XMM1: return "%xmm1";
-        case Type::XMM2: return "%xmm2";
-        case Type::XMM3: return "%xmm3";
-        case Type::XMM4: return "%xmm4";
-        case Type::XMM5: return "%xmm5";
-        case Type::XMM6: return "%xmm6";
-        case Type::XMM7: return "%xmm7";
-        case Type::XMM14: return "%xmm14";
-        case Type::XMM15: return "%xmm15";
+        case Type::XMM0:    return "%xmm0";
+        case Type::XMM1:    return "%xmm1";
+        case Type::XMM2:    return "%xmm2";
+        case Type::XMM3:    return "%xmm3";
+        case Type::XMM4:    return "%xmm4";
+        case Type::XMM5:    return "%xmm5";
+        case Type::XMM6:    return "%xmm6";
+        case Type::XMM7:    return "%xmm7";
+        case Type::XMM14:   return "%xmm14";
+        case Type::XMM15:   return "%xmm15";
             default:
             break;
     }

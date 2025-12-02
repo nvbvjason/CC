@@ -16,6 +16,11 @@ void asmStaticConstant(std::string& result, const ConstVariable& variable);
 void asmStaticArray(std::string& result, const CompoundVariable& array);
 void asmStaticString(std::string& result, const StringVariable& variable);
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction);
+
+std::string asmDataOperand(const std::shared_ptr<Operand>& operand);
+std::string asmMemoryOperand(const std::shared_ptr<Operand>& operand);
+std::string asmImmOperand(const std::shared_ptr<Operand>& operand);
+std::string asmRegisterOperand(const std::shared_ptr<Operand>& operand);
 std::string asmOperand(const std::shared_ptr<Operand>& operand);
 std::string asmRegister(const AsmType& type, Operand::RegKind reg);
 std::string asmUnaryOperator(UnaryInst::Operator oper, AsmType type);

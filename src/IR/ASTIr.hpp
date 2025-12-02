@@ -59,7 +59,7 @@ struct Value {
     enum class Kind : u8 {
         Variable, Constant
     };
-    IrType type;
+    const IrType type;
     const Kind kind;
     Value() = delete;
     virtual ~Value() = default;
