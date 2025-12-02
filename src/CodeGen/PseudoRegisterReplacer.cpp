@@ -107,9 +107,8 @@ void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 
 void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
 {
-    const i64 pseudoSize = pushPseudoInst.size * pushPseudoInst.type.size;
-    m_stackPtr -= pseudoSize;
-    if (pseudoSize < 16)
+    m_stackPtr -= pushPseudoInst.size;
+    if (pushPseudoInst.size < 16)
         fitTo8Alignment();
     else
         fitTo16Alignment();

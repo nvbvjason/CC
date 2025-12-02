@@ -107,14 +107,14 @@ u64 getSingleInitValue(const Ir::IrType::Kind type, const Ir::ValueConst* const 
 {
     using IrKind = Ir::IrType::Kind;
     switch (type) {
-        case IrKind::Char:    return std::get<char>(value->value);
-        case IrKind::I8:      return std::get<i8>(value->value);
-        case IrKind::U8:      return std::get<u8>(value->value);
-        case IrKind::I32:     return std::get<i32>(value->value);
-        case IrKind::U32:     return std::get<u32>(value->value);
-        case IrKind::I64:     return std::get<i64>(value->value);
-        case IrKind::Pointer: return std::get<u64>(value->value);
-        case IrKind::U64:     return std::get<u64>(value->value);
+        case IrKind::Char:      return std::get<char>(value->value);
+        case IrKind::I8:        return std::get<i8>(value->value);
+        case IrKind::U8:        return std::get<u8>(value->value);
+        case IrKind::I32:       return std::get<i32>(value->value);
+        case IrKind::U32:       return std::get<u32>(value->value);
+        case IrKind::I64:       return std::get<i64>(value->value);
+        case IrKind::Pointer:   return std::get<u64>(value->value);
+        case IrKind::U64:       return std::get<u64>(value->value);
         case IrKind::Double: {
             const double init = std::get<double>(value->value);
             return std::bit_cast<i64>(init);
@@ -903,8 +903,9 @@ void GenerateAsmTree::genBinaryShift(const Ir::BinaryInst& irBinary)
 
 void GenerateAsmTree::genAddPtr(const Ir::AddPtrInst& addPtrInst)
 {
-    if (addPtrInst.index->kind == Ir::Value::Kind::Constant)
+    if (addPtrInst.index->kind == Ir::Value::Kind::Constant) {
         genAddPtrConstIndex(addPtrInst);
+    }
     else if (addPtrInst.scale == 1 || addPtrInst.scale == 4 ||
              addPtrInst.scale == 2 || addPtrInst.scale == 8) {
         genAddPtrVariableIndex1_2_4_8(addPtrInst);

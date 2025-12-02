@@ -284,9 +284,9 @@ private:
     {
         m_insts.emplace_back(std::make_unique<FunCallInst>(iden, std::move(src), dst, type));
     }
-    void emitAllocate(const i64 size, const std::string& iden, const IrType type)
+    void emitAllocate(const i64 size, const std::string& iden)
     {
-        m_insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden), type));
+        m_insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden)));
     }
 };
 } // IR

@@ -274,9 +274,7 @@ void IrPrinter::print(const AllocateInst& inst)
 
 std::string IrPrinter::print(const ValueVar& val)
 {
-    if (val.type == i32Type)
-        return "Var(" + print(val.value) + ") i32";
-    return "Var(" + print(val.value) + ") i64";
+    return "Var(" + print(val.value) + ") " + to_string(val.type);
 }
 
 std::string IrPrinter::print(const ValueConst& val)

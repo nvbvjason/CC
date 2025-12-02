@@ -494,8 +494,8 @@ struct AllocateInst final : Instruction {
     const i64 size;
     const Identifier iden;
 
-    AllocateInst(const i64 size, Identifier iden, const IrType type)
-        : Instruction(Kind::Allocate, type), size(size), iden(std::move(iden)) {}
+    AllocateInst(const i64 size, Identifier iden)
+        : Instruction(Kind::Allocate, u8Type), size(size), iden(std::move(iden)) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::Allocate; }
 

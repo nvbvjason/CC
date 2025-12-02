@@ -68,9 +68,8 @@ std::unique_ptr<TopLevel> GenerateIr::structuredDecl(const Parsing::StructuredDe
 
 void GenerateIr::allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl)
 {
-    const i64 size = Parsing::getArrayLength(varDecl.type.get());
-    const Parsing::TypeBase* typeBase = getArrayBaseType(*varDecl.type);
-    emitAllocate(size, varDecl.name, convert(*typeBase));
+    const i64 size = typeTable.getSize(varDecl.type.get());
+    emitAllocate(size, varDecl.name);
 }
 
 void GenerateIr::directlyPushConstant32Bit(const Parsing::VarDecl& varDecl, const std::shared_ptr<Value>& value)
@@ -89,7 +88,10 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
     const auto varDecl = dynCast<const Parsing::VarDecl>(&decl);
     if (varDecl->storage == Storage::Static)
         return genStaticLocal(*varDecl);
-    if (varDecl->init == nullptr && varDecl->type->type == Type::Array) {
+    if (varDecl->init == nullptr &&
+        (varDecl->type->type == Type::Array ||
+            varDecl->type->type == Type::Struct ||
+            varDecl->type->type == Type::Union)) {
         allocateLocalArrayWithoutInitializer(*varDecl);
         return;
     }
@@ -1199,7 +1201,7 @@ std::unique_ptr<ExprResult> GenerateIr::genDotExprInst(const Parsing::DotExpr& d
         }
         case ExprResult::Kind::DereferencedPointer: {
             const auto deref = dynCast<const DereferencedPointer>(result.get());
-            const auto dstPtr = std::make_shared<ValueVar>(makeTemporaryName(), convert(*dotExpr.type));
+            const auto dstPtr = std::make_shared<ValueVar>(makeTemporaryName(), pointerType);
             const auto index = std::make_shared<ValueConst>(memberOffset);
             emitAddPtr(deref->ptr, index, dstPtr, 1l);
             return std::make_unique<DereferencedPointer>(dstPtr, dotExpr.type->type);
