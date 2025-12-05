@@ -33,6 +33,9 @@ public:
     void genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs);
     [[nodiscard]] std::unique_ptr<TopLevel> genFunction(const Ir::Function& function);
     [[nodiscard]] std::vector<bool> genFunctionPushIntoRegs(const Ir::Function& function);
+    std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
+
+    std::shared_ptr<Operand> genStaticOperand(const Ir::Value& value);
 
     void genInst(const std::unique_ptr<Ir::Instruction>& inst);
     void genUnary(const Ir::UnaryInst& irUnary);
@@ -107,8 +110,8 @@ public:
     void genFunCallPushArgs(const Ir::FunCallInst& funcCall);
     void deAllocateStack(const Ir::FunCallInst& funcCall, i64 stackPadding);
 
-    std::shared_ptr<Operand> genDoubleLocalConst(double value, i32 alignment);
     std::shared_ptr<Operand> genOperand(const Ir::Value& value);
+    std::shared_ptr<Operand> genDoubleLocalConst(double value, i32 alignment);
     std::shared_ptr<Operand> getOperandFromConstant(const Ir::Value& value);
     std::shared_ptr<Operand> getZeroOperand(AsmType type);
 
@@ -216,7 +219,6 @@ private:
     }
 };
 
-std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
 std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray);
 std::unique_ptr<TopLevel> genStaticString(const Ir::StaticConstant& staticConstant);
 u64 getSingleInitValue(Ir::IrType::Kind type, const Ir::ValueConst* value);

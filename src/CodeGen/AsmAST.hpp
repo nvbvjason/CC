@@ -592,9 +592,10 @@ struct Function final : TopLevel {
 
 struct StaticVariable final : TopLevel {
     std::string name;
-    u64 init = 0;
+    std::shared_ptr<Operand> init = nullptr;
     AsmType type;
     const bool global;
+
     StaticVariable(std::string name, const AsmType type, const bool isGlobal)
         : TopLevel(Kind::StaticVariable), name(std::move(name)), type(type), global(isGlobal) {}
 

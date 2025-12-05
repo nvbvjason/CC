@@ -103,6 +103,46 @@ void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std
     }
 }
 
+std::unique_ptr<TopLevel> genStaticString(const Ir::StaticConstant& staticConstant)
+{
+    return std::make_unique<StringVariable>(
+        staticConstant.identifier.value,
+        staticConstant.value,
+        staticConstant.global,
+        staticConstant.nullTerminated
+    );
+}
+
+std::unique_ptr<TopLevel> GenerateAsmTree::genStaticVariable(const Ir::StaticVariable& staticVariable)
+{
+    auto result = std::make_unique<StaticVariable>(
+        staticVariable.name, getAsmType(staticVariable.type), staticVariable.global);
+    if (staticVariable.value)
+        result->init = genStaticOperand(*staticVariable.value);
+    return result;
+}
+
+std::shared_ptr<Operand> GenerateAsmTree::genStaticOperand(const Ir::Value& value)
+{
+    switch (value.kind) {
+        case Ir::Value::Kind::Constant: {
+            const auto valueConst = dynCast<const Ir::ValueConst>(&value);
+            return std::make_shared<ImmOperand>(
+                getSingleInitValue(valueConst->type.kind, valueConst),
+                getAsmType(valueConst->type));
+        }
+        case Ir::Value::Kind::Variable: {
+            const auto variable = dynCast<const Ir::ValueVar>(&value);
+            return std::make_shared<DataOperand>(
+                getAsmType(value.type),
+                0,
+                Identifier(variable->value.value),
+                true);
+        }
+    }
+    std::abort();
+}
+
 u64 getSingleInitValue(const Ir::IrType::Kind type, const Ir::ValueConst* const value)
 {
     using IrKind = Ir::IrType::Kind;
@@ -122,25 +162,6 @@ u64 getSingleInitValue(const Ir::IrType::Kind type, const Ir::ValueConst* const 
         default:
             std::abort();
     }
-}
-
-std::unique_ptr<TopLevel> genStaticString(const Ir::StaticConstant& staticConstant)
-{
-    return std::make_unique<StringVariable>(
-        staticConstant.identifier.value,
-        staticConstant.value,
-        staticConstant.global,
-        staticConstant.nullTerminated
-    );
-}
-
-std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable)
-{
-    const auto value = dynCast<const Ir::ValueConst>(staticVariable.value.get());
-    auto result = std::make_unique<StaticVariable>(
-        staticVariable.name, getAsmType(staticVariable.type), staticVariable.global);
-    result->init = getSingleInitValue(staticVariable.type.kind, value);
-    return result;
 }
 
 std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray)

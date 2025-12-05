@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <format>
 #include <strings.h>
 
 namespace Ir {
@@ -66,7 +67,7 @@ std::unique_ptr<TopLevel> GenerateIr::structuredDecl(const Parsing::StructuredDe
     return nullptr;
 }
 
-void GenerateIr::allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl)
+void GenerateIr::allocateLocal(const Parsing::VarDecl& varDecl)
 {
     const i64 size = typeTable.getSize(varDecl.type.get());
     emitAllocate(size, varDecl.name);
@@ -92,7 +93,7 @@ void GenerateIr::genDeclaration(const Parsing::Declaration& decl)
         (varDecl->type->type == Type::Array ||
             varDecl->type->type == Type::Struct ||
             varDecl->type->type == Type::Union)) {
-        allocateLocalArrayWithoutInitializer(*varDecl);
+        allocateLocal(*varDecl);
         return;
     }
     if (varDecl->init == nullptr)

@@ -117,7 +117,7 @@ public:
     std::unique_ptr<ExprResult> genVarInst(const Parsing::VarExpr& varExpr) const;
 
 private:
-    void allocateLocalArrayWithoutInitializer(const Parsing::VarDecl& varDecl);
+    void allocateLocal(const Parsing::VarDecl& varDecl);
     void directlyPushConstant32Bit(const Parsing::VarDecl& varDecl, const std::shared_ptr<Value>& value);
 
     const std::shared_ptr<Value> zeroConst1 = genZeroValueForType(Type::U8);

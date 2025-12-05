@@ -29,7 +29,9 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
             if (operand->kind == Operand::Kind::PseudoMem) {
                 const auto pseudoMem = dynCast<PseudoMemOperand>(operand.get());
                 i64 arraySize = pseudoMem->size;
-                if (arraySize != 0 && arraySize % pseudoMem->alignment != 0) {
+                if (arraySize != 0
+                      && pseudoMem->alignment
+                      && arraySize % pseudoMem->alignment != 0) {
                     arraySize -= arraySize % pseudoMem->alignment;
                     arraySize += pseudoMem->alignment;
                 }

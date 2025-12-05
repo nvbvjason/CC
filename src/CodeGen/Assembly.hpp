@@ -17,12 +17,16 @@ void asmStaticArray(std::string& result, const CompoundVariable& array);
 void asmStaticString(std::string& result, const StringVariable& variable);
 void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instruction);
 
-std::string asmDataOperand(const std::shared_ptr<Operand>& operand);
-std::string asmMemoryOperand(const std::shared_ptr<Operand>& operand);
-std::string asmImmOperand(const std::shared_ptr<Operand>& operand);
-std::string asmRegisterOperand(const std::shared_ptr<Operand>& operand);
+std::string asmStaticOperand(const std::shared_ptr<Operand>& operand);
+
 std::string asmOperand(const std::shared_ptr<Operand>& operand);
+std::string asmDataOperand(const DataOperand& dataOperand);
+std::string asmMemoryOperand(const MemoryOperand& memoryOperand);
+std::string asmImmOperand(const ImmOperand& immOperand);
+std::string asmRegisterOperand(const RegisterOperand& operand);
 std::string asmRegister(const AsmType& type, Operand::RegKind reg);
+std::string asmIndexedOperand(const IndexedOperand& indexedOperand);
+
 std::string asmUnaryOperator(UnaryInst::Operator oper, AsmType type);
 std::string asmBinaryOperator(BinaryInst::Operator oper, AsmType type);
 std::string asmFormatLabel(const std::string& name);

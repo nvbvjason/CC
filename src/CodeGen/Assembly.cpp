@@ -77,16 +77,16 @@ void asmStaticVariableByte(std::string& result, const StaticVariable& variable)
 {
     if (variable.global)
         result += asmFormatInstruction(".globl", variable.name);
-    if (variable.init == 0)
+    if (variable.init == nullptr)
         result += asmFormatInstruction(".bss");
     else
         result += asmFormatInstruction(".data");
     result += asmFormatInstruction(".align","1");
     result += asmFormatLabel(variable.name);
-    if (variable.init == 0)
+    if (variable.init == nullptr)
         result += asmFormatInstruction(".zero 1");
-    if (variable.init != 0)
-        result += asmFormatInstruction(".byte " + std::to_string(variable.init));
+    else
+        result += asmFormatInstruction(".byte " + asmStaticOperand(variable.init));
     result += '\n';
 }
 
@@ -94,16 +94,16 @@ void asmStaticVariableLong(std::string& result, const StaticVariable& variable)
 {
     if (variable.global)
         result += asmFormatInstruction(".globl", variable.name);
-    if (variable.init == 0)
+    if (variable.init == nullptr)
         result += asmFormatInstruction(".bss");
     else
         result += asmFormatInstruction(".data");
     result += asmFormatInstruction(".align","4");
     result += asmFormatLabel(variable.name);
-    if (variable.init == 0)
+    if (variable.init == nullptr)
         result += asmFormatInstruction(".zero 4");
-    if (variable.init != 0)
-        result += asmFormatInstruction(".long " + std::to_string(variable.init));
+    else
+        result += asmFormatInstruction(".long " + asmStaticOperand(variable.init));
     result += '\n';
 }
 
@@ -111,16 +111,16 @@ void asmStaticVariableQuad(std::string& result, const StaticVariable& variable)
 {
     if (variable.global)
         result += asmFormatInstruction(".globl", variable.name);
-    if (variable.init == 0)
+    if (variable.init == nullptr)
         result += asmFormatInstruction(".bss");
     else
         result += asmFormatInstruction(".data");
     result += asmFormatInstruction(".align","8");
     result += asmFormatLabel(variable.name);
-    if (variable.init == 0)
+    if (variable.init == nullptr)
         result += asmFormatInstruction(".zero 8");
-    if (variable.init != 0)
-        result += asmFormatInstruction(".quad " + std::to_string(variable.init));
+    else
+        result += asmFormatInstruction(".quad " + asmStaticOperand(variable.init));
     result += '\n';
 }
 
@@ -131,7 +131,7 @@ void asmStaticVariableDouble(std::string& result, const StaticVariable& variable
     result += asmFormatInstruction(".data");
     result += asmFormatInstruction(".align","8");
     result += asmFormatLabel(variable.name);
-    result += asmFormatInstruction(".quad " + std::to_string(variable.init));
+    result += asmFormatInstruction(".quad " + asmStaticOperand(variable.init));
     result += '\n';
 }
 
@@ -324,60 +324,88 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
     }
 }
 
-std::string asmIndexedOperand(const std::shared_ptr<Operand>& operand)
+std::string asmStaticOperand(const std::shared_ptr<Operand>& operand)
 {
-    const auto indexedOperand = dynCast<IndexedOperand>(operand.get());
-    return "(" + asmRegister(indexedOperand->type, indexedOperand->regKind) + ", " +
-           asmRegister(indexedOperand->type, indexedOperand->indexRegKind) + ", " +
-           std::to_string(indexedOperand->scale) + ")";
-}
-
-std::string asmDataOperand(const std::shared_ptr<Operand>& operand)
-{
-    const auto dataOperand = dynCast<DataOperand>(operand.get());
-    std::string prefix;
-    if (dataOperand->offset == 0)
-        prefix = "(%rip)";
-    else
-        prefix = "+" + std::to_string(dataOperand->offset) + "(%rip)";
-    if (dataOperand->isRoData)
-        return createLabel(dataOperand->identifier.value) + prefix;
-    return dataOperand->identifier.value + prefix;
-}
-
-std::string asmMemoryOperand(const std::shared_ptr<Operand>& operand)
-{
-    const auto moveOperand = dynCast<const MemoryOperand>(operand.get());
-    if (moveOperand->value != 0)
-        return std::to_string(moveOperand->value) + "(" +
-               asmRegister(moveOperand->type, moveOperand->regKind) + ")";
-    return "(" + asmRegister(moveOperand->type, moveOperand->regKind) + ")";
-}
-
-std::string asmImmOperand(const std::shared_ptr<Operand>& operand)
-{
-    const auto immOperand = dynCast<ImmOperand>(operand.get());
-    return "$" + std::to_string(immOperand->value);
-}
-
-std::string asmRegisterOperand(const std::shared_ptr<Operand>& operand)
-{
-    const auto registerOperand = dynCast<RegisterOperand>(operand.get());
-    return asmRegister(registerOperand->type, registerOperand->regKind);
+    switch (operand->kind) {
+        case Operand::Kind::Imm: {
+            const auto immOperand = dynCast<const ImmOperand>(operand.get());
+            return std::to_string(immOperand->value);
+        }
+        case Operand::Kind::Data: {
+            const auto dataOperand = dynCast<const DataOperand>(operand.get());
+            return dataOperand->identifier.value;
+        }
+        case Operand::Kind::Pseudo:         return "invalid pseudo";
+        default:
+            return "not set asmOperand";
+    }
 }
 
 std::string asmOperand(const std::shared_ptr<Operand>& operand)
 {
     switch (operand->kind) {
-        case Operand::Kind::Register:       return asmRegisterOperand(operand);
-        case Operand::Kind::Imm:            return asmImmOperand(operand);
-        case Operand::Kind::Memory:         return asmMemoryOperand(operand);
-        case Operand::Kind::Data:           return asmDataOperand(operand);
-        case Operand::Kind::Indexed:        return asmIndexedOperand(operand);
+        case Operand::Kind::Register: {
+            const auto registerOperand = dynCast<const RegisterOperand>(operand.get());
+            return asmRegisterOperand(*registerOperand);
+        }
+        case Operand::Kind::Imm: {
+            const auto immOperand = dynCast<const ImmOperand>(operand.get());
+            return asmImmOperand(*immOperand);
+        }
+        case Operand::Kind::Memory: {
+            const auto memoryOperand = dynCast<const MemoryOperand>(operand.get());
+            return asmMemoryOperand(*memoryOperand);
+        }
+        case Operand::Kind::Data: {
+            const auto dataOperand = dynCast<const DataOperand>(operand.get());
+            return asmDataOperand(*dataOperand);
+        }
+        case Operand::Kind::Indexed: {
+            const auto indexedOperand = dynCast<const IndexedOperand>(operand.get());
+            return asmIndexedOperand(*indexedOperand);
+        }
         case Operand::Kind::Pseudo:         return "invalid pseudo";
         default:
             return "not set asmOperand";
     }
+}
+
+std::string asmIndexedOperand(const IndexedOperand& indexedOperand)
+{
+    return "(" + asmRegister(indexedOperand.type, indexedOperand.regKind) + ", " +
+           asmRegister(indexedOperand.type, indexedOperand.indexRegKind) + ", " +
+           std::to_string(indexedOperand.scale) + ")";
+}
+
+std::string asmDataOperand(const DataOperand& dataOperand)
+{
+    std::string prefix;
+    if (dataOperand.offset == 0)
+        prefix = "(%rip)";
+    else
+        prefix = "+" + std::to_string(dataOperand.offset) + "(%rip)";
+    if (dataOperand.isRoData)
+        return createLabel(dataOperand.identifier.value) + prefix;
+    return dataOperand.identifier.value + prefix;
+}
+
+std::string asmMemoryOperand(const MemoryOperand& memoryOperand)
+{
+    if (memoryOperand.value != 0) {
+        return std::to_string(memoryOperand.value) + "(" +
+               asmRegister(memoryOperand.type, memoryOperand.regKind) + ")";
+    }
+    return "(" + asmRegister(memoryOperand.type, memoryOperand.regKind) + ")";
+}
+
+std::string asmImmOperand(const ImmOperand& immOperand)
+{
+    return "$" + std::to_string(immOperand.value);
+}
+
+std::string asmRegisterOperand(const RegisterOperand& registerOperand)
+{
+    return asmRegister(registerOperand.type, registerOperand.regKind);
 }
 
 std::string asmRegister(const AsmType& type, const Operand::RegKind reg)

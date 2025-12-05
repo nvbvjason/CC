@@ -77,7 +77,10 @@ void AsmPrinter::add(const StaticVariable& staticVariable)
         global = "is global";
     else
         global = "is not global";
-    addLine(staticVariable.name + " " + std::to_string(staticVariable.init) + " " + global);
+    if (staticVariable.init)
+        addLine(staticVariable.name + " " + " " + global);
+    else
+        addLine(staticVariable.name + " " + to_string(*staticVariable.init) + " " + global);
 }
 
 void AsmPrinter::add(const ConstVariable& constVariable)
