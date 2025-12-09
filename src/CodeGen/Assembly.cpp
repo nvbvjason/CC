@@ -335,7 +335,6 @@ std::string asmStaticOperand(const std::shared_ptr<Operand>& operand)
             const auto dataOperand = dynCast<const DataOperand>(operand.get());
             return dataOperand->identifier.value;
         }
-        case Operand::Kind::Pseudo:         return "invalid pseudo";
         default:
             return "not set asmOperand";
     }

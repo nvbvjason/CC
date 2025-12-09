@@ -223,7 +223,7 @@ void TypeResolution::initDecl(Parsing::VarDecl& varDecl)
         return;
     if (newInits.empty())
         return;
-    if (newInits.size() == 1) {
+    if (newInits.size() == 1 && !isStructuredType(varDecl.type->type)) {
         const auto first = newInits[0].get();
         const auto singleInit = dynCast<Parsing::SingleInitializer>(first);
         varDecl.init = std::make_unique<Parsing::SingleInitializer>(std::move(singleInit->expr));
