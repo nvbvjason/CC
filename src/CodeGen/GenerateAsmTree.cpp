@@ -427,40 +427,26 @@ void GenerateAsmTree::genLoad(const Ir::LoadInst& load)
     const auto dstVal = dynCast<const Ir::ValueVar>(load.dst.get());
     const auto srcIden = Identifier(dstVal->value.value);
     const AsmType type = getAsmType(load.type);
+    const bool dstLocal = dstVal->referingTo == ReferingTo::Local;
     const i64 size = type.size;
     i64 i = 0;
 
     for (; i + 8 <= size; i += 8) {
         const auto srcEight = std::make_shared<MemoryOperand>(RegType::DX, i, asmQuadWord);
         const auto dstEight = std::make_shared<PseudoMemOperand>(
-            srcIden,
-            i,
-            8,
-            0,
-            dstVal->referingTo == ReferingTo::Local,
-            asmQuadWord);
+            srcIden, i, 8, 0, dstLocal, asmQuadWord);
         emitMove(srcEight, dstEight, asmQuadWord);
     }
     for (; i + 4 <= size; i += 4) {
         const auto srcFour = std::make_shared<MemoryOperand>(RegType::DX, i, asmLongWord);
         const auto dstFour = std::make_shared<PseudoMemOperand>(
-            srcIden,
-            i,
-            4,
-            0,
-            dstVal->referingTo == ReferingTo::Local,
-            asmLongWord);
+            srcIden, i, 4, 0, dstLocal, asmLongWord);
         emitMove(srcFour, dstFour, asmLongWord);
     }
     for (; i < size; ++i) {
         const auto srcOne = std::make_shared<MemoryOperand>(RegType::DX, i, asmByte);
         const auto dstOne = std::make_shared<PseudoMemOperand>(
-            srcIden,
-            i,
-            1,
-            0,
-            dstVal->referingTo == ReferingTo::Local,
-            asmByte);
+            srcIden, i, 1, 0, dstLocal, asmByte);
         emitMove(srcOne, dstOne, asmByte);
     }
 }
@@ -480,39 +466,25 @@ void GenerateAsmTree::genStore(const Ir::StoreInst& store)
     const auto srcVal = dynCast<const Ir::ValueVar>(store.src.get());
     const auto srcIden = Identifier(srcVal->value.value);
     const AsmType type = getAsmType(store.type);
+    const bool srcLocal = srcVal->referingTo == ReferingTo::Local;
     const i64 size = type.size;
     i64 i = 0;
 
     for (; i + 8 <= size; i += 8) {
         const auto srcEight = std::make_shared<PseudoMemOperand>(
-            srcIden,
-            i,
-            8,
-            0,
-            srcVal->referingTo == ReferingTo::Local,
-            asmQuadWord);
+            srcIden, i, 8, 0, srcLocal, asmQuadWord);
         const auto dstEight = std::make_shared<MemoryOperand>(RegType::DX, i, asmQuadWord);
         emitMove(srcEight, dstEight, asmQuadWord);
     }
     for (; i + 4 <= size; i += 4) {
         const auto srcFour = std::make_shared<PseudoMemOperand>(
-            srcIden,
-            i,
-            4,
-            0,
-            srcVal->referingTo == ReferingTo::Local,
-            asmLongWord);
+            srcIden, i, 4, 0, srcLocal, asmLongWord);
         const auto dstFour = std::make_shared<MemoryOperand>(RegType::DX, i, asmLongWord);
         emitMove(srcFour, dstFour, asmLongWord);
     }
     for (; i < size; ++i) {
         const auto srcOne = std::make_shared<PseudoMemOperand>(
-            srcIden,
-            i,
-            1,
-            0,
-            srcVal->referingTo == ReferingTo::Local,
-            asmByte);
+            srcIden, i, 1, 0, srcLocal, asmByte);
         const auto dstOne = std::make_shared<MemoryOperand>(RegType::DX, i, asmByte);
         emitMove(srcOne, dstOne, asmByte);
     }
@@ -1051,58 +1023,30 @@ void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
         const auto srcVal = dynCast<const Ir::ValueVar>(copyToOffset.src.get());
         const auto srcIden = Identifier(srcVal->value.value);
         const auto dstIden = Identifier(copyToOffset.iden.value);
+        const bool srcLocal = srcVal->referingTo == ReferingTo::Local;
+        const bool dstLocal = copyToOffset.referingTo == ReferingTo::Local;
         const i64 size = copyToOffset.type.size;
         i64 i = 0;
 
         for (; i + 8 <= size; i += 8) {
             const auto srcEight = std::make_shared<PseudoMemOperand>(
-                srcIden,
-                i,
-                8,
-                0,
-                srcVal->referingTo == ReferingTo::Local,
-                asmQuadWord);
+                srcIden, i, 8, 0, srcLocal, asmQuadWord);
             const auto dstEight = std::make_shared<PseudoMemOperand>(
-                dstIden,
-                copyToOffset.offset + i,
-                8,
-                0,
-                copyToOffset.referingTo == ReferingTo::Local,
-                asmQuadWord);
+                dstIden, copyToOffset.offset + i, 8, 0, dstLocal, asmQuadWord);
             emitMove(srcEight, dstEight, asmQuadWord);
         }
         for (; i + 4 <= size; i += 4) {
             const auto srcFour = std::make_shared<PseudoMemOperand>(
-                srcIden,
-                i,
-                4,
-                0,
-                srcVal->referingTo == ReferingTo::Local,
-                asmLongWord);
+                srcIden, i, 4, 0, srcLocal, asmLongWord);
             const auto dstFour = std::make_shared<PseudoMemOperand>(
-                dstIden,
-                copyToOffset.offset + i,
-                4,
-                0,
-                copyToOffset.referingTo == ReferingTo::Local,
-                asmLongWord);
+                dstIden, copyToOffset.offset + i, 4, 0, dstLocal, asmLongWord);
             emitMove(srcFour, dstFour, asmLongWord);
         }
         for (; i < size; ++i) {
             const auto srcOne = std::make_shared<PseudoMemOperand>(
-                srcIden,
-                i,
-                1,
-                0,
-                srcVal->referingTo == ReferingTo::Local,
-                asmByte);
+                srcIden, i, 1, 0, srcLocal, asmByte);
             const auto dstOne = std::make_shared<PseudoMemOperand>(
-                dstIden,
-                copyToOffset.offset + i,
-                1,
-                0,
-                copyToOffset.referingTo == ReferingTo::Local,
-                asmByte);
+                dstIden, copyToOffset.offset + i, 1, 0, dstLocal, asmByte);
             emitMove(srcOne, dstOne, asmByte);
         }
         return;
@@ -1217,57 +1161,29 @@ void GenerateAsmTree::genCopyFromOffset(const Ir::CopyFromOffsetInst& copyFromOf
     const auto dstVal = dynCast<const Ir::ValueVar>(copyFromOffset.dst.get());
     const auto dstIden = Identifier(dstVal->value.value);
     const i64 size = copyFromOffset.type.size;
+    const bool srcLocal = copyFromOffset.referingTo == ReferingTo::Local;
+    const bool dstLocal = dstVal->referingTo == ReferingTo::Local;
     i64 i = 0;
 
     for (; i + 8 <= size; i += 8) {
         const auto srcEight = std::make_shared<PseudoMemOperand>(
-            srcIden,
-            copyFromOffset.offset + i,
-            8,
-            0,
-            copyFromOffset.referingTo == ReferingTo::Local,
-            asmQuadWord);
+            srcIden, copyFromOffset.offset + i, 8, 0, srcLocal, asmQuadWord);
         const auto dstEight = std::make_shared<PseudoMemOperand>(
-            dstIden,
-            i,
-            8,
-            0,
-            dstVal->referingTo == ReferingTo::Local,
-            asmQuadWord);
+            dstIden, i, 8, 0, dstLocal, asmQuadWord);
         emitMove(srcEight, dstEight, asmQuadWord);
     }
     for (; i + 4 <= size; i += 4) {
         const auto srcFour = std::make_shared<PseudoMemOperand>(
-            srcIden,
-            copyFromOffset.offset + i,
-            4,
-            0,
-            copyFromOffset.referingTo == ReferingTo::Local,
-            asmLongWord);
+            srcIden, copyFromOffset.offset + i, 4, 0, srcLocal, asmLongWord);
         const auto dstFour = std::make_shared<PseudoMemOperand>(
-            dstIden,
-            i,
-            4,
-            0,
-            dstVal->referingTo == ReferingTo::Local,
-            asmLongWord);
+            dstIden, i, 4, 0, dstLocal, asmLongWord);
         emitMove(srcFour, dstFour, asmLongWord);
     }
     for (; i < size; ++i) {
         const auto srcOne = std::make_shared<PseudoMemOperand>(
-            srcIden,
-            copyFromOffset.offset + i,
-            1,
-            0,
-            copyFromOffset.referingTo == ReferingTo::Local,
-            asmByte);
+            srcIden, copyFromOffset.offset + i, 1, 0, srcLocal, asmByte);
         const auto dstOne = std::make_shared<PseudoMemOperand>(
-            dstIden,
-            i,
-            1,
-            0,
-            dstVal->referingTo == ReferingTo::Local,
-            asmByte);
+            dstIden, i, 1, 0, dstLocal, asmByte);
         emitMove(srcOne, dstOne, asmByte);
     }
 }
