@@ -127,14 +127,13 @@ void GenerateIr::genSingleDeclaration(const Parsing::VarDecl& varDecl)
 }
 
 void GenerateIr::genSingleLocalInit(const std::string& name,
-                                    const Type type,
                                     const i64 arraySize,
                                     const i64 alignment,
                                     i64& offset,
                                     const Parsing::SingleInitializer& singleInit)
 {
     using ExprKind = Parsing::Expr::Kind;
-    const i64 typeSize = singleInit.expr->kind == ExprKind::String ? 8 : getTypeSize(singleInit.expr->type->type);
+    const i64 typeSize = singleInit.expr->kind == ExprKind::String ? 8 : typeTable.getSize(singleInit.expr->type.get());
     std::shared_ptr<Value> value = genInstAndConvert(*singleInit.expr);
     if (singleInit.expr->kind == Parsing::Expr::Kind::String) {
         const auto var = std::make_shared<ValueVar>(
@@ -142,7 +141,12 @@ void GenerateIr::genSingleLocalInit(const std::string& name,
         emitGetAddress(value, var, convertType(Type::Pointer));
         value = var;
     }
-    emitCopyToOffset(value, Identifier(name), ReferingTo::Local, offset, arraySize, alignment, convertType(type));
+    emitCopyToOffset(
+        value,
+        Identifier(name),
+        ReferingTo::Local,
+        offset, arraySize,
+        alignment, convert(*singleInit.expr->type));
     offset += typeSize;
 }
 
@@ -163,8 +167,7 @@ void GenerateIr::genCompoundLocalInit(const Parsing::VarDecl& varDecl)
         switch (init->kind) {
             case Parsing::Initializer::Kind::Single: {
                 const auto singleInit = dynCast<Parsing::SingleInitializer>(init.get());
-                const Type type = singleInit->expr->type->type;
-                genSingleLocalInit(varDecl.name, type, declSize, alignment, offset, *singleInit);
+                genSingleLocalInit(varDecl.name, declSize, alignment, offset, *singleInit);
                 break;
             }
             case Parsing::Initializer::Kind::Zero: {

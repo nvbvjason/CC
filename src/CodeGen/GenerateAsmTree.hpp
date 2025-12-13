@@ -79,6 +79,7 @@ public:
     void genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst);
     void genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst);
     void genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst);
+    static bool getReferingToLocal(const Ir::CopyToOffsetInst& copyToOffset);
 
     void genJump(const Ir::JumpInst& irJump);
     void genJumpIfZero(const Ir::JumpIfZeroInst& jumpIfZero);
@@ -97,13 +98,32 @@ public:
     void genAllocate(const Ir::AllocateInst& allocate);
     static std::shared_ptr<Operand> getReturnRegister(const Ir::ReturnInst& returnInst);
 
+    void emitCopy(const Ir::Value* srcIr, const Ir::Value* dstIr, Ir::IrType typeIr);
+
     void genMove(
         i64 offset,
         i64 size,
         AsmType type,
-        const Ir::ValueVar& srcValue,
-                const Ir::ValueVar& dstValue);
-    void genCopyByteArray(const Ir::ValueVar& src, const Ir::ValueVar& dst, i64 size);
+        const Identifier& srcIden,
+        const Identifier& dstIden,
+        bool referingToLocalSrc,
+        bool referingToLocalDst);
+    void genCopyByteArray(
+        const Ir::ValueVar& src,
+        const Ir::ValueVar& dst,
+        i64 size);
+    void genCopyByteArrayWithOffset(
+        const Ir::ValueVar& src,
+        const Ir::ValueVar& dst,
+        i64 start,
+        i64 end);
+    void genCopyByteArrayWithOffset(
+        const Identifier& srcIden,
+        const Identifier& dstIden,
+        bool referingToLocalSrc,
+        bool referingToLocalDst,
+        i64 start,
+        i64 end);
 
     void genFunCall(const Ir::FunCallInst& funcCall);
     std::vector<bool> genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall);

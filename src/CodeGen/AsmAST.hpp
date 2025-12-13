@@ -142,9 +142,13 @@ struct PseudoOperand final : Operand {
 struct MemoryOperand final : Operand {
     RegKind regKind;
     i64 value;
+    i64 offset = 0;
 
     MemoryOperand(const RegKind rK, const i64 value, const AsmType type)
         : Operand(Kind::Memory, type), regKind(rK), value(value) {}
+
+    MemoryOperand(const RegKind rK, const i64 value, const AsmType type, const i64 offset)
+        : Operand(Kind::Memory, type), regKind(rK), value(value), offset(offset) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Memory; }
 

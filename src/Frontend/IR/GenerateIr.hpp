@@ -48,7 +48,6 @@ public:
                           i64 lengthZeroInit,
                           i64& offset);
     void genSingleLocalInit(const std::string& name,
-                            Type type,
                             i64 arraySize,
                             i64 alignment,
                             i64& offset,
