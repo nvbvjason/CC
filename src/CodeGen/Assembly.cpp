@@ -160,15 +160,15 @@ void asmStaticArray(std::string& result, const CompoundVariable& array)
     result += asmFormatLabel(array.name.value);
     for (const auto& init : array.initializers) {
         switch (init->kind) {
+            case Initializer::Kind::Value: {
+                const auto value = dynCast<ValueInitializer>(init.get());
+                const std::string typeName = '.' + getTypeName(value->init->type);
+                result += asmFormatInstruction(typeName, asmStaticOperand(value->init));
+                break;
+            }
             case Initializer::Kind::Zero: {
                 const auto zero = dynCast<const ZeroInitializer>(init.get());
                 result += asmFormatInstruction(".zero", std::to_string(zero->size));
-                break;
-            }
-            case Initializer::Kind::Value: {
-                const auto value = dynCast<ValueInitializer>(init.get());
-                const std::string typeName = '.' + getTypeName(value->asmType);
-                result += asmFormatInstruction(typeName, std::to_string(value->init));
                 break;
             }
         }

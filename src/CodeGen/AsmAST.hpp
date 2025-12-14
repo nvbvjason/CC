@@ -246,11 +246,10 @@ struct ZeroInitializer final : Initializer {
 };
 
 struct ValueInitializer final : Initializer {
-    const u64 init;
-    const AsmType asmType;
+    const std::shared_ptr<Operand> init;
 
-    explicit ValueInitializer(const u64 init, const AsmType asmType)
-        : Initializer(Kind::Value), init(init), asmType(asmType) {}
+    explicit ValueInitializer(const std::shared_ptr<Operand>& init)
+        : Initializer(Kind::Value), init(init) {}
 
     static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Value; }
 

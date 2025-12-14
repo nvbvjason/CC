@@ -33,9 +33,6 @@ public:
     void genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs);
     [[nodiscard]] std::unique_ptr<TopLevel> genFunction(const Ir::Function& function);
     [[nodiscard]] std::vector<bool> genFunctionPushIntoRegs(const Ir::Function& function);
-    std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
-
-    std::shared_ptr<Operand> genStaticOperand(const Ir::Value& value);
 
     void genInst(const std::unique_ptr<Ir::Instruction>& inst);
     void genUnary(const Ir::UnaryInst& irUnary);
@@ -97,33 +94,6 @@ public:
     void genCopyFromOffset(const Ir::CopyFromOffsetInst& copyFromOffset);
     void genAllocate(const Ir::AllocateInst& allocate);
     static std::shared_ptr<Operand> getReturnRegister(const Ir::ReturnInst& returnInst);
-
-    void emitCopy(const Ir::Value* srcIr, const Ir::Value* dstIr, Ir::IrType typeIr);
-
-    void genMove(
-        i64 offset,
-        i64 size,
-        AsmType type,
-        const Identifier& srcIden,
-        const Identifier& dstIden,
-        bool referingToLocalSrc,
-        bool referingToLocalDst);
-    void genCopyByteArray(
-        const Ir::ValueVar& src,
-        const Ir::ValueVar& dst,
-        i64 size);
-    void genCopyByteArrayWithOffset(
-        const Ir::ValueVar& src,
-        const Ir::ValueVar& dst,
-        i64 start,
-        i64 end);
-    void genCopyByteArrayWithOffset(
-        const Identifier& srcIden,
-        const Identifier& dstIden,
-        bool referingToLocalSrc,
-        bool referingToLocalDst,
-        i64 start,
-        i64 end);
 
     void genFunCall(const Ir::FunCallInst& funcCall);
     std::vector<bool> genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall);
@@ -239,6 +209,8 @@ private:
     }
 };
 
+std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
+std::shared_ptr<Operand> genStaticOperand(const Ir::Value& value);
 std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray);
 std::unique_ptr<TopLevel> genStaticString(const Ir::StaticConstant& staticConstant);
 u64 getSingleInitValue(Ir::IrType::Kind type, const Ir::ValueConst* value);

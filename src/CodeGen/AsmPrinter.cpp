@@ -62,7 +62,7 @@ void AsmPrinter::add(const Initializer& init)
 
 void AsmPrinter::add(const ValueInitializer& init)
 {
-    addLine(std::to_string(init.init) + " " + to_string(init.asmType));
+    addLine(to_string(*init.init) + " " + to_string(init.init->type));
 }
 
 void AsmPrinter::add(const ZeroInitializer& init)
