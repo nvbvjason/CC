@@ -241,7 +241,7 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
             const auto unaryInst = dynCast<UnaryInst>(instruction.get());
             result += asmFormatInstruction(
                 asmUnaryOperator(unaryInst->oper, unaryInst->type),
-                asmOperand(unaryInst->destination));
+                asmOperand(unaryInst->dst));
             return;
         }
         case Inst::Kind::Binary: {
@@ -324,15 +324,15 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
     }
 }
 
-std::string asmStaticOperand(const std::shared_ptr<Operand>& operand)
+std::string asmStaticOperand(const Operand* operand)
 {
     switch (operand->kind) {
         case Operand::Kind::Imm: {
-            const auto immOperand = dynCast<const ImmOperand>(operand.get());
+            const auto immOperand = dynCast<const ImmOperand>(operand);
             return std::to_string(immOperand->value);
         }
         case Operand::Kind::Data: {
-            const auto dataOperand = dynCast<const DataOperand>(operand.get());
+            const auto dataOperand = dynCast<const DataOperand>(operand);
             return dataOperand->identifier.value;
         }
         default:
@@ -340,27 +340,27 @@ std::string asmStaticOperand(const std::shared_ptr<Operand>& operand)
     }
 }
 
-std::string asmOperand(const std::shared_ptr<Operand>& operand)
+std::string asmOperand(const Operand* operand)
 {
     switch (operand->kind) {
         case Operand::Kind::Register: {
-            const auto registerOperand = dynCast<const RegisterOperand>(operand.get());
+            const auto registerOperand = dynCast<const RegisterOperand>(operand);
             return asmRegisterOperand(*registerOperand);
         }
         case Operand::Kind::Imm: {
-            const auto immOperand = dynCast<const ImmOperand>(operand.get());
+            const auto immOperand = dynCast<const ImmOperand>(operand);
             return asmImmOperand(*immOperand);
         }
         case Operand::Kind::Memory: {
-            const auto memoryOperand = dynCast<const MemoryOperand>(operand.get());
+            const auto memoryOperand = dynCast<const MemoryOperand>(operand);
             return asmMemoryOperand(*memoryOperand);
         }
         case Operand::Kind::Data: {
-            const auto dataOperand = dynCast<const DataOperand>(operand.get());
+            const auto dataOperand = dynCast<const DataOperand>(operand);
             return asmDataOperand(*dataOperand);
         }
         case Operand::Kind::Indexed: {
-            const auto indexedOperand = dynCast<const IndexedOperand>(operand.get());
+            const auto indexedOperand = dynCast<const IndexedOperand>(operand);
             return asmIndexedOperand(*indexedOperand);
         }
         case Operand::Kind::Pseudo:         return "invalid pseudo";

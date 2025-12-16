@@ -7,9 +7,15 @@
 namespace CodeGen {
 
 class PseudoRegisterReplacer final : public InstVisitor {
+    Program& m_program;
     std::unordered_map<std::string, i64> m_pseudoMap;
     i64 m_stackPtr = 0;
 public:
+    explicit PseudoRegisterReplacer(Program& program)
+        : m_program(program) {}
+
+    PseudoRegisterReplacer() = delete;
+
     [[nodiscard]] i64 stackPointer() const { return m_stackPtr; }
 
     void visit(MoveInst& move) override;
@@ -36,7 +42,7 @@ public:
 private:
     void fitTo8Alignment();
     void fitTo16Alignment();
-    void replaceIfPseudo(std::shared_ptr<Operand>& operand);
+    [[nodiscard]] const Operand* replaceIfPseudo(const Operand* operand);
 };
 
 std::tuple<ReferingTo, AsmType, bool, std::string, i64> getPseudoValues(const std::shared_ptr<Operand>& operand);

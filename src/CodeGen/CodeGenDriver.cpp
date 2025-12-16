@@ -1,5 +1,6 @@
 #include "CodeGenDriver.hpp"
 #include "AsmPrinter.hpp"
+#include "DynCast.hpp"
 #include "Assembly.hpp"
 #include "FixUpInstructions.hpp"
 #include "GenerateAsmTree.hpp"
@@ -8,6 +9,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+
 
 namespace CodeGen {
 
@@ -43,34 +45,34 @@ void run(const Ir::Program& irProgram,
 
 Program codegen(const Ir::Program& irProgram)
 {
-    Program codegenProgram;
-    GenerateAsmTree generateAsmTree;
-    generateAsmTree.genProgram(irProgram, codegenProgram);
-    return codegenProgram;
+    Program program;
+    GenerateAsmTree generateAsmTree(program);
+    generateAsmTree.genProgram(irProgram);
+    return program;
 }
 
-i32 replacingPseudoRegisters(const Function& function)
+i32 replacingPseudoRegisters(const Function& function, Program& program)
 {
-    PseudoRegisterReplacer pseudoRegisterReplacer;
+    PseudoRegisterReplacer pseudoRegisterReplacer(program);
     for (const auto& inst : function.instructions)
         inst->accept(pseudoRegisterReplacer);
     return pseudoRegisterReplacer.stackPointer();
 }
 
-void fixUpInstructions(Function& function, const i32 stackAlloc)
+void fixUpInstructions(Function& function, const i32 stackAlloc, Program& program)
 {
-    FixUpInstructions fixUpInstructions(function.instructions, stackAlloc);
+    FixUpInstructions fixUpInstructions(function.instructions, stackAlloc, program);
     fixUpInstructions.fixUp();
 }
 
-void fixAsm(const Program& codegenProgram)
+void fixAsm(Program& codegenProgram)
 {
-    for (auto& topLevel : codegenProgram.topLevels) {
+    for (std::unique_ptr<TopLevel>& topLevel : codegenProgram.topLevels) {
         if (topLevel->kind != TopLevel::Kind::Function)
             continue;
-        const auto function = dynamic_cast<Function*>(topLevel.get());
-        const i32 stackAlloc = replacingPseudoRegisters(*function);
-        fixUpInstructions(*function, stackAlloc);
+        const auto function = dynCast<Function>(topLevel.get());
+        const i32 stackAlloc = replacingPseudoRegisters(*function, codegenProgram);
+        fixUpInstructions(*function, stackAlloc, codegenProgram);
     }
 }
 

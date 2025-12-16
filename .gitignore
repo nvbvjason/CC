@@ -11,4 +11,5 @@ test/external/*
 !test/external/.gitkeep
 
 examples/*
+examples/test.c
 !examples/*.c

@@ -4,30 +4,28 @@
 
 namespace CodeGen {
 
-std::tuple<ReferingTo, AsmType, bool, std::string, i64> getPseudoValues(const std::shared_ptr<Operand>& operand)
+std::tuple<ReferingTo, AsmType, bool, std::string, i64> getPseudoValues(const Operand* operand)
 {
     if (operand->kind == Operand::Kind::PseudoMem) {
-        const auto pseudoMem = dynamic_cast<PseudoMemOperand*>(operand.get());
+        const auto pseudoMem = dynCast<const PseudoMemOperand>(operand);
         return {pseudoMem->referingTo, pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->offset};
     }
     if (operand->kind == Operand::Kind::Pseudo) {
-        const auto pseudo = dynamic_cast<PseudoOperand*>(operand.get());
+        const auto pseudo = dynCast<const PseudoOperand>(operand);
         return {pseudo->referingTo, pseudo->type, pseudo->local, pseudo->identifier.value, 0};
     }
     std::abort();
 }
 
-void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
+const Operand* PseudoRegisterReplacer::replaceIfPseudo(const Operand* operand)
 {
     if (operand && (operand->kind == Operand::Kind::PseudoMem || operand->kind == Operand::Kind::Pseudo)) {
         const auto [referingTo, asmType, isLocal, identifier, offset] = getPseudoValues(operand);
-        if (referingTo == ReferingTo::Extern || referingTo == ReferingTo::Static) {
-            operand = std::make_shared<DataOperand>(asmType, offset, Identifier(identifier), !isLocal);
-            return;
-        }
+        if (referingTo == ReferingTo::Extern || referingTo == ReferingTo::Static)
+            return m_program.getDataOperand(asmType, offset, Identifier(identifier), !isLocal);
         if (!m_pseudoMap.contains(identifier)) {
             if (operand->kind == Operand::Kind::PseudoMem) {
-                const auto pseudoMem = dynCast<PseudoMemOperand>(operand.get());
+                const auto pseudoMem = dynCast<const PseudoMemOperand>(operand);
                 i64 arraySize = pseudoMem->size;
                 if (arraySize != 0
                       && pseudoMem->alignment
@@ -38,73 +36,72 @@ void PseudoRegisterReplacer::replaceIfPseudo(std::shared_ptr<Operand>& operand)
                 m_stackPtr -= arraySize;
                 fitTo8Alignment();
                 m_pseudoMap[identifier] = m_stackPtr;
-                operand = std::make_shared<MemoryOperand>(
-                    Operand::RegKind::BP, m_stackPtr, operand->type);
-                return;
+                return m_program.getMemoryOperand(Operand::RegKind::BP, m_stackPtr, operand->type);
             }
             m_stackPtr -= 1 * asmType.size;
             fitTo8Alignment();
             m_pseudoMap[identifier] = m_stackPtr;
         }
-        operand = std::make_shared<MemoryOperand>(
+        return m_program.getMemoryOperand(
             Operand::RegKind::BP, m_pseudoMap.at(identifier) + offset, operand->type);
     }
+    return operand;
 }
 
 void PseudoRegisterReplacer::visit(MoveInst& move)
 {
-    replaceIfPseudo(move.src);
-    replaceIfPseudo(move.dst);
+    move.src = replaceIfPseudo(move.src);
+    move.dst = replaceIfPseudo(move.dst);
 }
 
 void PseudoRegisterReplacer::visit(MoveSXInst& moveSX)
 {
-    replaceIfPseudo(moveSX.src);
-    replaceIfPseudo(moveSX.dst);
+    moveSX.src = replaceIfPseudo(moveSX.src);
+    moveSX.dst = replaceIfPseudo(moveSX.dst);
 }
 
 void PseudoRegisterReplacer::visit(MoveZeroExtendInst& moveZero)
 {
-    replaceIfPseudo(moveZero.src);
-    replaceIfPseudo(moveZero.dst);
+    moveZero.src = replaceIfPseudo(moveZero.src);
+    moveZero.dst = replaceIfPseudo(moveZero.dst);
 }
 
 void PseudoRegisterReplacer::visit(LeaInst& lea)
 {
-    replaceIfPseudo(lea.src);
-    replaceIfPseudo(lea.dst);
+    lea.src = replaceIfPseudo(lea.src);
+    lea.dst = replaceIfPseudo(lea.dst);
 }
 
 void PseudoRegisterReplacer::visit(UnaryInst& unary)
 {
-    replaceIfPseudo(unary.destination);
+    unary.dst = replaceIfPseudo(unary.dst);
 }
 
 void PseudoRegisterReplacer::visit(BinaryInst& binary)
 {
-    replaceIfPseudo(binary.lhs);
-    replaceIfPseudo(binary.rhs);
+    binary.lhs = replaceIfPseudo(binary.lhs);
+    binary.rhs = replaceIfPseudo(binary.rhs);
 }
 
 void PseudoRegisterReplacer::visit(IdivInst& idiv)
 {
-    replaceIfPseudo(idiv.operand);
+    idiv.operand = replaceIfPseudo(idiv.operand);
 }
 
 void PseudoRegisterReplacer::visit(DivInst& div)
 {
-    replaceIfPseudo(div.operand);
+    div.operand= replaceIfPseudo(div.operand);
 }
 
 void PseudoRegisterReplacer::visit(CmpInst& cmpInst)
 {
-    replaceIfPseudo(cmpInst.lhs);
-    replaceIfPseudo(cmpInst.rhs);
+    cmpInst.lhs = replaceIfPseudo(cmpInst.lhs);
+    cmpInst.rhs = replaceIfPseudo(cmpInst.rhs);
 }
 
 void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 {
-    replaceIfPseudo(setCCInst.operand);
+    setCCInst.operand = replaceIfPseudo(setCCInst.operand);
 }
 
 void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
@@ -119,19 +116,19 @@ void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
 
 void PseudoRegisterReplacer::visit(PushInst& pushInst)
 {
-    replaceIfPseudo(pushInst.operand);
+    pushInst.operand = replaceIfPseudo(pushInst.operand);
 }
 
 void PseudoRegisterReplacer::visit(Cvttsd2siInst& cvttsd2siInst)
 {
-    replaceIfPseudo(cvttsd2siInst.src);
-    replaceIfPseudo(cvttsd2siInst.dst);
+    cvttsd2siInst.src = replaceIfPseudo(cvttsd2siInst.src);
+    cvttsd2siInst.dst = replaceIfPseudo(cvttsd2siInst.dst);
 }
 
 void PseudoRegisterReplacer::visit(Cvtsi2sdInst& cvtsi2sdInst)
 {
-    replaceIfPseudo(cvtsi2sdInst.src);
-    replaceIfPseudo(cvtsi2sdInst.dst);
+    cvtsi2sdInst.src = replaceIfPseudo(cvtsi2sdInst.src);
+    cvtsi2sdInst.dst = replaceIfPseudo(cvtsi2sdInst.dst);
 }
 
 void PseudoRegisterReplacer::fitTo8Alignment()

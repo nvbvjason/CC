@@ -202,6 +202,21 @@ struct PseudoMemOperand final : Operand {
             alignment(alignment),
             local(local) {}
 
+    PseudoMemOperand(Identifier identifier,
+                     const i64 offset,
+                     const i64 size,
+                     const i64 alignment,
+                     const bool local,
+                     const AsmType type,
+                     const ReferingTo referingTo)
+        : Operand(Kind::PseudoMem, type),
+            identifier(std::move(identifier)),
+            offset(offset),
+            size(size),
+            alignment(alignment),
+            referingTo(referingTo),
+            local(local) {}
+
     static bool classOf(const Operand* operand) { return operand->kind == Kind::PseudoMem; }
 
     PseudoMemOperand() = delete;
@@ -246,9 +261,9 @@ struct ZeroInitializer final : Initializer {
 };
 
 struct ValueInitializer final : Initializer {
-    const std::shared_ptr<Operand> init;
+    const Operand* init;
 
-    explicit ValueInitializer(const std::shared_ptr<Operand>& init)
+    explicit ValueInitializer(const Operand* init)
         : Initializer(Kind::Value), init(init) {}
 
     static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Value; }
@@ -279,15 +294,15 @@ protected:
 };
 
 struct MoveInst final : Inst {
-    std::shared_ptr<Operand> src;
-    std::shared_ptr<Operand> dst;
+    const Operand* src;
+    const Operand* dst;
     const AsmType type;
 
     MoveInst(
-        std::shared_ptr<Operand> src,
-        std::shared_ptr<Operand> dst,
+        const Operand* src,
+        const Operand* dst,
         const AsmType t)
-        : Inst(Kind::Move), src(std::move(src)), dst(std::move(dst)), type(t) {}
+        : Inst(Kind::Move), src(src), dst(dst), type(t) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Move; }
@@ -296,17 +311,17 @@ struct MoveInst final : Inst {
 };
 
 struct MoveSXInst final : Inst {
-    std::shared_ptr<Operand> src;
-    std::shared_ptr<Operand> dst;
+    const Operand* src;
+    const Operand* dst;
     const AsmType srcType;
     const AsmType dstType;
 
     MoveSXInst(
-        std::shared_ptr<Operand> src,
-        std::shared_ptr<Operand> dst,
+        const Operand* src,
+        const Operand* dst,
         const AsmType srcType,
         const AsmType dstType)
-        : Inst(Kind::MoveSX), src(std::move(src)), dst(std::move(dst)), srcType(srcType), dstType(dstType) {}
+        : Inst(Kind::MoveSX), src(src), dst(dst), srcType(srcType), dstType(dstType) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::MoveSX; }
@@ -315,18 +330,18 @@ struct MoveSXInst final : Inst {
 };
 
 struct MoveZeroExtendInst final : Inst {
-    std::shared_ptr<Operand> src;
-    std::shared_ptr<Operand> dst;
+    const Operand* src;
+    const Operand* dst;
     const AsmType srcType;
     const AsmType dstType;
 
     MoveZeroExtendInst(
-        std::shared_ptr<Operand> src,
-        std::shared_ptr<Operand> dst,
+        const Operand* src,
+        const Operand* dst,
         const AsmType srcType,
         const AsmType dstType)
-        : Inst(Kind::MoveZeroExtend), src(std::move(src)),
-                                        dst(std::move(dst)),
+        : Inst(Kind::MoveZeroExtend), src(src),
+                                        dst(dst),
                                         srcType(srcType),
                                         dstType(dstType) {}
 
@@ -337,12 +352,12 @@ struct MoveZeroExtendInst final : Inst {
 };
 
 struct LeaInst final : Inst {
-    std::shared_ptr<Operand> src;
-    std::shared_ptr<Operand> dst;
+    const Operand* src;
+    const Operand* dst;
     const AsmType type;
 
-    LeaInst(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst, const AsmType t)
-        : Inst(Kind::Lea), src(std::move(src)), dst(std::move(dst)), type(t) {}
+    LeaInst(const Operand* src, const Operand* dst, const AsmType t)
+        : Inst(Kind::Lea), src(src), dst(dst), type(t) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Lea; }
@@ -351,15 +366,15 @@ struct LeaInst final : Inst {
 };
 
 struct Cvttsd2siInst final : Inst {
-    std::shared_ptr<Operand> src;
-    std::shared_ptr<Operand> dst;
+    const Operand* src;
+    const Operand* dst;
     const AsmType dstType;
 
     Cvttsd2siInst(
-        std::shared_ptr<Operand> src,
-        std::shared_ptr<Operand> dst,
+        const Operand* src,
+        const Operand* dst,
         const AsmType dstType)
-        : Inst(Kind::Cvttsd2si), src(std::move(src)), dst(std::move(dst)), dstType(dstType) {}
+        : Inst(Kind::Cvttsd2si), src(src), dst(dst), dstType(dstType) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Cvttsd2si; }
@@ -368,15 +383,12 @@ struct Cvttsd2siInst final : Inst {
 };
 
 struct Cvtsi2sdInst final : Inst {
-    std::shared_ptr<Operand> src;
-    std::shared_ptr<Operand> dst;
+    const Operand* src;
+    const Operand* dst;
     const AsmType srcType;
 
-    Cvtsi2sdInst(
-        std::shared_ptr<Operand> src,
-        std::shared_ptr<Operand> dst,
-        const AsmType srcType)
-        : Inst(Kind::Cvtsi2sd), src(std::move(src)), dst(std::move(dst)), srcType(srcType) {}
+    Cvtsi2sdInst(const Operand* src, const Operand* dst, const AsmType srcType)
+        : Inst(Kind::Cvtsi2sd), src(src), dst(dst), srcType(srcType) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Cvtsi2sd; }
@@ -388,12 +400,12 @@ struct UnaryInst final : Inst {
     enum class Operator : u8 {
         Neg, Not, Shr
     };
-    std::shared_ptr<Operand> destination;
+    const Operand* dst;
     const Operator oper;
     const AsmType type;
 
-    UnaryInst(std::shared_ptr<Operand> dst, const Operator op, const AsmType type)
-        : Inst(Kind::Unary), destination(std::move(dst)), oper(op), type(type) {}
+    UnaryInst(const Operand* dst, const Operator op, const AsmType type)
+        : Inst(Kind::Unary), dst(dst), oper(op), type(type) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Unary; }
@@ -409,15 +421,15 @@ struct BinaryInst final : Inst {
         LeftShiftUnsigned, RightShiftUnsigned,
         DivDouble,
     };
-    std::shared_ptr<Operand> lhs;
-    std::shared_ptr<Operand> rhs;
+    const Operand* lhs;
+    const Operand* rhs;
     const Operator oper;
     const AsmType type;
-    BinaryInst(std::shared_ptr<Operand> lhs,
-               std::shared_ptr<Operand> rhs,
+    BinaryInst(const Operand* lhs,
+               const Operand* rhs,
                const Operator op,
                const AsmType ty)
-        :Inst(Kind::Binary), lhs(std::move(lhs)), rhs(std::move(rhs)), oper(op), type(ty) {}
+        : Inst(Kind::Binary), lhs(lhs), rhs(rhs), oper(op), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Binary; }
@@ -426,11 +438,11 @@ struct BinaryInst final : Inst {
 };
 
 struct CmpInst final : Inst {
-    std::shared_ptr<Operand> lhs;
-    std::shared_ptr<Operand> rhs;
+    const Operand* lhs;
+    const Operand* rhs;
     const AsmType type;
-    CmpInst(std::shared_ptr<Operand> lhs, std::shared_ptr<Operand> rhs, const AsmType ty)
-        : Inst(Kind::Cmp), lhs(std::move(lhs)), rhs(std::move(rhs)), type(ty) {}
+    CmpInst(const Operand* lhs, const Operand* rhs, const AsmType ty)
+        : Inst(Kind::Cmp), lhs(lhs), rhs(rhs), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Cmp; }
@@ -439,11 +451,11 @@ struct CmpInst final : Inst {
 };
 
 struct IdivInst final : Inst {
-    std::shared_ptr<Operand> operand;
+    const Operand* operand;
     const AsmType type;
 
-    IdivInst(std::shared_ptr<Operand> operand, const AsmType ty)
-        : Inst(Kind::Idiv), operand(std::move(operand)), type(ty) {}
+    IdivInst(const Operand* operand, const AsmType ty)
+        : Inst(Kind::Idiv), operand(operand), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Idiv; }
@@ -452,11 +464,11 @@ struct IdivInst final : Inst {
 };
 
 struct DivInst final : Inst {
-    std::shared_ptr<Operand> operand;
+    const Operand* operand;
     const AsmType type;
 
-    DivInst(std::shared_ptr<Operand> operand, const AsmType ty)
-        : Inst(Kind::Div), operand(std::move(operand)), type(ty) {}
+    DivInst(const Operand* operand, const AsmType ty)
+        : Inst(Kind::Div), operand(operand), type(ty) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Div; }
@@ -498,10 +510,10 @@ struct JmpCCInst final : Inst {
 };
 
 struct SetCCInst final : Inst {
-    std::shared_ptr<Operand> operand;
+    const Operand* operand;
     const CondCode condition;
-    explicit SetCCInst(const CondCode condition, std::shared_ptr<Operand> operand)
-        : Inst(Kind::SetCC), operand(std::move(operand)), condition(condition) {}
+    explicit SetCCInst(const CondCode condition, const Operand* operand)
+        : Inst(Kind::SetCC), operand(operand), condition(condition) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::SetCC; }
@@ -537,9 +549,9 @@ struct PushPseudoInst final : Inst {
 };
 
 struct PushInst final : Inst {
-    std::shared_ptr<Operand> operand;
-    explicit PushInst(std::shared_ptr<Operand> operand)
-        : Inst(Kind::Push), operand(std::move(operand)) {}
+    const Operand* operand;
+    explicit PushInst(const Operand* operand)
+        : Inst(Kind::Push), operand(operand) {}
 
     void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Push; }
@@ -595,7 +607,7 @@ struct Function final : TopLevel {
 
 struct StaticVariable final : TopLevel {
     std::string name;
-    std::shared_ptr<Operand> init = nullptr;
+    const Operand* init = nullptr;
     AsmType type;
     const bool global;
 
@@ -658,6 +670,39 @@ struct StringVariable final : TopLevel {
 
 struct Program {
     std::vector<std::unique_ptr<TopLevel>> topLevels;
+    std::vector<std::unique_ptr<Operand>> operands;
+
+    Program() = default;
+    Program(Program&& other) noexcept
+        : topLevels(std::move(other.topLevels)), operands(std::move(other.operands)) {}
+
+    const Operand* getImmOperand(u64 value, AsmType type);
+    const Operand* getPseudoOperand(const Identifier& identifier, ReferingTo referingTo, AsmType asmType, bool local);
+    const Operand* getPseudoMemOperand(const Identifier& identifier,
+                                       i64 offset,
+                                       i64 size,
+                                       i64 alignment,
+                                       bool local,
+                                       AsmType type);
+    const Operand* getPseudoMemOperand(Identifier identifier,
+                                       i64 offset,
+                                       i64 size,
+                                       i64 alignment,
+                                       bool local,
+                                       AsmType type,
+                                       ReferingTo referingTo);
+    const Operand* getMemoryOperand(RegisterOperand::RegKind rK, i64 value, AsmType type);
+    const Operand* getMemoryOperand(RegisterOperand::RegKind rK, i64 value, AsmType type, i64 offset);
+    const Operand* getRegisterOperand(RegisterOperand::RegKind regType, const AsmType& type);
+    const Operand* getIndexedOperand(
+        RegisterOperand::RegKind rK, RegisterOperand::RegKind indexRegKind, i64 scale, AsmType asmType);
+    const Operand* getDataOperand(AsmType asmType, i64 offset, const Identifier& iden, bool local);
+    const Operand* getDataOperand(
+        AsmType asmType,
+        i64 offset,
+        const Identifier& iden,
+        bool local,
+        bool isRoData);
 };
 
 struct InstVisitor {
@@ -706,4 +751,77 @@ inline void PushInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void CallInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 inline void ReturnInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 
+inline const Operand* Program::getImmOperand(u64 value, AsmType type)
+{
+    operands.emplace_back(std::make_unique<ImmOperand>(value, type));
+    return operands.back().get();
+}
+
+inline const Operand* Program::getPseudoOperand(const Identifier& identifier, ReferingTo referingTo, AsmType asmType,
+    bool local)
+{
+    operands.emplace_back(std::make_unique<PseudoOperand>(identifier, referingTo, asmType, local));
+    return operands.back().get();
+}
+
+inline const Operand* Program::getPseudoMemOperand(const Identifier& identifier, i64 offset, i64 size, i64 alignment,
+    bool local, AsmType type)
+{
+    operands.emplace_back(std::make_unique<PseudoMemOperand>(
+        identifier, offset, size, alignment, local, type));
+    return operands.back().get();
+}
+
+inline const Operand* Program::getPseudoMemOperand(
+    Identifier identifier, i64 offset, i64 size, i64 alignment,
+    bool local, AsmType type, ReferingTo referingTo)
+{
+    operands.emplace_back(std::make_unique<PseudoMemOperand>(
+        identifier, offset, size, alignment, local, type, referingTo));
+    return operands.back().get();
+}
+
+inline const Operand* Program::getMemoryOperand(RegisterOperand::RegKind rK, i64 value, AsmType type)
+{
+    operands.emplace_back(std::make_unique<MemoryOperand>(rK, value, type));
+    return operands.back().get();
+}
+
+inline const Operand* Program::getMemoryOperand(RegisterOperand::RegKind rK, i64 value, AsmType type, i64 offset)
+{
+    operands.emplace_back(std::make_unique<MemoryOperand>(rK, value, type, offset));
+    return operands.back().get();
+}
+
+inline const Operand* Program::getRegisterOperand(const RegisterOperand::RegKind regType, const AsmType& type)
+{
+    operands.emplace_back(std::make_unique<RegisterOperand>(regType, type));
+    return operands.back().get();
+}
+
+inline const Operand* Program::getIndexedOperand(
+    RegisterOperand::RegKind rK, RegisterOperand::RegKind indexRegKind,
+    i64 scale, AsmType asmType)
+{
+    operands.emplace_back(std::make_unique<IndexedOperand>(rK, indexRegKind, scale, asmType));
+    return operands.back().get();
+}
+
+inline const Operand* Program::getDataOperand(AsmType asmType, i64 offset, const Identifier& iden, bool local)
+{
+    operands.emplace_back(std::make_unique<DataOperand>(asmType, offset, iden, local));
+    return operands.back().get();
+}
+
+inline const Operand* Program::getDataOperand(
+        AsmType asmType,
+        i64 offset,
+        const Identifier& iden,
+        bool local,
+        bool isRoData
+)
+{
+    operands.emplace_back(std::make_unique<DataOperand>(asmType, offset, iden, local, isRoData));
+    return operands.back().get();
+}
 } // CodeGen

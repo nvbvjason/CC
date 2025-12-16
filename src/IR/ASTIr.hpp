@@ -76,6 +76,9 @@ struct ValueVar final : Value {
     ValueVar(Identifier v, const IrType t)
         : Value(t, Kind::Variable), value(std::move(v)) {}
 
+    ValueVar(Identifier v, const IrType t, const ReferingTo referingTo)
+    : Value(t, Kind::Variable), value(std::move(v)), referingTo(referingTo) {}
+
     ValueVar(Identifier v, const IrType t, const i64 size)
         : Value(t, Kind::Variable), value(std::move(v)), size(size) {}
 
@@ -122,9 +125,9 @@ protected:
 };
 
 struct ValueInitializer final : Initializer {
-    std::shared_ptr<Value> value;
+    const Value* value;
 
-    explicit ValueInitializer(std::shared_ptr<Value> value)
+    explicit ValueInitializer(const Value* value)
         : Initializer(Kind::Value), value(std::move(value)) {}
 
     static bool classOf(const Initializer* initializer) { return initializer->kind == Kind::Value; }
@@ -161,12 +164,12 @@ protected:
 };
 
 struct ReturnInst final : Instruction {
-    std::shared_ptr<Value> returnValue = nullptr;
+    const Value* returnValue = nullptr;
     const i64 structReturnType = 0;
 
     explicit ReturnInst(const IrType t)
         : Instruction(Kind::Return, t) {}
-    explicit ReturnInst(std::shared_ptr<Value> v, const IrType t)
+    explicit ReturnInst(const Value* v, const IrType t)
         : Instruction(Kind::Return, t), returnValue(std::move(v)) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::Return; }
@@ -175,10 +178,10 @@ struct ReturnInst final : Instruction {
 };
 
 struct SignExtendInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
-    SignExtendInst(const std::shared_ptr<Value>& src,
-                   const std::shared_ptr<Value>& dst,
+    const Value* src;
+    const Value* dst;
+    SignExtendInst(const Value* src,
+                   const Value* dst,
                    const IrType t)
         : Instruction(Kind::SignExtend, t), src(src), dst(dst) {}
 
@@ -188,10 +191,10 @@ struct SignExtendInst final : Instruction {
 };
 
 struct TruncateInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
-    TruncateInst(const std::shared_ptr<Value>& src,
-                 const std::shared_ptr<Value>& dst,
+    const Value* src;
+    const Value* dst;
+    TruncateInst(const Value* src,
+                 const Value* dst,
                  const IrType t)
         : Instruction(Kind::Truncate, t), src(src), dst(dst) {}
 
@@ -201,10 +204,10 @@ struct TruncateInst final : Instruction {
 };
 
 struct ZeroExtendInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
-    ZeroExtendInst(const std::shared_ptr<Value>& src,
-                   const std::shared_ptr<Value>& dst,
+    const Value* src;
+    const Value* dst;
+    ZeroExtendInst(const Value* src,
+                   const Value* dst,
                    const IrType t)
         : Instruction(Kind::ZeroExtend, t), src(src), dst(dst) {}
 
@@ -214,10 +217,10 @@ struct ZeroExtendInst final : Instruction {
 };
 
 struct DoubleToIntInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
-    DoubleToIntInst(const std::shared_ptr<Value>& src,
-                    const std::shared_ptr<Value>& dst,
+    const Value* src;
+    const Value* dst;
+    DoubleToIntInst(const Value* src,
+                    const Value* dst,
                     const IrType t)
         : Instruction(Kind::DoubleToInt, t), src(src), dst(dst) {}
 
@@ -227,10 +230,10 @@ struct DoubleToIntInst final : Instruction {
 };
 
 struct DoubleToUIntInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
-    DoubleToUIntInst(const std::shared_ptr<Value>& src,
-                     const std::shared_ptr<Value>& dst,
+    const Value* src;
+    const Value* dst;
+    DoubleToUIntInst(const Value* src,
+                     const Value* dst,
                      const IrType t)
         : Instruction(Kind::DoubleToUInt, t), src(src), dst(dst) {}
 
@@ -240,10 +243,10 @@ struct DoubleToUIntInst final : Instruction {
 };
 
 struct IntToDoubleInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
-    IntToDoubleInst(const std::shared_ptr<Value>& src,
-                    const std::shared_ptr<Value>& dst,
+    const Value* src;
+    const Value* dst;
+    IntToDoubleInst(const Value* src,
+                    const Value* dst,
                     const IrType t)
         : Instruction(Kind::IntToDouble, t), src(src), dst(dst) {}
 
@@ -253,10 +256,10 @@ struct IntToDoubleInst final : Instruction {
 };
 
 struct UIntToDoubleInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
-    UIntToDoubleInst(const std::shared_ptr<Value>& src,
-                     const std::shared_ptr<Value>& dst,
+    const Value* src;
+    const Value* dst;
+    UIntToDoubleInst(const Value* src,
+                     const Value* dst,
                      const IrType t)
         : Instruction(Kind::UIntToDouble, t), src(src), dst(dst) {}
 
@@ -270,11 +273,11 @@ struct UnaryInst final : Instruction {
         Complement, Negate, Not
     };
     Operation operation;
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
+    const Value* src;
+    const Value* dst;
     UnaryInst(const Operation op,
-              const std::shared_ptr<Value>& src,
-              const std::shared_ptr<Value>& dst,
+              const Value* src,
+              const Value* dst,
               const IrType t)
         : Instruction(Kind::Unary, t), operation(op), src(src), dst(dst) {}
 
@@ -292,13 +295,13 @@ struct BinaryInst final : Instruction {
         LessThan, LessOrEqual, GreaterThan, GreaterOrEqual
     };
     Operation operation;
-    std::shared_ptr<Value> lhs;
-    std::shared_ptr<Value> rhs;
-    std::shared_ptr<Value> dst;
+    const Value* lhs;
+    const Value* rhs;
+    const Value* dst;
     BinaryInst(const Operation op,
-               const std::shared_ptr<Value>& src1,
-               const std::shared_ptr<Value>& src2,
-               const std::shared_ptr<Value>& dst,
+               const Value* src1,
+               const Value* src2,
+               const Value* dst,
                const IrType t)
         : Instruction(Kind::Binary, t), operation(op), lhs(src1), rhs(src2), dst(dst) {}
 
@@ -308,9 +311,9 @@ struct BinaryInst final : Instruction {
 };
 
 struct CopyInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
-    CopyInst(const std::shared_ptr<Value>& src, const std::shared_ptr<Value>& dst, const IrType t)
+    const Value* src;
+    const Value* dst;
+    CopyInst(const Value* src, const Value* dst, const IrType t)
         : Instruction(Kind::Copy, t), src(src), dst(dst) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::Copy; }
@@ -319,10 +322,10 @@ struct CopyInst final : Instruction {
 };
 
 struct GetAddressInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> dst;
-    GetAddressInst(const std::shared_ptr<Value>& src,
-                   const std::shared_ptr<Value>& dst,
+    const Value* src;
+    const Value* dst;
+    GetAddressInst(const Value* src,
+                   const Value* dst,
                    const IrType t)
         : Instruction(Kind::GetAddress, t), src(src), dst(dst) {}
 
@@ -332,10 +335,10 @@ struct GetAddressInst final : Instruction {
 };
 
 struct LoadInst final : Instruction {
-    std::shared_ptr<Value> ptr;
-    std::shared_ptr<Value> dst;
-    LoadInst(const std::shared_ptr<Value>& src,
-             const std::shared_ptr<Value>& dst,
+    const Value* ptr;
+    const Value* dst;
+    LoadInst(const Value* src,
+             const Value* dst,
              const IrType t)
         : Instruction(Kind::Load, t), ptr(src), dst(dst) {}
 
@@ -345,10 +348,10 @@ struct LoadInst final : Instruction {
 };
 
 struct StoreInst final : Instruction {
-    std::shared_ptr<Value> src;
-    std::shared_ptr<Value> ptr;
-    StoreInst(const std::shared_ptr<Value>& src,
-              const std::shared_ptr<Value>& dst,
+    const Value* src;
+    const Value* ptr;
+    StoreInst(const Value* src,
+              const Value* dst,
               const IrType t)
         : Instruction(Kind::Store, t), src(src), ptr(dst) {}
 
@@ -358,14 +361,14 @@ struct StoreInst final : Instruction {
 };
 
 struct AddPtrInst final : Instruction {
-    std::shared_ptr<Value> ptr;
-    std::shared_ptr<Value> index;
-    std::shared_ptr<Value> dst;
+    const Value* ptr;
+    const Value* index;
+    const Value* dst;
     i64 scale;
 
-    AddPtrInst(const std::shared_ptr<Value>& src,
-               const std::shared_ptr<Value>& index,
-               const std::shared_ptr<Value>& dst,
+    AddPtrInst(const Value* src,
+               const Value* index,
+               const Value* dst,
                const i64 scale)
         : Instruction(Kind::AddPtr, IrType(IrType::Kind::Pointer, 8)),
           ptr(src),
@@ -379,14 +382,14 @@ struct AddPtrInst final : Instruction {
 };
 
 struct CopyToOffsetInst final : Instruction {
-    std::shared_ptr<Value> src;
+    const Value* src;
     const Identifier iden;
     const ReferingTo referingTo;
     const i64 offset;
     const i64 size;
     const i64 alignment;
 
-    CopyToOffsetInst(const std::shared_ptr<Value>& src,
+    CopyToOffsetInst(const Value* src,
                      Identifier iden,
                      const ReferingTo referingTo,
                      const i64 offset,
@@ -404,12 +407,12 @@ struct CopyToOffsetInst final : Instruction {
 struct CopyFromOffsetInst final : Instruction {
     const Identifier src;
     const ReferingTo referingTo;
-    std::shared_ptr<Value> dst;
+    const Value* dst;
     const i64 offset;
 
     CopyFromOffsetInst(Identifier iden,
                        const ReferingTo referingTo,
-                       const std::shared_ptr<Value>& dst,
+                       const Value* dst,
                        const i64 offset,
                        const IrType t)
     : Instruction(Kind::CopyFromOffset, t), src(std::move(iden)), referingTo(referingTo),
@@ -431,9 +434,9 @@ struct JumpInst final : Instruction {
 };
 
 struct JumpIfZeroInst final : Instruction {
-    std::shared_ptr<Value> condition;
+    const Value* condition;
     Identifier target;
-    JumpIfZeroInst(const std::shared_ptr<Value>& condition, Identifier target)
+    JumpIfZeroInst(const Value* condition, Identifier target)
         : Instruction(Kind::JumpIfZero, condition->type),
             condition(condition),
             target(std::move(target)) {}
@@ -444,9 +447,9 @@ struct JumpIfZeroInst final : Instruction {
 };
 
 struct JumpIfNotZeroInst final : Instruction {
-    std::shared_ptr<Value> condition;
+    const Value* condition;
     Identifier target;
-    JumpIfNotZeroInst(const std::shared_ptr<Value>& condition, Identifier target)
+    JumpIfNotZeroInst(const Value* condition, Identifier target)
         : Instruction(Kind::JumpIfNotZero, condition->type),
             condition(condition),
             target(std::move(target)) {}
@@ -468,12 +471,12 @@ struct LabelInst final : Instruction {
 
 struct FunCallInst final : Instruction {
     Identifier funName;
-    std::vector<std::shared_ptr<Value>> args;
-    std::shared_ptr<Value> destination = nullptr;
+    std::vector<const Value*> args;
+    const Value* destination = nullptr;
 
     FunCallInst(Identifier funName,
-                std::vector<std::shared_ptr<Value>>&& args,
-                const std::shared_ptr<Value>& dst,
+                std::vector<const Value*>&& args,
+                const Value* dst,
                 const IrType t)
         : Instruction(Kind::FunCall, t),
             funName(std::move(funName)),
@@ -481,7 +484,7 @@ struct FunCallInst final : Instruction {
             destination(dst) {}
 
     FunCallInst(Identifier funName,
-                std::vector<std::shared_ptr<Value>>&& args,
+                std::vector<const Value*>&& args,
                 const IrType t)
     : Instruction(Kind::FunCall, t), funName(std::move(funName)), args(std::move(args)) {}
 
@@ -535,11 +538,11 @@ struct Function final : TopLevel {
 
 struct StaticVariable final : TopLevel {
     const std::string name;
-    const std::shared_ptr<Value> value;
+    const Value* value;
     const IrType type;
     const bool global;
     StaticVariable(std::string identifier,
-                   const std::shared_ptr<Value>& value,
+                   const Value* value,
                    const IrType ty,
                    const bool isGlobal)
         : TopLevel(Kind::StaticVariable), name(std::move(identifier)),

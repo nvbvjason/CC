@@ -25,10 +25,13 @@ class GenerateAsmTree {
     std::unordered_map<double, std::string, DoubleHash, DoubleEqual> m_constantDoubles;
     using RegType = Operand::RegKind;
     std::vector<std::unique_ptr<Inst>> insts;
-    Program m_programCodegen;
-    std::vector<std::unique_ptr<TopLevel>> m_toplevel;
+    std::vector<std::unique_ptr<TopLevel>>& m_toplevel;
+    Program& m_program;
 public:
-    void genProgram(const Ir::Program &program, Program &programCodegen);
+    explicit GenerateAsmTree(Program& program)
+        : m_program(program), m_toplevel(program.topLevels) {}
+
+    void genProgram(const Ir::Program &program);
     [[nodiscard]] std::unique_ptr<TopLevel> genTopLevel(const Ir::TopLevel& topLevel);
     void genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs);
     [[nodiscard]] std::unique_ptr<TopLevel> genFunction(const Ir::Function& function);
@@ -93,45 +96,44 @@ public:
     void genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset);
     void genCopyFromOffset(const Ir::CopyFromOffsetInst& copyFromOffset);
     void genAllocate(const Ir::AllocateInst& allocate);
-    static std::shared_ptr<Operand> getReturnRegister(const Ir::ReturnInst& returnInst);
+    const Operand* getReturnRegister(const Ir::ReturnInst& returnInst) const;
 
     void genFunCall(const Ir::FunCallInst& funcCall);
     std::vector<bool> genFuncCallPushArgsRegs(const Ir::FunCallInst& funcCall);
     void genFunCallPushArgs(const Ir::FunCallInst& funcCall);
     void deAllocateStack(const Ir::FunCallInst& funcCall, i64 stackPadding);
 
-    std::shared_ptr<Operand> genOperand(const Ir::Value& value);
-    std::shared_ptr<Operand> genDoubleLocalConst(double value, i32 alignment);
-    std::shared_ptr<Operand> getOperandFromConstant(const Ir::Value& value);
-    std::shared_ptr<Operand> getZeroOperand(AsmType type);
+    const Operand* genOperand(const Ir::Value& value);
+    const Operand* getOperandFromConstant(const Ir::Value& value);
+    const Operand* getImmOperandFromValue(const Ir::ValueConst& valueConst) const;
+    const Operand* genDoubleLocalConst(double value, i32 alignment);
+    const Operand* getZeroOperand(AsmType type);
 
-    static std::shared_ptr<ImmOperand> getImmOperandFromValue(const Ir::ValueConst& valueConst);
+    const Operand* genStaticOperand(const Ir::Value& value) const;
+
+    std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable) const;
+    std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray) const;
+    static std::unique_ptr<TopLevel> genStaticString(const Ir::StaticConstant& staticConstant);
 private:
-    void zeroOutReg(const std::shared_ptr<RegisterOperand>& reg);
-    void emitUnary(const std::shared_ptr<Operand>& target, UnaryInst::Operator oper, const AsmType type)
+    void zeroOutReg(const Operand* reg);
+    void emitUnary(const Operand* target, UnaryInst::Operator oper, const AsmType type)
     {
         insts.emplace_back(std::make_unique<UnaryInst>(target, oper, type));
     }
-    void emitBinary(const std::shared_ptr<Operand>& left,
-                    const std::shared_ptr<Operand>& right,
-                    const BinaryInst::Operator oper,
-                    const AsmType type)
+    void emitBinary(const Operand* left, const Operand* right,
+                    const BinaryInst::Operator oper, const AsmType type)
     {
         insts.emplace_back(std::make_unique<BinaryInst>(left, right, oper, type));
     }
-    void emitCvtsi2sd(const std::shared_ptr<Operand>& src,
-                      const std::shared_ptr<Operand>& dst,
-                      const AsmType type)
+    void emitCvtsi2sd(const Operand* src, const Operand* dst, const AsmType type)
     {
         insts.emplace_back(std::make_unique<Cvtsi2sdInst>(src, dst, type));
     }
-    void emitCvttsd2si(const std::shared_ptr<Operand>& src,
-                       const std::shared_ptr<Operand>& dst,
-                       const AsmType type)
+    void emitCvttsd2si(const Operand* src, const Operand* dst, const AsmType type)
     {
         insts.emplace_back(std::make_unique<Cvttsd2siInst>(src, dst, type));
     }
-    void emitDiv(const std::shared_ptr<Operand>& src, const AsmType type)
+    void emitDiv(const Operand* src, const AsmType type)
     {
         insts.emplace_back(std::make_unique<DivInst>(src, type));
     }
@@ -139,27 +141,20 @@ private:
     {
         insts.emplace_back(std::make_unique<CdqInst>(type));
     }
-    void emitIdiv(const std::shared_ptr<Operand>& src, const AsmType type)
+    void emitIdiv(const Operand* src, const AsmType type)
     {
         insts.emplace_back(std::make_unique<IdivInst>(src, type));
     }
-    void emitMove(const std::shared_ptr<Operand>& src,
-                  const std::shared_ptr<Operand>& dst,
-                  const AsmType type)
+    void emitMove(const Operand* src, const Operand* dst, const AsmType type)
     {
         insts.emplace_back(std::make_unique<MoveInst>(src, dst, type));
     }
-    void emitMoveZeroExtend(const std::shared_ptr<Operand>& src,
-                            const std::shared_ptr<Operand>& dst,
-                            const AsmType srcType,
-                            const AsmType dstType)
+    void emitMoveZeroExtend(const Operand* src, const Operand* dst,
+                            const AsmType srcType, const AsmType dstType)
     {
         insts.emplace_back(std::make_unique<MoveZeroExtendInst>(src, dst, srcType, dstType));
     }
-    void emitMoveSX(const std::shared_ptr<Operand>& src,
-                    const std::shared_ptr<Operand>& dst,
-                    const AsmType srcType,
-                    const AsmType dstType)
+    void emitMoveSX(const Operand* src, const Operand* dst, const AsmType srcType, const AsmType dstType)
     {
         insts.emplace_back(std::make_unique<MoveSXInst>(src, dst, srcType, dstType));
     }
@@ -167,23 +162,19 @@ private:
     {
         insts.emplace_back(std::make_unique<PushPseudoInst>(size, 16, type, Identifier(iden)));
     }
-    void emitPush(const std::shared_ptr<Operand>& src)
+    void emitPush(const Operand* src)
     {
         insts.emplace_back(std::make_unique<PushInst>(src));
     }
-    void emitLea(const std::shared_ptr<Operand>& src,
-                 const std::shared_ptr<Operand>& dst,
-                 const AsmType type)
+    void emitLea(const Operand* src, const Operand* dst, const AsmType type)
     {
         insts.emplace_back(std::make_unique<LeaInst>(src, dst, type));
     }
-    void emitCmp(const std::shared_ptr<Operand>& lhs,
-                 const std::shared_ptr<Operand>& rhs,
-                 const AsmType type)
+    void emitCmp(const Operand* lhs, const Operand* rhs, const AsmType type)
     {
         insts.emplace_back(std::make_unique<CmpInst>(lhs, rhs, type));
     }
-    void emitSetCC(BinaryInst::CondCode cond, const std::shared_ptr<Operand>& src)
+    void emitSetCC(BinaryInst::CondCode cond, const Operand* src)
     {
         insts.emplace_back(std::make_unique<SetCCInst>(cond, src));
     }
@@ -209,13 +200,8 @@ private:
     }
 };
 
-std::unique_ptr<TopLevel> genStaticVariable(const Ir::StaticVariable& staticVariable);
-std::shared_ptr<Operand> genStaticOperand(const Ir::Value& value);
-std::unique_ptr<TopLevel> genStaticArray(const Ir::StaticArray& staticArray);
-std::unique_ptr<TopLevel> genStaticString(const Ir::StaticConstant& staticConstant);
 u64 getSingleInitValue(Ir::IrType::Kind type, const Ir::ValueConst* value);
 i64 getStackPadding(size_t numArgs);
 
 std::string makeTemporaryPseudoName();
-
 } // CodeGen

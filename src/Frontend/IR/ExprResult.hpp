@@ -6,51 +6,51 @@
 
 namespace Ir {
 
-struct ExprResult {
-    enum class Kind : u8 {
-        PlainOperand, DereferencedPointer, SubObject
+    struct ExprResult {
+        enum class Kind : u8 {
+            PlainOperand, DereferencedPointer, SubObject
+        };
+        const Kind kind;
+
+        ExprResult() = delete;
+    protected:
+        explicit ExprResult(const Kind kind)
+            : kind(kind) {}
     };
-    const Kind kind;
 
-    ExprResult() = delete;
-protected:
-    explicit ExprResult(const Kind kind)
-        : kind(kind) {}
-};
+    struct PlainOperand : ExprResult {
+        const Value* value;
 
-struct PlainOperand : ExprResult {
-    const std::shared_ptr<Value> value;
+        explicit PlainOperand(const Value* value)
+            : ExprResult(Kind::PlainOperand), value(std::move(value)) {}
 
-    explicit PlainOperand(std::shared_ptr<Value> value)
-        : ExprResult(Kind::PlainOperand), value(std::move(value)) {}
+        static bool classOf(const ExprResult* expr) { return expr->kind == Kind::PlainOperand; }
 
-    static bool classOf(const ExprResult* expr) { return expr->kind == Kind::PlainOperand; }
+        PlainOperand() = delete;
+    };
 
-    PlainOperand() = delete;
-};
+    struct DereferencedPointer : ExprResult {
+        const Value* ptr;
+        const Type referredToType;
+        DereferencedPointer(const Value* p, const Type rt)
+            : ExprResult(Kind::DereferencedPointer), ptr(std::move(p)), referredToType(rt) {}
 
-struct DereferencedPointer : ExprResult {
-    const std::shared_ptr<Value> ptr;
-    const Type referredToType;
-    DereferencedPointer(std::shared_ptr<Value> p, const Type rt)
-        : ExprResult(Kind::DereferencedPointer), ptr(std::move(p)), referredToType(rt) {}
+        static bool classOf(const ExprResult* expr) { return expr->kind == Kind::DereferencedPointer; }
 
-    static bool classOf(const ExprResult* expr) { return expr->kind == Kind::DereferencedPointer; }
+        DereferencedPointer() = delete;
+    };
 
-    DereferencedPointer() = delete;
-};
+    struct SubObject : ExprResult {
+        const Identifier base;
+        const ReferingTo referingTo;
+        const i64 offset;
 
-struct SubObject : ExprResult {
-    const Identifier base;
-    const ReferingTo referingTo;
-    const i64 offset;
+        SubObject(Identifier base, const ReferingTo referingTo, const i64 offset)
+            : ExprResult(Kind::SubObject), base(std::move(base)), referingTo(referingTo), offset(offset) {}
 
-    SubObject(Identifier base, const ReferingTo referingTo, const i64 offset)
-        : ExprResult(Kind::SubObject), base(std::move(base)), referingTo(referingTo), offset(offset) {}
+        static bool classOf(const ExprResult* expr) { return expr->kind == Kind::SubObject; }
 
-    static bool classOf(const ExprResult* expr) { return expr->kind == Kind::SubObject; }
-
-    SubObject() = delete;
-};
+        SubObject() = delete;
+    };
 
 } // Ir

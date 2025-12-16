@@ -162,14 +162,13 @@ void AsmPrinter::add(const Inst& inst)
 
 void AsmPrinter::add(const MoveInst& move)
 {
-    addLine("Move", to_string(*move.src) + " " + to_string(*move.dst));
+    addLine("Move",
+        to_string(*move.src) + " " + to_string(*move.dst) + " " + to_string(move.type));
 }
 
 void AsmPrinter::add(const MoveSXInst& moveSX)
 {
-    addLine("MoveSX",
-        to_string(*moveSX.src) + " " +
-        to_string(*moveSX.dst));
+    addLine("MoveSX",to_string(*moveSX.src) + " " + to_string(*moveSX.dst));
 }
 
 void AsmPrinter::add(const MoveZeroExtendInst& moveZeroExtend)
@@ -186,9 +185,7 @@ void AsmPrinter::add(const LeaInst& lea)
 
 void AsmPrinter::add(const UnaryInst& unary)
 {
-    addLine("Unary",
-            to_string(unary.oper) + " " +
-            to_string(*unary.destination));
+    addLine("Unary", to_string(unary.oper) + " " + to_string(*unary.dst) + " " + to_string(unary.type));
 }
 
 void AsmPrinter::add(const BinaryInst& binary)
@@ -201,9 +198,7 @@ void AsmPrinter::add(const BinaryInst& binary)
 
 void AsmPrinter::add(const CmpInst& cmp)
 {
-    addLine("Cmp",
-            to_string(*cmp.lhs) + " " +
-            to_string(*cmp.rhs));
+    addLine("Cmp", to_string(*cmp.lhs) + " " + to_string(*cmp.rhs) + " " + to_string(cmp.type));
 }
 
 void AsmPrinter::add(const IdivInst& idiv)

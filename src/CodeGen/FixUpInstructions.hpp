@@ -9,12 +9,13 @@ namespace CodeGen {
 class FixUpInstructions final {
     using RegType = Operand::RegKind;
 
+    Program& m_program;
     std::vector<std::unique_ptr<Inst>>& m_insts;
     std::vector<std::unique_ptr<Inst>> m_copy;
     i32 stackAlloc;
 public:
-    FixUpInstructions(std::vector<std::unique_ptr<Inst>>& insts, const i32 stackAlloc)
-        : m_insts(insts), stackAlloc(stackAlloc) {}
+    FixUpInstructions(std::vector<std::unique_ptr<Inst>>& insts, const i32 stackAlloc, Program& program)
+        : m_program(program), m_insts(insts), stackAlloc(stackAlloc) {}
 
     void fixStackAlignment();
     void fixUp();
@@ -30,8 +31,8 @@ public:
     void fixCvttsd2si(Cvttsd2siInst& cvttsd2si);
     void fixCvtsi2sd(Cvtsi2sdInst& cvtsi2sd);
 
-    static std::shared_ptr<RegisterOperand> genSrcOperand(AsmType type);
-    static std::shared_ptr<RegisterOperand> genDstOperand(AsmType type);
+    [[nodiscard]] const Operand* genSrcOperand(AsmType type) const;
+    [[nodiscard]] const Operand* genDstOperand(AsmType type) const;
 private:
     template<typename... InstPtrs>
     void insert(InstPtrs&&... others)
