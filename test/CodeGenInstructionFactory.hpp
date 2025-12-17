@@ -15,6 +15,7 @@ class CodeGenInstructionFactory {
     const RegType m_doubleDst = RegType::XMM1;
     const RegType m_integerSrc = RegType::R8;
     const RegType m_integerDst = RegType::R9;
+    std::vector<std::unique_ptr<Operand>> operands;
 public:
     CodeGenInstructionFactory(
         const RegType doubleSrc, const RegType doubleDst,
@@ -28,7 +29,7 @@ public:
     std::unique_ptr<Inst> create(Inst::Kind kind, OperKind src, OperKind dst);
     std::unique_ptr<Inst> createBinary(
         BinaryInst::Operator kind, AsmType asmType, OperKind srcKind, OperKind dstKind);
-    std::unique_ptr<Operand> createOperand(OperKind kind, AsmType asmType);
+    const Operand* createOperand(OperKind kind, AsmType asmType);
 };
 
 }

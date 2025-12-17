@@ -7,8 +7,8 @@ namespace CodeGen {
 std::unique_ptr<Inst> CodeGenInstructionFactory::create(
     const Inst::Kind kind, const OperKind srcKind, const OperKind dstKind, const AsmType asmType)
 {
-    std::unique_ptr<Operand> src = createOperand(srcKind, asmType);
-    std::unique_ptr<Operand> dst = createOperand(dstKind, asmType);
+    const Operand* src = createOperand(srcKind, asmType);
+    const Operand* dst = createOperand(dstKind, asmType);
     switch (kind) {
         case Kind::Move:
             return std::make_unique<MoveInst>(std::move(src), std::move(dst), asmType);
@@ -43,25 +43,37 @@ std::unique_ptr<Inst> CodeGenInstructionFactory::createBinary(
     BinaryInst::Operator kind, AsmType asmType,
     const OperKind srcKind, const OperKind dstKind)
 {
-    std::unique_ptr<Operand> src = createOperand(srcKind, asmType);
-    std::unique_ptr<Operand> dst = createOperand(dstKind, asmType);
+    const Operand* src = createOperand(srcKind, asmType);
+    const Operand* dst = createOperand(dstKind, asmType);
     return std::make_unique<BinaryInst>(std::move(src), std::move(dst), kind, asmType);
 }
 
-std::unique_ptr<Operand> CodeGenInstructionFactory::createOperand(const OperKind kind, AsmType asmType)
+const Operand* CodeGenInstructionFactory::createOperand(const OperKind kind, AsmType asmType)
 {
     switch (kind) {
-        case OperKind::Imm:
-            return std::make_unique<ImmOperand>(0l, asmType);
-        case OperKind::Register:
-            return std::make_unique<RegisterOperand>(RegType::R8, asmType);
-        case OperKind::Pseudo:
-            return std::make_unique<PseudoOperand>(Identifier("x"), ReferingTo::Local, asmType, false);
-        case OperKind::Memory:
-            return std::make_unique<MemoryOperand>(RegType::R8, 0, asmType);
-        case OperKind::Data:
-            return std::make_unique<DataOperand>(asmType, 0, Identifier("x"), false);
+        case OperKind::Imm: {
+            operands.emplace_back(std::make_unique<ImmOperand>(0l, asmType));
+            break;
+        }
+        case OperKind::Register: {
+            operands.emplace_back(std::make_unique<RegisterOperand>(RegType::R8, asmType));
+            break;
+        }
+        case OperKind::Pseudo: {
+            operands.emplace_back(std::make_unique<PseudoOperand>(
+                Identifier("x"), ReferingTo::Local, asmType, false));
+            break;
+        }
+        case OperKind::Memory: {
+            operands.emplace_back(std::make_unique<MemoryOperand>(RegType::R8, 0, asmType));
+            break;
+        }
+        case OperKind::Data: {
+            operands.emplace_back(std::make_unique<DataOperand>(
+                asmType, 0, Identifier("x"), false));
+            break;
+        }
     }
-    std::abort();
+    return operands.back().get();
 }
-}
+} // CodeGen

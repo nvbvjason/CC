@@ -21,7 +21,7 @@ using DataOperand = CodeGen::DataOperand;
 using ImmOperand = CodeGen::ImmOperand;
 using RegisterOperand = CodeGen::RegisterOperand;
 using MemoryOperand = CodeGen::MemoryOperand;
-using std::make_shared;
+using std::make_unique;
 }
 
 TEST(AssemblyTests, addType)
@@ -219,23 +219,34 @@ TEST(AssemblyTests, createLabel)
 TEST(AssemblyTests, asmOperand)
 {
     struct TestDataOperand {
-        const std::string expected;
-        const std::shared_ptr<CodeGen::Operand> operand;
-        TestDataOperand(std::string expected, const std::shared_ptr<CodeGen::Operand>& operand)
-            : expected(std::move(expected)), operand(operand) {}
+        std::string expected;
+        std::unique_ptr<const CodeGen::Operand> operand;
+        TestDataOperand(std::string expected, std::unique_ptr<const CodeGen::Operand>&& operand)
+            : expected(std::move(expected)), operand(std::move(operand)) {}
+
+        TestDataOperand(TestDataOperand&& other) noexcept
+            : expected(std::move(other.expected)), operand(std::move(other.operand)) {}
+        TestDataOperand& operator=(TestDataOperand&& other) noexcept {
+            if (this != &other) {
+                expected = std::move(other.expected);
+                operand = std::move(other.operand);
+            }
+            return *this;
+        }
     };
 
-    const std::vector<TestDataOperand> tests = {
-        {"invalid pseudo", make_shared<PseudoOperand>(Iden(""), ReferingTo::Local, CodeGen::asmLongWord, true)},
-        {"(%rip)", make_shared<DataOperand>(CodeGen::asmLongWord, 0, Iden(""), true)},
-        {".L(%rip)", make_shared<DataOperand>(CodeGen::asmDouble, 0, Iden(""), true, true)},
-        {"$0", make_shared<ImmOperand>(0l, CodeGen::asmQuadWord)},
-        {"%rax", make_shared<RegisterOperand>(RegKind::AX, CodeGen::asmQuadWord)},
-        {"10(%rcx)", make_shared<MemoryOperand>(RegKind::CX, 10, CodeGen::asmQuadWord)},
-        {"(%rcx)", make_shared<MemoryOperand>(RegKind::CX, 0, CodeGen::asmQuadWord)},
-    };
+    std::vector<TestDataOperand> tests;
+
+    tests.emplace_back("invalid pseudo", make_unique<PseudoOperand>(Iden(""), ReferingTo::Local, CodeGen::asmLongWord, true));
+    tests.emplace_back("(%rip)", make_unique<DataOperand>(CodeGen::asmLongWord, 0, Iden(""), true));
+    tests.emplace_back(".L(%rip)", make_unique<DataOperand>(CodeGen::asmDouble, 0, Iden(""), true, true));
+    tests.emplace_back("$0", make_unique<ImmOperand>(0l, CodeGen::asmQuadWord));
+    tests.emplace_back("%rax", make_unique<RegisterOperand>(RegKind::AX, CodeGen::asmQuadWord));
+    tests.emplace_back("10(%rcx)", make_unique<MemoryOperand>(RegKind::CX, 10, CodeGen::asmQuadWord));
+    tests.emplace_back("(%rcx)", make_unique<MemoryOperand>(RegKind::CX, 0, CodeGen::asmQuadWord));
+
     for (const TestDataOperand& test : tests) {
-        const std::string operString = CodeGen::asmOperand(test.operand);
+        const std::string operString = CodeGen::asmOperand(test.operand.get());
         EXPECT_EQ(operString, test.expected);
     }
 }

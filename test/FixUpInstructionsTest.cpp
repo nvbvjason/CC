@@ -5,6 +5,8 @@
 #include "FixUpInstructions.hpp"
 #include "CodeGen/Operators.hpp"
 
+namespace CodeGen {
+
 std::array stackOperands{OperKind::Data, OperKind::Memory};
 std::array stackOperandsAndImm{OperKind::Data, OperKind::Memory, OperKind::Imm};
 std::array binaryShiftOpers{BinaryOper::LeftShiftSigned, BinaryOper::RightShiftSigned,
@@ -57,20 +59,20 @@ void FixUpInstructionsTest::addCmp(const OperKind srcKind, const OperKind dstKin
     insts.push_back(factory.create(InstKind::Cmp, srcKind, dstKind, asmType));
 }
 
-void FixUpInstructionsTest::addBinary(CodeGen::BinaryInst::Operator oper, AsmType asmType, OperKind srcKind, OperKind dstKind)
+void FixUpInstructionsTest::addBinary(BinaryInst::Operator oper, AsmType asmType, OperKind srcKind, OperKind dstKind)
 {
     insts.push_back(factory.createBinary(oper, asmType, srcKind, dstKind));
 }
 
 void FixUpInstructionsTest::run()
 {
-    CodeGen::FixUpInstructions fixUpInstructions(insts, 0);
+    FixUpInstructions fixUpInstructions(insts, 0, program);
     fixUpInstructions.fixUp();
 }
 
 void FixUpInstructionsTest::run(const i32 stackAlloc)
 {
-    CodeGen::FixUpInstructions fixUpInstructions(insts, stackAlloc);
+    FixUpInstructions fixUpInstructions(insts, stackAlloc, program);
     fixUpInstructions.fixUp();
 }
 
@@ -96,14 +98,14 @@ TEST_F(FixUpInstructionsTest, fixStackAlignment_fixAlignment)
     EXPECT_EQ(binary->rhs->kind, OperKind::Register);
     EXPECT_EQ(binary->oper, BinaryOper::Sub);
     EXPECT_EQ(binary->type, CodeGen::asmQuadWord);
-    const auto imm = dynCast<CodeGen::ImmOperand>(binary->lhs.get());
+    const auto imm = dynCast<const ImmOperand>(binary->lhs);
     EXPECT_EQ(imm->value, 16);
 }
 
 TEST_F(FixUpInstructionsTest, fixMove_expandSrcOnStack)
 {
     for (const OperKind stackOperand : stackOperands) {
-        addMove(stackOperand, OperKind::Memory, CodeGen::asmDouble);
+        addMove(stackOperand, OperKind::Memory, asmDouble);
         run();
         EXPECT_EQ(insts.size(), 2);
         EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -114,7 +116,7 @@ TEST_F(FixUpInstructionsTest, fixMove_expandSrcOnStack)
 
 TEST_F(FixUpInstructionsTest, fixMove_doNothing)
 {
-    addMove(OperKind::Imm, OperKind::Memory, CodeGen::asmDouble);
+    addMove(OperKind::Imm, OperKind::Memory, asmDouble);
     run();
     EXPECT_EQ(insts.size(), 1);
     EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -151,7 +153,7 @@ TEST_F(FixUpInstructionsTest, fixMoveSX_expandDstOnStack)
 
 TEST_F(FixUpInstructionsTest, fixMoveZero_replaceWithMove)
 {
-    addMoveZero(OperKind::Register, OperKind::Register, CodeGen::asmDouble);
+    addMoveZero(OperKind::Register, OperKind::Register, asmDouble);
     run();
     EXPECT_EQ(insts.size(), 1);
     EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -160,7 +162,7 @@ TEST_F(FixUpInstructionsTest, fixMoveZero_replaceWithMove)
 TEST_F(FixUpInstructionsTest, fixMoveZero_replaceRegister)
 {
     for (const OperKind stackOperand : stackOperands) {
-        addMoveZero(OperKind::Register, stackOperand, CodeGen::asmDouble);
+        addMoveZero(OperKind::Register, stackOperand, asmDouble);
         run();
         EXPECT_EQ(insts.size(), 2);
         EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -191,8 +193,8 @@ TEST_F(FixUpInstructionsTest, fixLea_fixStackDst)
 
 TEST_F(FixUpInstructionsTest, fixBinaryShift_replaceWithByteMove)
 {
-    for (const CodeGen::BinaryInst::Operator oper : binaryShiftOpers) {
-        addBinary(oper, CodeGen::asmLongWord, OperKind::Register, OperKind::Register);
+    for (const BinaryInst::Operator oper : binaryShiftOpers) {
+        addBinary(oper, asmLongWord, OperKind::Register, OperKind::Register);
         run();
         EXPECT_EQ(insts.size(), 2);
         EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -203,7 +205,7 @@ TEST_F(FixUpInstructionsTest, fixBinaryShift_replaceWithByteMove)
 
 TEST_F(FixUpInstructionsTest, fixBinaryMulLong_doNothing)
 {
-    addBinary(BinaryOper::Mul, CodeGen::asmLongWord, OperKind::Register, OperKind::Register);
+    addBinary(BinaryOper::Mul, asmLongWord, OperKind::Register, OperKind::Register);
     run();
     EXPECT_EQ(insts.size(), 1);
     EXPECT_EQ(insts[0]->kind, InstKind::Binary);
@@ -211,8 +213,8 @@ TEST_F(FixUpInstructionsTest, fixBinaryMulLong_doNothing)
 
 TEST_F(FixUpInstructionsTest, fixBinaryMulLong_fixUpStackRhsOperand)
 {
-    for (const CodeGen::Operand::Kind oper : stackOperands) {
-        addBinary(BinaryOper::Mul, CodeGen::asmLongWord, OperKind::Register, oper);
+    for (const Operand::Kind oper : stackOperands) {
+        addBinary(BinaryOper::Mul, asmLongWord, OperKind::Register, oper);
         run();
         EXPECT_EQ(insts.size(), 3);
         EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -224,7 +226,7 @@ TEST_F(FixUpInstructionsTest, fixBinaryMulLong_fixUpStackRhsOperand)
 
 TEST_F(FixUpInstructionsTest, fixBinaryMulDouble_doNothing)
 {
-    addBinary(BinaryOper::Mul, CodeGen::asmDouble, OperKind::Register, OperKind::Register);
+    addBinary(BinaryOper::Mul, asmDouble, OperKind::Register, OperKind::Register);
     run();
     EXPECT_EQ(insts.size(), 1);
     EXPECT_EQ(insts[0]->kind, InstKind::Binary);
@@ -232,7 +234,7 @@ TEST_F(FixUpInstructionsTest, fixBinaryMulDouble_doNothing)
 
 TEST_F(FixUpInstructionsTest, fixBinaryMulDouble_fixUpStackRhsOperand)
 {
-    addBinary(BinaryOper::Mul, CodeGen::asmDouble, OperKind::Register, OperKind::Memory);
+    addBinary(BinaryOper::Mul, asmDouble, OperKind::Register, OperKind::Memory);
     run();
     EXPECT_EQ(insts.size(), 3);
     EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -243,7 +245,7 @@ TEST_F(FixUpInstructionsTest, fixBinaryMulDouble_fixUpStackRhsOperand)
 TEST_F(FixUpInstructionsTest, fixBinaryOtherLong_fixUpBothOnStack)
 {
     for (const BinaryOper oper : binaryOtherOpers) {
-        addBinary(oper, CodeGen::asmLongWord, OperKind::Memory, OperKind::Memory);
+        addBinary(oper, asmLongWord, OperKind::Memory, OperKind::Memory);
         run();
         EXPECT_EQ(insts.size(), 2);
         EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -255,7 +257,7 @@ TEST_F(FixUpInstructionsTest, fixBinaryOtherLong_fixUpBothOnStack)
 TEST_F(FixUpInstructionsTest, fixBinaryOtherLong_doNothing)
 {
     for (const BinaryOper oper : binaryOtherOpers) {
-        addBinary(oper, CodeGen::asmLongWord, OperKind::Register, OperKind::Memory);
+        addBinary(oper, asmLongWord, OperKind::Register, OperKind::Memory);
         run();
         EXPECT_EQ(insts.size(), 1);
         EXPECT_EQ(insts[0]->kind, InstKind::Binary);
@@ -266,7 +268,7 @@ TEST_F(FixUpInstructionsTest, fixBinaryOtherLong_doNothing)
 TEST_F(FixUpInstructionsTest, fixBinaryDouble_fixUpBothOnStack)
 {
     for (const BinaryOper oper : binaryOtherOpers) {
-        addBinary(oper, CodeGen::asmDouble, OperKind::Memory, OperKind::Memory);
+        addBinary(oper, asmDouble, OperKind::Memory, OperKind::Memory);
         run();
         EXPECT_EQ(insts.size(), 3);
         EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -279,7 +281,7 @@ TEST_F(FixUpInstructionsTest, fixBinaryDouble_fixUpBothOnStack)
 TEST_F(FixUpInstructionsTest, fixBinaryDouble_doNothing)
 {
     for (const BinaryOper oper : binaryOtherOpers) {
-        addBinary(oper, CodeGen::asmDouble, OperKind::Memory, OperKind::Register);
+        addBinary(oper, asmDouble, OperKind::Memory, OperKind::Register);
         run();
         EXPECT_EQ(insts.size(), 1);
         EXPECT_EQ(insts[0]->kind, InstKind::Binary);
@@ -289,7 +291,7 @@ TEST_F(FixUpInstructionsTest, fixBinaryDouble_doNothing)
 
 TEST_F(FixUpInstructionsTest, fixCmp_doNothing)
 {
-    addCmp(OperKind::Memory, OperKind::Register, CodeGen::asmLongWord);
+    addCmp(OperKind::Memory, OperKind::Register, asmLongWord);
     run();
     EXPECT_EQ(insts.size(), 1);
     EXPECT_EQ(insts[0]->kind, InstKind::Cmp);
@@ -297,7 +299,7 @@ TEST_F(FixUpInstructionsTest, fixCmp_doNothing)
 
 TEST_F(FixUpInstructionsTest, fixCmp_rhsRegisterAndTypeDouble)
 {
-    addCmp(OperKind::Register, OperKind::Memory, CodeGen::asmDouble);
+    addCmp(OperKind::Register, OperKind::Memory, asmDouble);
     run();
     EXPECT_EQ(insts.size(), 2);
     EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -306,7 +308,7 @@ TEST_F(FixUpInstructionsTest, fixCmp_rhsRegisterAndTypeDouble)
 
 TEST_F(FixUpInstructionsTest, fixCmp_fixRhsImm)
 {
-    addCmp(OperKind::Memory, OperKind::Imm, CodeGen::asmLongWord);
+    addCmp(OperKind::Memory, OperKind::Imm, asmLongWord);
     run();
     EXPECT_EQ(insts.size(), 2);
     EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -316,7 +318,7 @@ TEST_F(FixUpInstructionsTest, fixCmp_fixRhsImm)
 TEST_F(FixUpInstructionsTest, fixCmp_fixUpBothOnStack)
 {
     for (const OperKind oper : stackOperands) {
-        addCmp(oper, oper, CodeGen::asmLongWord);
+        addCmp(oper, oper, asmLongWord);
         run();
         EXPECT_EQ(insts.size(), 2);
         EXPECT_EQ(insts[0]->kind, InstKind::Move);
@@ -410,28 +412,46 @@ TEST_F(FixUpInstructionsTest, fixCvtsi2sd_fixSrcImm)
 
 TEST_F(FixUpInstructionsTest, genSrcOperand_Double)
 {
-    const auto expected = make_shared<RegisterOperand>(RegType::XMM14, CodeGen::asmDouble);
-    const auto actual = CodeGen::FixUpInstructions::genSrcOperand(CodeGen::asmDouble);
-    EXPECT_EQ(expected->regKind, actual->regKind);
+    const auto expected = make_shared<RegisterOperand>(RegType::XMM14, asmDouble);
+    Program program;
+    std::vector<std::unique_ptr<Inst>> insts;
+    FixUpInstructions fixUpInstructions(insts, 0, program);
+    const Operand* actual = fixUpInstructions.genSrcOperand(asmDouble);
+    const auto regOper = dynCast<const RegisterOperand>(actual);
+    EXPECT_EQ(expected->regKind, regOper->regKind);
 }
 
 TEST_F(FixUpInstructionsTest, genSrcOperand_Long)
 {
-    const auto expected = make_shared<RegisterOperand>(RegType::R10, CodeGen::asmLongWord);
-    const auto actual = CodeGen::FixUpInstructions::genSrcOperand(CodeGen::asmLongWord);
-    EXPECT_EQ(expected->regKind, actual->regKind);
+    const auto expected = make_shared<RegisterOperand>(RegType::R10, asmLongWord);
+    Program program;
+    std::vector<std::unique_ptr<Inst>> insts;
+    FixUpInstructions fixUpInstructions(insts, 0, program);
+    const Operand* actual = fixUpInstructions.genSrcOperand(asmLongWord);
+    const auto regOper = dynCast<const RegisterOperand>(actual);
+    EXPECT_EQ(expected->regKind, regOper->regKind);
 }
 
 TEST_F(FixUpInstructionsTest, genDstOperand_Double)
 {
-    const auto expected = make_shared<RegisterOperand>(RegType::XMM15, CodeGen::asmDouble);
-    const auto actual = CodeGen::FixUpInstructions::genDstOperand(CodeGen::asmDouble);
-    EXPECT_EQ(expected->regKind, actual->regKind);
+    const auto expected = make_shared<RegisterOperand>(RegType::XMM15, asmDouble);
+    Program program;
+    std::vector<std::unique_ptr<Inst>> insts;
+    FixUpInstructions fixUpInstructions(insts, 0, program);
+    const Operand* actual = fixUpInstructions.genDstOperand(asmDouble);
+    const auto regOper = dynCast<const RegisterOperand>(actual);
+    EXPECT_EQ(expected->regKind, regOper->regKind);
 }
 
 TEST_F(FixUpInstructionsTest, genDstOperand_Long)
 {
-    const auto expected = make_shared<RegisterOperand>(RegType::R11, CodeGen::asmLongWord);
-    const auto actual = CodeGen::FixUpInstructions::genDstOperand(CodeGen::asmLongWord);
-    EXPECT_EQ(expected->regKind, actual->regKind);
+    const auto expected = make_shared<RegisterOperand>(RegType::R11, asmLongWord);
+    Program program;
+    std::vector<std::unique_ptr<Inst>> insts;
+    FixUpInstructions fixUpInstructions(insts, 0, program);
+    const Operand* actual = fixUpInstructions.genDstOperand(asmLongWord);
+    const auto regOper = dynCast<const RegisterOperand>(actual);
+    EXPECT_EQ(expected->regKind, regOper->regKind);
 }
+
+} // CodeGen

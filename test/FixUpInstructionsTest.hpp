@@ -7,19 +7,20 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-using RegType = CodeGen::Operand::RegKind;
-using AsmType = CodeGen::AsmType;
-using RegisterOperand = CodeGen::RegisterOperand;
-using OperKind = CodeGen::Operand::Kind;
-using InstKind = CodeGen::Inst::Kind;
-using AsmType = CodeGen::AsmType;
-using BinaryOper = CodeGen::BinaryInst::Operator;
+namespace CodeGen {
+
+using RegType = Operand::RegKind;
+using OperKind = Operand::Kind;
+using InstKind = Inst::Kind;
+using AsmType = AsmType;
+using BinaryOper = BinaryInst::Operator;
 using std::make_shared;
 
 class FixUpInstructionsTest : public testing::Test {
-    CodeGen::CodeGenInstructionFactory factory;
+    CodeGenInstructionFactory factory;
+    Program program;
 public:
-    std::vector<std::unique_ptr<CodeGen::Inst>> insts;
+    std::vector<std::unique_ptr<Inst>> insts;
     void addMove(OperKind srcKind, OperKind dstKind, AsmType asmType);
     void addMoveZero(OperKind srcKind, OperKind dstKind, AsmType asmType);
     void addMoveSX(OperKind srcKind, OperKind dstKind);
@@ -29,7 +30,7 @@ public:
     void addCvttsd2si(OperKind srcKind, OperKind dstKind);
     void addCvtsi2sd(OperKind srcKind, OperKind dstKind);
     void addCmp(OperKind srcKind, OperKind dstKind, AsmType asmType);
-    void addBinary(CodeGen::BinaryInst::Operator oper, AsmType asmType, OperKind srcKind, OperKind dstKind);
+    void addBinary(BinaryInst::Operator oper, AsmType asmType, OperKind srcKind, OperKind dstKind);
     void run();
     void run(i32 stackAlloc);
 protected:
@@ -38,3 +39,5 @@ protected:
         insts.clear();
     }
 };
+
+} // CodeGen
