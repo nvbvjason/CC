@@ -342,13 +342,11 @@ void GenerateIr::genBlockItem(const Parsing::BlockItem& blockItem)
     switch (blockItem.kind) {
         case Kind::Declaration: {
             const auto decl = dynCast<const Parsing::DeclBlockItem>(&blockItem);
-            genDeclaration(*decl->decl);
-            break;
+            return genDeclaration(*decl->decl);
         }
         case Kind::Statement: {
             const auto stmtBlockItem = dynCast<const Parsing::StmtBlockItem>(&blockItem);
-            genStmt(*stmtBlockItem->stmt);
-            break;
+            return genStmt(*stmtBlockItem->stmt);
         }
         default:
             std::abort();
@@ -378,75 +376,62 @@ void GenerateIr::genStmt(const Parsing::Stmt& stmt)
 {
     using Kind = Parsing::Stmt::Kind;
     switch (stmt.kind) {
-        case Kind::If: {
-            const auto ifStmt = dynCast<const Parsing::IfStmt>(&stmt);
-            genIfStmt(*ifStmt);
-            break;
-        }
-        case Kind::Return: {
-            const auto returnStmt = dynCast<const Parsing::ReturnStmt>(&stmt);
-            genReturnStmt(*returnStmt);
-            break;
-        }
         case Kind::Expression: {
             const auto stmtExpr = dynCast<const Parsing::ExprStmt>(&stmt);
             genInst(*stmtExpr->expr);
             break;
         }
+        case Kind::If: {
+            const auto ifStmt = dynCast<const Parsing::IfStmt>(&stmt);
+            return genIfStmt(*ifStmt);
+        }
+        case Kind::Return: {
+            const auto returnStmt = dynCast<const Parsing::ReturnStmt>(&stmt);
+            return genReturnStmt(*returnStmt);
+        }
         case Kind::Goto: {
             const auto gotoStmt = dynCast<const Parsing::GotoStmt>(&stmt);
-            genGotoStmt(*gotoStmt);
-            break;
+            return genGotoStmt(*gotoStmt);
         }
         case Kind::Compound: {
             const auto compoundStmtPtr = dynCast<const Parsing::CompoundStmt>(&stmt);
-            genCompoundStmt(*compoundStmtPtr);
-            break;
+            return genCompoundStmt(*compoundStmtPtr);
         }
         case Kind::Break: {
             const auto breakStmtPtr = dynCast<const Parsing::BreakStmt>(&stmt);
-            genBreakStmt(*breakStmtPtr);
-            break;
+            return genBreakStmt(*breakStmtPtr);
         }
         case Kind::Continue: {
             const auto continueStmtPtr = dynCast<const Parsing::ContinueStmt>(&stmt);
-            genContinueStmt(*continueStmtPtr);
-            break;
+            return genContinueStmt(*continueStmtPtr);
         }
         case Kind::Label: {
             const auto labelStmtPtr = dynCast<const Parsing::LabelStmt>(&stmt);
-            genLabelStmt(*labelStmtPtr);
-            break;
+            return genLabelStmt(*labelStmtPtr);
         }
         case Kind::Case: {
             const auto caseStmtPtr = dynCast<const Parsing::CaseStmt>(&stmt);
-            genCaseStmt(*caseStmtPtr);
-            break;
+            return genCaseStmt(*caseStmtPtr);
         }
         case Kind::Default: {
             const auto defaultStmtPtr = dynCast<const Parsing::DefaultStmt>(&stmt);
-            genDefaultStmt(*defaultStmtPtr);
-            break;
+            return genDefaultStmt(*defaultStmtPtr);
         }
         case Kind::DoWhile: {
             const auto doWhileStmtPtr = dynCast<const Parsing::DoWhileStmt>(&stmt);
-            genDoWhileStmt(*doWhileStmtPtr);
-            break;
+            return genDoWhileStmt(*doWhileStmtPtr);
         }
         case Kind::While: {
             const auto whileStmtPtr = dynCast<const Parsing::WhileStmt>(&stmt);
-            genWhileStmt(*whileStmtPtr);
-            break;
+            return genWhileStmt(*whileStmtPtr);
         }
         case Kind::For: {
             const auto forStmtPtr = dynCast<const Parsing::ForStmt>(&stmt);
-            genForStmt(*forStmtPtr);
-            break;
+            return genForStmt(*forStmtPtr);
         }
         case Kind::Switch: {
             const auto switchStmtPtr = dynCast<const Parsing::SwitchStmt>(&stmt);
-            genSwitchStmt(*switchStmtPtr);
-            break;
+            return genSwitchStmt(*switchStmtPtr);
         }
         case Kind::Null:
             break;

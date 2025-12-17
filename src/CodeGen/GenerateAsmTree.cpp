@@ -190,118 +190,95 @@ void GenerateAsmTree::genInst(const std::unique_ptr<Ir::Instruction>& inst)
     switch (inst->kind) {
         case Kind::Return: {
             const auto irReturn = dynCast<const Ir::ReturnInst>(inst.get());
-            genReturn(*irReturn);
-            break;
+            return genReturn(*irReturn);
         }
         case Kind::SignExtend: {
             const auto signExtend = dynCast<const Ir::SignExtendInst>(inst.get());
-            genSignExtend(*signExtend);
-            break;
+            return genSignExtend(*signExtend);
         }
         case Kind::Truncate: {
             const auto truncate = dynCast<const Ir::TruncateInst>(inst.get());
-            genTruncate(*truncate);
-            break;
+            return genTruncate(*truncate);
         }
         case Kind::ZeroExtend: {
             const auto zeroExtend = dynCast<const Ir::ZeroExtendInst>(inst.get());
-            genZeroExtend(*zeroExtend);
-            break;
+            return genZeroExtend(*zeroExtend);
         }
         case Kind::DoubleToInt: {
             const auto doubleToInt = dynCast<const Ir::DoubleToIntInst>(inst.get());
-            genDoubleToInt(*doubleToInt);
-            break;
+            return genDoubleToInt(*doubleToInt);
         }
         case Kind::DoubleToUInt: {
             const auto doubleToUInt = dynCast<const Ir::DoubleToUIntInst>(inst.get());
-            genDoubleToUInt(*doubleToUInt);
-            break;
+            return genDoubleToUInt(*doubleToUInt);
         }
         case Kind::IntToDouble: {
             const auto intToDouble = dynCast<const Ir::IntToDoubleInst>(inst.get());
-            genIntToDouble(*intToDouble);
-            break;
+            return genIntToDouble(*intToDouble);
         }
         case Kind::UIntToDouble: {
             const auto uIntToDouble = dynCast<const Ir::UIntToDoubleInst>(inst.get());
-            genUIntToDouble(*uIntToDouble);
-            break;
+            return genUIntToDouble(*uIntToDouble);
         }
         case Kind::Unary: {
             const auto irUnary = dynCast<const Ir::UnaryInst>(inst.get());
-            genUnary(*irUnary);
-            break;
+            return genUnary(*irUnary);
         }
         case Kind::Binary: {
             const auto irBinary = dynCast<const Ir::BinaryInst>(inst.get());
-            genBinary(*irBinary);
-            break;
+            return genBinary(*irBinary);
         }
         case Kind::Copy: {
             const auto irCopy = dynCast<const Ir::CopyInst>(inst.get());
-            genCopy(*irCopy);
-            break;
+            return genCopy(*irCopy);
         }
         case Kind::Jump: {
             const auto irJump = dynCast<const Ir::JumpInst>(inst.get());
-            genJump(*irJump);
-            break;
+            return genJump(*irJump);
         }
         case Kind::JumpIfZero: {
             const auto irJumpIfZero = dynCast<const Ir::JumpIfZeroInst>(inst.get());
-            genJumpIfZero(*irJumpIfZero);
-            break;
+            return genJumpIfZero(*irJumpIfZero);
         }
         case Kind::JumpIfNotZero: {
             const auto irJumpIfNotZero = dynCast<const Ir::JumpIfNotZeroInst>(inst.get());
-            genJumpIfNotZero(*irJumpIfNotZero);
-            break;
+            return genJumpIfNotZero(*irJumpIfNotZero);
         }
         case Kind::Label: {
             const auto irLabel = dynCast<const Ir::LabelInst>(inst.get());
-            genLabel(*irLabel);
-            break;
+            return genLabel(*irLabel);
         }
         case Kind::FunCall: {
             const auto irFunCall = dynCast<const Ir::FunCallInst>(inst.get());
-            genFunCall(*irFunCall);
-            break;
+            return genFunCall(*irFunCall);
         }
         case Kind::Store: {
             const auto irStore = dynCast<const Ir::StoreInst>(inst.get());
-            genStore(*irStore);
-            break;
+            return genStore(*irStore);
         }
         case Kind::Load: {
             const auto irLoad = dynCast<const Ir::LoadInst>(inst.get());
-            genLoad(*irLoad);
-            break;
+            return genLoad(*irLoad);
         }
         case Kind::GetAddress: {
             const auto irGetAddress = dynCast<const Ir::GetAddressInst>(inst.get());
-            genGetAddress(*irGetAddress);
-            break;
+            return genGetAddress(*irGetAddress);
         }
         case Kind::AddPtr: {
             const auto irAddPtr = dynCast<const Ir::AddPtrInst>(inst.get());
-            genAddPtr(*irAddPtr);
-            break;
+            return genAddPtr(*irAddPtr);
         }
         case Kind::CopyToOffset: {
             const auto irCopyToOffset = dynCast<const Ir::CopyToOffsetInst>(inst.get());
-            genCopyToOffSet(*irCopyToOffset);
-            break;
+            return genCopyToOffSet(*irCopyToOffset);
         }
         case Kind::CopyFromOffset: {
             const auto irCopyFromOffset = dynCast<const Ir::CopyFromOffsetInst>(inst.get());
-            genCopyFromOffset(*irCopyFromOffset);
-            break;
+            return genCopyFromOffset(*irCopyFromOffset);
         }
         case Kind::Allocate: {
             const auto allocate = dynCast<const Ir::AllocateInst>(inst.get());
-            genAllocate(*allocate);
-            break;
+            return genAllocate(*allocate);
         }
         default:
             std::abort();
