@@ -52,62 +52,20 @@ void PseudoRegisterReplacer::replace(Inst &inst)
 {
     using Kind = Inst::Kind;
     switch (inst.kind) {
-        case Kind::Move: {
-            const auto move = dynCast<MoveInst>(&inst);
-            return replace(*move);
-        }
-        case Kind::MoveSX: {
-            const auto move = dynCast<MoveSXInst>(&inst);
-            return replace(*move);
-        }
-        case Kind::MoveZeroExtend: {
-            const auto moveZeroExtend = dynCast<MoveZeroExtendInst>(&inst);
-            return replace(*moveZeroExtend);
-        }
-        case Kind::Lea: {
-            const auto lea = dynCast<LeaInst>(&inst);
-            return replace(*lea);
-        }
-        case Kind::Unary: {
-            const auto Unary = dynCast<UnaryInst>(&inst);
-            return replace(*Unary);
-        }
-        case Kind::Binary: {
-            const auto Binary = dynCast<BinaryInst>(&inst);
-            return replace(*Binary);
-        }
-        case Kind::Idiv: {
-            const auto idiv = dynCast<IdivInst>(&inst);
-            return replace(*idiv);
-        }
-        case Kind::Div: {
-            const auto div = dynCast<DivInst>(&inst);
-            return replace(*div);
-        }
-        case Kind::Cmp: {
-            const auto cmp = dynCast<CmpInst>(&inst);
-            return replace(*cmp);
-        }
-        case Kind::SetCC: {
-            const auto setCC = dynCast<SetCCInst>(&inst);
-            return replace(*setCC);
-        }
-        case Kind::PushPseudo: {
-            const auto pushPseudo = dynCast<PushPseudoInst>(&inst);
-            return replace(*pushPseudo);
-        }
-        case Kind::Push: {
-            const auto push = dynCast<PushInst>(&inst);
-            return replace(*push);
-        }
-        case Kind::Cvttsd2si: {
-            const auto Cvttsd2si = dynCast<Cvttsd2siInst>(&inst);
-            return replace(*Cvttsd2si);
-        }
-        case Kind::Cvtsi2sd: {
-            const auto cvtsi2sd = dynCast<Cvtsi2sdInst>(&inst);
-            return replace(*cvtsi2sd);
-        }
+        case Kind::Move:            return replace(*dynCast<MoveInst>(&inst));
+        case Kind::MoveSX:          return replace(*dynCast<MoveSXInst>(&inst));
+        case Kind::MoveZeroExtend:  return replace(*dynCast<MoveZeroExtendInst>(&inst));
+        case Kind::Lea:             return replace(*dynCast<LeaInst>(&inst));
+        case Kind::Unary:           return replace(*dynCast<UnaryInst>(&inst));
+        case Kind::Binary:          return replace(*dynCast<BinaryInst>(&inst));
+        case Kind::Idiv:            return replace(*dynCast<IdivInst>(&inst));
+        case Kind::Div:             return replace(*dynCast<DivInst>(&inst));
+        case Kind::Cmp:             return replace(*dynCast<CmpInst>(&inst));
+        case Kind::SetCC:           return replace(*dynCast<SetCCInst>(&inst));
+        case Kind::PushPseudo:      return replace(*dynCast<PushPseudoInst>(&inst));
+        case Kind::Push:            return replace(*dynCast<PushInst>(&inst));
+        case Kind::Cvttsd2si:       return replace(*dynCast<Cvttsd2siInst>(&inst));
+        case Kind::Cvtsi2sd:        return replace(*dynCast<Cvtsi2sdInst>(&inst));
     }
 }
 
