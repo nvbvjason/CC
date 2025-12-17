@@ -92,7 +92,7 @@ void asmStaticVariableByte(std::string& result, const StaticVariable& variable)
     if (variable.init == nullptr)
         result += asmFormatInstruction(".zero 1");
     else
-        result += asmFormatInstruction(".byte " + asmStaticOperand(variable.init));
+        result += asmFormatInstruction(".byte ", asmStaticOperand(variable.init));
 }
 
 void asmStaticVariableLong(std::string& result, const StaticVariable& variable)
@@ -103,7 +103,7 @@ void asmStaticVariableLong(std::string& result, const StaticVariable& variable)
     if (variable.init == nullptr)
         result += asmFormatInstruction(".zero 4");
     else
-        result += asmFormatInstruction(".long " + asmStaticOperand(variable.init));
+        result += asmFormatInstruction(".long ", asmStaticOperand(variable.init));
 }
 
 void asmStaticVariableQuad(std::string& result, const StaticVariable& variable)
@@ -114,7 +114,7 @@ void asmStaticVariableQuad(std::string& result, const StaticVariable& variable)
     if (variable.init == nullptr)
         result += asmFormatInstruction(".zero 8");
     else
-        result += asmFormatInstruction(".quad " + asmStaticOperand(variable.init));
+        result += asmFormatInstruction(".quad ", asmStaticOperand(variable.init));
 }
 
 void asmStaticVariableDouble(std::string& result, const StaticVariable& variable)
@@ -122,7 +122,7 @@ void asmStaticVariableDouble(std::string& result, const StaticVariable& variable
     asmStaticVariablePre(result, variable);
     result += asmFormatInstruction(".align","8");
     result += asmFormatLabel(variable.name);
-    result += asmFormatInstruction(".quad " + asmStaticOperand(variable.init));
+    result += asmFormatInstruction(".quad ", asmStaticOperand(variable.init));
 }
 
 void asmStaticConstant(std::string& result, const ConstVariable& variable)
