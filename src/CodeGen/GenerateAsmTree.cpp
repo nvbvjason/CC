@@ -609,15 +609,9 @@ void GenerateAsmTree::genDoubleToInt(const Ir::DoubleToIntInst& doubleToInt)
 void GenerateAsmTree::genDoubleToUInt(const Ir::DoubleToUIntInst& doubleToUInt)
 {
     switch (doubleToUInt.type.kind) {
-        case Ir::IrType::Kind::U8:
-            genDoubleToUIntByte(doubleToUInt);
-            break;
-        case Ir::IrType::Kind::U32:
-            genDoubleToUIntLong(doubleToUInt);
-            break;
-        case Ir::IrType::Kind::U64:
-            genDoubleToUIntQuad(doubleToUInt);
-            break;
+        case Ir::IrType::Kind::U8:      genDoubleToUIntByte(doubleToUInt);  break;
+        case Ir::IrType::Kind::U32:     genDoubleToUIntLong(doubleToUInt);  break;
+        case Ir::IrType::Kind::U64:     genDoubleToUIntQuad(doubleToUInt);  break;
         default:
             std::abort();
     }
@@ -684,15 +678,9 @@ void GenerateAsmTree::genIntToDouble(const Ir::IntToDoubleInst& intToDouble)
 void GenerateAsmTree::genUIntToDouble(const Ir::UIntToDoubleInst& uintToDouble)
 {
     switch (uintToDouble.src->type.kind) {
-        case Ir::IrType::Kind::U8:
-            genUIntToDoubleByte(uintToDouble);
-            break;
-        case Ir::IrType::Kind::U32:
-            genUIntToDoubleLong(uintToDouble);
-            break;
-        case Ir::IrType::Kind::U64:
-            genUIntToDoubleQuad(uintToDouble);
-            break;
+        case Ir::IrType::Kind::U8:      genUIntToDoubleByte(uintToDouble);  break;
+        case Ir::IrType::Kind::U32:     genUIntToDoubleLong(uintToDouble);  break;
+        case Ir::IrType::Kind::U64:     genUIntToDoubleQuad(uintToDouble);  break;
         default:
             std::abort();
     }
@@ -1026,50 +1014,50 @@ bool GenerateAsmTree::getReferingToLocal(const Ir::CopyToOffsetInst& copyToOffse
 
 void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
 {
-    const auto src = genOperand(*copyToOffset.src);
-    const AsmType srcType = src->type;
-    const bool referringToLocal = getReferingToLocal(copyToOffset);
-    if (copyToOffset.type.kind == Ir::IrType::Kind::ByteArray) {
-        const auto srcVal = dynCast<const Ir::ValueVar>(copyToOffset.src);
-        const auto srcIden = Identifier(srcVal->value.value);
-        const auto dstIden = Identifier(copyToOffset.iden.value);
-        const bool srcLocal = srcVal->referringTo == ReferringTo::Local;
-        const bool dstLocal = copyToOffset.referringTo == ReferringTo::Local;
-        const i64 size = copyToOffset.type.size;
-        i64 i = 0;
-
-        for (; i + 8 <= size; i += 8) {
-            const Operand* srcEight = program.getPseudoMemOperand(
-                srcIden, i, 8, 0, srcLocal, asmQuadWord);
-            const Operand* dstEight = program.getPseudoMemOperand(
-                dstIden, copyToOffset.offset + i, 8, 0, dstLocal, asmQuadWord);
-            emitMove(srcEight, dstEight, asmQuadWord);
-        }
-        for (; i + 4 <= size; i += 4) {
-            const Operand* srcFour = program.getPseudoMemOperand(
-                srcIden, i, 4, 0, srcLocal, asmLongWord);
-            const Operand* dstFour = program.getPseudoMemOperand(
-                dstIden, copyToOffset.offset + i, 4, 0, dstLocal, asmLongWord);
-            emitMove(srcFour, dstFour, asmLongWord);
-        }
-        for (; i < size; ++i) {
-            const Operand* srcOne = program.getPseudoMemOperand(
-                srcIden, i, 1, 0, srcLocal, asmByte);
-            const Operand* dstOne = program.getPseudoMemOperand(
-                dstIden, copyToOffset.offset + i, 1, 0, dstLocal, asmByte);
-            emitMove(srcOne, dstOne, asmByte);
-        }
+    if (copyToOffset.type.kind != Ir::IrType::Kind::ByteArray) {
+        const auto src = genOperand(*copyToOffset.src);
+        const AsmType srcType = src->type;
+        const bool referringToLocal = getReferingToLocal(copyToOffset);
+        const Operand* pseudoMem = program.getPseudoMemOperand(
+                Identifier(copyToOffset.iden.value),
+                copyToOffset.offset,
+                copyToOffset.size,
+                copyToOffset.alignment,
+                referringToLocal,
+                srcType,
+                copyToOffset.referringTo);
+        emitMove(src, pseudoMem, srcType);
         return;
     }
-    const Operand* pseudoMem = program.getPseudoMemOperand(
-            Identifier(copyToOffset.iden.value),
-            copyToOffset.offset,
-            copyToOffset.size,
-            copyToOffset.alignment,
-            referringToLocal,
-            srcType,
-            copyToOffset.referringTo);
-    emitMove(src, pseudoMem, srcType);
+    const auto srcVal = dynCast<const Ir::ValueVar>(copyToOffset.src);
+    const auto srcIden = Identifier(srcVal->value.value);
+    const auto dstIden = Identifier(copyToOffset.iden.value);
+    const bool srcLocal = srcVal->referringTo == ReferringTo::Local;
+    const bool dstLocal = copyToOffset.referringTo == ReferringTo::Local;
+    const i64 size = copyToOffset.type.size;
+    i64 i = 0;
+
+    for (; i + 8 <= size; i += 8) {
+        const Operand* srcEight = program.getPseudoMemOperand(
+            srcIden, i, 8, 0, srcLocal, asmQuadWord);
+        const Operand* dstEight = program.getPseudoMemOperand(
+            dstIden, copyToOffset.offset + i, 8, 0, dstLocal, asmQuadWord);
+        emitMove(srcEight, dstEight, asmQuadWord);
+    }
+    for (; i + 4 <= size; i += 4) {
+        const Operand* srcFour = program.getPseudoMemOperand(
+            srcIden, i, 4, 0, srcLocal, asmLongWord);
+        const Operand* dstFour = program.getPseudoMemOperand(
+            dstIden, copyToOffset.offset + i, 4, 0, dstLocal, asmLongWord);
+        emitMove(srcFour, dstFour, asmLongWord);
+    }
+    for (; i < size; ++i) {
+        const Operand* srcOne = program.getPseudoMemOperand(
+            srcIden, i, 1, 0, srcLocal, asmByte);
+        const Operand* dstOne = program.getPseudoMemOperand(
+            dstIden, copyToOffset.offset + i, 1, 0, dstLocal, asmByte);
+        emitMove(srcOne, dstOne, asmByte);
+    }
 }
 
 void GenerateAsmTree::genCopyFromOffset(const Ir::CopyFromOffsetInst& copyFromOffset)
