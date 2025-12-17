@@ -10,7 +10,6 @@
 #include <fstream>
 #include <iostream>
 
-
 namespace CodeGen {
 
 void run(const Ir::Program& irProgram,

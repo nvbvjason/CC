@@ -316,6 +316,7 @@ std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FuncDecl& parsin
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);
     m_global = true;
     m_insts = std::move(functionTacky->insts);
+    m_insts.reserve(parsingFunction.body->body.size() * 3);
     functionTacky->args.reserve(parsingFunction.params.size());
     functionTacky->argTypes.reserve(parsingFunction.params.size());
     const auto funcType = dynCast<const Parsing::FuncType>(parsingFunction.type.get());
