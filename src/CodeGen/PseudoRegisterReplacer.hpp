@@ -6,7 +6,7 @@
 
 namespace CodeGen {
 
-class PseudoRegisterReplacer final : public InstVisitor {
+class PseudoRegisterReplacer final {
     Program& program;
     std::unordered_map<std::string, i64> pseudoMap;
     i64 stackPtr = 0;
@@ -18,27 +18,22 @@ public:
 
     [[nodiscard]] i64 stackPointer() const { return stackPtr; }
 
-    void visit(MoveInst& move) override;
-    void visit(MoveSXInst& moveSX) override;
-    void visit(MoveZeroExtendInst& moveZero) override;
-    void visit(LeaInst& lea) override;
-    void visit(UnaryInst& unary) override;
-    void visit(BinaryInst& binary) override;
-    void visit(IdivInst& idiv) override;
-    void visit(DivInst& div) override;
-    void visit(CmpInst& cmpInst) override;
-    void visit(SetCCInst& setCCInst) override;
-    void visit(PushPseudoInst&) override;
-    void visit(PushInst& pushInst) override;
-    void visit(Cvttsd2siInst& cvttsd2siInst) override;
-    void visit(Cvtsi2sdInst& cvtsi2sdInst) override;
+    void replace(Inst& inst);
 
-    void visit(CallInst&) override {}
-    void visit(CdqInst&) override {}
-    void visit(ReturnInst&) override {}
-    void visit(JmpInst&) override {}
-    void visit(JmpCCInst&) override {}
-    void visit(LabelInst&) override {}
+    void replace(MoveInst& move);
+    void replace(MoveSXInst& moveSX);
+    void replace(MoveZeroExtendInst& moveZero);
+    void replace(LeaInst& lea);
+    void replace(UnaryInst& unary);
+    void replace(BinaryInst& binary);
+    void replace(IdivInst& idiv);
+    void replace(DivInst& div);
+    void replace(CmpInst& cmpInst);
+    void replace(SetCCInst& setCCInst);
+    void replace(const PushPseudoInst& pushPseudoInst);
+    void replace(PushInst& pushInst);
+    void replace(Cvttsd2siInst& cvttsd2siInst);
+    void replace(Cvtsi2sdInst& cvtsi2sdInst);
 private:
     void fitTo8Alignment();
     void fitTo16Alignment();

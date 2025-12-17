@@ -48,63 +48,126 @@ const Operand* PseudoRegisterReplacer::replaceIfPseudo(const Operand* operand)
     return operand;
 }
 
-void PseudoRegisterReplacer::visit(MoveInst& move)
+void PseudoRegisterReplacer::replace(Inst &inst)
+{
+    using Kind = Inst::Kind;
+    switch (inst.kind) {
+        case Kind::Move: {
+            const auto move = dynCast<MoveInst>(&inst);
+            return replace(*move);
+        }
+        case Kind::MoveSX: {
+            const auto move = dynCast<MoveSXInst>(&inst);
+            return replace(*move);
+        }
+        case Kind::MoveZeroExtend: {
+            const auto moveZeroExtend = dynCast<MoveZeroExtendInst>(&inst);
+            return replace(*moveZeroExtend);
+        }
+        case Kind::Lea: {
+            const auto lea = dynCast<LeaInst>(&inst);
+            return replace(*lea);
+        }
+        case Kind::Unary: {
+            const auto Unary = dynCast<UnaryInst>(&inst);
+            return replace(*Unary);
+        }
+        case Kind::Binary: {
+            const auto Binary = dynCast<BinaryInst>(&inst);
+            return replace(*Binary);
+        }
+        case Kind::Idiv: {
+            const auto idiv = dynCast<IdivInst>(&inst);
+            return replace(*idiv);
+        }
+        case Kind::Div: {
+            const auto div = dynCast<DivInst>(&inst);
+            return replace(*div);
+        }
+        case Kind::Cmp: {
+            const auto cmp = dynCast<CmpInst>(&inst);
+            return replace(*cmp);
+        }
+        case Kind::SetCC: {
+            const auto setCC = dynCast<SetCCInst>(&inst);
+            return replace(*setCC);
+        }
+        case Kind::PushPseudo: {
+            const auto pushPseudo = dynCast<PushPseudoInst>(&inst);
+            return replace(*pushPseudo);
+        }
+        case Kind::Push: {
+            const auto push = dynCast<PushInst>(&inst);
+            return replace(*push);
+        }
+        case Kind::Cvttsd2si: {
+            const auto Cvttsd2si = dynCast<Cvttsd2siInst>(&inst);
+            return replace(*Cvttsd2si);
+        }
+        case Kind::Cvtsi2sd: {
+            const auto cvtsi2sd = dynCast<Cvtsi2sdInst>(&inst);
+            return replace(*cvtsi2sd);
+        }
+    }
+}
+
+void PseudoRegisterReplacer::replace(MoveInst& move)
 {
     move.src = replaceIfPseudo(move.src);
     move.dst = replaceIfPseudo(move.dst);
 }
 
-void PseudoRegisterReplacer::visit(MoveSXInst& moveSX)
+void PseudoRegisterReplacer::replace(MoveSXInst& moveSX)
 {
     moveSX.src = replaceIfPseudo(moveSX.src);
     moveSX.dst = replaceIfPseudo(moveSX.dst);
 }
 
-void PseudoRegisterReplacer::visit(MoveZeroExtendInst& moveZero)
+void PseudoRegisterReplacer::replace(MoveZeroExtendInst& moveZero)
 {
     moveZero.src = replaceIfPseudo(moveZero.src);
     moveZero.dst = replaceIfPseudo(moveZero.dst);
 }
 
-void PseudoRegisterReplacer::visit(LeaInst& lea)
+void PseudoRegisterReplacer::replace(LeaInst& lea)
 {
     lea.src = replaceIfPseudo(lea.src);
     lea.dst = replaceIfPseudo(lea.dst);
 }
 
-void PseudoRegisterReplacer::visit(UnaryInst& unary)
+void PseudoRegisterReplacer::replace(UnaryInst& unary)
 {
     unary.dst = replaceIfPseudo(unary.dst);
 }
 
-void PseudoRegisterReplacer::visit(BinaryInst& binary)
+void PseudoRegisterReplacer::replace(BinaryInst& binary)
 {
     binary.lhs = replaceIfPseudo(binary.lhs);
     binary.rhs = replaceIfPseudo(binary.rhs);
 }
 
-void PseudoRegisterReplacer::visit(IdivInst& idiv)
+void PseudoRegisterReplacer::replace(IdivInst& idiv)
 {
     idiv.operand = replaceIfPseudo(idiv.operand);
 }
 
-void PseudoRegisterReplacer::visit(DivInst& div)
+void PseudoRegisterReplacer::replace(DivInst& div)
 {
     div.operand= replaceIfPseudo(div.operand);
 }
 
-void PseudoRegisterReplacer::visit(CmpInst& cmpInst)
+void PseudoRegisterReplacer::replace(CmpInst& cmpInst)
 {
     cmpInst.lhs = replaceIfPseudo(cmpInst.lhs);
     cmpInst.rhs = replaceIfPseudo(cmpInst.rhs);
 }
 
-void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
+void PseudoRegisterReplacer::replace(SetCCInst& setCCInst)
 {
     setCCInst.operand = replaceIfPseudo(setCCInst.operand);
 }
 
-void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
+void PseudoRegisterReplacer::replace(const PushPseudoInst& pushPseudoInst)
 {
     stackPtr -= pushPseudoInst.size;
     if (pushPseudoInst.size < 16)
@@ -114,18 +177,18 @@ void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
     pseudoMap[pushPseudoInst.identifier.value] = stackPtr;
 }
 
-void PseudoRegisterReplacer::visit(PushInst& pushInst)
+void PseudoRegisterReplacer::replace(PushInst& pushInst)
 {
     pushInst.operand = replaceIfPseudo(pushInst.operand);
 }
 
-void PseudoRegisterReplacer::visit(Cvttsd2siInst& cvttsd2siInst)
+void PseudoRegisterReplacer::replace(Cvttsd2siInst& cvttsd2siInst)
 {
     cvttsd2siInst.src = replaceIfPseudo(cvttsd2siInst.src);
     cvttsd2siInst.dst = replaceIfPseudo(cvttsd2siInst.dst);
 }
 
-void PseudoRegisterReplacer::visit(Cvtsi2sdInst& cvtsi2sdInst)
+void PseudoRegisterReplacer::replace(Cvtsi2sdInst& cvtsi2sdInst)
 {
     cvtsi2sdInst.src = replaceIfPseudo(cvtsi2sdInst.src);
     cvtsi2sdInst.dst = replaceIfPseudo(cvtsi2sdInst.dst);

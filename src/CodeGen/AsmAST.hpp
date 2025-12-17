@@ -54,8 +54,6 @@ reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP | BP
 
 namespace CodeGen {
 
-struct InstVisitor;
-
 struct AsmType final {
     enum class Kind : u8 {
         Byte, Word, LongWord, QuadWord, Double, ByteArray
@@ -285,8 +283,6 @@ struct Inst {
 
     virtual ~Inst() = default;
 
-    virtual void accept(InstVisitor& visitor) = 0;
-
     Inst() = delete;
 protected:
     explicit Inst(const Kind k)
@@ -304,7 +300,6 @@ struct MoveInst final : Inst {
         const AsmType t)
         : Inst(Kind::Move), src(src), dst(dst), type(t) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Move; }
 
     MoveInst() = delete;
@@ -323,7 +318,6 @@ struct MoveSXInst final : Inst {
         const AsmType dstType)
         : Inst(Kind::MoveSX), src(src), dst(dst), srcType(srcType), dstType(dstType) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::MoveSX; }
 
     MoveSXInst() = delete;
@@ -345,7 +339,6 @@ struct MoveZeroExtendInst final : Inst {
                                         srcType(srcType),
                                         dstType(dstType) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::MoveZeroExtend; }
 
     MoveZeroExtendInst() = delete;
@@ -359,7 +352,6 @@ struct LeaInst final : Inst {
     LeaInst(const Operand* src, const Operand* dst, const AsmType t)
         : Inst(Kind::Lea), src(src), dst(dst), type(t) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Lea; }
 
     LeaInst() = delete;
@@ -376,7 +368,6 @@ struct Cvttsd2siInst final : Inst {
         const AsmType dstType)
         : Inst(Kind::Cvttsd2si), src(src), dst(dst), dstType(dstType) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Cvttsd2si; }
 
     Cvttsd2siInst() = delete;
@@ -390,7 +381,6 @@ struct Cvtsi2sdInst final : Inst {
     Cvtsi2sdInst(const Operand* src, const Operand* dst, const AsmType srcType)
         : Inst(Kind::Cvtsi2sd), src(src), dst(dst), srcType(srcType) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Cvtsi2sd; }
 
     Cvtsi2sdInst() = delete;
@@ -407,7 +397,6 @@ struct UnaryInst final : Inst {
     UnaryInst(const Operand* dst, const Operator op, const AsmType type)
         : Inst(Kind::Unary), dst(dst), oper(op), type(type) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Unary; }
 
     UnaryInst() = delete;
@@ -431,7 +420,6 @@ struct BinaryInst final : Inst {
                const AsmType ty)
         : Inst(Kind::Binary), lhs(lhs), rhs(rhs), oper(op), type(ty) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Binary; }
 
     BinaryInst() = delete;
@@ -444,7 +432,6 @@ struct CmpInst final : Inst {
     CmpInst(const Operand* lhs, const Operand* rhs, const AsmType ty)
         : Inst(Kind::Cmp), lhs(lhs), rhs(rhs), type(ty) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Cmp; }
 
     CmpInst() = delete;
@@ -457,7 +444,6 @@ struct IdivInst final : Inst {
     IdivInst(const Operand* operand, const AsmType ty)
         : Inst(Kind::Idiv), operand(operand), type(ty) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Idiv; }
 
     IdivInst() = delete;
@@ -470,7 +456,6 @@ struct DivInst final : Inst {
     DivInst(const Operand* operand, const AsmType ty)
         : Inst(Kind::Div), operand(operand), type(ty) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Div; }
 
     DivInst() = delete;
@@ -482,7 +467,6 @@ struct CdqInst final : Inst {
     explicit CdqInst(const AsmType ty)
         : Inst(Kind::Cdq), type(ty) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Cdq; }
 };
 
@@ -491,7 +475,6 @@ struct JmpInst final : Inst {
     explicit JmpInst(Identifier target)
         : Inst(Kind::Jmp), target(std::move(target)) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Jmp; }
 
     JmpInst() = delete;
@@ -503,7 +486,6 @@ struct JmpCCInst final : Inst {
     explicit JmpCCInst(const CondCode condition, Identifier target)
         : Inst(Kind::JmpCC), condition(condition), target(std::move(target)) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::JmpCC; }
 
     JmpCCInst() = delete;
@@ -515,7 +497,6 @@ struct SetCCInst final : Inst {
     explicit SetCCInst(const CondCode condition, const Operand* operand)
         : Inst(Kind::SetCC), operand(operand), condition(condition) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::SetCC; }
 
     SetCCInst() = delete;
@@ -526,7 +507,6 @@ struct LabelInst final : Inst {
     explicit LabelInst(Identifier target)
         : Inst(Kind::Label), target(std::move(target)) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Label; }
 
     LabelInst() = delete;
@@ -542,7 +522,6 @@ struct PushPseudoInst final : Inst {
         : Inst(Kind::PushPseudo), size(size), alignment(alignment),
                                     type(type), identifier(std::move(identifier)) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::PushPseudo; }
 
     PushPseudoInst() = delete;
@@ -553,7 +532,6 @@ struct PushInst final : Inst {
     explicit PushInst(const Operand* operand)
         : Inst(Kind::Push), operand(operand) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Push; }
 
     PushInst() = delete;
@@ -564,7 +542,6 @@ struct CallInst final : Inst {
     explicit CallInst(Identifier iden)
         : Inst(Kind::Call), funName(std::move(iden)) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Call; }
 
     CallInst() = delete;
@@ -574,7 +551,6 @@ struct ReturnInst final : Inst {
     ReturnInst()
         : Inst(Kind::Ret) {}
 
-    void accept(InstVisitor& visitor) override;
     static bool classOf(const Inst* inst) { return inst->kind == Kind::Ret; }
 };
 
@@ -704,52 +680,6 @@ struct Program {
         bool local,
         bool isRoData);
 };
-
-struct InstVisitor {
-    virtual ~InstVisitor() = default;
-
-    virtual void visit(MoveInst&) = 0;
-    virtual void visit(MoveSXInst&) = 0;
-    virtual void visit(MoveZeroExtendInst&) = 0;
-    virtual void visit(LeaInst&) = 0;
-    virtual void visit(Cvttsd2siInst&) = 0;
-    virtual void visit(Cvtsi2sdInst&) = 0;
-    virtual void visit(UnaryInst&) = 0;
-    virtual void visit(BinaryInst&) = 0;
-    virtual void visit(CmpInst&) = 0;
-    virtual void visit(IdivInst&) = 0;
-    virtual void visit(DivInst&) = 0;
-    virtual void visit(CdqInst&) = 0;
-    virtual void visit(JmpInst&) = 0;
-    virtual void visit(JmpCCInst&) = 0;
-    virtual void visit(SetCCInst&) = 0;
-    virtual void visit(LabelInst&) = 0;
-    virtual void visit(PushPseudoInst&) = 0;
-    virtual void visit(PushInst&) = 0;
-    virtual void visit(CallInst&) = 0;
-    virtual void visit(ReturnInst&) = 0;
-};
-
-inline void MoveInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void MoveSXInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void MoveZeroExtendInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void LeaInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void Cvttsd2siInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void Cvtsi2sdInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void UnaryInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void BinaryInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void CmpInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void IdivInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void DivInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void CdqInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void JmpInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void JmpCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void SetCCInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void LabelInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void PushPseudoInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void PushInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void CallInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
-inline void ReturnInst::accept(InstVisitor& visitor) { visitor.visit(*this); }
 
 inline const Operand* Program::getImmOperand(u64 value, AsmType type)
 {

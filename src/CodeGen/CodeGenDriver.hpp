@@ -7,7 +7,7 @@
 namespace CodeGen {
 
 void run(const Ir::Program& irProgram, const std::string& argument, const std::string& inputFile);
-[[nodiscard]] i32 replacingPseudoRegisters(const Function& function, Program& program);
+[[nodiscard]] i64 replacingPseudoRegisters(const Function& function, Program& program);
 void fixUpInstructions(Function& function, i32 stackAlloc, Program& program);
 void fixAsm(Program& codegenProgram);
 static Program codegen(const Ir::Program& irProgram);

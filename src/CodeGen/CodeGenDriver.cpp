@@ -51,11 +51,11 @@ Program codegen(const Ir::Program& irProgram)
     return program;
 }
 
-i32 replacingPseudoRegisters(const Function& function, Program& program)
+i64 replacingPseudoRegisters(const Function& function, Program& program)
 {
     PseudoRegisterReplacer pseudoRegisterReplacer(program);
-    for (const auto& inst : function.instructions)
-        inst->accept(pseudoRegisterReplacer);
+    for (auto& inst : function.instructions)
+        pseudoRegisterReplacer.replace(*inst);
     return pseudoRegisterReplacer.stackPointer();
 }
 
