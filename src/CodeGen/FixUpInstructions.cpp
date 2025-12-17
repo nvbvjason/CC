@@ -19,7 +19,7 @@ void FixUpInstructions::fixStackAlignment()
 void FixUpInstructions::fixUp()
 {
     using Inst = Inst::Kind;
-    copy.reserve(insts.size() * 3 + 1);
+    copy.reserve(insts.size() * 3);
     fixStackAlignment();
     while (!insts.empty()) {
         auto inst = std::move(insts.front());

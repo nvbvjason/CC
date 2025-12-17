@@ -55,6 +55,7 @@ std::unique_ptr<TopLevel> GenerateAsmTree::genFunction(const Ir::Function& funct
 {
     auto functionCodeGen = std::make_unique<Function>(function.name, function.isGlobal);
     insts.clear();
+    insts.reserve(function.insts.size() * 3);
     const std::vector<bool> pushedIntoRegs = genFunctionPushIntoRegs(function);
     genFunctionPushOntoStack(function, pushedIntoRegs);
     for (const std::unique_ptr<Ir::Instruction>& inst : function.insts)

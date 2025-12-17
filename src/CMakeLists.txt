@@ -39,6 +39,8 @@ add_executable(CC
         main.cpp
         StateCode.hpp
         DynCast.hpp
+        Timer.cpp
+        Timer.hpp
 )
 
 # Specify include directories for the CC executable
