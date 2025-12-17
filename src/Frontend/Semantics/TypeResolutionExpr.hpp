@@ -1,5 +1,8 @@
 #pragma once
 
+#include <algorithm>
+#include <array>
+
 #include "ASTBase.hpp"
 #include "FuncEntry.hpp"
 #include "TypeTable.hpp"
@@ -9,20 +12,20 @@ namespace Semantics {
 class TypeResolutionExpr {
     static constexpr auto s_boolType = Type::I32;
 
-    const std::unordered_map<std::string, FuncEntry>& m_functions;
+    const std::unordered_map<std::string, FuncEntry>& functions;
 
-    std::vector<Error>& m_errors;
+    std::vector<Error>& errors;
     const TypeTable& typeTable;
 public:
     explicit TypeResolutionExpr(std::vector<Error>& errors,
                                 const TypeTable& varTable,
                                 const std::unordered_map<std::string, FuncEntry>& m_functions)
-        : m_errors(errors), typeTable(varTable), m_functions(m_functions) {}
+        : functions(m_functions), errors(errors), typeTable(varTable) {}
 
     TypeResolutionExpr() = delete;
 
-    bool m_isConst = false;
-    bool m_inArrayInit = false;
+    bool isConst = false;
+    bool inArrayInit = false;
 
     std::unique_ptr<Parsing::Expr> convertArrayType(Parsing::Expr& expr);
     std::unique_ptr<Parsing::Expr> convert(Parsing::Expr& expr);
@@ -65,16 +68,19 @@ public:
     [[nodiscard]] bool isLegalAssignExpr(const Parsing::AssignmentExpr& assignmentExpr) const;
 
 private:
-    void addError(const std::string& error, const i64 location) const { m_errors.emplace_back(error, location); }
-    [[nodiscard]] bool hasError() const { return !m_errors.empty(); }
+    void addError(const std::string& error, const i64 location) const { errors.emplace_back(error, location); }
+    [[nodiscard]] bool hasError() const { return !errors.empty(); }
 };
 
-inline bool isBinaryBitwise(const Parsing::BinaryExpr::Operator binOper)
+inline bool isBinaryBitwise(const Parsing::BinaryExpr::Operator oper)
 {
-    using Operator = Parsing::BinaryExpr::Operator;
-    return binOper == Operator::BitwiseAnd || binOper == Operator::BitwiseOr ||
-           binOper == Operator::BitwiseXor || binOper == Operator::LeftShift ||
-           binOper == Operator::RightShift;
+    using Oper = Parsing::BinaryExpr::Operator;
+
+    constexpr std::array allowed = {
+        Oper::BitwiseAnd, Oper::BitwiseOr, Oper::BitwiseXor,
+        Oper::LeftShift,  Oper::RightShift
+    };
+    return std::ranges::contains(allowed, oper);
 }
 
 inline bool isIllegalFloatingBinaryOperator(const Parsing::BinaryExpr::Operator oper)
@@ -88,19 +94,24 @@ inline bool isIllegalUnaryPointerOperator(const Parsing::UnaryExpr::Operator ope
     return oper == Operator::Complement || oper == Operator::Negate;
 }
 
-inline bool isIllegalPtrBinaryOperation(const Parsing::BinaryExpr::Operator oper)
+inline bool isUnallowedPtrBinaryOperation(const Parsing::BinaryExpr::Operator oper)
 {
     using Oper = Parsing::BinaryExpr::Operator;
-    return oper == Oper::Modulo || oper == Oper::Multiply ||
-           oper == Oper::Divide ||
-           oper == Oper::BitwiseOr || oper == Oper::BitwiseXor;
+    constexpr std::array unallowed = {
+        Oper::Modulo, Oper::Multiply, Oper::Divide,
+        Oper::BitwiseOr,  Oper::BitwiseXor
+    };
+    return std::ranges::contains(unallowed, oper);
 }
 
 inline bool isUnallowedComparisonBetweenPtrAndInteger(const Parsing::BinaryExpr::Operator oper)
 {
     using Oper = Parsing::BinaryExpr::Operator;
-    return oper == Oper::GreaterThan || oper == Oper::GreaterOrEqual ||
-           oper == Oper::LessThan || oper == Oper::LessOrEqual;
+    constexpr std::array unallowed = {
+        Oper::GreaterThan, Oper::GreaterOrEqual,
+        Oper::LessThan,    Oper::LessOrEqual
+    };
+    return std::ranges::contains(unallowed, oper);
 }
 
 bool areValidNonArithmeticTypesInTernaryExpr(const Parsing::TernaryExpr& ternaryExpr);

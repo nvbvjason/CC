@@ -20,16 +20,16 @@ void Labeling::visit(Parsing::FuncDecl& funDecl)
 {
     if (funDecl.body == nullptr)
         return;
-    m_labels.clear();
-    m_goto.clear();
-    m_funName = funDecl.name;
+    labels.clear();
+    gotos.clear();
+    funName = funDecl.name;
     ASTTraverser::visit(funDecl);
-    for (const std::vector<i64>& locations: m_labels | std::views::values)
+    for (const std::vector<i64>& locations: labels | std::views::values)
         if (1 < locations.size())
             for (const auto& location: locations)
                 emplaceError("Duplicate labels at ", location);
-    for (auto& gotoStmt : m_goto)
-        if (!m_labels.contains(gotoStmt->identifier))
+    for (auto& gotoStmt : gotos)
+        if (!labels.contains(gotoStmt->identifier))
             emplaceError("Did not find goto label ", gotoStmt->location);
 }
 
@@ -175,15 +175,15 @@ void Labeling::visit(Parsing::SwitchStmt& switchStmt)
 
 void Labeling::visit(Parsing::GotoStmt& gotoStmt)
 {
-    gotoStmt.identifier += '.' + m_funName;
-    m_goto.insert(&gotoStmt);
+    gotoStmt.identifier += '.' + funName;
+    gotos.insert(&gotoStmt);
     ASTTraverser::visit(gotoStmt);
 }
 
 void Labeling::visit(Parsing::LabelStmt& labelStmt)
 {
-    labelStmt.identifier += '.' + m_funName;
-    m_labels[labelStmt.identifier].emplace_back(labelStmt.location);
+    labelStmt.identifier += '.' + funName;
+    labels[labelStmt.identifier].emplace_back(labelStmt.location);
     ASTTraverser::visit(labelStmt);
 }
 } // Semantics

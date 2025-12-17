@@ -14,7 +14,6 @@ using OperKind = Operand::Kind;
 using InstKind = Inst::Kind;
 using AsmType = AsmType;
 using BinaryOper = BinaryInst::Operator;
-using std::make_shared;
 
 class FixUpInstructionsTest : public testing::Test {
     CodeGenInstructionFactory factory;

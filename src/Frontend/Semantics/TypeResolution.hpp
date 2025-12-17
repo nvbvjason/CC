@@ -14,12 +14,12 @@
 namespace Semantics {
 
 class TypeResolution final : public Parsing::ASTTraverser {
-    std::unordered_map<std::string, FuncEntry> m_functions;
-    std::unordered_set<std::string> m_definedFunctions;
-    std::unordered_set<std::string> m_localExternVars;
-    std::unordered_set<std::string> m_globalStaticVars;
+    std::unordered_map<std::string, FuncEntry> functions;
+    std::unordered_set<std::string> definedFunctions;
+    std::unordered_set<std::string> localExternVars;
+    std::unordered_set<std::string> globalStaticVars;
     const TypeTable& typeTable;
-    TypeResolutionExpr m_resolveExpr;
+    TypeResolutionExpr resolveExpr;
 
     i64 location = 0;
 
@@ -27,7 +27,7 @@ class TypeResolution final : public Parsing::ASTTraverser {
     bool m_global = true;
 public:
     explicit TypeResolution(const TypeTable& varTable)
-        : typeTable(varTable), m_resolveExpr(m_errors, varTable, m_functions) {}
+        : typeTable(varTable), resolveExpr(m_errors, varTable, functions) {}
 
     std::vector<Error> validate(Parsing::Program& program);
 

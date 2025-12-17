@@ -7,7 +7,7 @@
 
 namespace Semantics {
 class ValidateReturn : public Parsing::ASTTraverser {
-    std::vector<Error> m_errors;
+    std::vector<Error> errors;
 public:
     std::vector<Error> programValidate(Parsing::Program& program);
     void handlePtrReturnTypes(const Parsing::ReturnStmt* returnStmt, const Parsing::FuncType* funcType);

@@ -38,12 +38,12 @@ std::string IrPrinter::print(const Program& program)
         }
         addLine("");
     }
-    return m_oss.str();
+    return oss.str();
 }
 
 void IrPrinter::print(const StaticConstant& staticConstant)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("StaticConstant: " + staticConstant.identifier.value);
     addLine("Value: " + staticConstant.value);
     if (staticConstant.global)
@@ -54,9 +54,9 @@ void IrPrinter::print(const StaticConstant& staticConstant)
 
 void IrPrinter::print(const StaticArray& staticArray)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("StaticArray: " + staticArray.name);
-    IndentGuard guardInits(m_indentLevel);
+    IndentGuard guardInits(indentLevel);
     if (staticArray.global)
         addLine("is Global");
     for (const auto& init : staticArray.initializers) {
@@ -77,9 +77,9 @@ void IrPrinter::print(const StaticArray& staticArray)
 
 void IrPrinter::print(const StaticVariable& variable)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("Variable: " + variable.name);
-    IndentGuard innerGuard(m_indentLevel);
+    IndentGuard innerGuard(indentLevel);
     if (variable.global)
         addLine("is Global");
     else
@@ -89,7 +89,7 @@ void IrPrinter::print(const StaticVariable& variable)
 
 void IrPrinter::print(const Function& function)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("Function " + function.name);
     if (function.isGlobal)
         addLine("is Global");
@@ -101,7 +101,7 @@ void IrPrinter::print(const Function& function)
             args += print(arg) + ", ";
         addLine("args: " + args);
     }
-    IndentGuard guardBody(m_indentLevel);
+    IndentGuard guardBody(indentLevel);
     for (const auto& inst : function.insts)
         print(*inst);
 }
@@ -256,7 +256,7 @@ void IrPrinter::print(const LabelInst& inst)
 void IrPrinter::print(const FunCallInst &inst)
 {
     addLine("FunCall: " + inst.funName.value);
-    IndentGuard guard2(m_indentLevel);
+    IndentGuard guard2(indentLevel);
     if (!inst.args.empty()) {
         std::string args;
         for (const auto& arg : inst.args)
@@ -380,14 +380,14 @@ void IrPrinter::print(const Instruction& instruction) {
         case Kind::Allocate:        print(*dynCast<const AllocateInst>(&instruction)); break;
         case Kind::CopyFromOffset:  print(*dynCast<const CopyFromOffsetInst>(&instruction)); break;
         default:
-            m_oss << "Unknown Instruction\n";
+            oss << "Unknown Instruction\n";
             break;
     }
 }
 
 void IrPrinter::addLine(const std::string& line)
 {
-    m_oss << getIndent() << line << '\n';
+    oss << getIndent() << line << '\n';
 }
 
 void IrPrinter::addLine(const std::string& prefix, const std::string& message)
@@ -399,11 +399,11 @@ void IrPrinter::addLine(const std::string& prefix, const std::string& message)
     oss << std::left << std::setw(mnemonicWidth) << prefix
         << std::setw(operandsWidth) << message;
     oss << "\n";
-    m_oss << oss.str();
+    oss << oss.str();
 }
 
 std::string IrPrinter::getIndent() const
 {
-    return std::string(m_indentLevel * c_indentMult, ' ');
+    return std::string(indentLevel * c_indentMult, ' ');
 }
 } // namespace Ir

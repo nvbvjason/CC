@@ -36,9 +36,9 @@ class Labeling : public Parsing::ASTTraverser {
     std::vector<Error> errors;
     std::unordered_set<std::string> defaultCase;
     std::unordered_map<std::string, std::vector<std::variant<i32, i64, u32, u64>>> switchCases;
-    std::unordered_map<std::string, std::vector<i64>> m_labels;
-    std::unordered_set<Parsing::GotoStmt*> m_goto;
-    std::string m_funName;
+    std::unordered_map<std::string, std::vector<i64>> labels;
+    std::unordered_set<Parsing::GotoStmt*> gotos;
+    std::string funName;
     Type conditionType = Type::I32;
     std::string breakLabel;
     std::string continueLabel;

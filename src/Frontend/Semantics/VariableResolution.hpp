@@ -30,13 +30,13 @@ class VariableResolution : public Parsing::ASTTraverser {
         }
         ~FunctionGuard() { table.clearArgs(); }
     };
-    SymbolTable& m_symbolTable;
-    TypeTable& m_varTable;
-    i32 m_nameCounter = 0;
-    std::vector<Error> m_errors;
+    SymbolTable& symbolTable;
+    TypeTable& varTable;
+    i32 nameCounter = 0;
+    std::vector<Error> errors;
 public:
     explicit VariableResolution(SymbolTable& symbolTable, TypeTable& varTable)
-        : m_symbolTable(symbolTable), m_varTable(varTable) {}
+        : symbolTable(symbolTable), varTable(varTable) {}
     std::vector<Error> resolve(Parsing::Program& program);
     void visit(Parsing::FuncDecl& funDecl) override;
     void visit(Parsing::VarDecl& varDecl) override;
@@ -70,7 +70,7 @@ public:
 private:
     void checkFuncDeclForTypeVoid(const Parsing::FuncDecl& funDecl);
     std::string makeTemporaryName(const std::string &name);
-    void addError(const std::string& msg, const i64 location) { m_errors.emplace_back(msg, location); }
+    void addError(const std::string& msg, const i64 location) { errors.emplace_back(msg, location); }
 };
 
 bool duplicatesInArgs(const std::vector<std::string>& args);

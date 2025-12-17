@@ -44,12 +44,12 @@ void FixUpInstructionsTest::addIdiv(const OperKind srcKind, const OperKind dstKi
     insts.push_back(factory.create(InstKind::Idiv, srcKind, dstKind));
 }
 
-void FixUpInstructionsTest::addCvttsd2si(OperKind srcKind, OperKind dstKind)
+void FixUpInstructionsTest::addCvttsd2si(const OperKind srcKind, const OperKind dstKind)
 {
     insts.push_back(factory.create(InstKind::Cvttsd2si, srcKind, dstKind));
 }
 
-void FixUpInstructionsTest::addCvtsi2sd(OperKind srcKind, OperKind dstKind)
+void FixUpInstructionsTest::addCvtsi2sd(const OperKind srcKind, const OperKind dstKind)
 {
     insts.push_back(factory.create(InstKind::Cvtsi2sd, srcKind, dstKind));
 }
@@ -59,7 +59,8 @@ void FixUpInstructionsTest::addCmp(const OperKind srcKind, const OperKind dstKin
     insts.push_back(factory.create(InstKind::Cmp, srcKind, dstKind, asmType));
 }
 
-void FixUpInstructionsTest::addBinary(BinaryInst::Operator oper, AsmType asmType, OperKind srcKind, OperKind dstKind)
+void FixUpInstructionsTest::addBinary(
+    const BinaryInst::Operator oper, const AsmType asmType, const OperKind srcKind, const OperKind dstKind)
 {
     insts.push_back(factory.createBinary(oper, asmType, srcKind, dstKind));
 }
@@ -412,7 +413,7 @@ TEST_F(FixUpInstructionsTest, fixCvtsi2sd_fixSrcImm)
 
 TEST_F(FixUpInstructionsTest, genSrcOperand_Double)
 {
-    const auto expected = make_shared<RegisterOperand>(RegType::XMM14, asmDouble);
+    const auto expected = std::make_unique<RegisterOperand>(RegType::XMM14, asmDouble);
     Program program;
     std::vector<std::unique_ptr<Inst>> insts;
     FixUpInstructions fixUpInstructions(insts, 0, program);
@@ -423,10 +424,10 @@ TEST_F(FixUpInstructionsTest, genSrcOperand_Double)
 
 TEST_F(FixUpInstructionsTest, genSrcOperand_Long)
 {
-    const auto expected = make_shared<RegisterOperand>(RegType::R10, asmLongWord);
+    const auto expected = std::make_unique<RegisterOperand>(RegType::R10, asmLongWord);
     Program program;
     std::vector<std::unique_ptr<Inst>> insts;
-    FixUpInstructions fixUpInstructions(insts, 0, program);
+    const FixUpInstructions fixUpInstructions(insts, 0, program);
     const Operand* actual = fixUpInstructions.genSrcOperand(asmLongWord);
     const auto regOper = dynCast<const RegisterOperand>(actual);
     EXPECT_EQ(expected->regKind, regOper->regKind);
@@ -434,10 +435,10 @@ TEST_F(FixUpInstructionsTest, genSrcOperand_Long)
 
 TEST_F(FixUpInstructionsTest, genDstOperand_Double)
 {
-    const auto expected = make_shared<RegisterOperand>(RegType::XMM15, asmDouble);
+    const auto expected = std::make_unique<RegisterOperand>(RegType::XMM15, asmDouble);
     Program program;
     std::vector<std::unique_ptr<Inst>> insts;
-    FixUpInstructions fixUpInstructions(insts, 0, program);
+    const FixUpInstructions fixUpInstructions(insts, 0, program);
     const Operand* actual = fixUpInstructions.genDstOperand(asmDouble);
     const auto regOper = dynCast<const RegisterOperand>(actual);
     EXPECT_EQ(expected->regKind, regOper->regKind);
@@ -445,10 +446,10 @@ TEST_F(FixUpInstructionsTest, genDstOperand_Double)
 
 TEST_F(FixUpInstructionsTest, genDstOperand_Long)
 {
-    const auto expected = make_shared<RegisterOperand>(RegType::R11, asmLongWord);
+    const auto expected = std::make_unique<RegisterOperand>(RegType::R11, asmLongWord);
     Program program;
     std::vector<std::unique_ptr<Inst>> insts;
-    FixUpInstructions fixUpInstructions(insts, 0, program);
+    const FixUpInstructions fixUpInstructions(insts, 0, program);
     const Operand* actual = fixUpInstructions.genDstOperand(asmLongWord);
     const auto regOper = dynCast<const RegisterOperand>(actual);
     EXPECT_EQ(expected->regKind, regOper->regKind);

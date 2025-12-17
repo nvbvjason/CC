@@ -8,10 +8,10 @@
 namespace CodeGen {
 std::string AsmPrinter::printProgram(const Program &program)
 {
-    m_indentLevel = 0;
+    indentLevel = 0;
     for (const auto& topLevel: program.topLevels)
         add(*topLevel);
-    return m_oss.str();
+    return oss.str();
 }
 
 void AsmPrinter::add(const TopLevel& topLevel)
@@ -91,17 +91,17 @@ void AsmPrinter::add(const ConstVariable& constVariable)
 
 void AsmPrinter::add(const CompoundVariable& compoundVariable)
 {
-    IndentGuard indent(m_indentLevel);
+    IndentGuard indent(indentLevel);
     addLine(compoundVariable.name.value);
     addLine("Alignment: " + std::to_string(compoundVariable.alignment));
-    IndentGuard indentBody(m_indentLevel);
+    IndentGuard indentBody(indentLevel);
     for (const auto& init : compoundVariable.initializers)
         add(*init);
 }
 
 void AsmPrinter::add(const Function& function)
 {
-    IndentGuard indent(m_indentLevel);
+    IndentGuard indent(indentLevel);
     std::string global;
     if (function.isGlobal)
         global = "is global";
@@ -115,7 +115,7 @@ void AsmPrinter::add(const Function& function)
 void AsmPrinter::add(const Inst& inst)
 {
     using Kind = Inst::Kind;
-    IndentGuard indent(m_indentLevel);
+    IndentGuard indent(indentLevel);
     switch (inst.kind) {
         case Kind::Move:
             add(*dynCast<const MoveInst>(&inst)); break;
@@ -436,11 +436,11 @@ void AsmPrinter::addLine(const std::string& name,
     oss << std::left << std::setw(mnemonicWidth) << name
         << std::setw(operandsWidth) << operands;
     oss << "\n";
-    m_oss << oss.str();
+    oss << oss.str();
 }
 
 std::string AsmPrinter::getIndent() const
 {
-    return std::string(m_indentLevel * c_indentMult, ' ');
+    return std::string(indentLevel * c_indentMult, ' ');
 }
 } // CodeGen

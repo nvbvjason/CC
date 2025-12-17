@@ -33,14 +33,14 @@ TEST(CodeGenOperatorsTest, binaryOperator)
         TestcaseBinary(const IrOper irOp, const AsmOper asmOp)
             : irOper(irOp), asmOper(asmOp) {  }
     };
-    const std::vector<TestcaseBinary> testcases{
+    const auto testcases = std::to_array<TestcaseBinary>({
             {IrOper::Add, AsmOper::Add},
             {IrOper::Subtract, AsmOper::Sub},
             {IrOper::Multiply, AsmOper::Mul},
             {IrOper::BitwiseAnd, AsmOper::BitwiseAnd},
             {IrOper::BitwiseOr, AsmOper::BitwiseOr},
             {IrOper::BitwiseXor, AsmOper::BitwiseXor},
-    };
+    });
     for (const TestcaseBinary& testcase : testcases) {
         EXPECT_EQ(CodeGen::binaryOperator(testcase.irOper), testcase.asmOper);
     }
@@ -50,20 +50,20 @@ TEST(CodeGenOperatorsTest, shiftOperators)
 {
     using IrOper = Ir::BinaryInst::Operation;
     using AsmOper = CodeGen::BinaryInst::Operator;
-    struct TestcaseCond {
+    struct TestCaseCond {
         const IrOper irOper;
         const AsmOper asmOper;
         const bool isSigned;
-        TestcaseCond(const IrOper irOp, const AsmOper asmOper, const bool isSigned)
+        TestCaseCond(const IrOper irOp, const AsmOper asmOper, const bool isSigned)
             : irOper(irOp), asmOper(asmOper), isSigned(isSigned) {  }
     };
-    const std::vector<TestcaseCond> testcases{
-                    {IrOper::LeftShift, AsmOper::LeftShiftSigned, true},
-                    {IrOper::RightShift, AsmOper::RightShiftSigned, true},
-                    {IrOper::LeftShift, AsmOper::LeftShiftUnsigned, false},
-                    {IrOper::RightShift, AsmOper::RightShiftUnsigned, false},
-            };
-    for (const TestcaseCond& testcase : testcases) {
+    const auto testcases = std::to_array<TestCaseCond>({
+        {IrOper::LeftShift, AsmOper::LeftShiftSigned, true},
+        {IrOper::RightShift, AsmOper::RightShiftSigned, true},
+        {IrOper::LeftShift, AsmOper::LeftShiftUnsigned, false},
+        {IrOper::RightShift, AsmOper::RightShiftUnsigned, false},
+    });
+    for (const TestCaseCond& testcase : testcases) {
         EXPECT_EQ(CodeGen::getShiftOperator(testcase.irOper, testcase.isSigned), testcase.asmOper);
     }
 }
@@ -72,29 +72,29 @@ TEST(CodeGenOperatorsTest, condCode)
 {
     using IrOper = Ir::BinaryInst::Operation;
     using BinCond = CodeGen::BinaryInst::CondCode;
-    struct TestcaseCond {
+    struct TestCaseCond {
         const IrOper irOper;
         const BinCond cond;
         const bool isSigned;
-        TestcaseCond(const IrOper irOp, const BinCond cond, const bool isSigned)
+        TestCaseCond(const IrOper irOp, const BinCond cond, const bool isSigned)
             : irOper(irOp), cond(cond), isSigned(isSigned) {  }
     };
-    const std::vector<TestcaseCond> testcases{
-                {IrOper::Equal, BinCond::E, true},
-                {IrOper::NotEqual, BinCond::NE, true},
-                {IrOper::LessThan, BinCond::L, true},
-                {IrOper::LessOrEqual, BinCond::LE, true},
-                {IrOper::GreaterThan, BinCond::G, true},
-                {IrOper::GreaterOrEqual, BinCond::GE, true},
+    const auto testcases = std::to_array<TestCaseCond>({
+        {IrOper::Equal, BinCond::E, true},
+        {IrOper::NotEqual, BinCond::NE, true},
+        {IrOper::LessThan, BinCond::L, true},
+        {IrOper::LessOrEqual, BinCond::LE, true},
+        {IrOper::GreaterThan, BinCond::G, true},
+        {IrOper::GreaterOrEqual, BinCond::GE, true},
 
-                {IrOper::Equal, BinCond::E, false},
-                {IrOper::NotEqual, BinCond::NE, false},
-                {IrOper::LessThan, BinCond::B, false},
-                {IrOper::LessOrEqual, BinCond::BE, false},
-                {IrOper::GreaterThan, BinCond::A, false},
-                {IrOper::GreaterOrEqual, BinCond::AE, false},
-        };
-    for (const TestcaseCond& testcase : testcases) {
+        {IrOper::Equal, BinCond::E, false},
+        {IrOper::NotEqual, BinCond::NE, false},
+        {IrOper::LessThan, BinCond::B, false},
+        {IrOper::LessOrEqual, BinCond::BE, false},
+        {IrOper::GreaterThan, BinCond::A, false},
+        {IrOper::GreaterOrEqual, BinCond::AE, false},
+    });
+    for (const TestCaseCond& testcase : testcases) {
         EXPECT_EQ(CodeGen::condCode(testcase.irOper, testcase.isSigned), testcase.cond);
     }
 }
@@ -108,14 +108,14 @@ TEST(CodeGenOperatorsTest, getAsmType)
         TestcaseAsmType(const Type type, const AsmType asmType)
             : type(type), asmType(asmType) {  }
     };
-    const std::vector<TestcaseAsmType> testcases{
-                {Type::I32,     CodeGen::asmLongWord},
-                {Type::U32,     CodeGen::asmLongWord},
-                {Type::I64,     CodeGen::asmQuadWord},
-                {Type::U64,     CodeGen::asmQuadWord},
-                {Type::Pointer, CodeGen::asmQuadWord},
-                {Type::Double,  CodeGen::asmDouble},
-            };
+    const auto testcases = std::to_array<TestcaseAsmType>({
+        {Type::I32,     CodeGen::asmLongWord},
+        {Type::U32,     CodeGen::asmLongWord},
+        {Type::I64,     CodeGen::asmQuadWord},
+        {Type::U64,     CodeGen::asmQuadWord},
+        {Type::Pointer, CodeGen::asmQuadWord},
+        {Type::Double,  CodeGen::asmDouble},
+    });
     for (const TestcaseAsmType& testcase : testcases) {
         EXPECT_EQ(CodeGen::getAsmType(testcase.type), testcase.asmType);
     }

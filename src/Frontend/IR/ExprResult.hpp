@@ -33,7 +33,7 @@ namespace Ir {
         const Value* ptr;
         const Type referredToType;
         DereferencedPointer(const Value* p, const Type rt)
-            : ExprResult(Kind::DereferencedPointer), ptr(std::move(p)), referredToType(rt) {}
+            : ExprResult(Kind::DereferencedPointer), ptr(p), referredToType(rt) {}
 
         static bool classOf(const ExprResult* expr) { return expr->kind == Kind::DereferencedPointer; }
 
@@ -42,11 +42,11 @@ namespace Ir {
 
     struct SubObject : ExprResult {
         const Identifier base;
-        const ReferingTo referingTo;
+        const ReferringTo referringTo;
         const i64 offset;
 
-        SubObject(Identifier base, const ReferingTo referingTo, const i64 offset)
-            : ExprResult(Kind::SubObject), base(std::move(base)), referingTo(referingTo), offset(offset) {}
+        SubObject(Identifier base, const ReferringTo referringTo, const i64 offset)
+            : ExprResult(Kind::SubObject), base(std::move(base)), referringTo(referringTo), offset(offset) {}
 
         static bool classOf(const ExprResult* expr) { return expr->kind == Kind::SubObject; }
 

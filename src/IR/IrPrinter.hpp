@@ -10,15 +10,14 @@ namespace Ir {
 
 class IrPrinter {
     class IndentGuard {
+        size_t& level;
     public:
         explicit IndentGuard(size_t& level)
-            : m_level(level) { ++m_level; }
-        ~IndentGuard() { --m_level; }
-    private:
-        size_t& m_level;
+            : level(level) { ++level; }
+        ~IndentGuard() { --level; }
     };
-    std::ostringstream m_oss;
-    size_t m_indentLevel = 0;
+    std::ostringstream oss;
+    size_t indentLevel = 0;
     static constexpr i32 c_indentMult = 4;
 public:
     IrPrinter() = default;

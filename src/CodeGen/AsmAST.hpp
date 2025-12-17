@@ -104,7 +104,7 @@ protected:
 };
 
 struct ImmOperand final : Operand {
-    u64 value;
+    const u64 value;
 
     explicit ImmOperand(const u64 value, const AsmType asmType)
         : Operand(Kind::Imm, asmType, false), value(value) {}
@@ -115,7 +115,7 @@ struct ImmOperand final : Operand {
 };
 
 struct RegisterOperand final : Operand {
-    RegKind regKind;
+    const RegKind regKind;
 
     explicit RegisterOperand(const RegKind rK, const AsmType asmType)
         : Operand(Kind::Register, asmType), regKind(rK) {}
@@ -127,12 +127,12 @@ struct RegisterOperand final : Operand {
 
 struct PseudoOperand final : Operand {
     Identifier identifier;
-    ReferingTo referingTo = ReferingTo::Local;
-    bool local;
+    const ReferringTo referringTo = ReferringTo::Local;
+    const bool local;
 
-    PseudoOperand(Identifier identifier, const ReferingTo referingTo, const AsmType asmType, const bool local)
+    PseudoOperand(Identifier identifier, const ReferringTo referringTo, const AsmType asmType, const bool local)
         : Operand(Kind::Pseudo, asmType), identifier(std::move(identifier)),
-          referingTo(referingTo), local(local) {}
+          referringTo(referringTo), local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::Pseudo; }
 
@@ -140,9 +140,9 @@ struct PseudoOperand final : Operand {
 };
 
 struct MemoryOperand final : Operand {
-    RegKind regKind;
-    i64 value;
-    i64 offset = 0;
+    const RegKind regKind;
+    const i64 value;
+    const i64 offset = 0;
 
     MemoryOperand(const RegKind rK, const i64 value, const AsmType type)
         : Operand(Kind::Memory, type), regKind(rK), value(value) {}
@@ -156,9 +156,9 @@ struct MemoryOperand final : Operand {
 };
 
 struct DataOperand final : Operand {
-    Identifier identifier;
-    i64 offset;
-    bool local;
+    const Identifier identifier;
+    const i64 offset;
+    const bool local;
     const bool isRoData = false;
 
     DataOperand(const AsmType asmType, const i64 offset, Identifier iden, const bool local)
@@ -186,8 +186,8 @@ struct PseudoMemOperand final : Operand {
     const i64 offset;
     const i64 size = 0;
     const i64 alignment;
-    ReferingTo referingTo = ReferingTo::Local;
-    bool local;
+    const ReferringTo referringTo = ReferringTo::Local;
+    const bool local;
 
     PseudoMemOperand(Identifier identifier,
                      const i64 offset,
@@ -208,13 +208,13 @@ struct PseudoMemOperand final : Operand {
                      const i64 alignment,
                      const bool local,
                      const AsmType type,
-                     const ReferingTo referingTo)
+                     const ReferringTo referringTo)
         : Operand(Kind::PseudoMem, type),
             identifier(std::move(identifier)),
             offset(offset),
             size(size),
             alignment(alignment),
-            referingTo(referingTo),
+            referringTo(referringTo),
             local(local) {}
 
     static bool classOf(const Operand* operand) { return operand->kind == Kind::PseudoMem; }
@@ -223,9 +223,9 @@ struct PseudoMemOperand final : Operand {
 };
 
 struct IndexedOperand final : Operand {
-    RegKind regKind;
-    RegKind indexRegKind;
-    i64 scale;
+    const RegKind regKind;
+    const RegKind indexRegKind;
+    const i64 scale;
 
     IndexedOperand(const RegKind rK, const RegKind indexRegKind, const i64 scale, const AsmType asmType)
         : Operand(Kind::Indexed, asmType), regKind(rK), indexRegKind(indexRegKind), scale(scale) {}
@@ -608,7 +608,7 @@ struct Function final : TopLevel {
 struct StaticVariable final : TopLevel {
     std::string name;
     const Operand* init = nullptr;
-    AsmType type;
+    const AsmType type;
     const bool global;
 
     StaticVariable(std::string name, const AsmType type, const bool isGlobal)
@@ -621,13 +621,13 @@ struct StaticVariable final : TopLevel {
 
 struct ConstVariable final : TopLevel {
     Identifier name;
-    i32 alignment;
     const double staticInit;
+    const i32 alignment;
     const bool local;
 
-    ConstVariable(Identifier name, const i32 alignment, const double staticInit, const bool local)
-        : TopLevel(Kind::StaticConstant), name(std::move(name)), alignment(alignment),
-                                            staticInit(staticInit), local(local) {}
+    ConstVariable(Identifier name, const double staticInit, const i32 alignment, const bool local)
+        : TopLevel(Kind::StaticConstant), name(std::move(name)), staticInit(staticInit),
+                                            alignment(alignment), local(local) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticConstant; }
 
@@ -636,16 +636,16 @@ struct ConstVariable final : TopLevel {
 
 struct CompoundVariable final : TopLevel {
     Identifier name;
-    i32 alignment;
     std::vector<std::unique_ptr<Initializer>> initializers;
+    i32 alignment;
     const bool isGlobal;
 
     CompoundVariable(Identifier name,
-                  const i32 alignment,
                   std::vector<std::unique_ptr<Initializer>>&& initializers,
+                  const i32 alignment,
                   const bool local)
-        : TopLevel(Kind::StaticCompound), name(std::move(name)), alignment(alignment),
-                                         initializers(std::move(initializers)),
+        : TopLevel(Kind::StaticCompound), name(std::move(name)), initializers(std::move(initializers)),
+                                         alignment(alignment),
                                          isGlobal(local) {}
 
     static bool classOf(const TopLevel* topLevel) { return topLevel->kind == Kind::StaticCompound; }
@@ -677,7 +677,7 @@ struct Program {
         : topLevels(std::move(other.topLevels)), operands(std::move(other.operands)) {}
 
     const Operand* getImmOperand(u64 value, AsmType type);
-    const Operand* getPseudoOperand(const Identifier& identifier, ReferingTo referingTo, AsmType asmType, bool local);
+    const Operand* getPseudoOperand(const Identifier& identifier, ReferringTo referringTo, AsmType asmType, bool local);
     const Operand* getPseudoMemOperand(const Identifier& identifier,
                                        i64 offset,
                                        i64 size,
@@ -690,7 +690,7 @@ struct Program {
                                        i64 alignment,
                                        bool local,
                                        AsmType type,
-                                       ReferingTo referingTo);
+                                       ReferringTo referringTo);
     const Operand* getMemoryOperand(RegisterOperand::RegKind rK, i64 value, AsmType type);
     const Operand* getMemoryOperand(RegisterOperand::RegKind rK, i64 value, AsmType type, i64 offset);
     const Operand* getRegisterOperand(RegisterOperand::RegKind regType, const AsmType& type);
@@ -757,10 +757,10 @@ inline const Operand* Program::getImmOperand(u64 value, AsmType type)
     return operands.back().get();
 }
 
-inline const Operand* Program::getPseudoOperand(const Identifier& identifier, ReferingTo referingTo, AsmType asmType,
+inline const Operand* Program::getPseudoOperand(const Identifier& identifier, ReferringTo referringTo, AsmType asmType,
     bool local)
 {
-    operands.emplace_back(std::make_unique<PseudoOperand>(identifier, referingTo, asmType, local));
+    operands.emplace_back(std::make_unique<PseudoOperand>(identifier, referringTo, asmType, local));
     return operands.back().get();
 }
 
@@ -774,10 +774,10 @@ inline const Operand* Program::getPseudoMemOperand(const Identifier& identifier,
 
 inline const Operand* Program::getPseudoMemOperand(
     Identifier identifier, i64 offset, i64 size, i64 alignment,
-    bool local, AsmType type, ReferingTo referingTo)
+    bool local, AsmType type, ReferringTo referringTo)
 {
     operands.emplace_back(std::make_unique<PseudoMemOperand>(
-        identifier, offset, size, alignment, local, type, referingTo));
+        identifier, offset, size, alignment, local, type, referringTo));
     return operands.back().get();
 }
 

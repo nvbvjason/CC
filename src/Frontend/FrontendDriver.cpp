@@ -27,25 +27,25 @@ static std::string getSourceCode(const std::filesystem::path& inputFile);
 
 std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
 {
-    if (const std::vector<Error> errors = lex(m_tokenStore, m_inputFile); !errors.empty()) {
-        reportErrors(errors, m_tokenStore);
+    if (const std::vector<Error> errors = lex(tokenStore, inputFile); !errors.empty()) {
+        reportErrors(errors, tokenStore);
         return {std::nullopt, StateCode::Lexer};
     }
-    if (m_arg == "--lex")
+    if (arg == "--lex")
         return {std::nullopt, StateCode::Done};
-    if (m_arg == "--printTokens") {
-        for (size_t i = 0; i < m_tokenStore.size(); ++i)
-            std::cout << m_tokenStore.getToken(i) << '\n';
+    if (arg == "--printTokens") {
+        for (size_t i = 0; i < tokenStore.size(); ++i)
+            std::cout << tokenStore.getToken(i) << '\n';
         return {std::nullopt, StateCode::Done};
     }
     Parsing::Program program;
-    if (const std::vector<Error> errors = parse(m_tokenStore, program); !errors.empty()) {
-        reportErrors(errors, m_tokenStore);
+    if (const std::vector<Error> errors = parse(tokenStore, program); !errors.empty()) {
+        reportErrors(errors, tokenStore);
         return {std::nullopt, StateCode::Parser};
     }
-    if (m_arg == "--parse")
+    if (arg == "--parse")
         return {std::nullopt, StateCode::Done};
-    if (m_arg == "--printAst") {
+    if (arg == "--printAst") {
         printParsingAst(program);
         return {std::nullopt, StateCode::Done};
     }
@@ -54,12 +54,12 @@ std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
     if (const auto [err, errors] =
                 validateSemantics(program, symbolTable, typeTable);
         err != StateCode::Done) {
-        reportErrors(errors, m_tokenStore);
+        reportErrors(errors, tokenStore);
         return {std::nullopt, err};
     }
-    if (m_arg == "--validate")
+    if (arg == "--validate")
         return {std::nullopt, StateCode::Done};
-    if (m_arg == "--printAstAfter") {
+    if (arg == "--printAstAfter") {
         printParsingAst(program);
         return {std::nullopt, StateCode::Done};
     }

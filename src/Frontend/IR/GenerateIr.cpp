@@ -143,7 +143,7 @@ void GenerateIr::genSingleLocalInit(const std::string& name,
     emitCopyToOffset(
         value,
         Identifier(name),
-        ReferingTo::Local,
+        ReferringTo::Local,
         offset, arraySize,
         alignment, convert(*singleInit.expr->type));
     offset += typeSize;
@@ -193,17 +193,17 @@ void GenerateIr::genZeroLocalInit(const std::string& name,
     size_t i = 0;
     for (; i + 8 <= lengthZeroInit; i += 8) {
         emitCopyToOffset(
-            zeroConst8, Identifier(name), ReferingTo::Local, offset, arraySize, alignment, u8Type);
+            zeroConst8, Identifier(name), ReferringTo::Local, offset, arraySize, alignment, u8Type);
         offset += 8;
     }
     for (; i + 4 <= lengthZeroInit; i += 4) {
         emitCopyToOffset(
-            zeroConst4, Identifier(name), ReferingTo::Local, offset, arraySize, alignment, u8Type);
+            zeroConst4, Identifier(name), ReferringTo::Local, offset, arraySize, alignment, u8Type);
         offset += 4;
     }
     for (; i < lengthZeroInit; ++i) {
         emitCopyToOffset(
-    zeroConst1, Identifier(name), ReferingTo::Local, offset, arraySize, alignment, u8Type);
+    zeroConst1, Identifier(name), ReferringTo::Local, offset, arraySize, alignment, u8Type);
         ++offset;
     }
 }
@@ -707,7 +707,7 @@ const Value* GenerateIr::genInstAndConvert(const Parsing::Expr& parsingExpr)
         case ExprResult::Kind::SubObject: {
             const auto subObject = dynCast<const SubObject>(result.get());
             const Value* dst = genValueVar(makeTemporaryName(subObject->base.value), convert(*parsingExpr.type));
-            emitCopyFromOffset(subObject->base, subObject->referingTo, dst, subObject->offset, dst->type);
+            emitCopyFromOffset(subObject->base, subObject->referringTo, dst, subObject->offset, dst->type);
             return dst;
         }
     }
@@ -832,7 +832,7 @@ std::unique_ptr<ExprResult> GenerateIr::genUnaryPrefixInst(const Parsing::UnaryE
 std::unique_ptr<ExprResult> GenerateIr::genVarInst(const Parsing::VarExpr& varExpr)
 {
     const Identifier iden(varExpr.name);
-    const Value* var = genValueVar(iden, convert(*varExpr.type), varExpr.referingTo);
+    const Value* var = genValueVar(iden, convert(*varExpr.type), varExpr.referringTo);
     return std::make_unique<PlainOperand>(var);
 }
 
@@ -1019,7 +1019,7 @@ std::unique_ptr<ExprResult> GenerateIr::genAssignInst(const Parsing::AssignmentE
         }
         case ExprResult::Kind::SubObject: {
             const auto subObj = dynCast<const SubObject>(lhs.get());
-            emitCopyToOffset(rhs ,subObj->base, subObj->referingTo, subObj->offset, 0, 0, rhs->type);
+            emitCopyToOffset(rhs ,subObj->base, subObj->referringTo, subObj->offset, 0, 0, rhs->type);
             return std::make_unique<PlainOperand>(rhs);
         }
     }
@@ -1036,13 +1036,13 @@ std::unique_ptr<ExprResult> GenerateIr::genStringPlainOperand(const Parsing::Str
 {
     const auto it = m_constStrings.find(stringExpr.value);
     if (it != m_constStrings.end()) {
-        const Value* valueVar = genValueVar(Identifier(it->second), pointerType, ReferingTo::Static);
+        const Value* valueVar = genValueVar(Identifier(it->second), pointerType, ReferringTo::Static);
         return std::make_unique<PlainOperand>(valueVar);
     }
     const Identifier iden = makeTemporaryName("string.");
     m_constStrings.emplace_hint(it, stringExpr.value, iden.value);
     m_topLevels.emplace_back(std::make_unique<StaticConstant>(iden, stringExpr.value, false, true));
-    const Value* valueVar = genValueVar(iden, pointerType, ReferingTo::Static);
+    const Value* valueVar = genValueVar(iden, pointerType, ReferringTo::Static);
     return std::make_unique<PlainOperand>(valueVar);
 }
 
@@ -1119,7 +1119,7 @@ std::unique_ptr<ExprResult> GenerateIr::genAddrOfInst(const Parsing::AddrOffExpr
         }
         case ExprResult::Kind::SubObject: {
             const auto subObject = dynCast<const SubObject>(inner.get());
-            const Value* src = genValueVar(subObject->base, pointerType, subObject->referingTo);
+            const Value* src = genValueVar(subObject->base, pointerType, subObject->referringTo);
             const Value* dstPtr = genValueVar(makeTemporaryName(), pointerType);
             const Value* dst = genValueVar(makeTemporaryName(), pointerType);
             const Value* constOne = genConstValue(1l);
@@ -1187,12 +1187,12 @@ std::unique_ptr<ExprResult> GenerateIr::genDotExprInst(const Parsing::DotExpr& d
         case ExprResult::Kind::PlainOperand: {
             const auto plain = dynCast<const PlainOperand>(result.get());
             const auto variable = dynCast<const ValueVar>(plain->value);
-            return std::make_unique<SubObject>(variable->value, variable->referingTo, memberOffset);
+            return std::make_unique<SubObject>(variable->value, variable->referringTo, memberOffset);
         }
         case ExprResult::Kind::SubObject: {
             const auto subObject = dynCast<SubObject>(result.get());
             return std::make_unique<SubObject>(
-                subObject->base, subObject->referingTo, subObject->offset + memberOffset);
+                subObject->base, subObject->referringTo, subObject->offset + memberOffset);
         }
         case ExprResult::Kind::DereferencedPointer: {
             const auto deref = dynCast<const DereferencedPointer>(result.get());
@@ -1284,9 +1284,9 @@ const Value* GenerateIr::genValueVar(const Identifier& iden, const IrType& type)
     return m_values.back().get();
 }
 
-const Value* GenerateIr::genValueVar(const Identifier& iden, const IrType& type, const ReferingTo referingTo)
+const Value* GenerateIr::genValueVar(const Identifier& iden, const IrType& type, const ReferringTo referringTo)
 {
-    m_values.emplace_back(std::make_unique<ValueVar>(iden, type, referingTo));
+    m_values.emplace_back(std::make_unique<ValueVar>(iden, type, referringTo));
     return m_values.back().get();
 }
 

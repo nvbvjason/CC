@@ -1,10 +1,13 @@
 #include "ASTUtils.hpp"
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+
+#include "ASTExpr.hpp"
 #include "ASTTypes.hpp"
 #include "DynCast.hpp"
-#include "ASTExpr.hpp"
 #include "Types/TypeConversion.hpp"
-
-#include <cassert>
 
 namespace Parsing {
 
@@ -31,9 +34,12 @@ BinaryExpr::Operator convertAssignOperation(const AssignmentExpr::Operator assig
 bool isBinaryComparison(const BinaryExpr::Operator oper)
 {
     using Operator = BinaryExpr::Operator;
-    return oper == Operator::Equal       || oper == Operator::NotEqual ||
-           oper == Operator::LessThan    || oper == Operator::LessOrEqual ||
-           oper == Operator::GreaterThan || oper == Operator::GreaterOrEqual;
+
+    constexpr std::array allowed = {
+        Operator::Equal,       Operator::NotEqual,    Operator::LessThan,
+        Operator::LessOrEqual, Operator::GreaterThan, Operator::GreaterOrEqual
+    };
+    return std::ranges::contains(allowed, oper);
 }
 
 bool isPostfixOp(const UnaryExpr::Operator oper)
@@ -232,11 +238,11 @@ void assignTypeToArithmeticBinaryExpr(BinaryExpr& binaryExpr)
 bool isZeroArithmeticType(const ConstExpr& constExpr)
 {
     switch (constExpr.type->type) {
-        case Type::I32:     return 0 == std::get<i32>(constExpr.value);
-        case Type::U32:     return 0 == std::get<u32>(constExpr.value);
-        case Type::I64:     return 0 == std::get<i64>(constExpr.value);
-        case Type::U64:     return 0 == std::get<u64>(constExpr.value);
-        case Type::Double:  return 0 == std::get<double>(constExpr.value);
+        case Type::I32:     return std::get<i32>(constExpr.value)       == 0;
+        case Type::U32:     return std::get<u32>(constExpr.value)       == 0;
+        case Type::I64:     return std::get<i64>(constExpr.value)       == 0;
+        case Type::U64:     return std::get<u64>(constExpr.value)       == 0;
+        case Type::Double:  return std::get<double>(constExpr.value)    == 0;
         default:
             return false;
     }
@@ -248,30 +254,14 @@ std::unique_ptr<Expr> convertToArithmeticType(const Expr& expr, const Type targe
     std::variant<char, i8, u8, i32, i64, u32, u64, double> convertedValue;
 
     switch (targetType) {
-        case Type::I8:
-            convertedValue = constExpr->getValue<i8>();
-            break;
-        case Type::U8:
-            convertedValue = constExpr->getValue<u8>();
-            break;
-        case Type::I32:
-            convertedValue = constExpr->getValue<i32>();
-            break;
-        case Type::U32:
-            convertedValue = constExpr->getValue<u32>();
-            break;
-        case Type::I64:
-            convertedValue = constExpr->getValue<i64>();
-            break;
-        case Type::U64:
-            convertedValue = constExpr->getValue<u64>();
-            break;
-        case Type::Double:
-            convertedValue = constExpr->getValue<double>();
-            break;
-        case Type::Char:
-            convertedValue = constExpr->getValue<char>();
-            break;
+        case Type::I8:      convertedValue = constExpr->getValue<i8>();         break;
+        case Type::U8:      convertedValue = constExpr->getValue<u8>();         break;
+        case Type::I32:     convertedValue = constExpr->getValue<i32>();        break;
+        case Type::U32:     convertedValue = constExpr->getValue<u32>();        break;
+        case Type::I64:     convertedValue = constExpr->getValue<i64>();        break;
+        case Type::U64:     convertedValue = constExpr->getValue<u64>();        break;
+        case Type::Double:  convertedValue = constExpr->getValue<double>();     break;
+        case Type::Char:    convertedValue = constExpr->getValue<char>();       break;
         default:
             std::abort();
     }
@@ -311,12 +301,12 @@ std::unique_ptr<Expr> converOrAssign(const TypeBase& left,
         return convertOrCastToType(expr, Type::U64);
 
     if (expr->type->type == Type::Pointer && isVoidPointer(left)) {
-        expr->type = std::make_unique<Parsing::PointerType>(std::make_unique<VarType>(Type::Void));
+        expr->type = std::make_unique<PointerType>(std::make_unique<VarType>(Type::Void));
         return std::move(expr);
     }
 
     if (left.type == Type::Pointer && isVoidPointer(right)) {
-        expr->type = Parsing::deepCopy(left);
+        expr->type = deepCopy(left);
         return std::move(expr);
     }
 

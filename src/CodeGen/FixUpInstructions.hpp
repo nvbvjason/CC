@@ -9,13 +9,13 @@ namespace CodeGen {
 class FixUpInstructions final {
     using RegType = Operand::RegKind;
 
-    Program& m_program;
-    std::vector<std::unique_ptr<Inst>>& m_insts;
-    std::vector<std::unique_ptr<Inst>> m_copy;
+    Program& program;
+    std::vector<std::unique_ptr<Inst>>& insts;
+    std::vector<std::unique_ptr<Inst>> copy;
     i32 stackAlloc;
 public:
     FixUpInstructions(std::vector<std::unique_ptr<Inst>>& insts, const i32 stackAlloc, Program& program)
-        : m_program(program), m_insts(insts), stackAlloc(stackAlloc) {}
+        : program(program), insts(insts), stackAlloc(stackAlloc) {}
 
     void fixStackAlignment();
     void fixUp();
@@ -37,7 +37,7 @@ private:
     template<typename... InstPtrs>
     void insert(InstPtrs&&... others)
     {
-        (m_copy.push_back(std::forward<InstPtrs>(others)), ...);
+        (copy.push_back(std::forward<InstPtrs>(others)), ...);
     }
 
     void binaryShift(BinaryInst& binaryInst);

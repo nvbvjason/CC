@@ -12,13 +12,13 @@ namespace Semantics {
 std::vector<Error> VariableResolution::resolve(Parsing::Program& program)
 {
     ASTTraverser::visit(program);
-    return std::move(m_errors);
+    return std::move(errors);
 }
 
 void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
 {
     const std::string nameBefore = structuredDecl.identifier;
-    const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredDecl.identifier);
+    const auto structuredEntry = symbolTable.lookupStructuredEntry(structuredDecl.identifier);
     if (structuredEntry.isFromCurrentScope() &&
         structuredDecl.type != structuredEntry.typeBase->type) {
         addError("Cannot define union and struct of same name in same scope", structuredDecl.location);
@@ -28,7 +28,7 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
     if (isNewType(structuredEntry)) {
         uniqueName = makeTemporaryName(structuredDecl.identifier);
         structuredDecl.identifier = uniqueName;
-        m_symbolTable.addStructuredEntry(nameBefore,
+        symbolTable.addStructuredEntry(nameBefore,
                                      structuredDecl.identifier,
                                      Parsing::StructuredType(
                                          structuredDecl.type,
@@ -51,22 +51,22 @@ void VariableResolution::visit(Parsing::StructuredDecl& structuredDecl)
             addError("Cannot have duplicate identifiers in struct", structuredDecl.location);
             return;
         }
-        m_varTable.addEntry(uniqueName, structuredDecl, m_errors);
+        varTable.addEntry(uniqueName, structuredDecl, errors);
     }
 }
 
 void VariableResolution::visit(Parsing::FuncDecl& funDecl)
 {
-    const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookupEntry(funDecl.name);
-    validateFuncDecl(funDecl, m_symbolTable, prevEntry);
+    const SymbolTable::ReturnedEntry prevEntry = symbolTable.lookupEntry(funDecl.name);
+    validateFuncDecl(funDecl, symbolTable, prevEntry);
     const auto funcType = dynCast<Parsing::FuncType>(funDecl.type.get());
     for (const auto& param : funcType->params)
         param->accept(*this);
     funcType->returnType->accept(*this);
     addFuncToSymbolTable(funDecl, prevEntry);
     if (funDecl.body) {
-        FunctionGuard functionGuard(m_symbolTable, funDecl);
-        ScopeGuard guard(m_symbolTable);
+        FunctionGuard functionGuard(symbolTable, funDecl);
+        ScopeGuard guard(symbolTable);
         funDecl.body->accept(*this);
     }
 }
@@ -129,33 +129,33 @@ bool duplicatesInArgs(const std::vector<std::string>& args)
 
 void VariableResolution::visit(Parsing::CompoundStmt& compoundStmt)
 {
-    ScopeGuard scopeGuard(m_symbolTable);
+    ScopeGuard scopeGuard(symbolTable);
     ASTTraverser::visit(compoundStmt);
 }
 
 void VariableResolution::visit(Parsing::ForStmt& forStmt)
 {
-    ScopeGuard scopeGuard(m_symbolTable);
+    ScopeGuard scopeGuard(symbolTable);
     ASTTraverser::visit(forStmt);
 }
 
 void VariableResolution::handleVarDeclOfStructuredType(const Parsing::VarDecl& varDecl)
 {
     const auto structuredType = dynCast<Parsing::StructuredType>(varDecl.type.get());
-    const auto structuredEntry = m_symbolTable.lookupStructuredEntry(structuredType->identifier);
+    const auto structuredEntry = symbolTable.lookupStructuredEntry(structuredType->identifier);
     if (structuredEntry.typeBase && structuredType->type != structuredEntry.typeBase->type)
         addError("Cannot declare with different structured type and same name", varDecl.location);
 }
 
 void VariableResolution::visit(Parsing::VarDecl& varDecl)
 {
-    const SymbolTable::ReturnedEntry prevEntry = m_symbolTable.lookupEntry(varDecl.name);
+    const SymbolTable::ReturnedEntry prevEntry = symbolTable.lookupEntry(varDecl.name);
     varDecl.type->accept(*this);
-    if (varDecl.type->type == Type::Array && m_varTable.isIncompleteTypeBase(*varDecl.type))
+    if (varDecl.type->type == Type::Array && varTable.isIncompleteTypeBase(*varDecl.type))
         addError("Cannot declare array with incomplete type", varDecl.location);
     if (isStructuredType(varDecl.type->type))
         handleVarDeclOfStructuredType(varDecl);
-    validateVarDecl(varDecl, m_symbolTable, prevEntry);
+    validateVarDecl(varDecl, symbolTable, prevEntry);
     addVarToSymbolTable(varDecl, prevEntry);
     ASTTraverser::visit(varDecl);
 }
@@ -208,7 +208,7 @@ void VariableResolution::validateVarDeclGlobal(const Parsing::VarDecl& varDecl,
 
 void VariableResolution::visit(Parsing::StructuredType& structuredType)
 {
-    const auto entry = m_symbolTable.lookupStructuredEntry(structuredType.identifier);
+    const auto entry = symbolTable.lookupStructuredEntry(structuredType.identifier);
     if (!entry.contains())
         addError("Use of undeclared struct type", structuredType.location);
     if (entry.typeBase && structuredType.type != entry.typeBase->type)
@@ -221,16 +221,16 @@ void VariableResolution::visit(Parsing::StructuredType& structuredType)
 
 void VariableResolution::visit(Parsing::VarExpr& varExpr)
 {
-    const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookupEntry(varExpr.name);
+    const SymbolTable::ReturnedEntry returnedEntry = symbolTable.lookupEntry(varExpr.name);
     if (isValidVarExpr(varExpr.location, returnedEntry)) {
         if (returnedEntry.hasExternalLinkage() && !returnedEntry.isGlobal())
-            varExpr.referingTo = ReferingTo::Extern;
+            varExpr.referringTo = ReferringTo::Extern;
         else if (!returnedEntry.isInArgs())
-            varExpr.name = m_symbolTable.getUniqueName(varExpr.name);
+            varExpr.name = symbolTable.getUniqueName(varExpr.name);
         if (returnedEntry.hasExternalLinkage())
-            varExpr.referingTo = ReferingTo::Extern;
+            varExpr.referringTo = ReferringTo::Extern;
         if (returnedEntry.hasInternalLinkage())
-            varExpr.referingTo = ReferingTo::Static;
+            varExpr.referringTo = ReferringTo::Static;
         varExpr.type = Parsing::deepCopy(*returnedEntry.typeBase);
     }
     ASTTraverser::visit(varExpr);
@@ -253,7 +253,7 @@ bool VariableResolution::isValidVarExpr(const i64 location, const SymbolTable::R
 
 void VariableResolution::visit(Parsing::FuncCallExpr& funcCallExpr)
 {
-    const SymbolTable::ReturnedEntry returnedEntry = m_symbolTable.lookupEntry(funcCallExpr.name);
+    const SymbolTable::ReturnedEntry returnedEntry = symbolTable.lookupEntry(funcCallExpr.name);
     if (isValidFuncCall(funcCallExpr.location, returnedEntry)) {
         const auto funcType = dynCast<const Parsing::FuncType>(returnedEntry.typeBase.get());
         funcCallExpr.type = Parsing::deepCopy(*funcType->returnType);
@@ -281,9 +281,9 @@ void VariableResolution::addFuncToSymbolTable(
     const bool defined = funDecl.body != nullptr;
     const bool internal = prevEntry.hasInternalLinkage() || funDecl.storage == Storage::Static;
     const bool external = !prevEntry.hasInternalLinkage() && funDecl.storage != Storage::Static;
-    m_symbolTable.addEntry(funDecl.name, funDecl.name,
+    symbolTable.addEntry(funDecl.name, funDecl.name,
                            *Parsing::deepCopy(*funDecl.type), internal, external,
-                           !m_symbolTable.inFunc(), defined);
+                           !symbolTable.inFunc(), defined);
 }
 
 
@@ -292,30 +292,30 @@ void VariableResolution::addVarToSymbolTable(
     const SymbolTable::ReturnedEntry& prevEntry)
 {
     if (prevEntry.typeBase && !Parsing::areEquivalentTypes(*varDecl.type, *prevEntry.typeBase)) {
-        const bool global = !m_symbolTable.inFunc();
+        const bool global = !symbolTable.inFunc();
         const bool defined = varDecl.init != nullptr;
         const bool internal = hasInternalLinkageVar(varDecl);
-        const bool external = hasExternalLinkageVar(varDecl, !m_symbolTable.inFunc());
+        const bool external = hasExternalLinkageVar(varDecl, !symbolTable.inFunc());
         const std::string uniqueName = makeTemporaryName(varDecl.name);
-        m_symbolTable.addEntry(
+        symbolTable.addEntry(
             varDecl.name, uniqueName, *varDecl.type,
             internal, external, global, defined);
         varDecl.name = uniqueName;
         return;
     }
-    const bool global = !m_symbolTable.inFunc();
+    const bool global = !symbolTable.inFunc();
     const bool defined = prevEntry.isDefined()|| varDecl.init != nullptr;
     const bool internal = prevEntry.hasInternalLinkage() || hasInternalLinkageVar(varDecl);
     const bool external = !prevEntry.hasInternalLinkage() &&
-                           hasExternalLinkageVar(varDecl, !m_symbolTable.inFunc());
-    if (!m_symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
-        m_symbolTable.addEntry(
+                           hasExternalLinkageVar(varDecl, !symbolTable.inFunc());
+    if (!symbolTable.inFunc() || varDecl.storage == Storage::Extern) {
+        symbolTable.addEntry(
             varDecl.name, varDecl.name, *varDecl.type,
             internal, external, global, defined);
     }
     else {
         const std::string uniqueName = makeTemporaryName(varDecl.name);
-        m_symbolTable.addEntry(
+        symbolTable.addEntry(
             varDecl.name, uniqueName, *varDecl.type,
             internal, external, global, defined);
         varDecl.name = uniqueName;
@@ -333,7 +333,7 @@ bool isNewType(const SymbolTable::ReturnedStructuredEntry& prevEntry)
 
 std::string VariableResolution::makeTemporaryName(const std::string& name)
 {
-    return name + '.' + std::to_string(m_nameCounter++) + ".tmp";
+    return name + '.' + std::to_string(nameCounter++) + ".tmp";
 }
 
 } // Semantics

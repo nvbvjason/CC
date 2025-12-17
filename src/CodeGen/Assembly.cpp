@@ -15,13 +15,13 @@ std::string asmProgram(const Program& program)
     for (const std::unique_ptr<TopLevel>& topLevel : program.topLevels) {
         switch (topLevel->kind) {
             case TopLevel::Kind::StaticVariable: {
-                const auto var = dynCast<const StaticVariable>(topLevel.get());
-                asmStaticVariable(result, *var);
+                const auto staticVariable = dynCast<const StaticVariable>(topLevel.get());
+                asmStaticVariable(result, *staticVariable);
                 break;
             }
             case TopLevel::Kind::StaticConstant: {
-                const auto var = dynCast<const ConstVariable>(topLevel.get());
-                asmStaticConstant(result, *var);
+                const auto constVariable = dynCast<const ConstVariable>(topLevel.get());
+                asmStaticConstant(result, *constVariable);
                 break;
             }
             case TopLevel::Kind::Function: {
@@ -30,13 +30,13 @@ std::string asmProgram(const Program& program)
                 break;
             }
             case TopLevel::Kind::StaticCompound: {
-                const auto array = dynCast<const CompoundVariable>(topLevel.get());
-                asmStaticArray(result, *array);
+                const auto compoundVariable = dynCast<const CompoundVariable>(topLevel.get());
+                asmStaticArray(result, *compoundVariable);
                 break;
             }
             case TopLevel::Kind::StaticString: {
-                const auto str = dynCast<const StringVariable>(topLevel.get());
-                asmStaticString(result, *str);
+                const auto stringVariable = dynCast<const StringVariable>(topLevel.get());
+                asmStaticString(result, *stringVariable);
                 break;
             }
             default:
@@ -63,17 +63,18 @@ void asmStaticString(std::string& result, const StringVariable& variable)
 
 void asmStaticVariable(std::string& result, const StaticVariable& variable)
 {
-    if (variable.type == asmLongWord)
-        return asmStaticVariableLong(result, variable);
-    if (variable.type == asmQuadWord)
-        return asmStaticVariableQuad(result, variable);
-    if (variable.type == asmDouble)
-        return asmStaticVariableDouble(result, variable);
-    if (variable.type == asmByte)
-        return asmStaticVariableByte(result, variable);
+    switch (variable.type.kind) {
+        case AsmType::Kind::Byte:       return asmStaticVariableByte(result, variable);
+        case AsmType::Kind::LongWord:   return asmStaticVariableLong(result, variable);
+        case AsmType::Kind::QuadWord:   return asmStaticVariableQuad(result, variable);
+        case AsmType::Kind::Double:     return asmStaticVariableDouble(result, variable);
+        default:
+            result += "invalid static variable type";
+    }
+    result += '\n';
 }
 
-void asmStaticVariableByte(std::string& result, const StaticVariable& variable)
+void asmStaticVariablePre(std::string& result, const StaticVariable& variable)
 {
     if (variable.global)
         result += asmFormatInstruction(".globl", variable.name);
@@ -81,58 +82,47 @@ void asmStaticVariableByte(std::string& result, const StaticVariable& variable)
         result += asmFormatInstruction(".bss");
     else
         result += asmFormatInstruction(".data");
+}
+
+void asmStaticVariableByte(std::string& result, const StaticVariable& variable)
+{
+    asmStaticVariablePre(result, variable);
     result += asmFormatInstruction(".align","1");
     result += asmFormatLabel(variable.name);
     if (variable.init == nullptr)
         result += asmFormatInstruction(".zero 1");
     else
         result += asmFormatInstruction(".byte " + asmStaticOperand(variable.init));
-    result += '\n';
 }
 
 void asmStaticVariableLong(std::string& result, const StaticVariable& variable)
 {
-    if (variable.global)
-        result += asmFormatInstruction(".globl", variable.name);
-    if (variable.init == nullptr)
-        result += asmFormatInstruction(".bss");
-    else
-        result += asmFormatInstruction(".data");
+    asmStaticVariablePre(result, variable);
     result += asmFormatInstruction(".align","4");
     result += asmFormatLabel(variable.name);
     if (variable.init == nullptr)
         result += asmFormatInstruction(".zero 4");
     else
         result += asmFormatInstruction(".long " + asmStaticOperand(variable.init));
-    result += '\n';
 }
 
 void asmStaticVariableQuad(std::string& result, const StaticVariable& variable)
 {
-    if (variable.global)
-        result += asmFormatInstruction(".globl", variable.name);
-    if (variable.init == nullptr)
-        result += asmFormatInstruction(".bss");
-    else
-        result += asmFormatInstruction(".data");
+    asmStaticVariablePre(result, variable);
     result += asmFormatInstruction(".align","8");
     result += asmFormatLabel(variable.name);
     if (variable.init == nullptr)
         result += asmFormatInstruction(".zero 8");
     else
         result += asmFormatInstruction(".quad " + asmStaticOperand(variable.init));
-    result += '\n';
 }
 
 void asmStaticVariableDouble(std::string& result, const StaticVariable& variable)
 {
-    if (variable.global)
-        result += asmFormatInstruction(".globl", variable.name);
-    result += asmFormatInstruction(".data");
+    asmStaticVariablePre(result, variable);
     result += asmFormatInstruction(".align","8");
     result += asmFormatLabel(variable.name);
     result += asmFormatInstruction(".quad " + asmStaticOperand(variable.init));
-    result += '\n';
 }
 
 void asmStaticConstant(std::string& result, const ConstVariable& variable)
@@ -145,7 +135,6 @@ void asmStaticConstant(std::string& result, const ConstVariable& variable)
         result += asmFormatLabel(variable.name.value);
     result += asmFormatInstruction(".quad "+ std::to_string( std::bit_cast<u64>(variable.staticInit))
                 + " # " + std::to_string(variable.staticInit));
-    result += '\n';
 }
 
 void asmStaticArray(std::string& result, const CompoundVariable& array)

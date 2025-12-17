@@ -7,11 +7,11 @@
 namespace Semantics {
 
 class LvalueVerification : public Parsing::ConstASTTraverser {
-    std::vector<Error> m_errors;
+    std::vector<Error> errors;
 public:
     LvalueVerification() = default;
 
-    std::vector<Error> resolve(Parsing::Program& program);
+    std::vector<Error> resolve(const Parsing::Program& program);
 
     void visit(const Parsing::UnaryExpr& unaryExpr) override;
     void visit(const Parsing::AssignmentExpr& assignmentExpr) override;

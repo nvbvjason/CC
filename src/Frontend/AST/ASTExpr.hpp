@@ -80,7 +80,7 @@ struct StringExpr final : Expr {
 
 struct VarExpr final : Expr {
     std::string name;
-    ReferingTo referingTo = ReferingTo::Local;
+    ReferringTo referringTo = ReferringTo::Local;
 
     VarExpr(const i64 loc, std::string name) noexcept
         : Expr(loc, Kind::Var), name(std::move(name)) {}
@@ -88,7 +88,7 @@ struct VarExpr final : Expr {
     VarExpr(VarExpr&& varExpr) noexcept
         : Expr(varExpr.location, Kind::Var),
           name(std::move(varExpr.name)),
-          referingTo(varExpr.referingTo)
+          referringTo(varExpr.referringTo)
     {
         if (varExpr.type)
             type = std::move(varExpr.type);

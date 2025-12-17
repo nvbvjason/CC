@@ -9,10 +9,10 @@ namespace Lexing {
 std::vector<Error> Lexer::getLexemes()
 {
     while (!isAtEnd()) {
-        m_start = m_current;
+        start = current;
         scanToken();
     }
-    tokenStore.emplaceBack(0, m_line, m_column, Type::EndOfFile, "");
+    tokenStore.emplaceBack(0, line, column, Type::EndOfFile, "");
     return errors;
 }
 
@@ -212,7 +212,7 @@ void Lexer::forwardSlash()
         while (peek() != '\n' && !isAtEnd())
             advance();
     else if (match('*')) {
-        while (c_source.substr(m_current, 2) != "*/" && !isAtEnd())
+        while (source.substr(current, 2) != "*/" && !isAtEnd())
             advance();
         advance();
         advance();
@@ -225,7 +225,7 @@ bool Lexer::match(const char expected)
 {
     if (isAtEnd())
         return false;
-    if (c_source[m_current] != expected)
+    if (source[current] != expected)
         return false;
     advance();
     return true;
@@ -233,10 +233,10 @@ bool Lexer::match(const char expected)
 
 bool Lexer::match(const std::string& expected)
 {
-    if (c_source.size() <= m_current + expected.size() - 1)
+    if (source.size() <= current + expected.size() - 1)
         return false;
     for (i32 i = 0; i < expected.size(); ++i)
-        if (c_source[m_current + i] != expected[i])
+        if (source[current + i] != expected[i])
             return false;
     for (i32 i = 0; i < expected.size(); ++i)
         advance();
@@ -247,29 +247,29 @@ char Lexer::peek() const
 {
     if (isAtEnd())
         return '\0';
-    return c_source[m_current];
+    return source[current];
 }
 
 char Lexer::peekNext() const
 {
-    if (c_source.size() <= m_current + 1)
+    if (source.size() <= current + 1)
         return '\0';
-    return c_source[m_current + 1];
+    return source[current + 1];
 }
 
 char Lexer::advance()
 {
-    ++m_column;
-    if (c_source[m_current] == '\n') {
-        ++m_line;
-        m_column = 1;
+    ++column;
+    if (source[current] == '\n') {
+        ++line;
+        column = 1;
     }
-    return c_source[m_current++];
+    return source[current++];
 }
 
 void Lexer::number()
 {
-    u64 num = c_source[m_start] - '0';
+    u64 num = source[start] - '0';
     while (!isAtEnd() && isdigit(peek())) {
         num *= 10;
         num += peek() - '0';
@@ -279,29 +279,29 @@ void Lexer::number()
         floating();
         return;
     }
-    const i32 endNumbers = m_current;
+    const i32 endNumbers = current;
     while (!isAtEnd() && isalpha(peek()))
         advance();
-    if (endNumbers + 2 < m_current)
+    if (endNumbers + 2 < current)
         addToken(Type::Invalid);
-    const i32 ahead = m_current - m_start;
-    std::string text = c_source.substr(m_start, ahead);
-    if (matchesUL(text, endNumbers, m_current)) {
+    const i32 ahead = current - start;
+    std::string text = source.substr(start, ahead);
+    if (matchesUL(text, endNumbers, current)) {
         addToken(Type::UnsignedLongLiteral, num, ahead, text);
         return;
     }
-    if (tolower(text.back()) == 'l' && endNumbers + 1 == m_current) {
+    if (tolower(text.back()) == 'l' && endNumbers + 1 == current) {
         addToken(Type::LongLiteral, num, ahead, text);
         return;
     }
-    if (tolower(text.back()) == 'u' && endNumbers + 1 == m_current) {
+    if (tolower(text.back()) == 'u' && endNumbers + 1 == current) {
         if (MAX_U32 < num)
             addToken(Type::UnsignedLongLiteral, num, ahead, text);
         else
             addToken(Type::UnsignedIntegerLiteral, num, ahead, text);
         return;
     }
-    if (endNumbers == m_current) {
+    if (endNumbers == current) {
         if (MAX_I32 < num)
             addToken(Type::LongLiteral, num, ahead, text);
         else
@@ -420,8 +420,8 @@ void Lexer::identifier()
 {
     while (isalnum(peek()) || peek() == '_')
         advance();
-    const i32 ahead = m_current - m_start;
-    const std::string text = c_source.substr(m_start, ahead);
+    const i32 ahead = current - start;
+    const std::string text = source.substr(start, ahead);
     const auto iden = keywords.find(text);
     if (iden == keywords.end()) {
         addTokenStoreString(Type::Identifier);
@@ -445,43 +445,43 @@ void Lexer::addToken(const Token::Type type, const u64 num, const i32 ahead, std
         std::abort();
     tokenStore.emplaceBack(
         value,
-        m_line,
-        m_column - ahead,
+        line,
+        column - ahead,
         type,
         std::move(text));
 }
 
 void Lexer::addCharLiteral(const char ch) const
 {
-    const i32 ahead = m_current - m_start;
+    const i32 ahead = current - start;
     const std::variant<char, i8, u8, i32, i64, u32, u64, double> valueToStore = ch;
     tokenStore.emplaceBack(
         valueToStore,
-        m_line,
-        m_column - ahead,
+        line,
+        column - ahead,
         Type::CharLiteral,
         "");
 }
 
 void Lexer::addStringLiteral(const std::string& str) const
 {
-    const i32 ahead = m_current - m_start;
+    const i32 ahead = current - start;
     tokenStore.emplaceBack(
         std::variant<char, i8, u8, i32, i64, u32, u64, double>(),
-        m_line,
-        m_column - ahead,
+        line,
+        column - ahead,
         Type::StringLiteral,
         str);
 }
 
 void Lexer::addToken(const Token::Type type)
 {
-    const i32 ahead = m_current - m_start;
+    const i32 ahead = current - start;
     constexpr std::variant<char, i8, u8, i32, i64, u32, u64, double> valueToStore;
     tokenStore.emplaceBack(
         valueToStore,
-        m_line,
-        m_column - ahead,
+        line,
+        column - ahead,
         type,
         "");
     if (type == Type::Invalid)
@@ -490,8 +490,8 @@ void Lexer::addToken(const Token::Type type)
 
 void Lexer::addTokenStoreString(const Token::Type type) const
 {
-    const i32 ahead = m_current - m_start;
-    std::string text = c_source.substr(m_start, ahead);
+    const i32 ahead = current - start;
+    std::string text = source.substr(start, ahead);
     std::variant<char, i8, u8, i32, i64, u32, u64, double> valueToStore = 0;
     if (type == Type::DoubleLiteral) {
         const double value = std::strtod(text.c_str(), nullptr);
@@ -502,8 +502,8 @@ void Lexer::addTokenStoreString(const Token::Type type) const
     }
     tokenStore.emplaceBack(
         valueToStore,
-        m_line,
-        m_column - ahead,
+        line,
+        column - ahead,
         type,
         std::move(text));
 }

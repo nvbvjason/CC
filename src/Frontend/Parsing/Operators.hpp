@@ -1,8 +1,10 @@
 #pragma once
 
-#include "Token.hpp"
 #include "ASTParser.hpp"
+#include "Token.hpp"
 
+#include <algorithm>
+#include <array>
 #include <cassert>
 
 namespace Parsing::Operators {
@@ -102,68 +104,33 @@ constexpr AssignmentExpr::Operator assignOperator(const TokenType type)
 
 constexpr bool isBinaryOperator(const TokenType type)
 {
-    switch (type) {
-        case TokenType::Plus:
-        case TokenType::Minus:
-        case TokenType::ForwardSlash:
-        case TokenType::Percent:
-        case TokenType::Asterisk:
-        case TokenType::LeftShift:
-        case TokenType::RightShift:
-        case TokenType::Ampersand:
-        case TokenType::Pipe:
-        case TokenType::Circumflex:
-
-        case TokenType::LogicalAnd:
-        case TokenType::LogicalOr:
-        case TokenType::LogicalEqual:
-        case TokenType::LogicalNotEqual:
-        case TokenType::Greater:
-        case TokenType::Less:
-        case TokenType::LessOrEqual:
-        case TokenType::GreaterOrEqual:
-            return true;
-        default:
-            return false;
-    }
+    constexpr std::array binaryOperators{
+        TokenType::Plus, TokenType::Minus, TokenType::ForwardSlash, TokenType::Percent, TokenType::Asterisk,
+        TokenType::LeftShift, TokenType::RightShift, TokenType::Ampersand, TokenType::Pipe, TokenType::Circumflex,
+        TokenType::LogicalAnd, TokenType::LogicalOr, TokenType::LogicalEqual, TokenType::LogicalNotEqual,
+        TokenType::Greater, TokenType::Less, TokenType::LessOrEqual, TokenType::GreaterOrEqual
+    };
+    return std::ranges::contains(binaryOperators, type);
 }
 
 constexpr bool isUnaryOperator(const TokenType type)
 {
-    switch (type) {
-        case TokenType::Minus:
-        case TokenType::Plus:
-        case TokenType::Tilde:
-        case TokenType::ExclamationMark:
-        case TokenType::Increment:
-        case TokenType::Decrement:
-        case TokenType::Ampersand:
-        case TokenType::Asterisk:
-        case TokenType::SizeOf:
-            return true;
-        default:
-            return false;
-    }
+    constexpr std::array unaryOperators{
+        TokenType::Minus,     TokenType::Plus, TokenType::Tilde, TokenType::ExclamationMark, TokenType::Increment,
+        TokenType::Decrement, TokenType::Ampersand, TokenType::Asterisk, TokenType::SizeOf
+    };
+    return std::ranges::contains(unaryOperators, type);
 }
 
-constexpr bool isAssignmentOperator(TokenType type)
+constexpr bool isAssignmentOperator(const TokenType type)
 {
-    switch (type) {
-        case TokenType::Equal:
-        case TokenType::PlusAssign:
-        case TokenType::MinusAssign:
-        case TokenType::DivideAssign:
-        case TokenType::MultiplyAssign:
-        case TokenType::ModuloAssign:
-        case TokenType::BitwiseAndAssign:
-        case TokenType::BitwiseOrAssign:
-        case TokenType::BitwiseXorAssign:
-        case TokenType::LeftShiftAssign:
-        case TokenType::RightShiftAssign:
-            return true;
-        default:
-            return false;
-    }
+    constexpr std::array assignOpers{
+        TokenType::Equal, TokenType::ModuloAssign,
+        TokenType::PlusAssign, TokenType::MinusAssign, TokenType::MultiplyAssign, TokenType::DivideAssign,
+        TokenType::BitwiseAndAssign, TokenType::BitwiseOrAssign, TokenType::BitwiseXorAssign,
+        TokenType::LeftShiftAssign, TokenType::RightShiftAssign
+    };
+    return std::ranges::contains(assignOpers, type);
 }
 
 constexpr i32 precedence(const TokenType type)
@@ -173,15 +140,15 @@ constexpr i32 precedence(const TokenType type)
     if (type == TokenType::QuestionMark || type == TokenType::Colon)
         return (precedenceLevels - 13) * precedenceMult;
     if (isBinaryOperator(type)) {
-        BinaryExpr::Operator oper = binaryOperator(type);
+        const BinaryExpr::Operator oper = binaryOperator(type);
         return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
     }
     if (isUnaryOperator(type)) {
-        UnaryExpr::Operator oper = Operators::unaryOperator(type);
+        const UnaryExpr::Operator oper = Operators::unaryOperator(type);
         return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
     }
     if (isAssignmentOperator(type)) {
-        AssignmentExpr::Operator oper = Operators::assignOperator(type);
+        const AssignmentExpr::Operator oper = Operators::assignOperator(type);
         return (precedenceLevels - getPrecedenceLevel(oper)) * precedenceMult;
     }
     return 0;
@@ -255,31 +222,17 @@ constexpr bool isSpecifier(const TokenType type)
 
 constexpr bool isStorageSpecifier(const TokenType type)
 {
-    switch (type) {
-        case TokenType::Static:
-        case TokenType::Extern:
-            return true;
-        default:
-            return false;
-    }
+    return type == TokenType::Static || type == TokenType::Extern;
 }
 
 constexpr bool isType(const TokenType type)
 {
-    switch (type) {
-        case TokenType::CharKeyword:
-        case TokenType::IntKeyword:
-        case TokenType::LongKeyword:
-        case TokenType::Signed:
-        case TokenType::Unsigned:
-        case TokenType::DoubleKeyword:
-        case TokenType::StructKeyword:
-        case TokenType::UnionKeyword:
-        case TokenType::VoidKeyword:
-            return true;
-        default:
-            return false;
-    }
+    constexpr std::array types{
+        TokenType::Signed,   TokenType::CharKeyword, TokenType::LongKeyword,   TokenType::UnionKeyword,
+        TokenType::Unsigned, TokenType::IntKeyword,  TokenType::DoubleKeyword, TokenType::StructKeyword,
+        TokenType::VoidKeyword
+    };
+    return std::ranges::contains(types, type);
 }
 
 constexpr bool isStructuredType(const TokenType type)
@@ -303,8 +256,7 @@ constexpr BinaryExpr::Operator getBinaryOperator(const AssignmentExpr::Operator 
         case Assign::LeftShiftAssign:   return Binary::LeftShift;
         case Assign::RightShiftAssign:  return Binary::RightShift;
         default:
-            assert(false && "Invalid binary operator getBinaryOperator");
-            std::unreachable();
+            std::abort();
     }
 }
 
@@ -316,25 +268,16 @@ inline Declaration::StorageClass getStorageClass(const Lexing::Token::Type token
         case TokenType::Extern:     return StorageClass::Extern;
         case TokenType::NotAToken:  return StorageClass::None;
         default:
-            assert("getVarStorageClass invalid TokenType");
             std::abort();
     }
-    assert("getVarStorageClass invalid TokenType");
 }
 
 inline bool isLiteral(const TokenType type)
 {
-    switch (type) {
-        case TokenType::CharLiteral:
-        case TokenType::IntegerLiteral:
-        case TokenType::UnsignedIntegerLiteral:
-        case TokenType::LongLiteral:
-        case TokenType::UnsignedLongLiteral:
-        case TokenType::DoubleLiteral:
-            return true;
-        default:
-            return false;
-    }
-    std::unreachable();
+    constexpr std::array literals{
+        TokenType::CharLiteral, TokenType::IntegerLiteral, TokenType::UnsignedIntegerLiteral,
+        TokenType::LongLiteral, TokenType::DoubleLiteral,  TokenType::UnsignedLongLiteral
+    };
+    return std::ranges::contains(literals, type);
 }
-} // namespace Parsing::Operators
+} // Parsing::Operators

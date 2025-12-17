@@ -9,9 +9,9 @@ void FixUpInstructions::fixStackAlignment()
     if (0 < -stackAlloc) {
         i32 allocationSize = -stackAlloc;
         allocationSize += 16 - allocationSize % 16;
-        m_copy.emplace_back(std::make_unique<BinaryInst>(
-            m_program.getImmOperand(allocationSize, asmLongWord),
-            m_program.getRegisterOperand(RegType::SP, asmQuadWord),
+        copy.emplace_back(std::make_unique<BinaryInst>(
+            program.getImmOperand(allocationSize, asmLongWord),
+            program.getRegisterOperand(RegType::SP, asmQuadWord),
             BinaryInst::Operator::Sub, asmQuadWord));
     }
 }
@@ -19,11 +19,11 @@ void FixUpInstructions::fixStackAlignment()
 void FixUpInstructions::fixUp()
 {
     using Inst = Inst::Kind;
-    m_copy.reserve(m_insts.size() * 3 + 1);
+    copy.reserve(insts.size() * 3 + 1);
     fixStackAlignment();
-    while (!m_insts.empty()) {
-        auto inst = std::move(m_insts.front());
-        m_insts.erase(m_insts.begin());
+    while (!insts.empty()) {
+        auto inst = std::move(insts.front());
+        insts.erase(insts.begin());
         switch (inst->kind) {
             case Inst::Move: {
                 const auto move = dynCast<MoveInst>(inst.get());
@@ -76,10 +76,10 @@ void FixUpInstructions::fixUp()
             case Inst::PushPseudo:
                 break;
             default:
-                m_copy.emplace_back(std::move(inst));
+                copy.emplace_back(std::move(inst));
         }
     }
-    m_insts.swap(m_copy);
+    insts.swap(copy);
 }
 
 void FixUpInstructions::fixMove(MoveInst& moveInst)
@@ -153,8 +153,8 @@ void FixUpInstructions::fixBinary(BinaryInst& binary)
 
 void FixUpInstructions::binaryShift(BinaryInst& binaryInst)
 {
-    const Operand* regCX = m_program.getRegisterOperand(RegType::CX, binaryInst.type);
-    const Operand* regCL = m_program.getRegisterOperand(RegType::CX, asmByte);
+    const Operand* regCX = program.getRegisterOperand(RegType::CX, binaryInst.type);
+    const Operand* regCL = program.getRegisterOperand(RegType::CX, asmByte);
 
     insert(std::make_unique<MoveInst>(binaryInst.lhs, regCX, binaryInst.type));
     insert(std::make_unique<BinaryInst>(regCL, binaryInst.rhs, binaryInst.oper, binaryInst.type));
@@ -266,15 +266,15 @@ void FixUpInstructions::fixCvtsi2sd(Cvtsi2sdInst& cvtsi2sd)
 const Operand* FixUpInstructions::genSrcOperand(const AsmType type) const
 {
     if (type == asmDouble)
-        return m_program.getRegisterOperand(RegType::XMM14, type);
-    return m_program.getRegisterOperand(RegType::R10, type);
+        return program.getRegisterOperand(RegType::XMM14, type);
+    return program.getRegisterOperand(RegType::R10, type);
 }
 
 const Operand* FixUpInstructions::genDstOperand(const AsmType type) const
 {
     if (type == asmDouble)
-        return m_program.getRegisterOperand(RegType::XMM15, type);
-    return m_program.getRegisterOperand(RegType::R11, type);
+        return program.getRegisterOperand(RegType::XMM15, type);
+    return program.getRegisterOperand(RegType::R11, type);
 }
 
 } // namespace CodeGen

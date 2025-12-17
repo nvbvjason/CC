@@ -9,7 +9,7 @@
 namespace Lexing {
 
 struct Token {
-    enum class Type : u16 {
+    enum class Type : u8 {
         // Bracketing Symbols
         OpenParen,       CloseParen,     // (  )
         OpenBrace,       CloseBrace,     // {  }
@@ -109,28 +109,28 @@ struct Token {
         NotAToken,                       // maybe bad design
         Invalid                          // Invalid token
     };
-    std::variant<char, i8, u8, i32, i64, u32, u64, double> m_data;
-    i32 m_line;
-    u16 m_column;
-    Type m_type;
-    std::string m_lexeme;
+    std::variant<char, i8, u8, i32, i64, u32, u64, double> data;
+    i32 line;
+    u16 column;
+    Type type;
+    std::string lexeme;
     Token(const i32 line, const u16 column, const Type type, std::string lexeme)
-        : m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
+        : line(line), column(column), type(type), lexeme(std::move(lexeme)) {}
     Token(
         const std::variant<char, i8, u8, i32, i64, u32, u64, double> data,
         const i32 line, const u16 column,
         const Type type, std::string lexeme)
-        : m_data(data), m_line(line), m_column(column), m_type(type), m_lexeme(std::move(lexeme)) {}
-    [[nodiscard]] i32 line() const { return m_line; }
-    [[nodiscard]] u16 column() const { return m_column; }
-    [[nodiscard]] char getCharValue() const { return std::get<char>(m_data); }
-    [[nodiscard]] i8 getI8Value() const { return std::get<i8>(m_data); }
-    [[nodiscard]] u8 getU8Value() const { return std::get<u8>(m_data); }
-    [[nodiscard]] i32 getI32Value() const { return std::get<i32>(m_data); }
-    [[nodiscard]] u32 getU32Value() const { return std::get<u32>(m_data); }
-    [[nodiscard]] i64 getI64Value() const { return std::get<i64>(m_data); }
-    [[nodiscard]] u64 getU64Value() const { return std::get<u64>(m_data); }
-    [[nodiscard]] double getDoubleValue() const { return std::get<double>(m_data); }
+        : data(data), line(line), column(column), type(type), lexeme(std::move(lexeme)) {}
+    [[nodiscard]] i32 getLine() const { return line; }
+    [[nodiscard]] u16 getColumn() const { return column; }
+    [[nodiscard]] char getCharValue() const { return std::get<char>(data); }
+    [[nodiscard]] i8 getI8Value() const   { return std::get<i8>(data); }
+    [[nodiscard]] u8 getU8Value() const   { return std::get<u8>(data); }
+    [[nodiscard]] i32 getI32Value() const { return std::get<i32>(data); }
+    [[nodiscard]] u32 getU32Value() const { return std::get<u32>(data); }
+    [[nodiscard]] i64 getI64Value() const { return std::get<i64>(data); }
+    [[nodiscard]] u64 getU64Value() const { return std::get<u64>(data); }
+    [[nodiscard]] double getDoubleValue() const { return std::get<double>(data); }
     [[nodiscard]] std::string getTypeName() const;
 };
 

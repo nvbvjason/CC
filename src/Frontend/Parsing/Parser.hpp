@@ -90,14 +90,14 @@ class Parser {
     using TokenType = Lexing::Token::Type;
     using Storage = Declaration::StorageClass;
 
-    bool m_atFileScope = true;
-    const TokenStore& c_tokenStore;
-    i64 m_current = 0;
-    std::vector<Error> m_errors;
+    bool atFileScope = true;
+    const TokenStore& tokenStore;
+    i64 current = 0;
+    std::vector<Error> errors;
 public:
     Parser() = delete;
     explicit Parser(const TokenStore& tokenStore)
-        : c_tokenStore(tokenStore) {}
+        : tokenStore(tokenStore) {}
     std::vector<Error> programParse(Program& program);
     [[nodiscard]] std::unique_ptr<Declaration> declarationParse();
     [[nodiscard]] std::unique_ptr<Declaration> structuredDeclParse(
@@ -171,10 +171,10 @@ public:
     [[nodiscard]] std::tuple<std::unique_ptr<TypeBase>, TokenType> specifierParse();
     [[nodiscard]] std::unique_ptr<TypeBase> typeResolve(std::vector<TokenType>& tokens) const;
 private:
-    Lexing::Token advance() { return c_tokenStore.getToken(m_current++); }
+    Lexing::Token advance() { return tokenStore.getToken(current++); }
     [[nodiscard]] bool isAtEnd() const { return peekTokenType() == TokenType::EndOfFile; }
     [[nodiscard]] static bool continuePrecedenceClimbing(i32 minPrecedence, TokenType nextToken);
-    [[nodiscard]] Lexing::Token peek() const { return c_tokenStore.getToken(m_current); }
+    [[nodiscard]] Lexing::Token peek() const { return tokenStore.getToken(current); }
     [[nodiscard]] TokenType peekTokenType() const;
     [[nodiscard]] TokenType peekNextTokenType() const;
     [[nodiscard]] TokenType peekNextNextTokenType() const;
@@ -192,9 +192,9 @@ private:
 bool containsSameTwice(std::vector<Lexing::Token::Type>& tokens);
 inline bool Parser::continuePrecedenceClimbing(const i32 minPrecedence, const TokenType nextToken)
 {
-    return (Operators::isBinaryOperator(nextToken) ||
-            Operators::isAssignmentOperator(nextToken) ||
-            nextToken == TokenType::QuestionMark)
-        && minPrecedence <= Operators::precedence(nextToken);
+    return (Operators::isBinaryOperator(nextToken)
+                || Operators::isAssignmentOperator(nextToken)
+                || nextToken == TokenType::QuestionMark)
+            && minPrecedence <= Operators::precedence(nextToken);
 }
 } // namespace Parsing

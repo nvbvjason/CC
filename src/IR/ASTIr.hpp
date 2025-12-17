@@ -69,15 +69,15 @@ protected:
 };
 
 struct ValueVar final : Value {
-    ReferingTo referingTo = ReferingTo::Local;
+    ReferringTo referringTo = ReferringTo::Local;
     Identifier value;
     i64 size = 0;
 
     ValueVar(Identifier v, const IrType t)
         : Value(t, Kind::Variable), value(std::move(v)) {}
 
-    ValueVar(Identifier v, const IrType t, const ReferingTo referingTo)
-    : Value(t, Kind::Variable), value(std::move(v)), referingTo(referingTo) {}
+    ValueVar(Identifier v, const IrType t, const ReferringTo referringTo)
+    : Value(t, Kind::Variable), value(std::move(v)), referringTo(referringTo) {}
 
     ValueVar(Identifier v, const IrType t, const i64 size)
         : Value(t, Kind::Variable), value(std::move(v)), size(size) {}
@@ -272,7 +272,7 @@ struct UnaryInst final : Instruction {
     enum class Operation {
         Complement, Negate, Not
     };
-    Operation operation;
+    const Operation operation;
     const Value* src;
     const Value* dst;
     UnaryInst(const Operation op,
@@ -294,7 +294,7 @@ struct BinaryInst final : Instruction {
         And, Or, Equal, NotEqual,
         LessThan, LessOrEqual, GreaterThan, GreaterOrEqual
     };
-    Operation operation;
+    const Operation operation;
     const Value* lhs;
     const Value* rhs;
     const Value* dst;
@@ -364,7 +364,7 @@ struct AddPtrInst final : Instruction {
     const Value* ptr;
     const Value* index;
     const Value* dst;
-    i64 scale;
+    const i64 scale;
 
     AddPtrInst(const Value* src,
                const Value* index,
@@ -384,20 +384,20 @@ struct AddPtrInst final : Instruction {
 struct CopyToOffsetInst final : Instruction {
     const Value* src;
     const Identifier iden;
-    const ReferingTo referingTo;
+    const ReferringTo referringTo;
     const i64 offset;
     const i64 size;
     const i64 alignment;
 
     CopyToOffsetInst(const Value* src,
                      Identifier iden,
-                     const ReferingTo referingTo,
+                     const ReferringTo referringTo,
                      const i64 offset,
                      const i64 size,
                      const i64 alignment,
                      const IrType t)
         : Instruction(Kind::CopyToOffset, t), src(src),
-          iden(std::move(iden)), referingTo(referingTo), offset(offset), size(size), alignment(alignment) {}
+          iden(std::move(iden)), referringTo(referringTo), offset(offset), size(size), alignment(alignment) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyToOffset; }
 
@@ -406,16 +406,16 @@ struct CopyToOffsetInst final : Instruction {
 
 struct CopyFromOffsetInst final : Instruction {
     const Identifier src;
-    const ReferingTo referingTo;
+    const ReferringTo referringTo;
     const Value* dst;
     const i64 offset;
 
     CopyFromOffsetInst(Identifier iden,
-                       const ReferingTo referingTo,
+                       const ReferringTo referringTo,
                        const Value* dst,
                        const i64 offset,
                        const IrType t)
-    : Instruction(Kind::CopyFromOffset, t), src(std::move(iden)), referingTo(referingTo),
+    : Instruction(Kind::CopyFromOffset, t), src(std::move(iden)), referringTo(referringTo),
             dst(dst), offset(offset) {}
 
     static bool classOf(const Instruction* inst) { return inst->kind == Kind::CopyFromOffset; }

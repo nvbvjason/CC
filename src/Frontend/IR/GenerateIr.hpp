@@ -117,7 +117,7 @@ public:
     const Value* genConstValue(const Parsing::ConstExpr& constExpr);
     const Value* genZeroValueForType(Type type);
     const Value* genValueVar(const Identifier& iden, const IrType& type);
-    const Value* genValueVar(const Identifier& iden, const IrType& type, ReferingTo referingTo);
+    const Value* genValueVar(const Identifier& iden, const IrType& type, ReferringTo referringTo);
     const Value* genConstValue(i8 constValue);
     const Value* genConstValue(u8 constValue);
     const Value* genConstValue(char constValue);
@@ -224,22 +224,22 @@ private:
     }
     void emitCopyToOffset(const Value* src,
                           const Identifier& iden,
-                          const ReferingTo referingTo,
+                          const ReferringTo referringTo,
                           const i64 offset,
                           const i64 arraySize,
                           const i64 alignment,
                           const IrType type)
     {
         m_insts.emplace_back(std::make_unique<CopyToOffsetInst>(
-            src, iden, referingTo, offset, arraySize, alignment, type));
+            src, iden, referringTo, offset, arraySize, alignment, type));
     }
     void emitCopyFromOffset(const Identifier& iden,
-                            const ReferingTo referingTo,
+                            const ReferringTo referringTo,
                             const Value* dst,
                             const i64 offset,
                             const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<CopyFromOffsetInst>(iden, referingTo, dst, offset, type));
+        m_insts.emplace_back(std::make_unique<CopyFromOffsetInst>(iden, referringTo, dst, offset, type));
     }
     void emitJump(const Identifier& iden)
     {

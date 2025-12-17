@@ -18,8 +18,8 @@ std::vector<Error> TypeResolution::validate(Parsing::Program& program)
 
 void TypeResolution::visit(Parsing::FuncDecl& funDecl)
 {
-    const auto it = m_functions.find(funDecl.name);
-    if (it != m_functions.end() && !incompatibleFunctionDeclarations(it->second, funDecl)) {
+    const auto it = functions.find(funDecl.name);
+    if (it != functions.end() && !incompatibleFunctionDeclarations(it->second, funDecl)) {
         addError("Function declaration does not exist", funDecl.location);
         return;
     }
@@ -35,10 +35,10 @@ void TypeResolution::visit(Parsing::FuncDecl& funDecl)
         Parsing::deepCopy(*type->returnType),
         funDecl.storage,
         funDecl.body != nullptr);
-    m_functions.emplace_hint(it, funDecl.name, std::move(funcEntry));
+    functions.emplace_hint(it, funDecl.name, std::move(funcEntry));
 
     if (funDecl.body) {
-        m_definedFunctions.insert(funDecl.name);
+        definedFunctions.insert(funDecl.name);
         validateCompleteTypesFunc(funDecl, *funcType);
         m_global = false;
         funDecl.body->accept(*this);
@@ -90,10 +90,10 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
     if (isIllegalVarDecl(varDecl))
         return;
     if (m_global && varDecl.storage == Storage::Static)
-        m_globalStaticVars.insert(varDecl.name);
-    if (!m_global && !m_globalStaticVars.contains(varDecl.name))
-        m_definedFunctions.insert(varDecl.name);
-    m_resolveExpr.m_isConst = true;
+        globalStaticVars.insert(varDecl.name);
+    if (!m_global && !globalStaticVars.contains(varDecl.name))
+        definedFunctions.insert(varDecl.name);
+    resolveExpr.isConst = true;
 
     if (varDecl.storage != Parsing::Declaration::StorageClass::Extern
         && typeTable.isIncompleteTypeBase(*varDecl.type)) {
@@ -106,7 +106,7 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
 
     if (hasError())
         return;
-    if (illegalNonConstInitialization(varDecl, m_resolveExpr.m_isConst, m_global))
+    if (illegalNonConstInitialization(varDecl, resolveExpr.isConst, m_global))
         addError("Is illegal non const variable initilization", varDecl.location);
 }
 
@@ -116,7 +116,7 @@ bool TypeResolution::isIllegalVarDecl(const Parsing::VarDecl& varDecl)
         addError("Initiated extern variable", varDecl.location);
         return true;
     }
-    if (varDecl.storage == Storage::Static && m_definedFunctions.contains(varDecl.name)) {
+    if (varDecl.storage == Storage::Static && definedFunctions.contains(varDecl.name)) {
         addError("Static variable with same name as defined function", varDecl.location);
         return true;
     }
@@ -132,23 +132,23 @@ void TypeResolution::visit(Parsing::DeclForInit& declForInit)
 
 void TypeResolution::visit(Parsing::ExprForInit& exprForInit)
 {
-    exprForInit.expression = m_resolveExpr.convertArrayType(*exprForInit.expression);
+    exprForInit.expression = resolveExpr.convertArrayType(*exprForInit.expression);
 }
 
 void TypeResolution::visit(Parsing::ReturnStmt& stmt)
 {
     if (stmt.expr)
-        stmt.expr = m_resolveExpr.convertArrayType(*stmt.expr);
+        stmt.expr = resolveExpr.convertArrayType(*stmt.expr);
 }
 
 void TypeResolution::visit(Parsing::ExprStmt& stmt)
 {
-    stmt.expr = m_resolveExpr.convertArrayType(*stmt.expr);
+    stmt.expr = resolveExpr.convertArrayType(*stmt.expr);
 }
 
 void TypeResolution::visit(Parsing::IfStmt& ifStmt)
 {
-    ifStmt.condition = m_resolveExpr.convertArrayType(*ifStmt.condition);
+    ifStmt.condition = resolveExpr.convertArrayType(*ifStmt.condition);
     if (ifStmt.condition) {
         if (ifStmt.condition->type && !isScalarType(*ifStmt.condition->type))
             addError("If condition must have scalar type", ifStmt.location);
@@ -160,7 +160,7 @@ void TypeResolution::visit(Parsing::IfStmt& ifStmt)
 
 void TypeResolution::visit(Parsing::CaseStmt& caseStmt)
 {
-    caseStmt.condition = m_resolveExpr.convertArrayType(*caseStmt.condition);
+    caseStmt.condition = resolveExpr.convertArrayType(*caseStmt.condition);
     if (caseStmt.condition) {
         if (caseStmt.condition->type && !isScalarType(*caseStmt.condition->type))
             addError("Case condition must have scalar type", caseStmt.location);
@@ -170,7 +170,7 @@ void TypeResolution::visit(Parsing::CaseStmt& caseStmt)
 
 void TypeResolution::visit(Parsing::WhileStmt& whileStmt)
 {
-    whileStmt.condition = m_resolveExpr.convertArrayType(*whileStmt.condition);
+    whileStmt.condition = resolveExpr.convertArrayType(*whileStmt.condition);
     if (whileStmt.condition) {
         if (whileStmt.condition->type && !isScalarType(*whileStmt.condition->type))
             addError("While condition must have scalar type", whileStmt.location);
@@ -180,7 +180,7 @@ void TypeResolution::visit(Parsing::WhileStmt& whileStmt)
 
 void TypeResolution::visit(Parsing::DoWhileStmt& doWhileStmt)
 {
-    doWhileStmt.condition = m_resolveExpr.convertArrayType(*doWhileStmt.condition);
+    doWhileStmt.condition = resolveExpr.convertArrayType(*doWhileStmt.condition);
     if (doWhileStmt.condition) {
         if (doWhileStmt.condition->type && !isScalarType(*doWhileStmt.condition->type))
             addError("Do While condition must have scalar type", doWhileStmt.location);
@@ -193,18 +193,18 @@ void TypeResolution::visit(Parsing::ForStmt& forStmt)
     if (forStmt.init)
         forStmt.init->accept(*this);
     if (forStmt.condition) {
-        forStmt.condition = m_resolveExpr.convertArrayType(*forStmt.condition);
+        forStmt.condition = resolveExpr.convertArrayType(*forStmt.condition);
         if (forStmt.condition->type && !isScalarType(*forStmt.condition->type))
             addError("For loop condition must have scalar type", forStmt.location);
     }
     if (forStmt.post)
-        forStmt.post = m_resolveExpr.convertArrayType(*forStmt.post);
+        forStmt.post = resolveExpr.convertArrayType(*forStmt.post);
     forStmt.body->accept(*this);
 }
 
 void TypeResolution::visit(Parsing::SwitchStmt& switchStmt)
 {
-    switchStmt.condition = m_resolveExpr.convertArrayType(*switchStmt.condition);
+    switchStmt.condition = resolveExpr.convertArrayType(*switchStmt.condition);
     if (switchStmt.condition) {
         if (switchStmt.condition->type && !isScalarType(*switchStmt.condition->type))
             addError("Switch condition must have scalar type", switchStmt.location);
@@ -351,7 +351,7 @@ void TypeResolution::initVarWithSingle(
     const Parsing::SingleInitializer& singleInit,
     std::vector<std::unique_ptr<Parsing::Initializer>>& newInit)
 {
-    auto exprConverted = m_resolveExpr.convertArrayType(*singleInit.expr);
+    auto exprConverted = resolveExpr.convertArrayType(*singleInit.expr);
     if (hasError())
         return;
     auto expr = Parsing::converOrAssign(

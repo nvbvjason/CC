@@ -4,15 +4,15 @@
 
 namespace CodeGen {
 
-std::tuple<ReferingTo, AsmType, bool, std::string, i64> getPseudoValues(const Operand* operand)
+std::tuple<ReferringTo, AsmType, bool, std::string, i64> getPseudoValues(const Operand* operand)
 {
     if (operand->kind == Operand::Kind::PseudoMem) {
         const auto pseudoMem = dynCast<const PseudoMemOperand>(operand);
-        return {pseudoMem->referingTo, pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->offset};
+        return {pseudoMem->referringTo, pseudoMem->type, pseudoMem->local, pseudoMem->identifier.value, pseudoMem->offset};
     }
     if (operand->kind == Operand::Kind::Pseudo) {
         const auto pseudo = dynCast<const PseudoOperand>(operand);
-        return {pseudo->referingTo, pseudo->type, pseudo->local, pseudo->identifier.value, 0};
+        return {pseudo->referringTo, pseudo->type, pseudo->local, pseudo->identifier.value, 0};
     }
     std::abort();
 }
@@ -20,10 +20,10 @@ std::tuple<ReferingTo, AsmType, bool, std::string, i64> getPseudoValues(const Op
 const Operand* PseudoRegisterReplacer::replaceIfPseudo(const Operand* operand)
 {
     if (operand && (operand->kind == Operand::Kind::PseudoMem || operand->kind == Operand::Kind::Pseudo)) {
-        const auto [referingTo, asmType, isLocal, identifier, offset] = getPseudoValues(operand);
-        if (referingTo == ReferingTo::Extern || referingTo == ReferingTo::Static)
-            return m_program.getDataOperand(asmType, offset, Identifier(identifier), !isLocal);
-        if (!m_pseudoMap.contains(identifier)) {
+        const auto [referringTo, asmType, isLocal, identifier, offset] = getPseudoValues(operand);
+        if (referringTo == ReferringTo::Extern || referringTo == ReferringTo::Static)
+            return program.getDataOperand(asmType, offset, Identifier(identifier), !isLocal);
+        if (!pseudoMap.contains(identifier)) {
             if (operand->kind == Operand::Kind::PseudoMem) {
                 const auto pseudoMem = dynCast<const PseudoMemOperand>(operand);
                 i64 arraySize = pseudoMem->size;
@@ -33,17 +33,17 @@ const Operand* PseudoRegisterReplacer::replaceIfPseudo(const Operand* operand)
                     arraySize -= arraySize % pseudoMem->alignment;
                     arraySize += pseudoMem->alignment;
                 }
-                m_stackPtr -= arraySize;
+                stackPtr -= arraySize;
                 fitTo8Alignment();
-                m_pseudoMap[identifier] = m_stackPtr;
-                return m_program.getMemoryOperand(Operand::RegKind::BP, m_stackPtr, operand->type);
+                pseudoMap[identifier] = stackPtr;
+                return program.getMemoryOperand(Operand::RegKind::BP, stackPtr, operand->type);
             }
-            m_stackPtr -= 1 * asmType.size;
+            stackPtr -= 1 * asmType.size;
             fitTo8Alignment();
-            m_pseudoMap[identifier] = m_stackPtr;
+            pseudoMap[identifier] = stackPtr;
         }
-        return m_program.getMemoryOperand(
-            Operand::RegKind::BP, m_pseudoMap.at(identifier) + offset, operand->type);
+        return program.getMemoryOperand(
+            Operand::RegKind::BP, pseudoMap.at(identifier) + offset, operand->type);
     }
     return operand;
 }
@@ -106,12 +106,12 @@ void PseudoRegisterReplacer::visit(SetCCInst& setCCInst)
 
 void PseudoRegisterReplacer::visit(PushPseudoInst& pushPseudoInst)
 {
-    m_stackPtr -= pushPseudoInst.size;
+    stackPtr -= pushPseudoInst.size;
     if (pushPseudoInst.size < 16)
         fitTo8Alignment();
     else
         fitTo16Alignment();
-    m_pseudoMap[pushPseudoInst.identifier.value] = m_stackPtr;
+    pseudoMap[pushPseudoInst.identifier.value] = stackPtr;
 }
 
 void PseudoRegisterReplacer::visit(PushInst& pushInst)
@@ -134,14 +134,14 @@ void PseudoRegisterReplacer::visit(Cvtsi2sdInst& cvtsi2sdInst)
 void PseudoRegisterReplacer::fitTo8Alignment()
 {
     constexpr i64 requiredAlignment = 8;
-    if (m_stackPtr % requiredAlignment != 0)
-        m_stackPtr += -requiredAlignment - m_stackPtr % requiredAlignment;
+    if (stackPtr % requiredAlignment != 0)
+        stackPtr += -requiredAlignment - stackPtr % requiredAlignment;
 }
 
 void PseudoRegisterReplacer::fitTo16Alignment()
 {
     constexpr i64 requiredAlignment = 16;
-    if (m_stackPtr % requiredAlignment != 0)
-        m_stackPtr += -requiredAlignment - m_stackPtr % requiredAlignment;
+    if (stackPtr % requiredAlignment != 0)
+        stackPtr += -requiredAlignment - stackPtr % requiredAlignment;
 }
 } // namespace CodeGen

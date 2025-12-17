@@ -22,7 +22,7 @@ void GenerateAsmTree::genProgram(const Ir::Program &program)
 {
     for (const auto& toplevelIr : program.topLevels) {
         std::unique_ptr<TopLevel> topLevel = genTopLevel(*toplevelIr);
-        m_toplevel.emplace_back(std::move(topLevel));
+        toplevel.emplace_back(std::move(topLevel));
     }
 }
 
@@ -65,37 +65,37 @@ std::unique_ptr<TopLevel> GenerateAsmTree::genFunction(const Ir::Function& funct
 
 std::vector<bool> GenerateAsmTree::genFunctionPushIntoRegs(const Ir::Function& function)
 {
-    std::vector pushedIntoRegs(function.args.size(), false);
+    std::vector argsPushedIntoRegs(function.args.size(), false);
     i32 regIntIndex = 0;
     i32 regDoubleInex = 0;
     for (size_t i = 0; i < function.args.size(); ++i) {
         const AsmType type = getAsmType(function.argTypes[i]);
         const Operand* src;
         if (type != asmDouble && regIntIndex < intRegs.size())
-            src = m_program.getRegisterOperand(intRegs[regIntIndex++], type);
+            src = program.getRegisterOperand(intRegs[regIntIndex++], type);
         else if (type == asmDouble && regDoubleInex < doubleRegs.size())
-            src = m_program.getRegisterOperand(doubleRegs[regDoubleInex++], type);
+            src = program.getRegisterOperand(doubleRegs[regDoubleInex++], type);
         else
             continue;
-        auto arg = std::make_shared<Ir::ValueVar>(function.args[i], function.argTypes[i]);
+        auto arg = std::make_unique<Ir::ValueVar>(function.args[i], function.argTypes[i]);
         const Operand* dst = genOperand(*arg);
         emitMove(src, dst, type);
-        pushedIntoRegs[i] = true;
+        argsPushedIntoRegs[i] = true;
     }
-    return pushedIntoRegs;
+    return argsPushedIntoRegs;
 }
 
-void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs)
+void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> argsPushedIntoRegs)
 {
     i32 stackPtr = 2;
     for (size_t i = 0; i < function.args.size(); ++i) {
-        if (pushedIntoRegs[i])
+        if (argsPushedIntoRegs[i])
             continue;
         constexpr i32 stackAlignment = 8;
-        const Operand* stack = m_program.getMemoryOperand(
+        const Operand* stack = program.getMemoryOperand(
             RegType::BP, stackAlignment * stackPtr++,
             getAsmType(function.argTypes[i]));
-        auto arg = std::make_shared<Ir::ValueVar>(function.args[i], function.argTypes[i]);
+        auto arg = std::make_unique<Ir::ValueVar>(function.args[i], function.argTypes[i]);
         const Operand* dst = genOperand(*arg);
         emitMove(stack, dst, getAsmType(function.argTypes[i]));
     }
@@ -125,13 +125,13 @@ const Operand* GenerateAsmTree::genStaticOperand(const Ir::Value& value) const
     switch (value.kind) {
         case Ir::Value::Kind::Constant: {
             const auto valueConst = dynCast<const Ir::ValueConst>(&value);
-            return m_program.getImmOperand(
+            return program.getImmOperand(
                 getSingleInitValue(valueConst->type.kind, valueConst),
                 getAsmType(valueConst->type));
         }
         case Ir::Value::Kind::Variable: {
             const auto variable = dynCast<const Ir::ValueVar>(&value);
-            return m_program.getDataOperand(
+            return program.getDataOperand(
                 getAsmType(value.type),
                 0,
                 Identifier(variable->value.value),
@@ -160,7 +160,7 @@ std::unique_ptr<TopLevel> GenerateAsmTree::genStaticArray(const Ir::StaticArray&
         }
     }
     return std::make_unique<CompoundVariable>(
-        Identifier(staticArray.name), 16, std::move(initializers), staticArray.global);
+        Identifier(staticArray.name), std::move(initializers), 16, staticArray.global);
 }
 
 u64 getSingleInitValue(const Ir::IrType::Kind type, const Ir::ValueConst* const value)
@@ -325,7 +325,7 @@ void GenerateAsmTree::genJumpIfZero(const Ir::JumpIfZeroInst& jumpIfZero)
 
 void GenerateAsmTree::genJumpIfZeroDouble(const Ir::JumpIfZeroInst& jumpIfZero)
 {
-    const Operand* xmm0 = m_program.getRegisterOperand(RegType::XMM0, asmDouble);
+    const Operand* xmm0 = program.getRegisterOperand(RegType::XMM0, asmDouble);
     const Operand* condition = genOperand(*jumpIfZero.condition);
     const Identifier target(jumpIfZero.target.value);
     const Identifier endLabel(makeTemporaryPseudoName());
@@ -358,7 +358,7 @@ void GenerateAsmTree::genJumpIfNotZero(const Ir::JumpIfNotZeroInst& jumpIfNotZer
 
 void GenerateAsmTree::genJumpIfNotZeroDouble(const Ir::JumpIfNotZeroInst& jumpIfNotZero)
 {
-    const Operand* xmm0 = m_program.getRegisterOperand(RegType::XMM0, asmDouble);
+    const Operand* xmm0 = program.getRegisterOperand(RegType::XMM0, asmDouble);
     const Operand* condition = genOperand(*jumpIfNotZero.condition);
     const Identifier target(jumpIfNotZero.target.value);
 
@@ -391,28 +391,28 @@ void GenerateAsmTree::genCopy(const Ir::CopyInst& copy)
     const auto srcIden = Identifier(srcVal->value.value);
     const auto dstIden = Identifier(dstVal->value.value);
     const i64 size = copy.type.size;
-    const bool srcLocal = srcVal->referingTo == ReferingTo::Local;
-    const bool dstLocal = dstVal->referingTo == ReferingTo::Local;
+    const bool srcLocal = srcVal->referringTo == ReferringTo::Local;
+    const bool dstLocal = dstVal->referringTo == ReferringTo::Local;
     i64 i = 0;
 
     for (; i + 8 <= size; i += 8) {
-        const Operand* srcEight = m_program.getPseudoMemOperand(
+        const Operand* srcEight = program.getPseudoMemOperand(
             srcIden, i, 8, 0, srcLocal, asmQuadWord);
-        const Operand* dstEight = m_program.getPseudoMemOperand(
+        const Operand* dstEight = program.getPseudoMemOperand(
             dstIden, i, 8, 0, dstLocal, asmQuadWord);
         emitMove(srcEight, dstEight, asmQuadWord);
     }
     for (; i + 4 <= size; i += 4) {
-        const Operand* srcFour = m_program.getPseudoMemOperand(
+        const Operand* srcFour = program.getPseudoMemOperand(
             srcIden, i, 4, 0, srcLocal, asmLongWord);
-        const Operand* dstFour = m_program.getPseudoMemOperand(
+        const Operand* dstFour = program.getPseudoMemOperand(
             dstIden, i, 4, 0, dstLocal, asmLongWord);
         emitMove(srcFour, dstFour, asmLongWord);
     }
     for (; i < size; ++i) {
-        const Operand* srcOne = m_program.getPseudoMemOperand(
+        const Operand* srcOne = program.getPseudoMemOperand(
             srcIden, i, 1, 0, srcLocal, asmByte);
-        const Operand* dstOne = m_program.getPseudoMemOperand(
+        const Operand* dstOne = program.getPseudoMemOperand(
             dstIden, i, 1, 0, dstLocal, asmByte);
         emitMove(srcOne, dstOne, asmByte);
     }
@@ -430,8 +430,8 @@ void GenerateAsmTree::genLoad(const Ir::LoadInst& load)
     if (load.type.kind != Ir::IrType::Kind::ByteArray) {
         const Operand* ptr = genOperand(*load.ptr);
         const Operand* dst = genOperand(*load.dst);
-        const Operand* rax = m_program.getRegisterOperand(RegType::DX, asmQuadWord);
-        const Operand* memory = m_program.getMemoryOperand(RegType::DX, 0, asmQuadWord);
+        const Operand* rax = program.getRegisterOperand(RegType::DX, asmQuadWord);
+        const Operand* memory = program.getMemoryOperand(RegType::DX, 0, asmQuadWord);
 
         emitMove(ptr, rax, asmQuadWord);
         emitMove(memory, dst, dst->type);
@@ -440,25 +440,25 @@ void GenerateAsmTree::genLoad(const Ir::LoadInst& load)
     const auto dstVal = dynCast<const Ir::ValueVar>(load.dst);
     const auto srcIden = Identifier(dstVal->value.value);
     const AsmType type = getAsmType(load.type);
-    const bool dstLocal = dstVal->referingTo == ReferingTo::Local;
+    const bool dstLocal = dstVal->referringTo == ReferringTo::Local;
     const i64 size = type.size;
     i64 i = 0;
 
     for (; i + 8 <= size; i += 8) {
-        const Operand* srcEight = m_program.getMemoryOperand(RegType::DX, i, asmQuadWord);
-        const Operand* dstEight = m_program.getPseudoMemOperand(
+        const Operand* srcEight = program.getMemoryOperand(RegType::DX, i, asmQuadWord);
+        const Operand* dstEight = program.getPseudoMemOperand(
             srcIden, i, 8, 0, dstLocal, asmQuadWord);
         emitMove(srcEight, dstEight, asmQuadWord);
     }
     for (; i + 4 <= size; i += 4) {
-        const Operand* srcFour = m_program.getMemoryOperand(RegType::DX, i, asmLongWord);
-        const Operand* dstFour = m_program.getPseudoMemOperand(
+        const Operand* srcFour = program.getMemoryOperand(RegType::DX, i, asmLongWord);
+        const Operand* dstFour = program.getPseudoMemOperand(
             srcIden, i, 4, 0, dstLocal, asmLongWord);
         emitMove(srcFour, dstFour, asmLongWord);
     }
     for (; i < size; ++i) {
-        const Operand* srcOne = m_program.getMemoryOperand(RegType::DX, i, asmByte);
-        const Operand* dstOne = m_program.getPseudoMemOperand(
+        const Operand* srcOne = program.getMemoryOperand(RegType::DX, i, asmByte);
+        const Operand* dstOne = program.getPseudoMemOperand(
             srcIden, i, 1, 0, dstLocal, asmByte);
         emitMove(srcOne, dstOne, asmByte);
     }
@@ -469,8 +469,8 @@ void GenerateAsmTree::genStore(const Ir::StoreInst& store)
     if (store.type.kind != Ir::IrType::Kind::ByteArray) {
         const Operand* src = genOperand(*store.src);
         const Operand* ptr = genOperand(*store.ptr);
-        const Operand* rax = m_program.getRegisterOperand(RegType::DX, asmQuadWord);
-        const Operand* memory = m_program.getMemoryOperand(RegType::DX, 0, asmQuadWord);
+        const Operand* rax = program.getRegisterOperand(RegType::DX, asmQuadWord);
+        const Operand* memory = program.getMemoryOperand(RegType::DX, 0, asmQuadWord);
 
         emitMove(ptr, rax, asmQuadWord);
         emitMove(src, memory, src->type);
@@ -479,26 +479,26 @@ void GenerateAsmTree::genStore(const Ir::StoreInst& store)
     const auto srcVal = dynCast<const Ir::ValueVar>(store.src);
     const auto srcIden = Identifier(srcVal->value.value);
     const AsmType type = getAsmType(store.type);
-    const bool srcLocal = srcVal->referingTo == ReferingTo::Local;
+    const bool srcLocal = srcVal->referringTo == ReferringTo::Local;
     const i64 size = type.size;
     i64 i = 0;
 
     for (; i + 8 <= size; i += 8) {
-        const Operand* srcEight = m_program.getPseudoMemOperand(
+        const Operand* srcEight = program.getPseudoMemOperand(
             srcIden, i, 8, 0, srcLocal, asmQuadWord);
-        const Operand* dstEight = m_program.getMemoryOperand(RegType::DX, i, asmQuadWord);
+        const Operand* dstEight = program.getMemoryOperand(RegType::DX, i, asmQuadWord);
         emitMove(srcEight, dstEight, asmQuadWord);
     }
     for (; i + 4 <= size; i += 4) {
-        const Operand* srcFour = m_program.getPseudoMemOperand(
+        const Operand* srcFour = program.getPseudoMemOperand(
             srcIden, i, 4, 0, srcLocal, asmLongWord);
-        const Operand* dstFour = m_program.getMemoryOperand(RegType::DX, i, asmLongWord);
+        const Operand* dstFour = program.getMemoryOperand(RegType::DX, i, asmLongWord);
         emitMove(srcFour, dstFour, asmLongWord);
     }
     for (; i < size; ++i) {
-        const Operand* srcOne = m_program.getPseudoMemOperand(
+        const Operand* srcOne = program.getPseudoMemOperand(
             srcIden, i, 1, 0, srcLocal, asmByte);
-        const Operand* dstOne = m_program.getMemoryOperand(RegType::DX, i, asmByte);
+        const Operand* dstOne = program.getMemoryOperand(RegType::DX, i, asmByte);
         emitMove(srcOne, dstOne, asmByte);
     }
 }
@@ -557,7 +557,7 @@ void GenerateAsmTree::genUnaryNotDouble(const Ir::UnaryInst& irUnary)
     const Operand* src = genOperand(*irUnary.src);
     const Operand* dst = genOperand(*irUnary.dst);
     const Operand* zero = getZeroOperand(dst->type);
-    const Operand* xmm0 = m_program.getRegisterOperand(RegType::XMM0, asmDouble);
+    const Operand* xmm0 = program.getRegisterOperand(RegType::XMM0, asmDouble);
     const Identifier nanLabel(makeTemporaryPseudoName() + "nanUnaryNot");
     const Identifier endLabel(makeTemporaryPseudoName());
 
@@ -597,9 +597,9 @@ void GenerateAsmTree::genDoubleToInt(const Ir::DoubleToIntInst& doubleToInt)
     const Operand* dst = genOperand(*doubleToInt.dst);
 
     if (dst->type.size < 4) {
-        const Operand* raxLongWord = m_program.getRegisterOperand(RegType::AX, asmLongWord);
+        const Operand* raxLongWord = program.getRegisterOperand(RegType::AX, asmLongWord);
         emitCvttsd2si(src, raxLongWord, asmLongWord);
-        const Operand* raxByte = m_program.getRegisterOperand(RegType::AX, asmByte);
+        const Operand* raxByte = program.getRegisterOperand(RegType::AX, asmByte);
         emitMove(raxByte, dst, dst->type);
     }
     else
@@ -626,8 +626,8 @@ void GenerateAsmTree::genDoubleToUIntByte(const Ir::DoubleToUIntInst& doubleToUI
 {
     const Operand* src = genOperand(*doubleToUInt.src);
     const Operand* dst = genOperand(*doubleToUInt.dst);
-    const Operand* rax = m_program.getRegisterOperand(RegType::AX, asmLongWord);
-    const Operand* eax = m_program.getRegisterOperand(RegType::AX, asmByte);
+    const Operand* rax = program.getRegisterOperand(RegType::AX, asmLongWord);
+    const Operand* eax = program.getRegisterOperand(RegType::AX, asmByte);
 
     emitCvttsd2si(src, rax, asmLongWord);
     emitMove(eax, dst, dst->type);
@@ -637,8 +637,8 @@ void GenerateAsmTree::genDoubleToUIntLong(const Ir::DoubleToUIntInst& doubleToUI
 {
     const Operand* src = genOperand(*doubleToUInt.src);
     const Operand* dst = genOperand(*doubleToUInt.dst);
-    const Operand* rax = m_program.getRegisterOperand(RegType::AX, asmQuadWord);
-    const Operand* eax = m_program.getRegisterOperand(RegType::AX, asmLongWord);
+    const Operand* rax = program.getRegisterOperand(RegType::AX, asmQuadWord);
+    const Operand* eax = program.getRegisterOperand(RegType::AX, asmLongWord);
 
     emitCvttsd2si(src, rax, asmQuadWord);
     emitMove(eax, dst, dst->type);
@@ -650,8 +650,8 @@ void GenerateAsmTree::genDoubleToUIntQuad(const Ir::DoubleToUIntInst& doubleToUI
     const Operand* upperBound = genDoubleLocalConst(upperBoundConst, 8);
     const Operand* src = genOperand(*doubleToUInt.src);
     const Operand* dst = genOperand(*doubleToUInt.dst);
-    const Operand* xmm0 = m_program.getRegisterOperand(RegType::XMM0, asmDouble);
-    const Operand* xmm1 = m_program.getRegisterOperand(RegType::XMM1, asmDouble);
+    const Operand* xmm0 = program.getRegisterOperand(RegType::XMM0, asmDouble);
+    const Operand* xmm1 = program.getRegisterOperand(RegType::XMM1, asmDouble);
     const Identifier labelOne(makeTemporaryPseudoName());
     const Identifier labelTwo(makeTemporaryPseudoName());
 
@@ -673,7 +673,7 @@ void GenerateAsmTree::genIntToDouble(const Ir::IntToDoubleInst& intToDouble)
     const Operand* dst = genOperand(*intToDouble.dst);
 
     if (src->type.size < 4) {
-        const Operand* rax = m_program.getRegisterOperand(RegType::AX, asmLongWord);
+        const Operand* rax = program.getRegisterOperand(RegType::AX, asmLongWord);
         emitMoveSX(src, rax, asmByte, asmLongWord);
         emitCvtsi2sd(rax, dst, asmLongWord);
     }
@@ -701,7 +701,7 @@ void GenerateAsmTree::genUIntToDouble(const Ir::UIntToDoubleInst& uintToDouble)
 void GenerateAsmTree::genUIntToDoubleByte(const Ir::UIntToDoubleInst& uintToDouble)
 {
     const Operand* src = genOperand(*uintToDouble.src);
-    const Operand* rax = m_program.getRegisterOperand(RegType::AX, asmLongWord);
+    const Operand* rax = program.getRegisterOperand(RegType::AX, asmLongWord);
     const Operand* dst = genOperand(*uintToDouble.dst);
 
     emitMoveZeroExtend(src, rax, asmByte, asmLongWord);
@@ -711,7 +711,7 @@ void GenerateAsmTree::genUIntToDoubleByte(const Ir::UIntToDoubleInst& uintToDoub
 void GenerateAsmTree::genUIntToDoubleLong(const Ir::UIntToDoubleInst& uintToDouble)
 {
     const Operand* src = genOperand(*uintToDouble.src);
-    const Operand* rax = m_program.getRegisterOperand(RegType::AX, asmQuadWord);
+    const Operand* rax = program.getRegisterOperand(RegType::AX, asmQuadWord);
     const Operand* dst = genOperand(*uintToDouble.dst);
 
     emitMoveZeroExtend(src, rax, asmLongWord, asmQuadWord);
@@ -728,9 +728,9 @@ void GenerateAsmTree::genUIntToDoubleQuad(const Ir::UIntToDoubleInst& uintToDoub
     const Identifier labelOutOfRange(makeTemporaryPseudoName());
     const Operand* dst = genOperand(*uintToDouble.dst);
     const Identifier labelEnd(makeTemporaryPseudoName());
-    const Operand* rax = m_program.getRegisterOperand(RegType::AX, asmQuadWord);
-    const Operand* rdx = m_program.getRegisterOperand(RegType::DX, asmQuadWord);
-    const Operand* one = m_program.getImmOperand(1l, asmQuadWord);
+    const Operand* rax = program.getRegisterOperand(RegType::AX, asmQuadWord);
+    const Operand* rdx = program.getRegisterOperand(RegType::DX, asmQuadWord);
+    const Operand* one = program.getImmOperand(1l, asmQuadWord);
 
     emitCmp(zero, src, asmQuadWord);
     emitJmpCC(Inst::CondCode::L, labelOutOfRange);
@@ -835,7 +835,7 @@ void GenerateAsmTree::genBinaryCondDouble(const Ir::BinaryInst& irBinary)
     emitJmp(endLabel);
     emitLabel(nanLabel);
     if (cc == Inst::CondCode::NE) {
-        const Operand* one = m_program.getImmOperand(1, asmLongWord);
+        const Operand* one = program.getImmOperand(1, asmLongWord);
         emitMove(one, dst, dst->type);
     }
     emitLabel(endLabel);
@@ -867,7 +867,7 @@ void GenerateAsmTree::genBinaryDivideDouble(const Ir::BinaryInst& irBinary)
 void GenerateAsmTree::genBinaryDivideSigned(const Ir::BinaryInst& irBinary)
 {
     const Operand* src1 = genOperand(*irBinary.lhs);
-    const Operand* regAX = m_program.getRegisterOperand(RegType::AX, getAsmType(irBinary.type));
+    const Operand* regAX = program.getRegisterOperand(RegType::AX, getAsmType(irBinary.type));
     const Operand* src2 = genOperand(*irBinary.rhs);
     const Operand* dst = genOperand(*irBinary.dst);
 
@@ -881,8 +881,8 @@ void GenerateAsmTree::genUnsignedBinaryDivide(const Ir::BinaryInst& irBinary)
 {
     const Operand* src1 = genOperand(*irBinary.lhs);
     const Operand* zero = getZeroOperand(src1->type);
-    const Operand* regAX = m_program.getRegisterOperand(RegType::AX, getAsmType(irBinary.type));
-    const Operand* regDX = m_program.getRegisterOperand(RegType::DX, getAsmType(irBinary.type));
+    const Operand* regAX = program.getRegisterOperand(RegType::AX, getAsmType(irBinary.type));
+    const Operand* regDX = program.getRegisterOperand(RegType::DX, getAsmType(irBinary.type));
     const Operand* src2 = genOperand(*irBinary.rhs);
     const Operand* dst = genOperand(*irBinary.dst);
 
@@ -904,10 +904,10 @@ void GenerateAsmTree::genBinaryRemainder(const Ir::BinaryInst& irBinary)
 void GenerateAsmTree::genSignedBinaryRemainder(const Ir::BinaryInst& irBinary)
 {
     const Operand* src1 = genOperand(*irBinary.lhs);
-    const Operand* regAX = m_program.getRegisterOperand(RegType::AX, getAsmType(irBinary.type));
+    const Operand* regAX = program.getRegisterOperand(RegType::AX, getAsmType(irBinary.type));
     const Operand* src2 = genOperand(*irBinary.rhs);
     const Operand* dst = genOperand(*irBinary.dst);
-    const Operand* regDX = m_program.getRegisterOperand(RegType::DX, getAsmType(irBinary.type));
+    const Operand* regDX = program.getRegisterOperand(RegType::DX, getAsmType(irBinary.type));
 
     emitMove(src1, regAX, src1->type);
     emitCdq(src1->type);
@@ -919,8 +919,8 @@ void GenerateAsmTree::genUnsignedBinaryRemainder(const Ir::BinaryInst& irBinary)
 {
     const Operand* lhs = genOperand(*irBinary.lhs);
     const auto zero = getZeroOperand(lhs->type);
-    const Operand* regAX = m_program.getRegisterOperand(RegType::AX, getAsmType(irBinary.type));
-    const Operand* regDX = m_program.getRegisterOperand(RegType::DX, getAsmType(irBinary.type));
+    const Operand* regAX = program.getRegisterOperand(RegType::AX, getAsmType(irBinary.type));
+    const Operand* regDX = program.getRegisterOperand(RegType::DX, getAsmType(irBinary.type));
     const Operand* rhs = genOperand(*irBinary.rhs);
     const Operand* dst = genOperand(*irBinary.dst);
 
@@ -969,11 +969,11 @@ void GenerateAsmTree::genAddPtr(const Ir::AddPtrInst& addPtrInst)
 
 void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
 {
-    const Operand* regAX = m_program.getRegisterOperand(RegType::AX, getAsmType(addPtrInst.type));
+    const Operand* regAX = program.getRegisterOperand(RegType::AX, getAsmType(addPtrInst.type));
     const auto ptr = genOperand(*addPtrInst.ptr);
     const auto constValue = dynCast<const Ir::ValueConst>(addPtrInst.index);
     const i64 index = std::get<i64>(constValue->value) * addPtrInst.scale;
-    const Operand* memoryOp = m_program.getMemoryOperand(RegType::AX, index, getAsmType(addPtrInst.ptr->type));
+    const Operand* memoryOp = program.getMemoryOperand(RegType::AX, index, getAsmType(addPtrInst.ptr->type));
     const Operand* dst = genOperand(*addPtrInst.dst);
 
     emitMove(ptr, regAX, getAsmType(addPtrInst.ptr->type));
@@ -982,12 +982,12 @@ void GenerateAsmTree::genAddPtrConstIndex(const Ir::AddPtrInst& addPtrInst)
 
 void GenerateAsmTree::genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtrInst)
 {
-    const Operand* regAX = m_program.getRegisterOperand(RegType::AX, getAsmType(addPtrInst.type));
-    const Operand* regDX = m_program.getRegisterOperand(RegType::DX, getAsmType(addPtrInst.type));
+    const Operand* regAX = program.getRegisterOperand(RegType::AX, getAsmType(addPtrInst.type));
+    const Operand* regDX = program.getRegisterOperand(RegType::DX, getAsmType(addPtrInst.type));
     const auto ptr = genOperand(*addPtrInst.ptr);
     const Operand* index = genOperand(*addPtrInst.index);
     const AsmType type = getAsmType(addPtrInst.ptr->type);
-    const Operand* indexed = m_program.getIndexedOperand(RegType::AX, RegType::DX, addPtrInst.scale, type);
+    const Operand* indexed = program.getIndexedOperand(RegType::AX, RegType::DX, addPtrInst.scale, type);
     const Operand* dst = genOperand(*addPtrInst.dst);
 
     emitMove(ptr, regAX, asmQuadWord);
@@ -997,14 +997,14 @@ void GenerateAsmTree::genAddPtrVariableIndex1_2_4_8(const Ir::AddPtrInst& addPtr
 
 void GenerateAsmTree::genAddPtrVariableIndexAndOtherScale(const Ir::AddPtrInst& addPtrInst)
 {
-    const Operand* regAX = m_program.getRegisterOperand(RegType::AX, getAsmType(addPtrInst.type));
-    const Operand* regDX = m_program.getRegisterOperand(RegType::DX, getAsmType(addPtrInst.type));
+    const Operand* regAX = program.getRegisterOperand(RegType::AX, getAsmType(addPtrInst.type));
+    const Operand* regDX = program.getRegisterOperand(RegType::DX, getAsmType(addPtrInst.type));
     const auto ptr = genOperand(*addPtrInst.ptr);
     const Operand* index = genOperand(*addPtrInst.index);
-    const Operand* immScale = m_program.getImmOperand(addPtrInst.scale, asmQuadWord);
+    const Operand* immScale = program.getImmOperand(addPtrInst.scale, asmQuadWord);
     const AsmType type = getAsmType(addPtrInst.ptr->type);
     constexpr i64 byteSize = 1;
-    const Operand* indexed = m_program.getIndexedOperand(RegType::AX, RegType::DX, byteSize, type);
+    const Operand* indexed = program.getIndexedOperand(RegType::AX, RegType::DX, byteSize, type);
     const Operand* dst = genOperand(*addPtrInst.dst);
 
     emitMove(ptr, regAX, asmQuadWord);
@@ -1017,58 +1017,58 @@ bool GenerateAsmTree::getReferingToLocal(const Ir::CopyToOffsetInst& copyToOffse
 {
     if (copyToOffset.src->kind == Ir::Value::Kind::Variable) {
         const auto copyToOffSetSrcVar = dynCast<const Ir::ValueVar>(copyToOffset.src);
-        return copyToOffSetSrcVar->referingTo == ReferingTo::Local;
+        return copyToOffSetSrcVar->referringTo == ReferringTo::Local;
     }
     if (copyToOffset.src->kind == Ir::Value::Kind::Constant)
         return true;
-    return copyToOffset.referingTo != ReferingTo::Local;
+    return copyToOffset.referringTo != ReferringTo::Local;
 }
 
 void GenerateAsmTree::genCopyToOffSet(const Ir::CopyToOffsetInst& copyToOffset)
 {
     const auto src = genOperand(*copyToOffset.src);
     const AsmType srcType = src->type;
-    const bool referingToLocal = getReferingToLocal(copyToOffset);
+    const bool referringToLocal = getReferingToLocal(copyToOffset);
     if (copyToOffset.type.kind == Ir::IrType::Kind::ByteArray) {
         const auto srcVal = dynCast<const Ir::ValueVar>(copyToOffset.src);
         const auto srcIden = Identifier(srcVal->value.value);
         const auto dstIden = Identifier(copyToOffset.iden.value);
-        const bool srcLocal = srcVal->referingTo == ReferingTo::Local;
-        const bool dstLocal = copyToOffset.referingTo == ReferingTo::Local;
+        const bool srcLocal = srcVal->referringTo == ReferringTo::Local;
+        const bool dstLocal = copyToOffset.referringTo == ReferringTo::Local;
         const i64 size = copyToOffset.type.size;
         i64 i = 0;
 
         for (; i + 8 <= size; i += 8) {
-            const Operand* srcEight = m_program.getPseudoMemOperand(
+            const Operand* srcEight = program.getPseudoMemOperand(
                 srcIden, i, 8, 0, srcLocal, asmQuadWord);
-            const Operand* dstEight = m_program.getPseudoMemOperand(
+            const Operand* dstEight = program.getPseudoMemOperand(
                 dstIden, copyToOffset.offset + i, 8, 0, dstLocal, asmQuadWord);
             emitMove(srcEight, dstEight, asmQuadWord);
         }
         for (; i + 4 <= size; i += 4) {
-            const Operand* srcFour = m_program.getPseudoMemOperand(
+            const Operand* srcFour = program.getPseudoMemOperand(
                 srcIden, i, 4, 0, srcLocal, asmLongWord);
-            const Operand* dstFour = m_program.getPseudoMemOperand(
+            const Operand* dstFour = program.getPseudoMemOperand(
                 dstIden, copyToOffset.offset + i, 4, 0, dstLocal, asmLongWord);
             emitMove(srcFour, dstFour, asmLongWord);
         }
         for (; i < size; ++i) {
-            const Operand* srcOne = m_program.getPseudoMemOperand(
+            const Operand* srcOne = program.getPseudoMemOperand(
                 srcIden, i, 1, 0, srcLocal, asmByte);
-            const Operand* dstOne = m_program.getPseudoMemOperand(
+            const Operand* dstOne = program.getPseudoMemOperand(
                 dstIden, copyToOffset.offset + i, 1, 0, dstLocal, asmByte);
             emitMove(srcOne, dstOne, asmByte);
         }
         return;
     }
-    const Operand* pseudoMem = m_program.getPseudoMemOperand(
+    const Operand* pseudoMem = program.getPseudoMemOperand(
             Identifier(copyToOffset.iden.value),
             copyToOffset.offset,
             copyToOffset.size,
             copyToOffset.alignment,
-            referingToLocal,
+            referringToLocal,
             srcType,
-            copyToOffset.referingTo);
+            copyToOffset.referringTo);
     emitMove(src, pseudoMem, srcType);
 }
 
@@ -1076,14 +1076,14 @@ void GenerateAsmTree::genCopyFromOffset(const Ir::CopyFromOffsetInst& copyFromOf
 {
     if (copyFromOffset.type.kind != Ir::IrType::Kind::ByteArray) {
         const Operand* dst = genOperand(*copyFromOffset.dst);
-        const Operand* src = m_program.getPseudoMemOperand(
+        const Operand* src = program.getPseudoMemOperand(
                 Identifier(copyFromOffset.src.value),
                 copyFromOffset.offset,
                 dst->type.size,
                 1,
-                copyFromOffset.referingTo == ReferingTo::Local,
+                copyFromOffset.referringTo == ReferringTo::Local,
                 dst->type,
-                copyFromOffset.referingTo);
+                copyFromOffset.referringTo);
         emitMove(src, dst, dst->type);
         return;
     }
@@ -1091,28 +1091,28 @@ void GenerateAsmTree::genCopyFromOffset(const Ir::CopyFromOffsetInst& copyFromOf
     const auto dstVal = dynCast<const Ir::ValueVar>(copyFromOffset.dst);
     const auto dstIden = Identifier(dstVal->value.value);
     const i64 size = copyFromOffset.type.size;
-    const bool srcLocal = copyFromOffset.referingTo == ReferingTo::Local;
-    const bool dstLocal = dstVal->referingTo == ReferingTo::Local;
+    const bool srcLocal = copyFromOffset.referringTo == ReferringTo::Local;
+    const bool dstLocal = dstVal->referringTo == ReferringTo::Local;
     i64 i = 0;
 
     for (; i + 8 <= size; i += 8) {
-        const Operand* srcEight = m_program.getPseudoMemOperand(
+        const Operand* srcEight = program.getPseudoMemOperand(
             srcIden, copyFromOffset.offset + i, 8, 0, srcLocal, asmQuadWord);
-        const Operand* dstEight = m_program.getPseudoMemOperand(
+        const Operand* dstEight = program.getPseudoMemOperand(
             dstIden, i, 8, 0, dstLocal, asmQuadWord);
         emitMove(srcEight, dstEight, asmQuadWord);
     }
     for (; i + 4 <= size; i += 4) {
-        const Operand* srcFour = m_program.getPseudoMemOperand(
+        const Operand* srcFour = program.getPseudoMemOperand(
             srcIden, copyFromOffset.offset + i, 4, 0, srcLocal, asmLongWord);
-        const Operand* dstFour = m_program.getPseudoMemOperand(
+        const Operand* dstFour = program.getPseudoMemOperand(
             dstIden, i, 4, 0, dstLocal, asmLongWord);
         emitMove(srcFour, dstFour, asmLongWord);
     }
     for (; i < size; ++i) {
-        const Operand* srcOne = m_program.getPseudoMemOperand(
+        const Operand* srcOne = program.getPseudoMemOperand(
             srcIden, copyFromOffset.offset + i, 1, 0, srcLocal, asmByte);
-        const Operand* dstOne = m_program.getPseudoMemOperand(
+        const Operand* dstOne = program.getPseudoMemOperand(
             dstIden, i, 1, 0, dstLocal, asmByte);
         emitMove(srcOne, dstOne, asmByte);
     }
@@ -1126,8 +1126,8 @@ void GenerateAsmTree::genAllocate(const Ir::AllocateInst& allocate)
 const Operand* GenerateAsmTree::getReturnRegister(const Ir::ReturnInst& returnInst) const
 {
     if (getAsmType(returnInst.type) == asmDouble)
-        return m_program.getRegisterOperand(RegType::XMM0, getAsmType(returnInst.type));
-    return m_program.getRegisterOperand(RegType::AX, getAsmType(returnInst.type));
+        return program.getRegisterOperand(RegType::XMM0, getAsmType(returnInst.type));
+    return program.getRegisterOperand(RegType::AX, getAsmType(returnInst.type));
 }
 
 void GenerateAsmTree::genReturn(const Ir::ReturnInst& returnInst)
@@ -1147,8 +1147,8 @@ void GenerateAsmTree::deAllocateStack(const Ir::FunCallInst& funcCall, const i64
 {
     const i64 bytesToRemove = 8l * (funcCall.args.size() - 6l) + stackPadding;
     if (0 < bytesToRemove) {
-        const Operand* bytesToRemoveOperand = m_program.getImmOperand(bytesToRemove, asmLongWord);
-        const Operand* sp = m_program.getRegisterOperand(RegType::SP, asmQuadWord);
+        const Operand* bytesToRemoveOperand = program.getImmOperand(bytesToRemove, asmLongWord);
+        const Operand* sp = program.getRegisterOperand(RegType::SP, asmQuadWord);
         emitBinary(bytesToRemoveOperand, sp, BinaryInst::Operator::Add, asmQuadWord);
     }
 }
@@ -1157,8 +1157,8 @@ void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
 {
     const i64 stackPadding = getStackPadding(funcCall.args.size());
     if (0 < stackPadding) {
-        const Operand* left = m_program.getImmOperand(8, asmLongWord);
-        const Operand* right = m_program.getRegisterOperand(RegType::SP, asmQuadWord);
+        const Operand* left = program.getImmOperand(8, asmLongWord);
+        const Operand* right = program.getRegisterOperand(RegType::SP, asmQuadWord);
         emitBinary(left, right, BinaryInst::Operator::Sub, asmQuadWord);
     }
     genFunCallPushArgs(funcCall);
@@ -1169,9 +1169,9 @@ void GenerateAsmTree::genFunCall(const Ir::FunCallInst& funcCall)
     const Operand* dst = genOperand(*funcCall.destination);
     const Operand* src;
     if (getAsmType(funcCall.type) != asmDouble)
-        src = m_program.getRegisterOperand(RegType::AX, getAsmType(funcCall.type));
+        src = program.getRegisterOperand(RegType::AX, getAsmType(funcCall.type));
     else
-        src = m_program.getRegisterOperand(RegType::XMM0, getAsmType(funcCall.type));
+        src = program.getRegisterOperand(RegType::XMM0, getAsmType(funcCall.type));
     emitMove(src, dst, getAsmType(funcCall.type));
 }
 
@@ -1185,9 +1185,9 @@ std::vector<bool> GenerateAsmTree::genFuncCallPushArgsRegs(const Ir::FunCallInst
         const AsmType type = getAsmType(funcCall.args[i]->type);
         const Operand* reg;
         if (type != asmDouble && regIntIndex < intRegs.size())
-            reg = m_program.getRegisterOperand(intRegs[regIntIndex++], type);
+            reg = program.getRegisterOperand(intRegs[regIntIndex++], type);
         else if (type == asmDouble && regDoubleIndex < doubleRegs.size())
-            reg = m_program.getRegisterOperand(doubleRegs[regDoubleIndex++], type);
+            reg = program.getRegisterOperand(doubleRegs[regDoubleIndex++], type);
         else
             continue;
         emitMove(src, reg, type);
@@ -1210,8 +1210,8 @@ void GenerateAsmTree::genFunCallPushArgs(const Ir::FunCallInst& funcCall)
         }
         else {
             const AsmType type = getAsmType(funcCall.args[i]->type);
-            emitMove(src, m_program.getRegisterOperand(RegType::AX, type), type);
-            emitPush(m_program.getRegisterOperand(RegType::AX, asmQuadWord));
+            emitMove(src, program.getRegisterOperand(RegType::AX, type), type);
+            emitPush(program.getRegisterOperand(RegType::AX, asmQuadWord));
         }
     }
 }
@@ -1234,9 +1234,9 @@ const Operand* GenerateAsmTree::genOperand(const Ir::Value& value)
         case Ir::Value::Kind::Variable: {
             const auto valueVar = dynCast<const Ir::ValueVar>(&value);
             const bool isConst = valueVar->type == Ir::doubleType;
-            return m_program.getPseudoOperand(
+            return program.getPseudoOperand(
                 Identifier(valueVar->value.value),
-                valueVar->referingTo,
+                valueVar->referringTo,
                 getAsmType(valueVar->type),
                 isConst
             );
@@ -1255,8 +1255,8 @@ const Operand* GenerateAsmTree::getOperandFromConstant(const Ir::Value& value)
     const auto* imm = dynCast<const ImmOperand>(immOper);
     if (INT_MAX < imm->value) {
         const Identifier pseudoName(makeTemporaryPseudoName());
-        const Operand* reg10 = m_program.getRegisterOperand(RegType::R10, asmQuadWord);
-        const Operand* pseudo = m_program.getPseudoOperand(pseudoName, ReferingTo::Local, asmQuadWord, false);
+        const Operand* reg10 = program.getRegisterOperand(RegType::R10, asmQuadWord);
+        const Operand* pseudo = program.getPseudoOperand(pseudoName, ReferringTo::Local, asmQuadWord, false);
         emitMove(imm, reg10, asmQuadWord);
         emitMove(reg10, pseudo, asmQuadWord);
         return pseudo;
@@ -1266,14 +1266,14 @@ const Operand* GenerateAsmTree::getOperandFromConstant(const Ir::Value& value)
 
 const Operand* GenerateAsmTree::genDoubleLocalConst(double value, i32 alignment)
 {
-    const auto it = m_constantDoubles.find(value);
-    if (it != m_constantDoubles.end())
-        return m_program.getDataOperand(asmDouble, 0, Identifier(it->second), true, true);
+    const auto it = constantDoubles.find(value);
+    if (it != constantDoubles.end())
+        return program.getDataOperand(asmDouble, 0, Identifier(it->second), true, true);
     Identifier constLabel(makeTemporaryPseudoName());
-    m_toplevel.emplace_back(std::make_unique<ConstVariable>(
-        Identifier(constLabel), alignment, value, true));
-    m_constantDoubles.emplace_hint(it, value, constLabel.value);
-    return m_program.getDataOperand(asmDouble, 0, constLabel, true, true);
+    toplevel.emplace_back(std::make_unique<ConstVariable>(
+        Identifier(constLabel), value, alignment, true));
+    constantDoubles.emplace_hint(it, value, constLabel.value);
+    return program.getDataOperand(asmDouble, 0, constLabel, true, true);
 }
 
 const Operand* GenerateAsmTree::getZeroOperand(const AsmType type)
@@ -1281,9 +1281,9 @@ const Operand* GenerateAsmTree::getZeroOperand(const AsmType type)
     using AsmKind = AsmType::Kind;
 
     switch (type.kind) {
-        case AsmKind::Byte:       return m_program.getImmOperand(0, asmByte);
-        case AsmKind::LongWord:   return m_program.getImmOperand(0, asmLongWord);
-        case AsmKind::QuadWord:   return m_program.getImmOperand(0, asmQuadWord);
+        case AsmKind::Byte:       return program.getImmOperand(0, asmByte);
+        case AsmKind::LongWord:   return program.getImmOperand(0, asmLongWord);
+        case AsmKind::QuadWord:   return program.getImmOperand(0, asmQuadWord);
         case AsmKind::Double:     return genDoubleLocalConst(0.0, 8);
         default:
             std::abort();
@@ -1297,26 +1297,26 @@ const Operand* GenerateAsmTree::getImmOperandFromValue(const Ir::ValueConst& val
     switch (valueConst.type.kind) {
         case IrKind::Char: {
             const u64 value = std::get<char>(valueConst.value) & 0xFF;
-            return m_program.getImmOperand(value, asmByte);
+            return program.getImmOperand(value, asmByte);
         }
         case IrKind::I8: {
             const u64 value = std::get<i8>(valueConst.value) & 0xFF;
-            return m_program.getImmOperand(value, asmByte);
+            return program.getImmOperand(value, asmByte);
         }
         case IrKind::U8: {
             const u64 value = std::get<u8>(valueConst.value) & 0xFF;
-            return m_program.getImmOperand(value, asmByte);
+            return program.getImmOperand(value, asmByte);
         }
         case IrKind::I32: {
             const u64 value = std::get<i32>(valueConst.value) & 0xFFFFFFFF;
-            return m_program.getImmOperand(value, asmLongWord);
+            return program.getImmOperand(value, asmLongWord);
         }
         case IrKind::U32: {
             const u64 value = std::get<u32>(valueConst.value) & 0xFFFFFFFF;
-            return m_program.getImmOperand(value, asmLongWord);
+            return program.getImmOperand(value, asmLongWord);
         }
-        case IrKind::U64: return m_program.getImmOperand(std::get<u64>(valueConst.value), asmQuadWord);
-        case IrKind::I64: return m_program.getImmOperand(std::get<i64>(valueConst.value), asmQuadWord);
+        case IrKind::U64: return program.getImmOperand(std::get<u64>(valueConst.value), asmQuadWord);
+        case IrKind::I64: return program.getImmOperand(std::get<i64>(valueConst.value), asmQuadWord);
         default:
             std::abort();
     }

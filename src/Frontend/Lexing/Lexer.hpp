@@ -14,12 +14,12 @@ class Lexer {
     using Type = Token::Type;
     static constexpr u64 MAX_I32 = INT_MAX;
     static constexpr u64 MAX_U32 = UINT_MAX;
-    const std::string& c_source;
-    i32 m_current = 0;
-    i32 m_start = 0;
-    i32 m_line = 1;
-    u16 m_column = 1;
-    u16 m_ahead = 0;
+    const std::string& source;
+    i32 current = 0;
+    i32 start = 0;
+    i32 line = 1;
+    u16 column = 1;
+    u16 ahead = 0;
     TokenStore& tokenStore;
     std::vector<Error> errors;
     static inline std::unordered_map<std::string, Token::Type> keywords = {
@@ -50,16 +50,16 @@ class Lexer {
     };
 public:
     explicit Lexer(const std::string& input, TokenStore& tokenStore)
-        : c_source(input), tokenStore(tokenStore)
+        : source(input), tokenStore(tokenStore)
     {
-        const size_t estimatedTokens = c_source.length() / 4;
+        const size_t estimatedTokens = source.length() / 4;
         tokenStore.reserve(estimatedTokens);
     }
     std::vector<Error> getLexemes();
     void string();
     i32 handleEscapedChars();
 private:
-    [[nodiscard]] bool isAtEnd() const { return c_source.size() <= m_current; }
+    [[nodiscard]] bool isAtEnd() const { return source.size() <= current; }
     [[nodiscard]] char peek() const;
     [[nodiscard]] char peekNext() const;
 

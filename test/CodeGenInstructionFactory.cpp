@@ -11,23 +11,23 @@ std::unique_ptr<Inst> CodeGenInstructionFactory::create(
     const Operand* dst = createOperand(dstKind, asmType);
     switch (kind) {
         case Kind::Move:
-            return std::make_unique<MoveInst>(std::move(src), std::move(dst), asmType);
+            return std::make_unique<MoveInst>(src, dst, asmType);
         case Kind::MoveZeroExtend:
-            return std::make_unique<MoveZeroExtendInst>(std::move(src), std::move(dst), src->type, dst->type);
+            return std::make_unique<MoveZeroExtendInst>(src, dst, src->type, dst->type);
         case Kind::MoveSX:
-            return std::make_unique<MoveSXInst>(std::move(src), std::move(dst), src->type, dst->type);
+            return std::make_unique<MoveSXInst>(src, dst, src->type, dst->type);
         case Kind::Lea:
-            return std::make_unique<LeaInst>(std::move(src), std::move(dst), asmType);
+            return std::make_unique<LeaInst>(src, dst, asmType);
         case Kind::Idiv:
-            return std::make_unique<IdivInst>(std::move(src), asmType);
+            return std::make_unique<IdivInst>(src, asmType);
         case Kind::Div:
-            return std::make_unique<DivInst>(std::move(src), asmType);
+            return std::make_unique<DivInst>(src, asmType);
         case Kind::Cvttsd2si:
-            return std::make_unique<Cvttsd2siInst>(std::move(src), std::move(dst), asmType);
+            return std::make_unique<Cvttsd2siInst>(src, dst, asmType);
         case Kind::Cvtsi2sd:
-            return std::make_unique<Cvtsi2sdInst>(std::move(src), std::move(dst), asmType);
+            return std::make_unique<Cvtsi2sdInst>(src, dst, asmType);
         case Kind::Cmp:
-            return std::make_unique<CmpInst>(std::move(src), std::move(dst), asmType);
+            return std::make_unique<CmpInst>(src, dst, asmType);
         default:
             std::abort();
     }
@@ -45,7 +45,7 @@ std::unique_ptr<Inst> CodeGenInstructionFactory::createBinary(
 {
     const Operand* src = createOperand(srcKind, asmType);
     const Operand* dst = createOperand(dstKind, asmType);
-    return std::make_unique<BinaryInst>(std::move(src), std::move(dst), kind, asmType);
+    return std::make_unique<BinaryInst>(src, dst, kind, asmType);
 }
 
 const Operand* CodeGenInstructionFactory::createOperand(const OperKind kind, AsmType asmType)
@@ -61,7 +61,7 @@ const Operand* CodeGenInstructionFactory::createOperand(const OperKind kind, Asm
         }
         case OperKind::Pseudo: {
             operands.emplace_back(std::make_unique<PseudoOperand>(
-                Identifier("x"), ReferingTo::Local, asmType, false));
+                Identifier("x"), ReferringTo::Local, asmType, false));
             break;
         }
         case OperKind::Memory: {

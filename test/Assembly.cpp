@@ -32,13 +32,13 @@ TEST(AssemblyTests, addType)
         TestDataAddType(std::string expected, const AsmType type)
             : expected(std::move(expected)), type(type) {}
     };
-    const std::vector<TestDataAddType> tests = {
+    const auto tests = std::to_array<TestDataAddType>({
         {"addb", CodeGen::asmByte},
         {"addl", CodeGen::asmLongWord},
         {"addq", CodeGen::asmQuadWord},
         {"addsd",CodeGen::asmDouble},
         {"add not set addType", CodeGen::asmWord},
-    };
+    });
     const std::string start = "add";
     for (const TestDataAddType& test : tests) {
         const std::string withType = CodeGen::addType(start, test.type);
@@ -54,7 +54,7 @@ TEST(AssemblyTests, condCode)
         TestDataCondCode(std::string expected, const CondCode condCode)
             : expected(std::move(expected)), condCode(condCode) {}
     };
-    const std::vector<TestDataCondCode> tests = {
+    const auto tests = std::to_array<TestDataCondCode>({
         {"e", CondCode::E},
         {"ne", CondCode::NE},
         {"l", CondCode::L},
@@ -66,7 +66,7 @@ TEST(AssemblyTests, condCode)
         {"b", CondCode::B},
         {"be", CondCode::BE},
         {"p", CondCode::PF},
-    };
+    });
     for (const TestDataCondCode& test : tests) {
         const std::string withType = CodeGen::condCode(test.condCode);
         EXPECT_EQ(withType, test.expected) << "Instruction mismatch for input: "
@@ -83,7 +83,7 @@ TEST(AssemblyTests, asmRegister)
         TestDataAsmRegister(std::string expected, const AsmType type, const RegKind reg)
             : expected(std::move(expected)), type(type), reg(reg) {}
     };
-    const std::vector<TestDataAsmRegister> tests = {
+    const auto tests = std::to_array<TestDataAsmRegister>({
         {"%rbp", CodeGen::asmDouble, RegKind::BP},
 
         {"%xmm0", CodeGen::asmDouble, RegKind::XMM0},
@@ -147,7 +147,7 @@ TEST(AssemblyTests, asmRegister)
         {"%rsp", CodeGen::asmWord, RegKind::SP},
         {"%rsp", CodeGen::asmLongWord, RegKind::SP},
         {"%rsp", CodeGen::asmQuadWord, RegKind::SP},
-    };
+    });
     for (const TestDataAsmRegister& test : tests) {
         const std::string withType = CodeGen::asmRegister(test.type, test.reg);
         EXPECT_EQ(withType, test.expected) << "Instruction mismatch for input: "
@@ -164,11 +164,11 @@ TEST(AssemblyTests, asmUnaryOperator)
         TestDataUnaryOperator(std::string expected, const UnaryOper oper)
             : expected(std::move(expected)), oper(oper) {}
     };
-    const std::vector<TestDataUnaryOperator> tests = {
+    const auto tests = std::to_array<TestDataUnaryOperator>({
         {"negl", UnaryOper::Neg},
         {"notl", UnaryOper::Not},
         {"shrl", UnaryOper::Shr},
-    };
+    });
     for (const TestDataUnaryOperator& test : tests) {
         const std::string operString = CodeGen::asmUnaryOperator(test.oper, CodeGen::asmLongWord);
         EXPECT_EQ(operString, test.expected) << "Instruction mismatch for input: "
@@ -185,7 +185,7 @@ TEST(AssemblyTests, asmBinaryOperator)
         TestDataBinaryOperator(std::string expected, const BinaryOper oper, const AsmType type)
             : expected(std::move(expected)), oper(oper), type(type) {}
     };
-    const std::vector<TestDataBinaryOperator> tests = {
+    const auto tests = std::to_array<TestDataBinaryOperator>({
         {"xorpd", BinaryOper::BitwiseXor, CodeGen::asmDouble},
         {"mulsd", BinaryOper::Mul, CodeGen::asmDouble},
         {"divsd", BinaryOper::DivDouble, CodeGen::asmDouble},
@@ -199,7 +199,7 @@ TEST(AssemblyTests, asmBinaryOperator)
         {"sall", BinaryOper::LeftShiftUnsigned, CodeGen::asmLongWord},
         {"sarl", BinaryOper::RightShiftSigned, CodeGen::asmLongWord},
         {"shrl", BinaryOper::RightShiftUnsigned, CodeGen::asmLongWord},
-    };
+    });
     for (const TestDataBinaryOperator& test : tests) {
         const std::string operString = CodeGen::asmBinaryOperator(test.oper, test.type);
         EXPECT_EQ(operString, test.expected) << "Instruction mismatch for input: "
@@ -235,15 +235,15 @@ TEST(AssemblyTests, asmOperand)
         }
     };
 
-    std::vector<TestDataOperand> tests;
-
-    tests.emplace_back("invalid pseudo", make_unique<PseudoOperand>(Iden(""), ReferingTo::Local, CodeGen::asmLongWord, true));
-    tests.emplace_back("(%rip)", make_unique<DataOperand>(CodeGen::asmLongWord, 0, Iden(""), true));
-    tests.emplace_back(".L(%rip)", make_unique<DataOperand>(CodeGen::asmDouble, 0, Iden(""), true, true));
-    tests.emplace_back("$0", make_unique<ImmOperand>(0l, CodeGen::asmQuadWord));
-    tests.emplace_back("%rax", make_unique<RegisterOperand>(RegKind::AX, CodeGen::asmQuadWord));
-    tests.emplace_back("10(%rcx)", make_unique<MemoryOperand>(RegKind::CX, 10, CodeGen::asmQuadWord));
-    tests.emplace_back("(%rcx)", make_unique<MemoryOperand>(RegKind::CX, 0, CodeGen::asmQuadWord));
+    const auto tests = std::to_array<TestDataOperand>({
+        {"invalid pseudo", make_unique<PseudoOperand>(Iden(""), ReferringTo::Local, CodeGen::asmLongWord, true)},
+        {"(%rip)", make_unique<DataOperand>(CodeGen::asmLongWord, 0, Iden(""), true)},
+        {".L(%rip)", make_unique<DataOperand>(CodeGen::asmDouble, 0, Iden(""), true, true)},
+        {"$0", make_unique<ImmOperand>(0l, CodeGen::asmQuadWord)},
+        {"%rax", make_unique<RegisterOperand>(RegKind::AX, CodeGen::asmQuadWord)},
+        {"10(%rcx)", make_unique<MemoryOperand>(RegKind::CX, 10, CodeGen::asmQuadWord)},
+        {"(%rcx)", make_unique<MemoryOperand>(RegKind::CX, 0, CodeGen::asmQuadWord)},
+    });
 
     for (const TestDataOperand& test : tests) {
         const std::string operString = CodeGen::asmOperand(test.operand.get());

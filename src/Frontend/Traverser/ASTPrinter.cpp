@@ -112,14 +112,14 @@ void ASTPrinter::visit(const Program& program)
 
 void ASTPrinter::visit(const VarDecl& varDecl)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("VarDecl " + varDecl.name + ' ' + storageClass(varDecl.storage) + ' ' + varTypeToString(varDecl.type->type));
     ConstASTTraverser::visit(varDecl);
 }
 
 void ASTPrinter::visit(const FuncDecl& funDecl)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("FunDecl: " + funDecl.name + ' ' + storageClass(funDecl.storage));
     auto type = dynCast<const Parsing::FuncType>(funDecl.type.get());
     addLine("ReturnType " + varTypeToString(type->returnType->type));
@@ -146,20 +146,20 @@ void ASTPrinter::visit(const StructuredDecl& structuredDecl)
 
 void ASTPrinter::visit(const Block& block)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("Block");
     ConstASTTraverser::visit(block);
 }
 
 void ASTPrinter::visit(const ZeroInitializer& zeroInitializer)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine(std::to_string(zeroInitializer.size) + " zero init");
 }
 
 void ASTPrinter::visit(const StringInitializer& stringInitializer)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     if (stringInitializer.nullTerminated)
         addLine(stringInitializer.value + " is null terminated " + " string init");
     else
@@ -189,130 +189,130 @@ void ASTPrinter::visit(const ArrayType& arrayType)
 
 void ASTPrinter::visit(const StmtBlockItem& stmtBlockItem)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("StmtBlockItem: ");
     ConstASTTraverser::visit(stmtBlockItem);
 }
 
 void ASTPrinter::visit(const DeclBlockItem& declBlockItem)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("DeclBlockItem: ");
     ConstASTTraverser::visit(declBlockItem);
 }
 
 void ASTPrinter::visit(const DeclForInit& declForInit)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("DeclForInit: ");
     ConstASTTraverser::visit(declForInit);
 }
 
 void ASTPrinter::visit(const ExprForInit& exprForInit)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("ExprForInit: ");
     ConstASTTraverser::visit(exprForInit);
 }
 
 void ASTPrinter::visit(const IfStmt& ifStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("IfStmt: ");
     ConstASTTraverser::visit(ifStmt);
 }
 
 void ASTPrinter::visit(const GotoStmt& gotoStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("GotoStmt " + gotoStmt.identifier);
     ConstASTTraverser::visit(gotoStmt);
 }
 
 void ASTPrinter::visit(const ReturnStmt& returnStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("Return: ");
     ConstASTTraverser::visit(returnStmt);
 }
 
 void ASTPrinter::visit(const ExprStmt& exprStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("ExprStmt: ");
     ConstASTTraverser::visit(exprStmt);
 }
 
 void ASTPrinter::visit(const CompoundStmt& function)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("CompoundStmt:");
     ConstASTTraverser::visit(function);
 }
 
 void ASTPrinter::visit(const BreakStmt& breakStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("BreakStmt " + breakStmt.identifier);
 }
 
 void ASTPrinter::visit(const ContinueStmt& continueStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("ContinueStmt "  + continueStmt.identifier);
 }
 
 void ASTPrinter::visit(const LabelStmt& labelStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("LabelStmt "  + labelStmt.identifier);
 }
 
 void ASTPrinter::visit(const CaseStmt& caseStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("CaseStmt: " + caseStmt.identifier);
     ConstASTTraverser::visit(caseStmt);
 }
 
 void ASTPrinter::visit(const DefaultStmt& defaultStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("DefaultStmt: ");
     ConstASTTraverser::visit(defaultStmt);
 }
 
 void ASTPrinter::visit(const WhileStmt& whileStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("WhileStmt: ");
     ConstASTTraverser::visit(whileStmt);
 }
 
 void ASTPrinter::visit(const DoWhileStmt& doWhileStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("DoWhileStmt: ");
     ConstASTTraverser::visit(doWhileStmt);
 }
 
 void ASTPrinter::visit(const ForStmt& forStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("ForStmt: ");
     ConstASTTraverser::visit(forStmt);
 }
 
 void ASTPrinter::visit(const SwitchStmt& switchStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("SwitchStmt: ");
     ConstASTTraverser::visit(switchStmt);
 }
 
 void ASTPrinter::visit(const UnaryExpr& unaryExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     if (unaryExpr.type)
         addLine("Unary " + unaryOpToString(unaryExpr.op) + " " + varTypeToString(unaryExpr.type->type));
     else
@@ -322,21 +322,21 @@ void ASTPrinter::visit(const UnaryExpr& unaryExpr)
 
 void ASTPrinter::visit(const StringExpr& stringExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("StringExpr: " + stringExpr.value);
     ConstASTTraverser::visit(stringExpr);
 }
 
 void ASTPrinter::visit(const CastExpr& castExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("Cast (" + varTypeToString(castExpr.type->type) + ')');
     ConstASTTraverser::visit(castExpr);
 }
 
 void ASTPrinter::visit(const BinaryExpr& binaryExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     if (binaryExpr.type)
         addLine("Binary " + binaryOpToString(binaryExpr.op) + " " + varTypeToString(binaryExpr.type->type));
     else
@@ -346,7 +346,7 @@ void ASTPrinter::visit(const BinaryExpr& binaryExpr)
 
 void ASTPrinter::visit(const AssignmentExpr& assignmentExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("AssignmentExpr: " + assignmentOpToString(assignmentExpr.op));
     assignmentExpr.lhs->accept(*this);
     addLine(assignmentOpToString(assignmentExpr.op));
@@ -355,7 +355,7 @@ void ASTPrinter::visit(const AssignmentExpr& assignmentExpr)
 
 void ASTPrinter::visit(const ConstExpr& constExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     if (constExpr.type->type == Type::I8)
         addLine(std::to_string(std::get<i8>(constExpr.value)) + ' ' + varTypeToString(Type::I8));
     else if (constExpr.type->type == Type::U8)
@@ -377,7 +377,7 @@ void ASTPrinter::visit(const ConstExpr& constExpr)
 
 void ASTPrinter::visit(const VarExpr& varExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     if (varExpr.type)
         addLine(varExpr.name + " " + varTypeToString(varExpr.type->type));
     else
@@ -387,7 +387,7 @@ void ASTPrinter::visit(const VarExpr& varExpr)
 
 void ASTPrinter::visit(const TernaryExpr& conditionalExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     conditionalExpr.condition->accept(*this);
     addLine("?");
     conditionalExpr.trueExpr->accept(*this);
@@ -398,55 +398,55 @@ void ASTPrinter::visit(const TernaryExpr& conditionalExpr)
 
 void ASTPrinter::visit(const NullStmt& nullStmt)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("NullStmt (;)");
 }
 
 void ASTPrinter::visit(const FuncCallExpr& functionCallExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("Function Call: " + functionCallExpr.name);
     ConstASTTraverser::visit(functionCallExpr);
 }
 
 void ASTPrinter::visit(const AddrOffExpr& addrOffExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("AddressOf" );
     ConstASTTraverser::visit(addrOffExpr);
 }
 
 void ASTPrinter::visit(const DereferenceExpr& dereferenceExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("Dereference");
     ConstASTTraverser::visit(dereferenceExpr);
 }
 
 void ASTPrinter::visit(const SubscriptExpr& subscriptExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("Subscript");
     ConstASTTraverser::visit(subscriptExpr);
 }
 
 void ASTPrinter::visit(const SizeOfExprExpr& sizeOfExprExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("SizeOfExprExpr");
     ConstASTTraverser::visit(sizeOfExprExpr);
 }
 
 void ASTPrinter::visit(const SizeOfTypeExpr& sizeOfTypeExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     addLine("SizeOfTypeExpr");
     ConstASTTraverser::visit(sizeOfTypeExpr);
 }
 
 void ASTPrinter::visit(const DotExpr& dotExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     if (dotExpr.type)
         addLine("DotExpr " + varTypeToString(dotExpr.type->type));
     else
@@ -456,7 +456,7 @@ void ASTPrinter::visit(const DotExpr& dotExpr)
 
 void ASTPrinter::visit(const ArrowExpr& arrowExpr)
 {
-    IndentGuard guard(m_indentLevel);
+    IndentGuard guard(indentLevel);
     if (arrowExpr.type)
         addLine("arrowExpr " + varTypeToString(arrowExpr.type->type));
     else
@@ -471,6 +471,6 @@ void ASTPrinter::addLine(const std::string& line)
 
 std::string ASTPrinter::getIndent() const
 {
-    return std::string(m_indentLevel * m_indentMultiplier, ' ');
+    return std::string(indentLevel * indentMultiplier, ' ');
 }
 } // namespace Parsing

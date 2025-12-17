@@ -134,11 +134,11 @@ private:
                 set(State::Defined);
         }
     };
-    std::vector<std::unordered_map<std::string, Entry>> m_entries;
-    std::vector<std::unordered_map<std::string, StructuredEntry>> m_StructuredEntries;
-    std::unordered_map<std::string, i32> m_funcs;
-    std::vector<std::string> m_args;
-    std::vector<std::unique_ptr<Parsing::TypeBase>> m_argTypes;
+    std::vector<std::unordered_map<std::string, Entry>> entries;
+    std::vector<std::unordered_map<std::string, StructuredEntry>> structuredEntries;
+    std::unordered_map<std::string, i32> funcs;
+    std::vector<std::string> args;
+    std::vector<std::unique_ptr<Parsing::TypeBase>> argTypes;
 public:
     SymbolTable();
     [[nodiscard]] bool contains(const std::string& name) const;
@@ -158,8 +158,8 @@ public:
     void addScope();
     void removeScope();
 
-    [[nodiscard]] i32 argSize(const std::string& funcName) const { return m_funcs.at(funcName); }
-    [[nodiscard]] bool isInArgs(const std::string& name) const { return std::ranges::find(m_args, name) != m_args.end(); }
-    [[nodiscard]] bool inFunc() const { return 1 < m_entries.size(); }
+    [[nodiscard]] i32 argSize(const std::string& funcName) const { return funcs.at(funcName); }
+    [[nodiscard]] bool isInArgs(const std::string& name) const { return std::ranges::find(args, name) != args.end(); }
+    [[nodiscard]] bool inFunc() const { return 1 < entries.size(); }
     [[nodiscard]] bool isFunc(const std::string& name) const;
 };

@@ -12,14 +12,14 @@
 #include <string>
 
 class FrontendDriver {
-    std::string m_arg;
-    std::filesystem::path m_inputFile;
-    TokenStore m_tokenStore;
+    std::string arg;
+    std::filesystem::path inputFile;
+    TokenStore tokenStore;
 public:
     FrontendDriver() = delete;
     FrontendDriver(const FrontendDriver& other) = delete;
     FrontendDriver(std::string arg, std::filesystem::path inputFile)
-        : m_arg(std::move(arg)), m_inputFile(std::move(inputFile)) {}
+        : arg(std::move(arg)), inputFile(std::move(inputFile)) {}
 
     [[nodiscard]] std::tuple<std::optional<Ir::Program>, StateCode> run();
 };

@@ -8,6 +8,7 @@ namespace CodeGen {
 std::string asmProgram(const Program& program);
 void asmFunction(std::string& result, const Function& functionNode);
 void asmStaticVariable(std::string& result, const StaticVariable& variable);
+void asmStaticVariablePre(std::string& result, const StaticVariable& variable);
 void asmStaticVariableByte(std::string& result, const StaticVariable& variable);
 void asmStaticVariableLong(std::string& result, const StaticVariable& variable);
 void asmStaticVariableQuad(std::string& result, const StaticVariable& variable);
@@ -23,7 +24,7 @@ std::string asmOperand(const Operand* operand);
 std::string asmDataOperand(const DataOperand& dataOperand);
 std::string asmMemoryOperand(const MemoryOperand& memoryOperand);
 std::string asmImmOperand(const ImmOperand& immOperand);
-std::string asmRegisterOperand(const RegisterOperand& operand);
+std::string asmRegisterOperand(const RegisterOperand& registerOperand);
 std::string asmRegister(const AsmType& type, Operand::RegKind reg);
 std::string asmIndexedOperand(const IndexedOperand& indexedOperand);
 

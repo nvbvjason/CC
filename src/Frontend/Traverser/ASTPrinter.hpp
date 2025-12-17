@@ -9,15 +9,14 @@
 namespace Parsing {
 class ASTPrinter final : public ConstASTTraverser {
     class IndentGuard {
+        int& level;
     public:
-        explicit IndentGuard(int& level) : m_level(level) { ++m_level; }
-        ~IndentGuard() { --m_level; }
-    private:
-        int& m_level;
+        explicit IndentGuard(int& level) : level(level) { ++level; }
+        ~IndentGuard() { --level; }
     };
     std::ostringstream oss;
-    i32 m_indentLevel = 0;
-    i32 m_indentMultiplier = 3;
+    i32 indentLevel = 0;
+    i32 indentMultiplier = 3;
 public:
     std::string getString() const;
 

@@ -107,7 +107,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertConstExpr(Parsing::Con
 
 std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertStringExpr(Parsing::StringExpr& stringExpr) const
 {
-    if (m_inArrayInit)
+    if (inArrayInit)
         return std::make_unique<Parsing::StringExpr>(std::move(stringExpr));
     stringExpr.type = std::make_unique<Parsing::ArrayType>(
         std::make_unique<Parsing::VarType>(Type::Char), stringExpr.value.size() + 1);
@@ -145,8 +145,8 @@ void TypeResolutionExpr::validateAndConvertFuncCallArgs(
 
 std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertFuncCallExpr(Parsing::FuncCallExpr& funCallExpr)
 {
-    const auto it = m_functions.find(funCallExpr.name);
-    if (it == m_functions.end()) {
+    const auto it = functions.find(funCallExpr.name);
+    if (it == functions.end()) {
         addError("Called function is not declared", funCallExpr.location);
         return std::make_unique<Parsing::FuncCallExpr>(std::move(funCallExpr));
     }
@@ -168,7 +168,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertFuncCallExpr(Parsing::
 
 std::unique_ptr<Parsing::Expr> TypeResolutionExpr::convertVarExpr(Parsing::VarExpr& varExpr)
 {
-    m_isConst = false;
+    isConst = false;
     return std::make_unique<Parsing::VarExpr>(std::move(varExpr));
 }
 
@@ -330,7 +330,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::handleBinaryPtr(
     const Type leftType,
     const Type rightType) const
 {
-    if (isIllegalPtrBinaryOperation(binaryExpr.op)) {
+    if (isUnallowedPtrBinaryOperation(binaryExpr.op)) {
         addError("Cannot apply operator to pointer", binaryExpr.location);
         return std::make_unique<Parsing::BinaryExpr>(std::move(binaryExpr));
     }
@@ -420,7 +420,7 @@ bool TypeResolutionExpr::isLegalAssignExpr(const Parsing::AssignmentExpr& assign
         return false;
     }
     if (leftType == Type::Pointer) {
-        if (isIllegalPtrBinaryOperation(binaryOp)) {
+        if (isUnallowedPtrBinaryOperation(binaryOp)) {
             addError("Is illegal pointer assign operator", assignmentExpr.location);
             return false;
         }
@@ -441,7 +441,7 @@ std::unique_ptr<Parsing::Expr> TypeResolutionExpr::converSimpleAssignExpr(
         *assignmentExpr.lhs->type,
         *assignmentExpr.rhs->type,
         assignmentExpr.rhs,
-        m_errors);
+        errors);
     assignmentExpr.type = Parsing::deepCopy(*assignmentExpr.lhs->type);
     return std::make_unique<Parsing::AssignmentExpr>(std::move(assignmentExpr));
 }
