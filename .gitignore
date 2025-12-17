@@ -12,4 +12,3 @@ test/external/*
 
 examples/*
 examples/test.c
-!examples/*.c
