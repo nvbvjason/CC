@@ -13,20 +13,20 @@ namespace Ir {
 class GenerateIr {
     using Storage = Parsing::Declaration::StorageClass;
 
-    bool m_global = true;
-    std::vector<std::unique_ptr<Instruction>> m_insts;
-    SymbolTable& m_symbolTable;
-    std::unordered_set<std::string> m_writtenGlobals;
-    std::vector<std::unique_ptr<TopLevel>> m_topLevels;
-    std::unordered_map<std::string, IrStruct> m_irStructs;
-    std::vector<std::unique_ptr<Value>> m_values;
+    bool global = true;
+    std::vector<std::unique_ptr<Instruction>> insts;
+    SymbolTable& symbolTable;
+    std::unordered_set<std::string> writtenGlobals;
+    std::vector<std::unique_ptr<TopLevel>> topLevels;
+    std::unordered_map<std::string, IrStruct> irStructs;
+    std::vector<std::unique_ptr<Value>> values;
 
-    std::unordered_map<std::string, std::string> m_constStrings;
+    std::unordered_map<std::string, std::string> constStrings;
 
     const TypeTable& typeTable;
 public:
     explicit GenerateIr(SymbolTable& symbolTable, const TypeTable& varTable)
-        : m_symbolTable(symbolTable), typeTable(varTable) {}
+        : symbolTable(symbolTable), typeTable(varTable) {}
     void program(const Parsing::Program& parsingProgram, Program& tackyProgram);
     std::unique_ptr<TopLevel> topLevelIr(const Parsing::Declaration& decl);
     std::unique_ptr<TopLevel> structuredDecl(const Parsing::StructuredDecl& structuredDecl);
@@ -158,69 +158,69 @@ private:
 
     void emitReturn()
     {
-        m_insts.emplace_back(std::make_unique<ReturnInst>(voidType));
+        insts.emplace_back(std::make_unique<ReturnInst>(voidType));
     }
     void emitReturn(const Value* src, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<ReturnInst>(src, type));
+        insts.emplace_back(std::make_unique<ReturnInst>(src, type));
     }
     void emitSignExtend(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<SignExtendInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<SignExtendInst>(src, dst, type));
     }
     void emitTruncate(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<TruncateInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<TruncateInst>(src, dst, type));
     }
     void emitZeroExtend(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<ZeroExtendInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<ZeroExtendInst>(src, dst, type));
     }
     void emitDoubleToInt(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<DoubleToIntInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<DoubleToIntInst>(src, dst, type));
     }
     void emitDoubleToUInt(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<DoubleToUIntInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<DoubleToUIntInst>(src, dst, type));
     }
     void emitIntToDouble(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<IntToDoubleInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<IntToDoubleInst>(src, dst, type));
     }
     void emitUIntToDouble(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<UIntToDoubleInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<UIntToDoubleInst>(src, dst, type));
     }
     void emitUnary(const UnaryInst::Operation oper, const IrType type,
                    const Value* src, const Value* dst)
     {
-        m_insts.emplace_back(std::make_unique<UnaryInst>(oper, src, dst, type));
+        insts.emplace_back(std::make_unique<UnaryInst>(oper, src, dst, type));
     }
     void emitBinary(const BinaryInst::Operation oper, const IrType type,
                     const Value* lhs, const Value* rhs, const Value* dst)
     {
-        m_insts.emplace_back(std::make_unique<BinaryInst>(oper, lhs, rhs, dst, type));
+        insts.emplace_back(std::make_unique<BinaryInst>(oper, lhs, rhs, dst, type));
     }
     void emitCopy(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<CopyInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<CopyInst>(src, dst, type));
     }
     void emitGetAddress(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<GetAddressInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<GetAddressInst>(src, dst, type));
     }
     void emitLoad(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<LoadInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<LoadInst>(src, dst, type));
     }
     void emitStore(const Value* src, const Value* dst, const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<StoreInst>(src, dst, type));
+        insts.emplace_back(std::make_unique<StoreInst>(src, dst, type));
     }
     void emitAddPtr(const Value* ptr, const Value* index, const Value* dst, const i64 scale)
     {
-        m_insts.emplace_back(std::make_unique<AddPtrInst>(ptr, index, dst, scale));
+        insts.emplace_back(std::make_unique<AddPtrInst>(ptr, index, dst, scale));
     }
     void emitCopyToOffset(const Value* src,
                           const Identifier& iden,
@@ -230,7 +230,7 @@ private:
                           const i64 alignment,
                           const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<CopyToOffsetInst>(
+        insts.emplace_back(std::make_unique<CopyToOffsetInst>(
             src, iden, referringTo, offset, arraySize, alignment, type));
     }
     void emitCopyFromOffset(const Identifier& iden,
@@ -239,40 +239,40 @@ private:
                             const i64 offset,
                             const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<CopyFromOffsetInst>(iden, referringTo, dst, offset, type));
+        insts.emplace_back(std::make_unique<CopyFromOffsetInst>(iden, referringTo, dst, offset, type));
     }
     void emitJump(const Identifier& iden)
     {
-        m_insts.emplace_back(std::make_unique<JumpInst>(iden));
+        insts.emplace_back(std::make_unique<JumpInst>(iden));
     }
     void emitJumpIfZero(const Value* src, const Identifier& iden)
     {
-        m_insts.emplace_back(std::make_unique<JumpIfZeroInst>(src, iden));
+        insts.emplace_back(std::make_unique<JumpIfZeroInst>(src, iden));
     }
     void emitJumpIfNotZero(const Value* src, const Identifier& iden)
     {
-        m_insts.emplace_back(std::make_unique<JumpIfNotZeroInst>(src, iden));
+        insts.emplace_back(std::make_unique<JumpIfNotZeroInst>(src, iden));
     }
     void emitLabel(const Identifier& iden)
     {
-        m_insts.emplace_back(std::make_unique<LabelInst>(iden));
+        insts.emplace_back(std::make_unique<LabelInst>(iden));
     }
     void emitFunCall(const Identifier& iden,
                      std::vector<const Value*>&& src,
                      const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<FunCallInst>(iden, std::move(src), type));
+        insts.emplace_back(std::make_unique<FunCallInst>(iden, std::move(src), type));
     }
     void emitFunCall(const Identifier& iden,
                      std::vector<const Value*>&& src,
                      const Value* dst,
                      const IrType type)
     {
-        m_insts.emplace_back(std::make_unique<FunCallInst>(iden, std::move(src), dst, type));
+        insts.emplace_back(std::make_unique<FunCallInst>(iden, std::move(src), dst, type));
     }
     void emitAllocate(const i64 size, const std::string& iden)
     {
-        m_insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden)));
+        insts.emplace_back(std::make_unique<AllocateInst>(size, Identifier(iden)));
     }
 };
 } // IR

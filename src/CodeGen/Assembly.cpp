@@ -3,6 +3,7 @@
 #include "Operators.hpp"
 
 #include <array>
+#include <cstring>
 #include <string>
 #include <iomanip>
 #include <unordered_map>
@@ -43,21 +44,21 @@ std::string asmProgram(const Program& program)
                 std::abort();
         }
     }
-    result += asmFormatInstruction(".section .note.GNU-stack,\"\",@progbits\n");
+    result.append(asmFormatInstruction(".section .note.GNU-stack,\"\",@progbits\n"));
     return result;
 }
 
 void asmStaticString(std::string& result, const StringVariable& variable)
 {
-    result += asmFormatInstruction(".section .rodata");
-    result += asmFormatLabel(variable.name);
+    result.append(asmFormatInstruction(".section .rodata"));
+    result.append(asmFormatLabel(variable.name));
 
     const std::string escaped_value = genAsmCompatibleString(variable);
 
     if (variable.nullTerminated)
-        result += asmFormatInstruction(".asciz ", + "\"" + escaped_value + '\"');
+        result.append(asmFormatInstruction(".asciz ", + "\"" + escaped_value + '\"'));
     else
-        result += asmFormatInstruction(".ascii \"", escaped_value + '\"');
+        result.append(asmFormatInstruction(".ascii \"", escaped_value + '\"'));
     result += '\n';
 }
 
@@ -77,87 +78,87 @@ void asmStaticVariable(std::string& result, const StaticVariable& variable)
 void asmStaticVariablePre(std::string& result, const StaticVariable& variable)
 {
     if (variable.global)
-        result += asmFormatInstruction(".globl", variable.name);
+        result.append(asmFormatInstruction(".globl", variable.name));
     if (variable.init == nullptr)
-        result += asmFormatInstruction(".bss");
+        result.append(asmFormatInstruction(".bss"));
     else
-        result += asmFormatInstruction(".data");
+        result.append(asmFormatInstruction(".data"));
 }
 
 void asmStaticVariableByte(std::string& result, const StaticVariable& variable)
 {
     asmStaticVariablePre(result, variable);
-    result += asmFormatInstruction(".align","1");
-    result += asmFormatLabel(variable.name);
+    result.append(asmFormatInstruction(".align","1"));
+    result.append(asmFormatLabel(variable.name));
     if (variable.init == nullptr)
-        result += asmFormatInstruction(".zero 1");
+        result.append(asmFormatInstruction(".zero 1"));
     else
-        result += asmFormatInstruction(".byte ", asmStaticOperand(variable.init));
+        result.append(asmFormatInstruction(".byte ", asmStaticOperand(variable.init)));
 }
 
 void asmStaticVariableLong(std::string& result, const StaticVariable& variable)
 {
     asmStaticVariablePre(result, variable);
-    result += asmFormatInstruction(".align","4");
-    result += asmFormatLabel(variable.name);
+    result.append(asmFormatInstruction(".align","4"));
+    result.append(asmFormatLabel(variable.name));
     if (variable.init == nullptr)
-        result += asmFormatInstruction(".zero 4");
+        result.append(asmFormatInstruction(".zero 4"));
     else
-        result += asmFormatInstruction(".long ", asmStaticOperand(variable.init));
+        result.append(asmFormatInstruction(".long ", asmStaticOperand(variable.init)));
 }
 
 void asmStaticVariableQuad(std::string& result, const StaticVariable& variable)
 {
     asmStaticVariablePre(result, variable);
-    result += asmFormatInstruction(".align","8");
-    result += asmFormatLabel(variable.name);
+    result.append(asmFormatInstruction(".align","8"));
+    result.append(asmFormatLabel(variable.name));
     if (variable.init == nullptr)
-        result += asmFormatInstruction(".zero 8");
+        result.append(asmFormatInstruction(".zero 8"));
     else
-        result += asmFormatInstruction(".quad ", asmStaticOperand(variable.init));
+        result.append(asmFormatInstruction(".quad ", asmStaticOperand(variable.init)));
 }
 
 void asmStaticVariableDouble(std::string& result, const StaticVariable& variable)
 {
     asmStaticVariablePre(result, variable);
-    result += asmFormatInstruction(".align","8");
-    result += asmFormatLabel(variable.name);
-    result += asmFormatInstruction(".quad ", asmStaticOperand(variable.init));
+    result.append(asmFormatInstruction(".align","8"));
+    result.append(asmFormatLabel(variable.name));
+    result.append(asmFormatInstruction(".quad ", asmStaticOperand(variable.init)));
 }
 
 void asmStaticConstant(std::string& result, const ConstVariable& variable)
 {
-    result += asmFormatInstruction(".section .rodata");
-    result += asmFormatInstruction(".align",std::to_string(variable.alignment));
+    result.append(asmFormatInstruction(".section .rodata"));
+    result.append(asmFormatInstruction(".align",std::to_string(variable.alignment)));
     if (variable.local)
-        result += asmFormatLabel(createLabel(variable.name.value));
+        result.append(asmFormatLabel(createLabel(variable.name.value)));
     else
-        result += asmFormatLabel(variable.name.value);
-    result += asmFormatInstruction(".quad "+ std::to_string( std::bit_cast<u64>(variable.staticInit))
-                + " # " + std::to_string(variable.staticInit));
+        result.append(asmFormatLabel(variable.name.value));
+    result.append(asmFormatInstruction(".quad "+ std::to_string( std::bit_cast<u64>(variable.staticInit))
+                + " # " + std::to_string(variable.staticInit)));
 }
 
 void asmStaticArray(std::string& result, const CompoundVariable& array)
 {
     if (array.isGlobal)
-        result += asmFormatInstruction(".globl", array.name.value);
+        result.append(asmFormatInstruction(".globl", array.name.value));
     if (array.initializers.size() == 1 && array.initializers.front()->kind == Initializer::Kind::Zero)
-        result += asmFormatInstruction(".bss");
+        result.append(asmFormatInstruction(".bss"));
     else
-        result += asmFormatInstruction(".data");
-    result += asmFormatInstruction(".align", std::to_string(array.alignment));
-    result += asmFormatLabel(array.name.value);
+        result.append(asmFormatInstruction(".data"));
+    result.append(asmFormatInstruction(".align", std::to_string(array.alignment)));
+    result.append(asmFormatLabel(array.name.value));
     for (const auto& init : array.initializers) {
         switch (init->kind) {
             case Initializer::Kind::Value: {
                 const auto value = dynCast<ValueInitializer>(init.get());
                 const std::string typeName = '.' + getTypeName(value->init->type);
-                result += asmFormatInstruction(typeName, asmStaticOperand(value->init));
+                result.append(asmFormatInstruction(typeName, asmStaticOperand(value->init)));
                 break;
             }
             case Initializer::Kind::Zero: {
                 const auto zero = dynCast<const ZeroInitializer>(init.get());
-                result += asmFormatInstruction(".zero", std::to_string(zero->size));
+                result.append(asmFormatInstruction(".zero", std::to_string(zero->size)));
                 break;
             }
         }
@@ -168,11 +169,11 @@ void asmStaticArray(std::string& result, const CompoundVariable& array)
 void asmFunction(std::string& result, const Function& functionNode)
 {
     if (functionNode.isGlobal)
-        result += asmFormatInstruction(".globl", functionNode.name);
-    result += asmFormatInstruction(".text");
-    result += asmFormatLabel(functionNode.name);
-    result += asmFormatInstruction("pushq", "%rbp");
-    result += asmFormatInstruction("movq","%rsp, %rbp");
+        result.append(asmFormatInstruction(".globl", functionNode.name));
+    result.append(asmFormatInstruction(".text"));
+    result.append(asmFormatLabel(functionNode.name));
+    result.append(asmFormatInstruction("pushq", "%rbp"));
+    result.append(asmFormatInstruction("movq","%rsp, %rbp"));
     for (const std::unique_ptr<Inst>& inst : functionNode.instructions)
         asmInstruction(result, inst);
     result += '\n';
@@ -184,132 +185,132 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
         case Inst::Kind::Move: {
             const auto moveInst = dynCast<MoveInst>(instruction.get());
             const std::string operand = asmOperand(moveInst->src) + ", " + asmOperand(moveInst->dst);
-            result += asmFormatInstruction(addType("mov", moveInst->type), operand);
+            result.append(asmFormatInstruction(addType("mov", moveInst->type), operand));
             return;
         }
         case Inst::Kind::MoveSX: {
             const auto moveSXInst = dynCast<MoveSXInst>(instruction.get());
             const std::string operands = asmOperand(moveSXInst->src) + ", " + asmOperand(moveSXInst->dst);
-            result += asmFormatInstruction(addType(
-                    addType("movs", moveSXInst->srcType),
+            result.append(asmFormatInstruction(
+                addType(addType("movs", moveSXInst->srcType),
                     moveSXInst->dstType),
-                operands);
+                operands));
             return;
         }
         case Inst::Kind::MoveZeroExtend: {
             const auto moveZeroExtend = dynCast<MoveZeroExtendInst>(instruction.get());
             const std::string operands = asmOperand(moveZeroExtend->src) + ", " + asmOperand(moveZeroExtend->dst);
-            result += asmFormatInstruction(
+            result.append(asmFormatInstruction(
                 addType(
                     addType("movz", moveZeroExtend->srcType),
                     moveZeroExtend->dstType),
-                operands);
+                operands));
             return;
         }
         case Inst::Kind::Lea: {
             const auto lea = dynCast<const LeaInst>(instruction.get());
             const std::string operands = asmOperand(lea->src) + ", " + asmOperand(lea->dst);
-            result += asmFormatInstruction(addType("lea", lea->type), operands);
+            result.append(asmFormatInstruction(addType("lea", lea->type), operands));
             return;
         }
         case Inst::Kind::Cvtsi2sd: {
             const auto cvtsi2sd = dynCast<Cvtsi2sdInst>(instruction.get());
             const AsmType type = cvtsi2sd->srcType;
             const std::string operands = asmOperand(cvtsi2sd->src) + ", " + asmOperand(cvtsi2sd->dst);
-            result += asmFormatInstruction(addType("cvtsi2sd", type), operands);
+            result.append(asmFormatInstruction(addType("cvtsi2sd", type), operands));
             return;
         }
         case Inst::Kind::Cvttsd2si: {
             const auto cvtsd2siInst = dynCast<Cvttsd2siInst>(instruction.get());
             const AsmType type = cvtsd2siInst->dstType;
             const std::string operands = asmOperand(cvtsd2siInst->src) + ", " + asmOperand(cvtsd2siInst->dst);
-            result += asmFormatInstruction(addType("cvttsd2si", type), operands);
+            result.append(asmFormatInstruction(addType("cvttsd2si", type), operands));
             return;
         }
         case Inst::Kind::Unary: {
             const auto unaryInst = dynCast<UnaryInst>(instruction.get());
-            result += asmFormatInstruction(
+            result.append(asmFormatInstruction(
                 asmUnaryOperator(unaryInst->oper, unaryInst->type),
-                asmOperand(unaryInst->dst));
+                asmOperand(unaryInst->dst)));
             return;
         }
         case Inst::Kind::Binary: {
             const auto binaryInst = dynCast<BinaryInst>(instruction.get());
             const std::string operands = asmOperand(binaryInst->lhs) + ", " + asmOperand(binaryInst->rhs);
-            result += asmFormatInstruction(asmBinaryOperator(binaryInst->oper, binaryInst->type), operands);
+            result.append(asmFormatInstruction(asmBinaryOperator(binaryInst->oper, binaryInst->type), operands));
             return;
         }
         case Inst::Kind::Cdq: {
             const auto cdqInst = dynCast<CdqInst>(instruction.get());
             if (cdqInst->type == asmLongWord)
-                result += asmFormatInstruction("cdq");
+                result.append(asmFormatInstruction("cdq"));
             if (cdqInst->type == asmQuadWord)
-                result += asmFormatInstruction("cqo");
+                result.append(asmFormatInstruction("cqo"));
             return;
         }
         case Inst::Kind::Idiv: {
             const auto idivInst = dynCast<IdivInst>(instruction.get());
-            result += asmFormatInstruction(addType(
-                "idiv", idivInst->type), asmOperand(idivInst->operand));
+            result.append(asmFormatInstruction(addType(
+                "idiv", idivInst->type), asmOperand(idivInst->operand)));
             return;
         }
         case Inst::Kind::Div: {
             const auto divInst = dynCast<DivInst>(instruction.get());
             if (divInst->type == asmLongWord)
-                result += asmFormatInstruction("divl", asmOperand(divInst->operand));
+                result.append(asmFormatInstruction("divl", asmOperand(divInst->operand)));
             if (divInst->type == asmQuadWord)
-                result += asmFormatInstruction("divq", asmOperand(divInst->operand));
+                result.append(asmFormatInstruction("divq", asmOperand(divInst->operand)));
             return;
         }
         case Inst::Kind::Ret: {
-            result += asmFormatInstruction("movq", "%rbp, %rsp");
-            result += asmFormatInstruction("popq", "%rbp");
-            result += asmFormatInstruction("ret");
+            result.append(asmFormatInstruction("movq", "%rbp, %rsp"));
+            result.append(asmFormatInstruction("popq", "%rbp"));
+            result.append(asmFormatInstruction("ret"));
             return;
         }
         case Inst::Kind::Cmp: {
             const auto cmpInst = dynCast<CmpInst>(instruction.get());
             const std::string operands = asmOperand(cmpInst->lhs) + ", " + asmOperand(cmpInst->rhs);
             if (cmpInst->lhs->type == asmDouble)
-                result += asmFormatInstruction("comisd", operands);
+                result.append(asmFormatInstruction("comisd", operands));
             else
-                result += asmFormatInstruction(addType("cmp", cmpInst->lhs->type), operands);
+                result.append(asmFormatInstruction(addType("cmp", cmpInst->lhs->type), operands));
             return;
         }
         case Inst::Kind::Jmp: {
             const auto jmpInst = dynCast<JmpInst>(instruction.get());
-            result += asmFormatInstruction("jmp", createLabel(jmpInst->target.value));
+            result.append(asmFormatInstruction("jmp", createLabel(jmpInst->target.value)));
             return;
         }
         case Inst::Kind::JmpCC: {
             const auto jmpCCInst = dynCast<JmpCCInst>(instruction.get());
-            result += asmFormatInstruction(
-                "j" + condCode(jmpCCInst->condition), createLabel(jmpCCInst->target.value));
+            result.append(asmFormatInstruction(
+                "j" + condCode(jmpCCInst->condition), createLabel(jmpCCInst->target.value)));
             return;
         }
         case Inst::Kind::SetCC: {
             const auto setCCInst = dynCast<SetCCInst>(instruction.get());
-            result += asmFormatInstruction(
-                "set" + condCode(setCCInst->condition), asmOperand(setCCInst->operand));
+            result.append(asmFormatInstruction(
+                "set" + condCode(setCCInst->condition), asmOperand(setCCInst->operand)));
             return;
         }
         case Inst::Kind::Label: {
             const auto labelInst = dynCast<LabelInst>(instruction.get());
-            result += asmFormatLabel(createLabel(labelInst->target.value));
+            result.append(asmFormatLabel(createLabel(labelInst->target.value)));
             return;
         }
         case Inst::Kind::Push: {
             const auto pushInst = dynCast<PushInst>(instruction.get());
-            result += asmFormatInstruction("pushq", asmOperand(pushInst->operand));
+            result.append(asmFormatInstruction("pushq", asmOperand(pushInst->operand)));
             return;
         }
         case Inst::Kind::Call: {
             const auto callInst = dynCast<CallInst>(instruction.get());
-            result += asmFormatInstruction("call", callInst->funName.value);
+            result.append(asmFormatInstruction("call", callInst->funName.value));
             return;
         }
         default:
-            result += asmFormatInstruction("not set asmInstruction");
+            result.append(asmFormatInstruction("not set asmInstruction"));
     }
 }
 
@@ -332,40 +333,25 @@ std::string asmStaticOperand(const Operand* operand)
 std::string asmOperand(const Operand* operand)
 {
     switch (operand->kind) {
-        case Operand::Kind::Register: {
-            const auto registerOperand = dynCast<const RegisterOperand>(operand);
-            return asmRegisterOperand(*registerOperand);
-        }
-        case Operand::Kind::Imm: {
-            const auto immOperand = dynCast<const ImmOperand>(operand);
-            return asmImmOperand(*immOperand);
-        }
-        case Operand::Kind::Memory: {
-            const auto memoryOperand = dynCast<const MemoryOperand>(operand);
-            return asmMemoryOperand(*memoryOperand);
-        }
-        case Operand::Kind::Data: {
-            const auto dataOperand = dynCast<const DataOperand>(operand);
-            return asmDataOperand(*dataOperand);
-        }
-        case Operand::Kind::Indexed: {
-            const auto indexedOperand = dynCast<const IndexedOperand>(operand);
-            return asmIndexedOperand(*indexedOperand);
-        }
-        case Operand::Kind::Pseudo:         return "invalid pseudo";
+        case Operand::Kind::Register:   return asmOperand(*dynCast<const RegisterOperand>(operand));
+        case Operand::Kind::Imm:        return asmOperand(*dynCast<const ImmOperand>(operand));
+        case Operand::Kind::Memory:     return asmOperand(*dynCast<const MemoryOperand>(operand));
+        case Operand::Kind::Data:       return asmOperand(*dynCast<const DataOperand>(operand));
+        case Operand::Kind::Indexed:    return asmOperand(*dynCast<const IndexedOperand>(operand));
+        case Operand::Kind::Pseudo:     return "invalid pseudo";
         default:
             return "not set asmOperand";
     }
 }
 
-std::string asmIndexedOperand(const IndexedOperand& indexedOperand)
+std::string asmOperand(const IndexedOperand& indexedOperand)
 {
     return "(" + asmRegister(indexedOperand.type, indexedOperand.regKind) + ", " +
            asmRegister(indexedOperand.type, indexedOperand.indexRegKind) + ", " +
            std::to_string(indexedOperand.scale) + ")";
 }
 
-std::string asmDataOperand(const DataOperand& dataOperand)
+std::string asmOperand(const DataOperand& dataOperand)
 {
     std::string prefix;
     if (dataOperand.offset == 0)
@@ -377,7 +363,7 @@ std::string asmDataOperand(const DataOperand& dataOperand)
     return dataOperand.identifier.value + prefix;
 }
 
-std::string asmMemoryOperand(const MemoryOperand& memoryOperand)
+std::string asmOperand(const MemoryOperand& memoryOperand)
 {
     if (memoryOperand.value != 0) {
         return std::to_string(memoryOperand.value) + "(" +
@@ -386,12 +372,12 @@ std::string asmMemoryOperand(const MemoryOperand& memoryOperand)
     return "(" + asmRegister(memoryOperand.type, memoryOperand.regKind) + ")";
 }
 
-std::string asmImmOperand(const ImmOperand& immOperand)
+std::string asmOperand(const ImmOperand& immOperand)
 {
     return "$" + std::to_string(immOperand.value);
 }
 
-std::string asmRegisterOperand(const RegisterOperand& registerOperand)
+std::string asmOperand(const RegisterOperand& registerOperand)
 {
     return asmRegister(registerOperand.type, registerOperand.regKind);
 }
@@ -513,22 +499,6 @@ std::string condCode(const BinaryInst::CondCode condCode)
     }
 }
 
-std::string asmFormatInstruction(const std::string& mnemonic,
-                                 const std::string& operands,
-                                 const std::string& comment)
-{
-    constexpr int mnemonicWidth = 12;
-    constexpr int operandsWidth = 16;
-
-    std::ostringstream oss;
-    oss << "    " << std::left << std::setw(mnemonicWidth) << mnemonic
-        << std::setw(operandsWidth) << operands;
-    if (!comment.empty())
-        oss << "# " << comment;
-    oss << "\n";
-    return oss.str();
-}
-
 std::string addType(const std::string& instruction, const AsmType type)
 {
     switch (type.kind) {
@@ -567,6 +537,32 @@ std::string genAsmCompatibleString(const StringVariable& variable)
         }
     }
     return escaped_value;
+}
+
+std::string asmFormatInstruction(const std::string& mnemonic,
+                                 const std::string& operands,
+                                 const std::string& comment)
+{
+    constexpr size_t tabWidth = 4;
+    constexpr size_t operandsWidth = 16;
+    constexpr size_t commentPrefixLength = 2;
+    constexpr size_t newLine = 1;
+    size_t length = std::max(operandsWidth, mnemonic.length() + tabWidth) + operands.length() + newLine;
+    if (!comment.empty())
+        length += comment.length() + commentPrefixLength;
+
+    std::string result(length, ' ');
+
+    std::memcpy(result.data() + tabWidth, mnemonic.data(), mnemonic.length());
+    std::memcpy(result.data() + operandsWidth, operands.data(), operands.length());
+
+    if (!comment.empty()) {
+        result[operandsWidth + operands.length()] = '#';
+        std::memcpy(result.data() + operandsWidth + operands.length() + commentPrefixLength,
+                comment.data(), comment.length());
+    }
+    result.back() = '\n';
+    return result;
 }
 
 } // CodeGen

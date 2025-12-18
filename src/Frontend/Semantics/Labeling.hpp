@@ -80,7 +80,7 @@ inline bool Labeling::isNonConstantInSwitchCase(const Parsing::CaseStmt& caseStm
 
 inline std::string Labeling::makeTemporary(const std::string& name)
 {
-    static i32 m_counter = 0;
-    return name + '.' + std::to_string(m_counter++);
+    static i32 counter = 0;
+    return name + '.' + std::to_string(counter++);
 }
 } // Semantics

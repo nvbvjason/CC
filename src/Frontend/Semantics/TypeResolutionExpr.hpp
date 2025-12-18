@@ -19,8 +19,8 @@ class TypeResolutionExpr {
 public:
     explicit TypeResolutionExpr(std::vector<Error>& errors,
                                 const TypeTable& varTable,
-                                const std::unordered_map<std::string, FuncEntry>& m_functions)
-        : functions(m_functions), errors(errors), typeTable(varTable) {}
+                                const std::unordered_map<std::string, FuncEntry>& functions)
+        : functions(functions), errors(errors), typeTable(varTable) {}
 
     TypeResolutionExpr() = delete;
 

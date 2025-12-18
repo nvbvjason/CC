@@ -33,7 +33,7 @@ StateCode CompilerDriver::wrappedRun() const
         printHelp();
         return StateCode::Done;
     }
-    const std::string inputFile = m_args.back();
+    const std::string inputFile = args.back();
     FrontendDriver frontend(argument, inputFile);
     auto [irProgramOptional, err] = frontend.run();
     if (!irProgramOptional.has_value())
@@ -53,16 +53,16 @@ StateCode CompilerDriver::wrappedRun() const
 
 StateCode CompilerDriver::validateAndSetArg(std::string& argument) const
 {
-    if (m_args.size() < 2 || 3 < m_args.size()) {
+    if (args.size() < 2 || 3 < args.size()) {
         std::cerr << "Usage: possible-argument <input_file>" << '\n';
         return StateCode::NoInputFile;
     }
-    if (const std::filesystem::path m_inputFile(m_args.back()); !std::filesystem::exists(m_inputFile)) {
-        std::cerr << "File " << m_inputFile.string() << " not found" << '\n';
+    if (const std::filesystem::path inputFile(args.back()); !std::filesystem::exists(inputFile)) {
+        std::cerr << "File " << inputFile.string() << " not found" << '\n';
         return StateCode::FileNotFound;
     }
-    if (m_args.size() == 3)
-        argument = m_args[1];
+    if (args.size() == 3)
+        argument = args[1];
     if (!isCommandLineArgumentValid(argument)) {
         std::cerr << "Invalid argument: " << argument << '\n';
         printHelp();

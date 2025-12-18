@@ -11,9 +11,9 @@ using Storage = Parsing::Declaration::StorageClass;
 namespace Semantics {
 std::vector<Error> TypeResolution::validate(Parsing::Program& program)
 {
-    m_errors = std::vector<Error>();
+    errors = std::vector<Error>();
     ASTTraverser::visit(program);
-    return std::move(m_errors);
+    return std::move(errors);
 }
 
 void TypeResolution::visit(Parsing::FuncDecl& funDecl)
@@ -40,9 +40,9 @@ void TypeResolution::visit(Parsing::FuncDecl& funDecl)
     if (funDecl.body) {
         definedFunctions.insert(funDecl.name);
         validateCompleteTypesFunc(funDecl, *funcType);
-        m_global = false;
+        global = false;
         funDecl.body->accept(*this);
-        m_global = true;
+        global = true;
     }
 }
 
@@ -89,9 +89,9 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
 {
     if (isIllegalVarDecl(varDecl))
         return;
-    if (m_global && varDecl.storage == Storage::Static)
+    if (global && varDecl.storage == Storage::Static)
         globalStaticVars.insert(varDecl.name);
-    if (!m_global && !globalStaticVars.contains(varDecl.name))
+    if (!global && !globalStaticVars.contains(varDecl.name))
         definedFunctions.insert(varDecl.name);
     resolveExpr.isConst = true;
 
@@ -106,7 +106,7 @@ void TypeResolution::visit(Parsing::VarDecl& varDecl)
 
     if (hasError())
         return;
-    if (illegalNonConstInitialization(varDecl, resolveExpr.isConst, m_global))
+    if (illegalNonConstInitialization(varDecl, resolveExpr.isConst, global))
         addError("Is illegal non const variable initilization", varDecl.location);
 }
 
@@ -355,7 +355,7 @@ void TypeResolution::initVarWithSingle(
     if (hasError())
         return;
     auto expr = Parsing::converOrAssign(
-        *type, *exprConverted->type, exprConverted, m_errors);
+        *type, *exprConverted->type, exprConverted, errors);
     newInit.emplace_back(std::make_unique<Parsing::SingleInitializer>(std::move(expr)));
 }
 

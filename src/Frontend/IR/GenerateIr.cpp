@@ -24,11 +24,11 @@ void GenerateIr::program(const Parsing::Program& parsingProgram, Program& tackyP
         std::unique_ptr<TopLevel> topLevel = topLevelIr(*decl);
         if (topLevel == nullptr)
             continue;
-        m_topLevels.emplace_back(std::move(topLevel));
+        topLevels.emplace_back(std::move(topLevel));
     }
-    tackyProgram.topLevels = std::move(m_topLevels);
-    tackyProgram.structs = std::move(m_irStructs);
-    tackyProgram.values = std::move(m_values);
+    tackyProgram.topLevels = std::move(topLevels);
+    tackyProgram.structs = std::move(irStructs);
+    tackyProgram.values = std::move(values);
 }
 
 std::unique_ptr<TopLevel> GenerateIr::topLevelIr(const Parsing::Declaration& decl)
@@ -63,7 +63,7 @@ std::unique_ptr<TopLevel> GenerateIr::structuredDecl(const Parsing::StructuredDe
         offsets.push_back(0);
     }
     IrStruct structured(std::move(types), std::move(offsets));
-    m_irStructs.emplace(structuredDecl.identifier, structured);
+    irStructs.emplace(structuredDecl.identifier, structured);
     return nullptr;
 }
 
@@ -212,8 +212,8 @@ void GenerateIr::genStaticLocal(const Parsing::VarDecl& varDecl)
 {
     const bool defined = varDecl.init != nullptr;
     auto variable = genStaticInit(varDecl, defined);
-    m_topLevels.emplace_back(std::move(variable));
-    m_symbolTable.addEntry(varDecl.name,
+    topLevels.emplace_back(std::move(variable));
+    symbolTable.addEntry(varDecl.name,
                            varDecl.name,
                            *varDecl.type,
                            true, false, false, defined);
@@ -221,17 +221,17 @@ void GenerateIr::genStaticLocal(const Parsing::VarDecl& varDecl)
 
 std::unique_ptr<TopLevel> GenerateIr::staticVariableIr(const Parsing::VarDecl& varDecl)
 {
-    const auto entry = m_symbolTable.lookupEntry(varDecl.name);
+    const auto entry = symbolTable.lookupEntry(varDecl.name);
     const bool defined = entry.isDefined();
 
     if (defined && varDecl.init == nullptr)
         return nullptr;
     if (!defined && varDecl.storage == Storage::Extern)
         return nullptr;
-    if (m_writtenGlobals.contains(varDecl.name))
+    if (writtenGlobals.contains(varDecl.name))
         return nullptr;
 
-    m_writtenGlobals.insert(varDecl.name);
+    writtenGlobals.insert(varDecl.name);
     if (varDecl.init == nullptr)
         return genStaticWithoutInit(varDecl);
     if (varDecl.init->kind == Parsing::Initializer::Kind::Compound)
@@ -312,11 +312,11 @@ const Value* GenerateIr::genStaticVariableInit(const Parsing::VarDecl& varDecl)
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FuncDecl& parsingFunction)
 {
-    bool global = !m_symbolTable.lookupEntry(parsingFunction.name).hasInternalLinkage();
+    bool global = !symbolTable.lookupEntry(parsingFunction.name).hasInternalLinkage();
     auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);
-    m_global = true;
-    m_insts = std::move(functionTacky->insts);
-    m_insts.reserve(parsingFunction.body->body.size() * 3);
+    global = true;
+    insts = std::move(functionTacky->insts);
+    insts.reserve(parsingFunction.body->body.size() * 3);
     functionTacky->args.reserve(parsingFunction.params.size());
     functionTacky->argTypes.reserve(parsingFunction.params.size());
     const auto funcType = dynCast<const Parsing::FuncType>(parsingFunction.type.get());
@@ -326,8 +326,8 @@ std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FuncDecl& parsin
         functionTacky->argTypes.emplace_back(irType);
     }
     genBlock(*parsingFunction.body);
-    functionTacky->insts = std::move(m_insts);
-    m_global = false;
+    functionTacky->insts = std::move(insts);
+    global = false;
     return functionTacky;
 }
 
@@ -1020,14 +1020,14 @@ std::unique_ptr<ExprResult> GenerateIr::genConstPlainOperand(const Parsing::Cons
 
 std::unique_ptr<ExprResult> GenerateIr::genStringPlainOperand(const Parsing::StringExpr& stringExpr)
 {
-    const auto it = m_constStrings.find(stringExpr.value);
-    if (it != m_constStrings.end()) {
+    const auto it = constStrings.find(stringExpr.value);
+    if (it != constStrings.end()) {
         const Value* valueVar = genValueVar(Identifier(it->second), pointerType, ReferringTo::Static);
         return std::make_unique<PlainOperand>(valueVar);
     }
     const Identifier iden = makeTemporaryName("string.");
-    m_constStrings.emplace_hint(it, stringExpr.value, iden.value);
-    m_topLevels.emplace_back(std::make_unique<StaticConstant>(iden, stringExpr.value, false, true));
+    constStrings.emplace_hint(it, stringExpr.value, iden.value);
+    topLevels.emplace_back(std::make_unique<StaticConstant>(iden, stringExpr.value, false, true));
     const Value* valueVar = genValueVar(iden, pointerType, ReferringTo::Static);
     return std::make_unique<PlainOperand>(valueVar);
 }
@@ -1209,13 +1209,13 @@ const Value* GenerateIr::getInrDecScale(const Parsing::UnaryExpr& unaryExpr, con
 {
     if (type == Type::Pointer) {
         const i64 size = getPointerReferenceTypeSize(unaryExpr.innerExpr->type.get());
-        m_values.emplace_back(std::make_unique<ValueConst>(size));
+        values.emplace_back(std::make_unique<ValueConst>(size));
     }
     else if (type == Type::Double)
-        m_values.emplace_back(std::make_unique<ValueConst>(1.0));
+        values.emplace_back(std::make_unique<ValueConst>(1.0));
     else
-        m_values.emplace_back(std::make_unique<ValueConst>(1));
-    return m_values.back().get();
+        values.emplace_back(std::make_unique<ValueConst>(1));
+    return values.back().get();
 }
 
 Identifier makeTemporaryName()
@@ -1266,62 +1266,62 @@ const Value* GenerateIr::genZeroValueForType(const Type type)
 
 const Value* GenerateIr::genValueVar(const Identifier& iden, const IrType& type)
 {
-    m_values.emplace_back(std::make_unique<ValueVar>(iden, type));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueVar>(iden, type));
+    return values.back().get();
 }
 
 const Value* GenerateIr::genValueVar(const Identifier& iden, const IrType& type, const ReferringTo referringTo)
 {
-    m_values.emplace_back(std::make_unique<ValueVar>(iden, type, referringTo));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueVar>(iden, type, referringTo));
+    return values.back().get();
 }
 
 const Value* GenerateIr::genConstValue(const i8 constValue)
 {
-    m_values.emplace_back(std::make_unique<ValueConst>(constValue));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueConst>(constValue));
+    return values.back().get();
 }
 
 const Value* GenerateIr::genConstValue(const u8 constValue)
 {
-    m_values.emplace_back(std::make_unique<ValueConst>(constValue));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueConst>(constValue));
+    return values.back().get();
 }
 
 const Value* GenerateIr::genConstValue(const char constValue)
 {
-    m_values.emplace_back(std::make_unique<ValueConst>(constValue));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueConst>(constValue));
+    return values.back().get();
 }
 
 const Value* GenerateIr::genConstValue(const i32 constValue)
 {
-    m_values.emplace_back(std::make_unique<ValueConst>(constValue));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueConst>(constValue));
+    return values.back().get();
 }
 
 const Value* GenerateIr::genConstValue(const u32 constValue)
 {
-    m_values.emplace_back(std::make_unique<ValueConst>(constValue));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueConst>(constValue));
+    return values.back().get();
 }
 
 const Value* GenerateIr::genConstValue(const i64 constValue)
 {
-    m_values.emplace_back(std::make_unique<ValueConst>(constValue));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueConst>(constValue));
+    return values.back().get();
 }
 
 const Value* GenerateIr::genConstValue(const u64 constValue)
 {
-    m_values.emplace_back(std::make_unique<ValueConst>(constValue));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueConst>(constValue));
+    return values.back().get();
 }
 
 const Value* GenerateIr::genConstValue(const double constValue)
 {
-    m_values.emplace_back(std::make_unique<ValueConst>(constValue));
-    return m_values.back().get();
+    values.emplace_back(std::make_unique<ValueConst>(constValue));
+    return values.back().get();
 }
 
 Type getSubscriptDereferenceType(Parsing::TypeBase* typeBase)
@@ -1344,40 +1344,40 @@ const Value* GenerateIr::genConstValue(const Parsing::ConstExpr& constExpr)
 {
     switch (constExpr.type->type) {
         case Type::I8: {
-            m_values.emplace_back(std::make_unique<ValueConst>(std::get<i8>(constExpr.value)));
+            values.emplace_back(std::make_unique<ValueConst>(std::get<i8>(constExpr.value)));
             break;
         }
         case Type::U8: {
-            m_values.emplace_back(std::make_unique<ValueConst>(std::get<u8>(constExpr.value)));
+            values.emplace_back(std::make_unique<ValueConst>(std::get<u8>(constExpr.value)));
             break;
         }
         case Type::Char: {
-            m_values.emplace_back(std::make_unique<ValueConst>(std::get<char>(constExpr.value)));
+            values.emplace_back(std::make_unique<ValueConst>(std::get<char>(constExpr.value)));
             break;
         }
         case Type::I32: {
-            m_values.emplace_back(std::make_unique<ValueConst>(std::get<i32>(constExpr.value)));
+            values.emplace_back(std::make_unique<ValueConst>(std::get<i32>(constExpr.value)));
             break;
         }
         case Type::U32: {
-            m_values.emplace_back(std::make_unique<ValueConst>(std::get<u32>(constExpr.value)));
+            values.emplace_back(std::make_unique<ValueConst>(std::get<u32>(constExpr.value)));
             break;
         }
         case Type::I64: {
-            m_values.emplace_back(std::make_unique<ValueConst>(std::get<i64>(constExpr.value)));
+            values.emplace_back(std::make_unique<ValueConst>(std::get<i64>(constExpr.value)));
             break;
         }
         case Type::U64: {
-            m_values.emplace_back(std::make_unique<ValueConst>(std::get<u64>(constExpr.value)));
+            values.emplace_back(std::make_unique<ValueConst>(std::get<u64>(constExpr.value)));
             break;
         }
         case Type::Double: {
-            m_values.emplace_back(std::make_unique<ValueConst>(std::get<double>(constExpr.value)));
+            values.emplace_back(std::make_unique<ValueConst>(std::get<double>(constExpr.value)));
             break;
         }
         default:
             std::abort();
     }
-    return m_values.back().get();
+    return values.back().get();
 }
 } // IR

@@ -23,11 +23,11 @@ class TypeResolution final : public Parsing::ASTTraverser {
 
     i64 location = 0;
 
-    std::vector<Error> m_errors;
-    bool m_global = true;
+    std::vector<Error> errors;
+    bool global = true;
 public:
     explicit TypeResolution(const TypeTable& varTable)
-        : typeTable(varTable), resolveExpr(m_errors, varTable, functions) {}
+        : typeTable(varTable), resolveExpr(errors, varTable, functions) {}
 
     std::vector<Error> validate(Parsing::Program& program);
 
@@ -68,8 +68,8 @@ public:
         const FuncEntry& funcEntry,
         const Parsing::FuncDecl& funDecl);
 private:
-    void addError(const std::string& error, const i64 loc) { m_errors.emplace_back(error, loc); }
-    [[nodiscard]] bool hasError() const { return !m_errors.empty(); }
+    void addError(const std::string& error, const i64 loc) { errors.emplace_back(error, loc); }
+    [[nodiscard]] bool hasError() const { return !errors.empty(); }
 };
 
 inline bool hasStorageClassSpecifier(const Parsing::DeclForInit& declForInit)

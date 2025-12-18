@@ -21,12 +21,12 @@ void asmInstruction(std::string& result, const std::unique_ptr<Inst>& instructio
 std::string asmStaticOperand(const Operand* operand);
 
 std::string asmOperand(const Operand* operand);
-std::string asmDataOperand(const DataOperand& dataOperand);
-std::string asmMemoryOperand(const MemoryOperand& memoryOperand);
-std::string asmImmOperand(const ImmOperand& immOperand);
-std::string asmRegisterOperand(const RegisterOperand& registerOperand);
+std::string asmOperand(const DataOperand& dataOperand);
+std::string asmOperand(const MemoryOperand& memoryOperand);
+std::string asmOperand(const ImmOperand& immOperand);
+std::string asmOperand(const RegisterOperand& registerOperand);
 std::string asmRegister(const AsmType& type, Operand::RegKind reg);
-std::string asmIndexedOperand(const IndexedOperand& indexedOperand);
+std::string asmOperand(const IndexedOperand& indexedOperand);
 
 std::string asmUnaryOperator(UnaryInst::Operator oper, AsmType type);
 std::string asmBinaryOperator(BinaryInst::Operator oper, AsmType type);

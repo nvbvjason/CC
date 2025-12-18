@@ -8,12 +8,12 @@
 #include <vector>
 
 class CompilerDriver {
-    std::vector<std::string> m_args;
+    std::vector<std::string> args;
 public:
     CompilerDriver() = delete;
     CompilerDriver(const CompilerDriver& other) = delete;
     CompilerDriver(const int argc, char *argv[])
-        : m_args(std::vector<std::string>(argv, argv + argc)) {}
+        : args(std::vector<std::string>(argv, argv + argc)) {}
 
     StateCode validateAndSetArg(std::string& argument) const;
     [[nodiscard]] i32 run() const;

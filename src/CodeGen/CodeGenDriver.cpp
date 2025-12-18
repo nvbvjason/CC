@@ -53,7 +53,7 @@ Program codegen(const Ir::Program& irProgram)
 i64 replacingPseudoRegisters(const Function& function, Program& program)
 {
     PseudoRegisterReplacer pseudoRegisterReplacer(program);
-    for (auto& inst : function.instructions)
+    for (const std::unique_ptr<Inst>& inst : function.instructions)
         pseudoRegisterReplacer.replace(*inst);
     return pseudoRegisterReplacer.stackPointer();
 }
