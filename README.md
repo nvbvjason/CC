@@ -122,4 +122,5 @@ I knew that compilers are challenging projects and wanted to know more about the
 - `--parse`          - Stop after the parsing stage.
 - `--codegen`        - Stop after the writing the assembly file.
 
-- for L.S.
+
+for L.S.
