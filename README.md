@@ -121,3 +121,5 @@ I knew that compilers are challenging projects and wanted to know more about the
 - `--lex`            - Stop after the lexing stage.
 - `--parse`          - Stop after the parsing stage.
 - `--codegen`        - Stop after the writing the assembly file.
+
+- for L.S.
