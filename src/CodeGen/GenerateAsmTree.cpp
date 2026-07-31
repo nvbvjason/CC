@@ -8,6 +8,7 @@
 
 #include <array>
 #include <cassert>
+#include <climits>
 
 namespace {
 using RegType = CodeGen::Operand::RegKind;

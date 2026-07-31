@@ -29,35 +29,44 @@ std::tuple<std::optional<Ir::Program>, StateCode> FrontendDriver::run()
         reportErrors(errors, m_tokenStore);
         return {std::nullopt, StateCode::Lexer};
     }
+
     if (m_arg == "--lex")
         return {std::nullopt, StateCode::Done};
+
     if (m_arg == "--printTokens") {
         for (size_t i = 0; i < m_tokenStore.size(); ++i)
             std::cout << m_tokenStore.getToken(i) << '\n';
         return {std::nullopt, StateCode::Done};
     }
+
     Parsing::Program program;
     if (const std::vector<Error> errors = parse(m_tokenStore, program); !errors.empty()) {
         reportErrors(errors, m_tokenStore);
         return {std::nullopt, StateCode::Parser};
     }
+
     if (m_arg == "--parse")
         return {std::nullopt, StateCode::Done};
+
     if (m_arg == "--printAst") {
         printParsingAst(program);
         return {std::nullopt, StateCode::Done};
     }
+
     SymbolTable symbolTable;
     if (const auto [err, errors] = validateSemantics(program, symbolTable); err != StateCode::Done) {
         reportErrors(errors, m_tokenStore);
         return {std::nullopt, err};
     }
+
     if (m_arg == "--validate")
         return {std::nullopt, StateCode::Done};
+
     if (m_arg == "--printAstAfter") {
         printParsingAst(program);
         return {std::nullopt, StateCode::Done};
     }
+
     Ir::Program irProgram = ir(program, symbolTable);
     return {std::move(irProgram), StateCode::Continue};
 }
@@ -76,21 +85,27 @@ std::pair<StateCode, std::vector<Error>> validateSemantics(Parsing::Program& pro
     Semantics::VariableResolution variableResolution(symbolTable);
     if (const std::vector<Error> errors = variableResolution.resolve(program); !errors.empty())
         return {StateCode::VariableResolution, errors};
+
     Semantics::TypeResolution typeResolution;
     if (const std::vector<Error> errors = typeResolution.validate(program); !errors.empty())
         return {StateCode::TypeResolution, errors};
+
     Semantics::LvalueVerification lvalueVerification;
     if (const std::vector<Error> errors = lvalueVerification.resolve(program); !errors.empty())
         return {StateCode::LValueVerification, errors};
+
     Semantics::ValidateReturn validateReturn;
     if (std::vector<Error> errors = validateReturn.programValidate(program); !errors.empty())
         return {StateCode::ValidateReturn, errors};
+
     Semantics::GotoLabelsUnique labelsUnique;
     if (const std::vector<Error> errors = labelsUnique.programValidate(program); !errors.empty())
         return {StateCode::LabelsUnique, errors};
+
     Semantics::LoopLabeling loopLabeling;
     if (const std::vector<Error> errors = loopLabeling.programValidate(program); !errors.empty())
         return {StateCode::LoopLabeling, errors};
+
     return {StateCode::Done, {}};
 }
 

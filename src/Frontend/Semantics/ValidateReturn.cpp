@@ -56,9 +56,8 @@ void ValidateReturn::visit(Parsing::FuncDeclaration& funDecl)
         m_errors.emplace_back("Must have return expression on non void function",returnStmt->location);
         return;
     }
-    assert(funcType->returnType->type);
+    assert(funcType->returnType);
     assert(returnStmt->expr->type);
-    assert(returnStmt->expr->type->type);
     if (funcType->returnType->type == Type::Pointer || returnStmt->expr->type->type == Type::Pointer) {
         if (isVoidPointer(*funcType->returnType)) {
             returnStmt->expr->type = std::make_unique<Parsing::PointerType>(
