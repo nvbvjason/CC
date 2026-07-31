@@ -23,9 +23,11 @@ Linux x86_64 required
 
 ```ebnf
 <program>               ::= { <declaration> }
-<declaration>           ::= <function-declaration> | <variable-declaration>
+<declaration>           ::= <function-declaration> | <variable-declaration> | <struct-declaration>
 <variable-declaration>  ::= { <specifier> }+ <declarator> [ "=" <initializer> ] ";"
 <function-declaration>  ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
+<struct-declaration>    ::= "struct" <identifier> [ "{" { <member-declaration> }+ "}" ] ";"
+<member-declaration>    ::= { <type-specifier> }+ <declarator> ";"
 <declarator>            ::= "*" <declarator> | <direct-declarator>
 <direct-declarator>     ::= <simple-declarator> [ <declarator-suffix> ]
 <declarator-suffix>     ::= <param-list> | { "[" <const> "]" }+
@@ -33,6 +35,7 @@ Linux x86_64 required
 <param>                 ::= { <type-specifier> }+ <declarator>
 <simple-declarator>     ::= <identifier> | "(" <declarator> ")"
 <type-specifier>        ::= "int" | "long" | "unsigned" | "signed" | "double" | "char" | "void"
+                          | "struct" <identifier>
 <specifier>             ::= <type-specifier> | "static" | "extern"
 <block>                 ::= "{" { <block-item> } "}"
 <block-item>            ::= <statement> | <declaration>
@@ -63,7 +66,11 @@ Linux x86_64 required
                           | "sizeof" <unary-exp>
                           | "sizeof" "(" <type-name> ")"
 <type-name>             ::= { <type-specifier> }+ [ <abstract-declarator> ]
-<postfix-exp>           ::= <factor> | <postfix-exp> <postfix-op>
+<postfix-exp>           ::= <factor>
+                          | <postfix-exp> <postfix-op>
+                          | "[" <exp> "]"
+                          | "." <identifier>
+                          | "->" <identifier>
 <factor>                ::= <const>
                           | { <string> }+
                           | <identifier>
