@@ -76,9 +76,8 @@ void ValidateReturn::visit(Parsing::FuncDecl& funDecl)
         errors.emplace_back("Must have return expression on non void function",returnStmt->location);
         return;
     }
-    assert(funcType->returnType->type);
+    assert(funcType->returnType);
     assert(returnStmt->expr->type);
-    assert(returnStmt->expr->type->type);
     if (funcType->returnType->type == Type::Pointer || returnStmt->expr->type->type == Type::Pointer) {
         handlePtrReturnTypes(returnStmt, funcType);
         return;
