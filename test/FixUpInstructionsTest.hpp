@@ -20,6 +20,7 @@ class FixUpInstructionsTest : public testing::Test {
     Program program;
 public:
     std::vector<std::unique_ptr<Inst>> insts;
+
     void addMove(OperKind srcKind, OperKind dstKind, AsmType asmType);
     void addMoveZero(OperKind srcKind, OperKind dstKind, AsmType asmType);
     void addMoveSX(OperKind srcKind, OperKind dstKind);

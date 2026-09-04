@@ -390,7 +390,7 @@ std::unique_ptr<Stmt> Parser::stmtParse()
                 return labelStmtParse();
             return exprStmtParse();
     }
-    assert("unreachable stmtParse()");
+    assert(false && "unreachable stmtParse()");
 }
 
 std::unique_ptr<Stmt> Parser::returnStmtParse()

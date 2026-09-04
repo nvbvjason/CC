@@ -74,8 +74,11 @@ inline bool operator==(const AsmType& lhs, const AsmType& rhs)
 
 struct Identifier {
     std::string value;
+
     explicit Identifier(std::string value)
         : value(std::move(value)) {}
+
+    Identifier& operator=(const Identifier& other) = default;
 };
 
 struct Operand {

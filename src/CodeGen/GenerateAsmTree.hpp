@@ -23,17 +23,19 @@ class GenerateAsmTree {
     };
 
     std::unordered_map<double, std::string, DoubleHash, DoubleEqual> constantDoubles;
+
     using RegType = Operand::RegKind;
-    std::vector<std::unique_ptr<Inst>> insts;
+
     Program& program;
     std::vector<std::unique_ptr<TopLevel>>& toplevel;
 public:
+    std::vector<std::unique_ptr<Inst>> insts;
     explicit GenerateAsmTree(Program& program)
         : program(program), toplevel(program.topLevels) {}
 
     void genProgram(const Ir::Program &program);
     [[nodiscard]] std::unique_ptr<TopLevel> genTopLevel(const Ir::TopLevel& topLevel);
-    void genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> pushedIntoRegs);
+    void genFunctionPushOntoStack(const Ir::Function& function, const std::vector<bool>& argsPushedIntoRegs);
     [[nodiscard]] std::unique_ptr<TopLevel> genFunction(const Ir::Function& function);
     [[nodiscard]] std::vector<bool> genFunctionPushIntoRegs(const Ir::Function& function);
 

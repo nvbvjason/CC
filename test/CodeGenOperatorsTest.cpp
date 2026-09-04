@@ -18,9 +18,8 @@ TEST(CodeGenOperatorsTest, unaryOperator)
         {IrOper::Complement, AsmOper::Not},
         {IrOper::Negate, AsmOper::Neg}
     };
-    for (const TestcaseUnary& testcase : testcases) {
+    for (const TestcaseUnary& testcase : testcases)
         EXPECT_EQ(CodeGen::unaryOperator(testcase.irOper), testcase.asmOper);
-    }
 }
 
 TEST(CodeGenOperatorsTest, binaryOperator)
@@ -41,9 +40,8 @@ TEST(CodeGenOperatorsTest, binaryOperator)
             {IrOper::BitwiseOr, AsmOper::BitwiseOr},
             {IrOper::BitwiseXor, AsmOper::BitwiseXor},
     });
-    for (const TestcaseBinary& testcase : testcases) {
+    for (const TestcaseBinary& testcase : testcases)
         EXPECT_EQ(CodeGen::binaryOperator(testcase.irOper), testcase.asmOper);
-    }
 }
 
 TEST(CodeGenOperatorsTest, shiftOperators)
@@ -63,9 +61,8 @@ TEST(CodeGenOperatorsTest, shiftOperators)
         {IrOper::LeftShift, AsmOper::LeftShiftUnsigned, false},
         {IrOper::RightShift, AsmOper::RightShiftUnsigned, false},
     });
-    for (const TestCaseCond& testcase : testcases) {
+    for (const TestCaseCond& testcase : testcases)
         EXPECT_EQ(CodeGen::getShiftOperator(testcase.irOper, testcase.isSigned), testcase.asmOper);
-    }
 }
 
 TEST(CodeGenOperatorsTest, condCode)
@@ -94,9 +91,8 @@ TEST(CodeGenOperatorsTest, condCode)
         {IrOper::GreaterThan, BinCond::A, false},
         {IrOper::GreaterOrEqual, BinCond::AE, false},
     });
-    for (const TestCaseCond& testcase : testcases) {
+    for (const TestCaseCond& testcase : testcases)
         EXPECT_EQ(CodeGen::condCode(testcase.irOper, testcase.isSigned), testcase.cond);
-    }
 }
 
 TEST(CodeGenOperatorsTest, getAsmType)

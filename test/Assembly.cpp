@@ -29,8 +29,6 @@ TEST(AssemblyTests, addType)
     struct TestDataAddType {
         const std::string expected;
         const AsmType type;
-        TestDataAddType(std::string expected, const AsmType type)
-            : expected(std::move(expected)), type(type) {}
     };
     const auto tests = std::to_array<TestDataAddType>({
         {"addb", CodeGen::asmByte},
@@ -51,8 +49,6 @@ TEST(AssemblyTests, condCode)
     struct TestDataCondCode {
         const std::string expected;
         const CondCode condCode;
-        TestDataCondCode(std::string expected, const CondCode condCode)
-            : expected(std::move(expected)), condCode(condCode) {}
     };
     const auto tests = std::to_array<TestDataCondCode>({
         {"e", CondCode::E},
@@ -80,8 +76,6 @@ TEST(AssemblyTests, asmRegister)
         const std::string expected;
         const AsmType type;
         const RegKind reg;
-        TestDataAsmRegister(std::string expected, const AsmType type, const RegKind reg)
-            : expected(std::move(expected)), type(type), reg(reg) {}
     };
     const auto tests = std::to_array<TestDataAsmRegister>({
         {"%rbp", CodeGen::asmDouble, RegKind::BP},
@@ -148,11 +142,11 @@ TEST(AssemblyTests, asmRegister)
         {"%rsp", CodeGen::asmLongWord, RegKind::SP},
         {"%rsp", CodeGen::asmQuadWord, RegKind::SP},
     });
-    for (const TestDataAsmRegister& test : tests) {
-        const std::string withType = CodeGen::asmRegister(test.type, test.reg);
-        EXPECT_EQ(withType, test.expected) << "Instruction mismatch for input: "
-                                           << CodeGen::to_string(test.type) << ' '
-                                           << CodeGen::to_string(test.reg) << '\n';
+    for (const auto& [expected, type, reg] : tests) {
+        const std::string withType = CodeGen::asmRegister(type, reg);
+        EXPECT_EQ(withType, expected) << "Instruction mismatch for input: "
+                                           << CodeGen::to_string(type) << ' '
+                                           << CodeGen::to_string(reg) << '\n';
     }
 }
 
@@ -161,8 +155,6 @@ TEST(AssemblyTests, asmUnaryOperator)
     struct TestDataUnaryOperator {
         const std::string expected;
         const UnaryOper oper;
-        TestDataUnaryOperator(std::string expected, const UnaryOper oper)
-            : expected(std::move(expected)), oper(oper) {}
     };
     const auto tests = std::to_array<TestDataUnaryOperator>({
         {"negl", UnaryOper::Neg},
@@ -182,8 +174,6 @@ TEST(AssemblyTests, asmBinaryOperator)
         const std::string expected;
         const BinaryOper oper;
         const AsmType type;
-        TestDataBinaryOperator(std::string expected, const BinaryOper oper, const AsmType type)
-            : expected(std::move(expected)), oper(oper), type(type) {}
     };
     const auto tests = std::to_array<TestDataBinaryOperator>({
         {"xorpd", BinaryOper::BitwiseXor, CodeGen::asmDouble},
@@ -200,11 +190,11 @@ TEST(AssemblyTests, asmBinaryOperator)
         {"sarl", BinaryOper::RightShiftSigned, CodeGen::asmLongWord},
         {"shrl", BinaryOper::RightShiftUnsigned, CodeGen::asmLongWord},
     });
-    for (const TestDataBinaryOperator& test : tests) {
-        const std::string operString = CodeGen::asmBinaryOperator(test.oper, test.type);
-        EXPECT_EQ(operString, test.expected) << "Instruction mismatch for input: "
-                                   << CodeGen::to_string(test.oper) << ' '
-                                   << CodeGen::to_string(test.type) << '\n';
+    for (const auto& [expected, oper, type] : tests) {
+        const std::string operString = CodeGen::asmBinaryOperator(oper, type);
+        EXPECT_EQ(operString, expected) << "Instruction mismatch for input: "
+                                   << CodeGen::to_string(oper) << ' '
+                                   << CodeGen::to_string(type) << '\n';
     }
 }
 

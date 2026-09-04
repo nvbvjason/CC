@@ -22,6 +22,8 @@ add_executable(CC_test
         ParserOperators.cpp
         TestReadUtils.cpp
         TestReadUtils.hpp
+        GenerateAsmTreeTest.cpp
+        GenerateAsmTreeTest.hpp
 )
 
 target_include_directories(CC_test PRIVATE

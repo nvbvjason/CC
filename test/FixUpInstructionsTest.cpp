@@ -7,12 +7,12 @@
 
 namespace CodeGen {
 
-std::array stackOperands{OperKind::Data, OperKind::Memory};
-std::array stackOperandsAndImm{OperKind::Data, OperKind::Memory, OperKind::Imm};
-std::array binaryShiftOpers{BinaryOper::LeftShiftSigned, BinaryOper::RightShiftSigned,
-                            BinaryOper::RightShiftUnsigned, BinaryOper::LeftShiftUnsigned};
-std::array binaryOtherOpers{BinaryOper::Add, BinaryOper::Sub,
-                            BinaryOper::BitwiseAnd, BinaryOper::BitwiseOr, BinaryOper::BitwiseXor};
+static std::array stackOperands{OperKind::Data, OperKind::Memory};
+static std::array stackOperandsAndImm{OperKind::Data, OperKind::Memory, OperKind::Imm};
+static std::array binaryShiftOpers{BinaryOper::LeftShiftSigned, BinaryOper::RightShiftSigned,
+                        BinaryOper::RightShiftUnsigned, BinaryOper::LeftShiftUnsigned};
+static std::array binaryOtherOpers{BinaryOper::Add, BinaryOper::Sub,
+                        BinaryOper::BitwiseAnd, BinaryOper::BitwiseOr, BinaryOper::BitwiseXor};
 
 void FixUpInstructionsTest::addMove(const OperKind srcKind, const OperKind dstKind, const AsmType asmType)
 {
@@ -78,12 +78,6 @@ void FixUpInstructionsTest::run(const i32 stackAlloc)
 }
 
 TEST_F(FixUpInstructionsTest, _doNothing)
-{
-    run(0);
-    EXPECT_TRUE(insts.empty());
-}
-
-TEST_F(FixUpInstructionsTest, fixStackAlignment_doNothing)
 {
     run(0);
     EXPECT_TRUE(insts.empty());
@@ -167,7 +161,7 @@ TEST_F(FixUpInstructionsTest, fixMoveZero_replaceRegister)
         run();
         EXPECT_EQ(insts.size(), 2);
         EXPECT_EQ(insts[0]->kind, InstKind::Move);
-        EXPECT_EQ(insts[0]->kind, InstKind::Move);
+        EXPECT_EQ(insts[1]->kind, InstKind::Move);
         TearDown();
     }
 }

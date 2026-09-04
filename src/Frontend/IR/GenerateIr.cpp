@@ -312,9 +312,9 @@ const Value* GenerateIr::genStaticVariableInit(const Parsing::VarDecl& varDecl)
 
 std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FuncDecl& parsingFunction)
 {
-    bool global = !symbolTable.lookupEntry(parsingFunction.name).hasInternalLinkage();
-    auto functionTacky = std::make_unique<Function>(parsingFunction.name, global);
-    global = true;
+    bool globalFunction = !symbolTable.lookupEntry(parsingFunction.name).hasInternalLinkage();
+    auto functionTacky = std::make_unique<Function>(parsingFunction.name, globalFunction);
+    inGlobalScope = true;
     insts = std::move(functionTacky->insts);
     insts.reserve(parsingFunction.body->body.size() * 3);
     functionTacky->args.reserve(parsingFunction.params.size());
@@ -327,7 +327,7 @@ std::unique_ptr<TopLevel> GenerateIr::functionIr(const Parsing::FuncDecl& parsin
     }
     genBlock(*parsingFunction.body);
     functionTacky->insts = std::move(insts);
-    global = false;
+    inGlobalScope = false;
     return functionTacky;
 }
 
@@ -588,7 +588,7 @@ void GenerateIr::genSwitchStmt(const Parsing::SwitchStmt& stmt)
             src2 = genConstValue(value);
         }
         if (conditionType == Type::U64) {
-            const u64 value = std::get<u32>(caseValue);
+            const u64 value = std::get<u64>(caseValue);
             caseLabelName = generateCaseLabelName(stmt.identifier + std::to_string(value));
             src2 = genConstValue(value);
         }

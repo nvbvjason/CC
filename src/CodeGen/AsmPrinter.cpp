@@ -117,44 +117,25 @@ void AsmPrinter::add(const Inst& inst)
     using Kind = Inst::Kind;
     IndentGuard indent(indentLevel);
     switch (inst.kind) {
-        case Kind::Move:
-            add(*dynCast<const MoveInst>(&inst)); break;
-        case Kind::MoveSX:
-            add(*dynCast<const MoveSXInst>(&inst)); break;
-        case Kind::MoveZeroExtend:
-            add(*dynCast<const MoveZeroExtendInst>(&inst)); break;
-        case Kind::Lea:
-            add(*dynCast<const LeaInst>(&inst)); break;
-        case Kind::Cvtsi2sd:
-            add(*dynCast<const Cvtsi2sdInst>(&inst)); break;
-        case Kind::Cvttsd2si:
-            add(*dynCast<const Cvttsd2siInst>(&inst)); break;
-        case Kind::Unary:
-            add(*dynCast<const UnaryInst>(&inst)); break;
-        case Kind::Binary:
-            add(*dynCast<const BinaryInst>(&inst)); break;
-        case Kind::Cmp:
-            add(*dynCast<const CmpInst>(&inst)); break;
-        case Kind::Idiv:
-            add(*dynCast<const IdivInst>(&inst)); break;
-        case Kind::Div:
-            add(*dynCast<const DivInst>(&inst)); break;
-        case Kind::Cdq:
-            add(*dynCast<const CdqInst>(&inst)); break;
-        case Kind::Jmp:
-            add(*dynCast<const JmpInst>(&inst)); break;
-        case Kind::JmpCC:
-            add(*dynCast<const JmpCCInst>(&inst)); break;
-        case Kind::SetCC:
-            add(*dynCast<const SetCCInst>(&inst)); break;
-        case Kind::Label:
-            add(*dynCast<const LabelInst>(&inst)); break;
-        case Kind::Push:
-            add(*dynCast<const PushInst>(&inst)); break;
-        case Kind::Call:
-            add(*dynCast<const CallInst>(&inst)); break;
-        case Kind::Ret:
-            add(*dynCast<const ReturnInst>(&inst)); break;
+        case Kind::Move:                add(*dynCast<const MoveInst>(&inst)); break;
+        case Kind::MoveSX:              add(*dynCast<const MoveSXInst>(&inst)); break;
+        case Kind::MoveZeroExtend:      add(*dynCast<const MoveZeroExtendInst>(&inst)); break;
+        case Kind::Lea:                 add(*dynCast<const LeaInst>(&inst)); break;
+        case Kind::Cvtsi2sd:            add(*dynCast<const Cvtsi2sdInst>(&inst)); break;
+        case Kind::Cvttsd2si:           add(*dynCast<const Cvttsd2siInst>(&inst)); break;
+        case Kind::Unary:               add(*dynCast<const UnaryInst>(&inst)); break;
+        case Kind::Binary:              add(*dynCast<const BinaryInst>(&inst)); break;
+        case Kind::Cmp:                 add(*dynCast<const CmpInst>(&inst)); break;
+        case Kind::Idiv:                add(*dynCast<const IdivInst>(&inst)); break;
+        case Kind::Div:                 add(*dynCast<const DivInst>(&inst)); break;
+        case Kind::Cdq:                 add(*dynCast<const CdqInst>(&inst)); break;
+        case Kind::Jmp:                 add(*dynCast<const JmpInst>(&inst)); break;
+        case Kind::JmpCC:               add(*dynCast<const JmpCCInst>(&inst)); break;
+        case Kind::SetCC:               add(*dynCast<const SetCCInst>(&inst)); break;
+        case Kind::Label:               add(*dynCast<const LabelInst>(&inst)); break;
+        case Kind::Push:                add(*dynCast<const PushInst>(&inst)); break;
+        case Kind::Call:                add(*dynCast<const CallInst>(&inst)); break;
+        case Kind::Ret:                 add(*dynCast<const ReturnInst>(&inst)); break;
         default:
             addLine("Unknown Instruction");
     }

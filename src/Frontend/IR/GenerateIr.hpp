@@ -13,7 +13,7 @@ namespace Ir {
 class GenerateIr {
     using Storage = Parsing::Declaration::StorageClass;
 
-    bool global = true;
+    bool inGlobalScope = true;
     std::vector<std::unique_ptr<Instruction>> insts;
     SymbolTable& symbolTable;
     std::unordered_set<std::string> writtenGlobals;

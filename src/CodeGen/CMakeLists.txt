@@ -7,7 +7,6 @@ add_library(CodeGen STATIC
         Operators.hpp
         FixUpInstructions.cpp
         CodeGenDriver.cpp
-        CodeGenDriver.hpp
 )
 
 target_include_directories(CodeGen PUBLIC

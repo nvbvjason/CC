@@ -36,7 +36,7 @@ TEST(ParserTests, BlockParseSuccesEmpty)
 {
     const std::vector tokenTypes{TokenType::OpenParen, TokenType::CloseBrace};
     Parsing::Parser parser = createParser(tokenTypes);
-    const auto ptr= parser.blockParse();
+    const auto ptr = parser.blockParse();
     EXPECT_EQ(nullptr, ptr);
 }
 
@@ -44,7 +44,7 @@ TEST(ParserTests, BlockParseSuccesWithBody)
 {
     const std::vector tokenTypes{TokenType::OpenParen, TokenType::Semicolon, TokenType::CloseBrace};
     Parsing::Parser parser = createParser(tokenTypes);
-    const auto ptr= parser.blockParse();
+    const auto ptr = parser.blockParse();
     EXPECT_EQ(nullptr, ptr);
 }
 
@@ -53,7 +53,7 @@ TEST(ParserTests, BlockParseMissingOpenBrace)
 {
     const std::vector tokenTypes{TokenType::IntKeyword, TokenType::CloseBrace};
     Parsing::Parser parser = createParser(tokenTypes);
-    const auto ptr= parser.blockParse();
+    const auto ptr = parser.blockParse();
     EXPECT_EQ(nullptr, ptr);
 }
 

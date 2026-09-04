@@ -28,11 +28,11 @@ public:
     void print(const StaticConstant& staticConstant);
     void print(const Function& function);
     void print(const Instruction& instruction);
+
     static std::string print(const Value& value);
     static std::string print(const Identifier& identifier);
     static std::string print(const ValueVar& val);
     static std::string print(const ValueConst& val);
-
 private:
     void print(const ReturnInst& inst);
     void print(const SignExtendInst& inst);

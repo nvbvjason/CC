@@ -87,16 +87,27 @@ std::vector<bool> GenerateAsmTree::genFunctionPushIntoRegs(const Ir::Function& f
     return argsPushedIntoRegs;
 }
 
-void GenerateAsmTree::genFunctionPushOntoStack(const Ir::Function& function, std::vector<bool> argsPushedIntoRegs)
+void GenerateAsmTree::genFunctionPushOntoStack(
+    const Ir::Function& function,
+    const std::vector<bool>& argsPushedIntoRegs)
 {
+    assert(function.argTypes.size() == function.args.size());
+    assert(function.args.size() == argsPushedIntoRegs.size());
+
     i32 stackPtr = 2;
+
     for (size_t i = 0; i < function.args.size(); ++i) {
+        constexpr i32 stackAlignment = 8;
+
         if (argsPushedIntoRegs[i])
             continue;
-        constexpr i32 stackAlignment = 8;
+
         const Operand* stack = program.getMemoryOperand(
-            RegType::BP, stackAlignment * stackPtr++,
-            getAsmType(function.argTypes[i]));
+                RegType::BP,
+                stackAlignment * stackPtr++,
+                getAsmType(function.argTypes[i])
+        );
+
         auto arg = std::make_unique<Ir::ValueVar>(function.args[i], function.argTypes[i]);
         const Operand* dst = genOperand(*arg);
         emitMove(stack, dst, getAsmType(function.argTypes[i]));

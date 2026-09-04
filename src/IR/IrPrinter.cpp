@@ -106,23 +106,6 @@ void IrPrinter::print(const Function& function)
         print(*inst);
 }
 
-std::string IrPrinter::print(const Value& value)
-{
-    switch (value.kind) {
-        case Value::Kind::Variable:
-            return print(*dynCast<const ValueVar>(&value));
-        case Value::Kind::Constant:
-            return print(*dynCast<const ValueConst>(&value));
-        default:
-            std::abort();
-    }
-}
-
-std::string IrPrinter::print(const Identifier& identifier)
-{
-    return identifier.value;
-}
-
 void IrPrinter::print(const ReturnInst& inst)
 {
     if (inst.returnValue)
@@ -270,6 +253,23 @@ void IrPrinter::print(const FunCallInst &inst)
 void IrPrinter::print(const AllocateInst& inst)
 {
     addLine("Allocate", print(inst.iden) + ", " + std::to_string(inst.size));
+}
+
+std::string IrPrinter::print(const Value& value)
+{
+    switch (value.kind) {
+        case Value::Kind::Variable:
+            return print(*dynCast<const ValueVar>(&value));
+        case Value::Kind::Constant:
+            return print(*dynCast<const ValueConst>(&value));
+        default:
+            std::abort();
+    }
+}
+
+std::string IrPrinter::print(const Identifier& identifier)
+{
+    return identifier.value;
 }
 
 std::string IrPrinter::print(const ValueVar& val)

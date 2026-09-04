@@ -212,7 +212,7 @@ void Lexer::forwardSlash()
         while (peek() != '\n' && !isAtEnd())
             advance();
     else if (match('*')) {
-        while (source.substr(current, 2) != "*/" && !isAtEnd())
+        while (!isAtEnd() && !(peek() == '*' && peekNext() == '/'))
             advance();
         advance();
         advance();
@@ -282,8 +282,10 @@ void Lexer::number()
     const i32 endNumbers = current;
     while (!isAtEnd() && isalpha(peek()))
         advance();
-    if (endNumbers + 2 < current)
+    if (endNumbers + 2 < current) {
         addToken(Type::Invalid);
+        return;
+    }
     const i32 ahead = current - start;
     std::string text = source.substr(start, ahead);
     if (matchesUL(text, endNumbers, current)) {
