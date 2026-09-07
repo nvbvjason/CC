@@ -824,7 +824,7 @@ std::unique_ptr<ExprResult> GenerateIr::genVarInst(const Parsing::VarExpr& varEx
 
 std::unique_ptr<ExprResult> GenerateIr::genBinaryInst(const Parsing::BinaryExpr& binaryExpr)
 {
-    if (binaryExpr.lhs->type->type == Type::Pointer || binaryExpr.lhs->type->type == Type::Pointer)
+    if (binaryExpr.lhs->type->type == Type::Pointer || binaryExpr.rhs->type->type == Type::Pointer)
         return genBinaryPtrInst(binaryExpr);
     if (binaryExpr.op == Parsing::BinaryExpr::Operator::And)
         return genBinaryAndInst(binaryExpr);

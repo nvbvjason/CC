@@ -64,7 +64,7 @@ private:
     [[nodiscard]] char peekNext() const;
 
     bool match(char expected);
-    bool match(const std::string& expected);
+    bool match(std::string_view expected);
     void scanToken();
     char advance();
     void addCharLiteral(char ch) const;

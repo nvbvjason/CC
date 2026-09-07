@@ -16,11 +16,10 @@ GenerateAsmTree GenerateAsmTreeTest::genGenerateAsmTree()
 
 void GenerateAsmTreeTest::actGenFunctionPushOntoStack(
     const std::vector<bool>& argsPushedOnStack,
-    std::vector<Ir::Identifier>&& args,
     std::vector<IrType>&& argTypes)
 {
     GenerateAsmTree generateAsmTree = genGenerateAsmTree();
-    const Ir::Function function = genIrFunction(std::move(args), std::move(argTypes));
+    const Ir::Function function = genIrFunction(std::move(argTypes));
     generateAsmTree.genFunctionPushOntoStack(function, argsPushedOnStack);
     insts = std::move(generateAsmTree.insts);
     generateAsmTree.insts = std::vector<std::unique_ptr<Inst>>();
@@ -29,13 +28,7 @@ void GenerateAsmTreeTest::actGenFunctionPushOntoStack(
 void GenerateAsmTreeTest::actGenFunctionPushOntoStackSimple(std::vector<IrType>&& argTypes)
 {
     std::vector<bool> argsPushedOnStack(argTypes.size(), false);
-    std::vector<Ir::Identifier> args;
-    args.reserve(argTypes.size());
-
-    for (int i = 0; i < argTypes.size(); ++i)
-        args.emplace_back(std::to_string(i));
-
-    actGenFunctionPushOntoStack(argsPushedOnStack, std::move(args), std::move(argTypes));
+    actGenFunctionPushOntoStack(argsPushedOnStack, std::move(argTypes));
 }
 
 static std::vector<MoveInst> castStackMoves(const std::vector<std::unique_ptr<Inst>>& stackMoves)
@@ -62,27 +55,35 @@ static std::vector<MemoryOperand> castMemoryOperands(const std::vector<MoveInst>
     return result;
 }
 
-Ir::Function genIrFunction(std::vector<Ir::Identifier>&& args, std::vector<IrType>&& argTypes)
+Ir::Function genIrFunction(std::vector<IrType>&& argTypes)
 {
     Ir::Function irFunction("function", true);
+    std::vector<Ir::Identifier> args;
+    args.reserve(argTypes.size());
+
+    for (int i = 0; i < argTypes.size(); ++i)
+        args.emplace_back(std::to_string(i));
     irFunction.args = std::move(args);
     irFunction.argTypes = std::move(argTypes);
     return irFunction;
 }
 
+std::vector<bool> GenerateAsmTreeTest::actGenFunctionPushOntoStack(std::vector<IrType>&& argTypes)
+{
+    const Ir::Function function = genIrFunction(std::move(argTypes));
+    GenerateAsmTree generateAsmTree = genGenerateAsmTree();
+    return generateAsmTree.genFunctionPushIntoRegs(function);
+}
+
 TEST_F(GenerateAsmTreeTest, genFunctionPushOntoStack_ignoreAgrsPushedOnStack)
 {
     const std::vector argsPushedOnStack(1, true);
-    std::vector args{
-        Ir::Identifier("first")
-    };
     std::vector argTypes{
         IrType(1)
     };
 
     actGenFunctionPushOntoStack(
         argsPushedOnStack,
-        std::move(args),
         std::move(argTypes)
     );
 
@@ -94,10 +95,13 @@ namespace {
         IrType irType;
         AsmType::Kind expected;
     };
-
     struct GenerateAsmTreeTestSingleArgTestCase_alignment {
         IrType irType;
         i64 expected;
+    };
+    struct FunctionPushIntoRegsTestCase {
+        std::vector<IrType> irType;
+        std::vector<bool> expected;
     };
 }
 
@@ -128,6 +132,7 @@ TEST_F(GenerateAsmTreeTest, fixStackAlignment_singleArgument_type)
 
 TEST_F(GenerateAsmTreeTest, fixStackAlignment_singleArgument_stackAlignment)
 {
+
     std::vector<GenerateAsmTreeTestSingleArgTestCase_alignment> testCases{
         {Ir::i8Type, 8},
         {Ir::u8Type, 8},
@@ -149,6 +154,31 @@ TEST_F(GenerateAsmTreeTest, fixStackAlignment_singleArgument_stackAlignment)
         const std::vector<MemoryOperand> memoryOperands = castMemoryOperands(stackMoves);
 
         EXPECT_EQ(memoryOperands.front().value - 8, testCase.expected) << Ir::to_string(testCase.irType);
+    }
+}
+
+Ir::Function genTestFunction(std::vector<std::unique_ptr<Ir::Instruction>>&& insts)
+{
+    Ir::Function result("", true);
+    result.insts = std::move(insts);
+    result.args = std::vector<Ir::Identifier>(result.insts.size());
+    return result;
+}
+
+TEST_F(GenerateAsmTreeTest, genFunctionPushIntoRegs_correctReturn)
+{
+    std::vector<FunctionPushIntoRegsTestCase> testCases{
+    {{Ir::i8Type, Ir::i8Type, Ir::i8Type, Ir::i8Type, Ir::i8Type, Ir::i8Type, Ir::i8Type},
+       {true, true, true, true, true, true, false} },    {
+       {Ir::doubleType, Ir::doubleType, Ir::doubleType, Ir::doubleType, Ir::doubleType,
+                  Ir::doubleType, Ir::doubleType, Ir::doubleType, Ir::doubleType},
+       {true, true, true, true, true,
+           true, true, true, false} },
+    };
+
+    for (FunctionPushIntoRegsTestCase& testCase : testCases) {
+        std::vector<bool> actual = actGenFunctionPushOntoStack(std::move(testCase.irType));
+        EXPECT_EQ(actual, testCase.expected);
     }
 }
 

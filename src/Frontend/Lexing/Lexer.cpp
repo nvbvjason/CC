@@ -231,15 +231,15 @@ bool Lexer::match(const char expected)
     return true;
 }
 
-bool Lexer::match(const std::string& expected)
+    bool Lexer::match(const std::string_view expected)
 {
-    if (source.size() <= current + expected.size() - 1)
+    const size_t len = expected.size();
+    if (source.size() - current < len)
         return false;
-    for (i32 i = 0; i < expected.size(); ++i)
-        if (source[current + i] != expected[i])
-            return false;
-    for (i32 i = 0; i < expected.size(); ++i)
-        advance();
+    if (source.compare(current, len, expected) != 0)
+        return false;
+    current += static_cast<i32>(len);
+    column  += static_cast<u16>(len);
     return true;
 }
 

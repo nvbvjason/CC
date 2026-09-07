@@ -27,9 +27,9 @@ public:
 
     void actGenFunctionPushOntoStack(
         const std::vector<bool>& argsPushedOnStack,
-        std::vector<Ir::Identifier>&& args,
         std::vector<IrType>&& argTypes
     );
+    std::vector<bool> actGenFunctionPushOntoStack(std::vector<IrType>&& argTypes);
     void actGenFunctionPushOntoStackSimple(std::vector<IrType>&& argTypes);
 protected:
     void TearDown() override
@@ -37,8 +37,7 @@ protected:
         program.operands.clear();
         program.topLevels.clear();
     }
-
 };
 
-static Ir::Function genIrFunction(std::vector<Ir::Identifier>&& args, std::vector<IrType>&& argTypes);
+static Ir::Function genIrFunction(std::vector<IrType>&& argTypes);
 }

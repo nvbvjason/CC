@@ -524,7 +524,6 @@ struct Function final : TopLevel {
     std::vector<Identifier> args;
     std::vector<IrType> argTypes;
     std::vector<std::unique_ptr<Instruction>> insts;
-    const std::vector<i64> functions;
     const i64 returnType = 0;
 
     const bool isGlobal;
